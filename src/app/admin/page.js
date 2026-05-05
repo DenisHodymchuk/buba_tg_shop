@@ -34,9 +34,9 @@ export default function AdminPanel() {
     if (!supabase) return;
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('customers')
         .select('*')
-        .not('telegram_id', 'is', null); // Тільки ті, хто має TG ID
+        .not('tg_id', 'is', null);
       if (!error && data) {
         setUsers(data);
       }
@@ -51,25 +51,25 @@ export default function AdminPanel() {
     if (!amount || isNaN(amount)) return;
 
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
+      const { data: customer } = await supabase
+        .from('customers')
         .select('*')
-        .or(`phone.eq.${user.phone}${user.telegram_id ? `,telegram_id.eq.${user.telegram_id}` : ''}`)
+        .or(`phone.eq.${user.phone}${user.tg_id ? `,tg_id.eq.${user.tg_id}` : ''}`)
         .single();
       
-      if (profile) {
+      if (customer) {
         const { error } = await supabase
-          .from('profiles')
-          .update({ bonuses: (profile.bonuses || 0) + parseInt(amount) })
-          .eq('phone', profile.phone);
+          .from('customers')
+          .update({ bonuses: (customer.bonuses || 0) + parseInt(amount) })
+          .eq('id', customer.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('profiles')
+          .from('customers')
           .insert([{ 
             phone: user.phone, 
-            telegram_id: user.telegram_id,
-            name: user.name, 
+            tg_id: user.tg_id,
+            first_name: user.name, 
             bonuses: parseInt(amount) 
           }]);
         if (error) throw error;
@@ -78,7 +78,7 @@ export default function AdminPanel() {
       alert('Бонуси успішно нараховано!');
       fetchUsers();
     } catch (e) {
-      alert('Помилка при нарахуванні: ' + e.message + '\n\nПереконайтеся, що у вас створена таблиця "profiles" з колонками phone (text, primary key), name (text) та bonuses (int4).');
+      alert('Помилка при нарахуванні: ' + e.message);
     }
   }
 
@@ -437,10 +437,10 @@ export default function AdminPanel() {
                     {users.map((user, i) => (
                       <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                         <td style={{ padding: '20px 24px' }}>
-                          <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{user.name}</div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{user.first_name} {user.last_name}</div>
                         </td>
                         <td style={{ padding: '20px 24px' }}>
-                          <div style={{ fontSize: 13, color: '#fff', fontWeight: 800 }}>{user.telegram_id || '---'}</div>
+                          <div style={{ fontSize: 13, color: '#fff', fontWeight: 800 }}>{user.tg_id || '---'}</div>
                           <div style={{ fontSize: 11, color: '#6b6b8a' }}>{user.phone}</div>
                         </td>
                         <td style={{ padding: '20px 24px' }}>

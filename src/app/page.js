@@ -44,25 +44,24 @@ export default function Home() {
   async function syncUser(tgUser) {
     if (!supabase) return;
     try {
-      // Спробуємо знайти за telegram_id
+      // Отримуємо або створюємо профіль за tg_id
       const { data: existing, error } = await supabase
-        .from('profiles')
+        .from('customers')
         .select('*')
-        .eq('telegram_id', tgUser.id.toString())
+        .eq('tg_id', tgUser.id.toString())
         .single();
 
       if (existing) {
         setBonuses(existing.bonuses || 0);
       } else {
-        // Якщо немає, створюємо новий профіль
-        // Використовуємо upsert для уникнення конфліктів
         const { data: created } = await supabase
-          .from('profiles')
+          .from('customers')
           .upsert({ 
-            telegram_id: tgUser.id.toString(), 
-            name: `${tgUser.first_name} ${tgUser.last_name || ''}`.trim(),
+            tg_id: tgUser.id.toString(), 
+            first_name: tgUser.first_name,
+            last_name: tgUser.last_name || '',
             bonuses: 0 
-          }, { onConflict: 'telegram_id' })
+          }, { onConflict: 'tg_id' })
           .select()
           .single();
         

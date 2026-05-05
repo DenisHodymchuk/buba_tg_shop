@@ -9,7 +9,7 @@ export default function CheckoutBar({ items, onCheckout }) {
     return sum + price;
   }, 0);
 
-  if (items.length === 0) return null;
+  const cartTotalItems = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   return (
     <motion.div
@@ -46,7 +46,7 @@ export default function CheckoutBar({ items, onCheckout }) {
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 9, color: '#6b6b8a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
-            Разом ({items.length})
+            РАЗОМ ({cartTotalItems})
           </div>
           <div style={{ fontSize: 20, fontWeight: 950, color: '#fff', lineHeight: 1 }}>
             {total.toFixed(0)}<span style={{ fontSize: 13, marginLeft: 2, color: '#ec4899' }}>₴</span>

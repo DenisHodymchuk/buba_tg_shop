@@ -129,11 +129,12 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
       // Оновлюємо профіль користувача (прив'язуємо телефон до Telegram ID)
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user) {
         const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-        const { error: upsertError } = await supabase.from('profiles').upsert({
-          telegram_id: tgUser.id.toString(),
-          name: `${formData.firstName} ${formData.lastName}`.trim(),
+        const { error: upsertError } = await supabase.from('customers').upsert({
+          tg_id: tgUser.id.toString(),
+          first_name: formData.firstName,
+          last_name: formData.lastName,
           phone: formData.phone
-        }, { onConflict: 'telegram_id' });
+        }, { onConflict: 'tg_id' });
         
         if (upsertError) {
           console.error('Profile upsert error:', upsertError);
