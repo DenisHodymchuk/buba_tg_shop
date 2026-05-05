@@ -205,9 +205,37 @@ export default function Home() {
                     </div>
                     <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
-                        <Droplets size={12} style={{ color: '#7c3aed' }} /> Колір
+                        <Droplets size={12} style={{ color: '#7c3aed' }} /> Кольори
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>{selectedProduct.color || 'Базовий'}</div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {selectedProduct.color ? selectedProduct.color.split(',').map((c, i) => {
+                          const val = c.trim().toLowerCase();
+                          let bg = val;
+                          
+                          // Спеціальні випадки для популярних назв або градієнтів
+                          if (val.includes('веселк') || val.includes('rainb')) bg = 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)';
+                          else if (val === 'білий' || val === 'white') bg = '#ffffff';
+                          else if (val === 'чорний' || val === 'black') bg = '#000000';
+                          else if (val === 'червоний' || val === 'red') bg = '#ef4444';
+                          else if (val === 'синій' || val === 'blue') bg = '#3b82f6';
+                          else if (val === 'жовтий' || val === 'yellow') bg = '#facc15';
+                          else if (val === 'зелений' || val === 'green') bg = '#22c55e';
+                          else if (val === 'рожевий' || val === 'pink') bg = '#ec4899';
+                          else if (val === 'помаранчевий' || val === 'orange') bg = '#f97316';
+                          
+                          return (
+                            <div 
+                              key={i} 
+                              title={c.trim()}
+                              style={{ 
+                                width: 18, height: 18, borderRadius: '50%', 
+                                background: bg, border: '2px solid rgba(255,255,255,0.2)',
+                                boxShadow: '0 2px 5px rgba(0,0,0,0.3)'
+                              }} 
+                            />
+                          );
+                        }) : <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>Базовий</div>}
+                      </div>
                     </div>
                   </div>
 
