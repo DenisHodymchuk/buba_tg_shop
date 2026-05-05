@@ -41,34 +41,31 @@ export default function Home() {
     }
   }, []);
 
+  const [debugInfo, setDebugInfo] = useState('');
+
   async function syncUser(tgUser) {
     if (!supabase) return;
     try {
-      console.log('Syncing user ID:', tgUser.id);
+      const tid = tgUser.id.toString();
+      setDebugInfo(`ID: ${tid}`);
+      
       const { data: existing, error } = await supabase
         .from('customers')
-        .select('*')
-        .eq('tg_id', tgUser.id.toString())
+        .select('bonuses')
+        .eq('tg_id', tid)
         .single();
+
+      if (error) {
+        console.error('Fetch error:', error);
+        setDebugInfo(`Err: ${error.message}`);
+      }
 
       if (existing) {
         setBonuses(existing.bonuses || 0);
-      } else {
-        const { data: created } = await supabase
-          .from('customers')
-          .upsert({ 
-            tg_id: tgUser.id.toString(), 
-            first_name: tgUser.first_name,
-            last_name: tgUser.last_name || '',
-            bonuses: 0 
-          }, { onConflict: 'tg_id' })
-          .select()
-          .single();
-        
-        if (created) setBonuses(created.bonuses || 0);
       }
     } catch (e) {
       console.error('Sync error:', e);
+      setDebugInfo(`Catch: ${e.message}`);
     }
   }
 
@@ -127,7 +124,7 @@ export default function Home() {
       display: 'flex', flexDirection: 'column', background: '#05050f'
     }}>
       <Header 
-        cartCount={cartTotalItems} bonuses={bonuses} 
+        cartCount={cartTotalItems} bonuses={bonuses} debugInfo={debugInfo}
         onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)} 
         onOpenHistory={() => setIsHistoryOpen(true)}
         onSearch={setSearchQuery}
