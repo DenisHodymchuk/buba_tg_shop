@@ -48,24 +48,26 @@ export default function Home() {
     if (!supabase) return;
     try {
       const tid = tgUser.id.toString();
+      console.log('Synchronizing user:', tid, tgUser.first_name);
       
-      // Спробуємо знайти або створити запис
       const { data, error } = await supabase
         .from('customers')
         .upsert({ 
           tg_id: tid, 
-          first_name: tgUser.first_name, 
-          last_name: tgUser.last_name || '',
-          username: tgUser.username || ''
+          first_name: tgUser.first_name || 'Клієнт', 
+          last_name: tgUser.last_name || ''
         }, { onConflict: 'tg_id' })
         .select('bonuses')
         .single();
 
-      if (data) {
+      if (error) {
+        console.error('Upsert error:', error);
+      } else if (data) {
         setBonuses(data.bonuses || 0);
+        console.log('User synced successfully, bonuses:', data.bonuses);
       }
     } catch (e) {
-      console.error('Sync error:', e);
+      console.error('Full sync exception:', e);
     }
   }
 
