@@ -42,7 +42,13 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
         </div>
 
         {/* Right Side Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Balance */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 16px', borderRadius: 14 }}>
+            <Award size={16} style={{ color: '#fbbf24' }} />
+            <span style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>{bonuses}</span>
+          </div>
+
           {/* History Button */}
           <button 
             onClick={onOpenHistory}
@@ -55,12 +61,6 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
           >
             <Clock size={20} />
           </button>
-
-          {/* Balance */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 16px', borderRadius: 14 }}>
-            <Award size={16} style={{ color: '#fbbf24' }} />
-            <span style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>{bonuses}</span>
-          </div>
           
           {/* Cart Button */}
           <button 
