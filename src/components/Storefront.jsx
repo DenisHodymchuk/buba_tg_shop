@@ -86,19 +86,6 @@ export default function Storefront({ addToCart, searchQuery }) {
               width: '100%', maxWidth: 240, position: 'relative',
               backdropFilter: 'blur(10px)'
             }}>
-              {/* Badge: Top Right Pill */}
-              <div style={{
-                position: 'absolute', top: 14, right: 14, zIndex: 10,
-                padding: '4px 10px', borderRadius: 20, fontSize: 9, fontWeight: 900, 
-                textTransform: 'uppercase', color: '#fff',
-                background: toy.status === 'in_stock' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)',
-                border: `1px solid ${toy.status === 'in_stock' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
-                display: 'flex', alignItems: 'center', gap: 4
-              }}>
-                <div style={{ width: 4, height: 4, borderRadius: '50%', background: toy.status === 'in_stock' ? '#10b981' : '#ef4444' }} />
-                {toy.status === 'in_stock' ? 'Є' : 'Немає'}
-              </div>
-
               {/* Image Container */}
               <div style={{ position: 'relative', aspectRatio: '1', background: 'rgba(255,255,255,0.03)', borderRadius: 24, overflow: 'hidden', marginBottom: 12 }}>
                 {toy.model_3d ? (
