@@ -2,14 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Storefront from '@/components/Storefront';
+import { supabase } from '@/lib/supabase';
 import CheckoutBar from '@/components/CheckoutBar';
 import Checkout from '@/components/Checkout';
+import OrderHistory from '@/components/OrderHistory';
 import { AnimatePresence } from 'framer-motion';
 
 export default function Home() {
   const [cart, setCart] = useState([]);
-  const [bonuses, setBonuses] = useState(150);
+  const [bonuses, setBonuses] = useState(0);
+  const [user, setUser] = useState(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -19,20 +23,67 @@ export default function Home() {
         webApp.ready();
         webApp.expand();
         webApp.MainButton.hide();
+
+        const tgUser = webApp.initDataUnsafe?.user;
+        if (tgUser) {
+          setUser(tgUser);
+          syncUser(tgUser);
+        }
       } catch (e) {
         console.warn('Error initializing Telegram WebApp:', e);
       }
     }
   }, []);
 
+  async function syncUser(tgUser) {
+    if (!supabase) return;
+    try {
+      // Отримуємо або створюємо профіль за telegram_id
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('telegram_id', tgUser.id)
+        .single();
+
+      if (error && error.code === 'PGRST116') {
+        // Профілю ще немає, створюємо
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .insert([{ 
+            telegram_id: tgUser.id, 
+            name: `${tgUser.first_name} ${tgUser.last_name || ''}`.trim(),
+            bonuses: 0 
+          }])
+          .select()
+          .single();
+        if (newProfile) setBonuses(newProfile.bonuses || 0);
+      } else if (data) {
+        setBonuses(data.bonuses || 0);
+      }
+    } catch (e) {
+      console.error('Error syncing user:', e);
+    }
+  }
+
   const addToCart = (toy) => {
-    // Переконуємося, що ціна - це число, щоб уникнути NaN
-    const itemToAdd = {
-      ...toy,
-      price: parseFloat(toy.price) || 0,
-      discount: parseFloat(toy.discount) || 0
-    };
-    setCart([...cart, itemToAdd]);
+    const existingIndex = cart.findIndex(item => item.id === toy.id);
+    
+    if (existingIndex !== -1) {
+      const newCart = [...cart];
+      newCart[existingIndex] = { 
+        ...newCart[existingIndex], 
+        quantity: (newCart[existingIndex].quantity || 1) + 1 
+      };
+      setCart(newCart);
+    } else {
+      const itemToAdd = {
+        ...toy,
+        price: parseFloat(toy.price) || 0,
+        discount: parseFloat(toy.discount) || 0,
+        quantity: 1
+      };
+      setCart([...cart, itemToAdd]);
+    }
     
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
@@ -40,10 +91,14 @@ export default function Home() {
   };
 
   const updateQuantity = (index, delta) => {
-    if (delta > 0) {
-      setCart([...cart, cart[index]]);
+    const newCart = [...cart];
+    const item = newCart[index];
+    const newQty = (item.quantity || 1) + delta;
+    
+    if (newQty > 0) {
+      newCart[index] = { ...item, quantity: newQty };
+      setCart(newCart);
     } else {
-      const newCart = [...cart];
       newCart.splice(index, 1);
       setCart(newCart);
       if (newCart.length === 0) setIsCheckoutOpen(false);
@@ -57,20 +112,29 @@ export default function Home() {
     if (newCart.length === 0) setIsCheckoutOpen(false);
   };
 
+  const cartTotalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+
   return (
     <div style={{ 
       minHeight: '100vh', width: '100%', margin: '0', 
       display: 'flex', flexDirection: 'column', background: '#05050f'
     }}>
       <Header 
-        cartCount={cart.length} bonuses={bonuses} 
+        cartCount={cartTotalItems} bonuses={bonuses} 
         onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)} 
+        onOpenHistory={() => setIsHistoryOpen(true)}
         onSearch={setSearchQuery}
       />
 
       <main style={{ flex: '1 0 auto', paddingBottom: 140 }}>
         <Storefront addToCart={addToCart} searchQuery={searchQuery} />
       </main>
+
+      <AnimatePresence>
+        {isHistoryOpen && (
+          <OrderHistory onClose={() => setIsHistoryOpen(false)} />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isCheckoutOpen && cart.length > 0 && (

@@ -12,9 +12,11 @@ CREATE TABLE products (
   name TEXT NOT NULL,
   description TEXT,
   price DECIMAL(10, 2) NOT NULL,
+  discount NUMERIC DEFAULT 0,
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+  category TEXT, -- Adding category name directly for simplicity in this version
   status TEXT DEFAULT 'in_stock' CHECK (status IN ('in_stock', 'pre_order', 'out_of_stock')),
-  images TEXT[] DEFAULT '{}',
+  image_url TEXT,
   model_3d TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -22,7 +24,7 @@ CREATE TABLE products (
 -- Customers table
 CREATE TABLE customers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  tg_id BIGINT UNIQUE NOT NULL,
+  tg_id BIGINT UNIQUE,
   first_name TEXT,
   last_name TEXT,
   phone TEXT,
@@ -35,9 +37,10 @@ CREATE TABLE customers (
 -- Orders table
 CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_number TEXT UNIQUE,
   customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
   total DECIMAL(10, 2) NOT NULL,
-  status TEXT DEFAULT 'new' CHECK (status IN ('new', 'processing', 'shipped', 'completed', 'cancelled')),
+  status TEXT DEFAULT 'new',
   shipping_method TEXT,
   shipping_details JSONB,
   payment_status TEXT DEFAULT 'pending',

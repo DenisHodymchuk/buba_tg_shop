@@ -18,36 +18,39 @@ export default function CheckoutBar({ items, onCheckout }) {
       exit={{ y: 100, opacity: 0 }}
       style={{
         position: 'fixed', 
-        bottom: 12, // Трохи вище для мобільних
+        bottom: 24, // Збільшено відступ знизу
         left: '50%', 
         transform: 'translateX(-50%)',
-        width: '94%', 
+        width: 'calc(100% - 32px)', // Динамічна ширина
         maxWidth: 500, 
         zIndex: 1000,
-        background: '#0a0a1a', 
-        borderRadius: 28, 
-        padding: '12px 14px',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+        background: 'rgba(10, 10, 26, 0.95)', 
+        backdropFilter: 'blur(20px)',
+        borderRadius: 24, 
+        padding: '12px 16px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)',
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        margin: '0 auto'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingLeft: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{
-          width: 48, height: 48, borderRadius: 16,
-          background: 'rgba(124, 58, 237, 0.1)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed'
+          width: 44, height: 44, borderRadius: 14,
+          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.2))',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed',
+          flexShrink: 0
         }}>
-          <ShoppingCart size={24} />
+          <ShoppingCart size={22} />
         </div>
-        <div>
-          <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: -2 }}>
-            В кошику ({items.length})
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 0 }}>
+            Кошик ({items.length})
           </div>
-          <div style={{ fontSize: 26, fontWeight: 950, color: '#fff', lineHeight: 1 }}>
-            {total.toFixed(0)}<span style={{ fontSize: 16, marginLeft: 2, color: '#ec4899' }}>₴</span>
+          <div style={{ fontSize: 22, fontWeight: 950, color: '#fff', lineHeight: 1, whiteSpace: 'nowrap' }}>
+            {total.toFixed(0)}<span style={{ fontSize: 14, marginLeft: 2, color: '#ec4899' }}>₴</span>
           </div>
         </div>
       </div>
@@ -55,24 +58,25 @@ export default function CheckoutBar({ items, onCheckout }) {
       <button
         onClick={onCheckout}
         style={{
-          padding: '14px 28px', 
-          borderRadius: 22, 
+          padding: '12px 24px', 
+          borderRadius: 18, 
           border: 'none',
           background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
           color: '#fff', 
           fontWeight: 950, 
-          fontSize: 16, 
+          fontSize: 15, 
           cursor: 'pointer',
           display: 'flex', 
           alignItems: 'center', 
-          gap: 12,
-          boxShadow: '0 8px 25px rgba(124, 58, 237, 0.4)',
-          transition: 'all 0.2s'
+          gap: 8,
+          boxShadow: '0 8px 20px rgba(124, 58, 237, 0.3)',
+          transition: 'all 0.2s',
+          flexShrink: 0
         }}
         className="active:scale-95"
       >
-        Оплатити
-        <ArrowRight size={20} strokeWidth={3} />
+        <span>Оплатити</span>
+        <ArrowRight size={18} strokeWidth={3} />
       </button>
     </motion.div>
   );

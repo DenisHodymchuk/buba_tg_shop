@@ -1,8 +1,8 @@
 "use client";
 import React from 'react';
-import { ShoppingCart, Award, Search, Box } from 'lucide-react';
+import { ShoppingCart, Award, Search, Box, Clock } from 'lucide-react';
 
-export default function Header({ cartCount, bonuses, onOpenCart, onSearch }) {
+export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, onSearch }) {
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 100,
@@ -43,6 +43,19 @@ export default function Header({ cartCount, bonuses, onOpenCart, onSearch }) {
 
         {/* Right Side Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* History Button */}
+          <button 
+            onClick={onOpenHistory}
+            style={{
+              width: 48, height: 48, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', cursor: 'pointer', transition: 'all 0.2s'
+            }}
+            className="hover:bg-white/[0.05] active:scale-95"
+          >
+            <Clock size={20} />
+          </button>
+
           {/* Balance */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 16px', borderRadius: 14 }}>
             <Award size={16} style={{ color: '#fbbf24' }} />
