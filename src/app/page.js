@@ -29,6 +29,12 @@ export default function Home() {
           setUser(tgUser);
           syncUser(tgUser);
         }
+        const handleOpenHistory = () => setIsHistoryOpen(true);
+        window.addEventListener('openOrderHistory', handleOpenHistory);
+
+        return () => {
+          window.removeEventListener('openOrderHistory', handleOpenHistory);
+        };
       } catch (e) {
         console.warn('Error initializing Telegram WebApp:', e);
       }

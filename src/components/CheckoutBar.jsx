@@ -18,18 +18,18 @@ export default function CheckoutBar({ items, onCheckout }) {
       exit={{ y: 100, opacity: 0 }}
       style={{
         position: 'fixed', 
-        bottom: 24, // Збільшено відступ знизу
+        bottom: 'calc(32px + env(safe-area-inset-bottom))', // Вище для безпечних зон
         left: '50%', 
         transform: 'translateX(-50%)',
-        width: 'calc(100% - 32px)', // Динамічна ширина
+        width: 'calc(100% - 32px)', 
         maxWidth: 500, 
         zIndex: 1000,
-        background: 'rgba(10, 10, 26, 0.95)', 
-        backdropFilter: 'blur(20px)',
+        background: 'rgba(10, 10, 26, 0.98)', 
+        backdropFilter: 'blur(30px)',
         borderRadius: 24, 
-        padding: '12px 16px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)',
+        padding: '16px 20px', // Більше падінгів
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        boxShadow: '0 20px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)',
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between',

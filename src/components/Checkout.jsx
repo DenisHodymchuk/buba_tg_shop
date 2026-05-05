@@ -149,16 +149,17 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           alignItems: 'center', padding: '60px 20px', textAlign: 'center'
         }}
       >
-        <div style={{ 
-          width: 80, height: 80, borderRadius: '50%', background: 'rgba(45, 212, 191, 0.1)', 
+        {/* Circle for Checkmark */}
+        <div style={{
+          width: 90, height: 90, borderRadius: '50%', background: 'rgba(45, 212, 191, 0.1)', 
           display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2dd4bf',
-          marginBottom: 32
+          marginBottom: 32, border: '2px solid rgba(45, 212, 191, 0.2)', boxShadow: '0 0 30px rgba(45, 212, 191, 0.15)'
         }}>
-          <Check size={40} strokeWidth={3} />
+          <Check size={44} strokeWidth={4} />
         </div>
 
-        <h2 style={{ fontSize: 32, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Замовлення Прийнято!</h2>
-        <p style={{ color: '#6b6b8a', fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Номер вашого замовлення:</p>
+        <h2 style={{ fontSize: 32, fontWeight: 950, color: '#fff', marginBottom: 12 }}>Замовлення Прийнято!</h2>
+        <p style={{ color: '#6b6b8a', fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Номер вашого замовлення:</p>
         <div style={{ fontSize: 24, fontWeight: 950, color: '#fff', marginBottom: 40, letterSpacing: '0.05em' }}>{orderNumber}</div>
 
         <div style={{ 
@@ -175,45 +176,33 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           </p>
         </div>
 
-        <div style={{ 
-          width: '100%', maxWidth: 400, background: 'rgba(255,255,255,0.02)', 
-          border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 24,
-          textAlign: 'left', marginBottom: 40
-        }}>
-          <h3 style={{ fontSize: 16, fontWeight: 900, color: '#fff', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            Склад замовлення:
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
-            {items.map((item, idx) => (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                 <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', marginBottom: 2 }}>{item.name}</div>
-                    <div style={{ fontSize: 11, color: '#6b6b8a' }}>Кількість: {item.quantity || 1} шт.</div>
-                 </div>
-                 <div style={{ textAlign: 'right' }}>
-                    {item.discount > 0 && <div style={{ fontSize: 10, color: '#6b6b8a', textDecoration: 'line-through' }}>{item.price} ₴</div>}
-                    <div style={{ fontSize: 14, fontWeight: 900, color: '#2dd4bf' }}>{(item.price * (1 - (item.discount || 0)/100) * (item.quantity || 1)).toFixed(0)} ₴</div>
-                 </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <span style={{ fontSize: 14, color: '#6b6b8a', fontWeight: 800 }}>Всього до оплати:</span>
-            <span style={{ fontSize: 22, fontWeight: 950, color: '#2dd4bf' }}>{total.toFixed(0)} ₴</span>
-          </div>
-        </div>
-
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <button 
-            onClick={onClose}
+            onClick={() => {
+              window.location.reload(); // Найпростіший спосіб скинути все
+            }}
             style={{ 
-              width: '100%', padding: '18px', borderRadius: 18, border: 'none', 
-              background: '#5b5bff', color: '#fff', fontWeight: 950, 
+              width: '100%', padding: '18px', borderRadius: 20, border: 'none', 
+              background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff', fontWeight: 950, 
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
-              boxShadow: '0 10px 20px rgba(91, 91, 255, 0.3)'
+              boxShadow: '0 10px 30px rgba(124, 58, 237, 0.4)', fontSize: 16
             }}
           >
-            На головну
+            ПОВЕРНУТИСЬ ДО МАГАЗИНУ
+          </button>
+          <button 
+            onClick={() => {
+              onClose();
+              window.dispatchEvent(new CustomEvent('openOrderHistory'));
+            }}
+            style={{ 
+              width: '100%', padding: '18px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)', 
+              background: 'rgba(255,255,255,0.03)', color: '#fff', fontWeight: 800, 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
+              fontSize: 14
+            }}
+          >
+            МОЇ ЗАМОВЛЕННЯ
           </button>
         </div>
       </motion.div>
@@ -550,7 +539,7 @@ function Input({ icon, placeholder, value, onChange, onFocus }) {
         onFocus={onFocus}
         style={{
           width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
-          borderRadius: 16, padding: `14px 16px 14px ${icon ? 44 : 16}px`, color: '#fff', fontSize: 14, outline: 'none'
+          borderRadius: 16, padding: `14px 16px 14px ${icon ? 44 : 16}px`, color: '#fff', fontSize: 16, outline: 'none'
         }}
       />
     </div>
