@@ -129,11 +129,15 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
       // Оновлюємо профіль користувача (прив'язуємо телефон до Telegram ID)
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user) {
         const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-        await supabase.from('profiles').upsert({
+        const { error: upsertError } = await supabase.from('profiles').upsert({
           telegram_id: tgUser.id.toString(),
           name: `${formData.firstName} ${formData.lastName}`.trim(),
           phone: formData.phone
         }, { onConflict: 'telegram_id' });
+        
+        if (upsertError) {
+          console.error('Profile upsert error:', upsertError);
+        }
       }
 
       if (typeof window !== 'undefined') {
@@ -465,7 +469,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                 placeholder="Додаткові побажання..." 
                 value={formData.comment}
                 onChange={e => setFormData({...formData, comment: e.target.value})}
-                style={{ width: '100%', height: 100, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 16, padding: '12px 16px', color: '#fff', fontSize: 14, outline: 'none', resize: 'none' }}
+                style={{ width: '100%', height: 100, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 16, padding: '12px 16px', color: '#fff', fontSize: 16, outline: 'none', resize: 'none' }}
               />
             </div>
             <button 
