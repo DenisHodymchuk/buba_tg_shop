@@ -41,31 +41,24 @@ export default function Home() {
     }
   }, []);
 
-  const [debugInfo, setDebugInfo] = useState('');
+  const [debugInfo, setDebugInfo] = useState('Wait...');
 
   async function syncUser(tgUser) {
     if (!supabase) return;
     try {
       const tid = tgUser.id.toString();
-      setDebugInfo(`ID: ${tid}`);
-      
-      const { data: existing, error } = await supabase
-        .from('customers')
-        .select('bonuses')
-        .eq('tg_id', tid)
-        .single();
-
-      if (error) {
-        console.error('Fetch error:', error);
-        setDebugInfo(`Err: ${error.message}`);
-      }
-
-      if (existing) {
-        setBonuses(existing.bonuses || 0);
+      setDebugInfo(`TID: ${tid}`);
+      const { data, error } = await supabase.from('customers').select('bonuses').eq('tg_id', tid).single();
+      if (data) {
+        setBonuses(data.bonuses || 0);
+        setDebugInfo(`OK: ${tid}`);
+      } else if (error) {
+        setDebugInfo(`Err: ${error.code}`);
+      } else {
+        setDebugInfo(`None: ${tid}`);
       }
     } catch (e) {
-      console.error('Sync error:', e);
-      setDebugInfo(`Catch: ${e.message}`);
+      setDebugInfo(`Err: Catch`);
     }
   }
 
