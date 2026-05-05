@@ -118,7 +118,13 @@ export default function Storefront({ addToCart, searchQuery }) {
 
               {/* Info Section */}
               <div style={{ padding: '0 4px 4px' }}>
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 10, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
+                <h3 style={{ 
+                  fontSize: 13, fontWeight: 800, color: '#fff', 
+                  lineHeight: '1.25', marginBottom: 10, 
+                  height: '34px', overflow: 'hidden', 
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                  textOverflow: 'ellipsis'
+                }}>
                   {toy.name}
                 </h3>
                 
