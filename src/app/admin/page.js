@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
-  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins
+  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,13 +17,14 @@ export default function AdminPanel() {
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Всі');
   const [bonusModal, setBonusModal] = useState({ open: false, user: null, amount: '100', mode: 'add' });
 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', discount: 0, status: 'in_stock', 
-    model_3d: '', image_url: '', category: '',
+    model_3d: '', image_url: '', image_urls: [], category: '',
     plastic_type: '', safety_info: '', weight: '', color: ''
   });
 
@@ -268,6 +269,7 @@ export default function AdminPanel() {
       status: product.status || 'in_stock',
       model_3d: product.model_3d || '',
       image_url: product.image_url || '',
+      image_urls: product.image_urls || [],
       category: product.category || ''
     });
     setShowForm(true);
@@ -276,7 +278,7 @@ export default function AdminPanel() {
   function closeModal() {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', description: '', price: '', discount: 0, status: 'in_stock', model_3d: '', image_url: '', category: '' });
+    setFormData({ name: '', description: '', price: '', discount: 0, status: 'in_stock', model_3d: '', image_url: '', image_urls: [], category: '' });
   }
 
   async function handleDelete(id) {
@@ -558,6 +560,77 @@ export default function AdminPanel() {
                   )}
                 </div>
                 
+                {/* Unified Gallery Management */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Галерея фотографій</label>
+                  
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <input 
+                      type="text" 
+                      value={newPhotoUrl}
+                      onChange={(e) => setNewPhotoUrl(e.target.value)}
+                      placeholder="Вставте URL нового фото..." 
+                      style={{ flex: 1, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', color: '#fff', outline: 'none', fontSize: 13 }} 
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const url = newPhotoUrl.trim();
+                        if (url) {
+                          const currentExtra = Array.isArray(formData.image_urls) ? formData.image_urls : [];
+                          if (!formData.image_url) {
+                            setFormData({...formData, image_url: url});
+                          } else {
+                            setFormData({...formData, image_urls: [...currentExtra, url]});
+                          }
+                          setNewPhotoUrl('');
+                        }
+                      }}
+                      style={{ padding: '0 20px', borderRadius: 14, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      ДОДАТИ
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10 }}>
+                    {[formData.image_url, ...(Array.isArray(formData.image_urls) ? formData.image_urls : [])].filter(Boolean).map((url, index) => {
+                      const isMain = url === formData.image_url;
+                      return (
+                        <div key={index} style={{ position: 'relative', width: 100, height: 100, borderRadius: 16, border: isMain ? '2px solid #7c3aed' : '1px solid rgba(255,255,255,0.1)', overflow: 'hidden', background: 'rgba(0,0,0,0.3)' }}>
+                          <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const all = [formData.image_url, ...(formData.image_urls || [])].filter(Boolean);
+                              const newMain = url;
+                              const newExtra = all.filter(u => u !== newMain);
+                              setFormData({...formData, image_url: newMain, image_urls: newExtra});
+                            }}
+                            style={{ position: 'absolute', top: 5, left: 5, width: 24, height: 24, borderRadius: '50%', background: isMain ? '#7c3aed' : 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            title="Зробити головним"
+                          >
+                            <Award size={14} />
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              if (isMain) {
+                                const extra = formData.image_urls || [];
+                                setFormData({...formData, image_url: extra[0] || '', image_urls: extra.slice(1)});
+                              } else {
+                                setFormData({...formData, image_urls: formData.image_urls.filter(u => u !== url)});
+                              }
+                            }}
+                            style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: '50%', background: 'rgba(239,68,68,0.8)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва</label>
                   <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />

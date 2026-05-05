@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import Storefront from '@/components/Storefront';
 import { supabase } from '@/lib/supabase';
@@ -7,7 +7,7 @@ import CheckoutBar from '@/components/CheckoutBar';
 import Checkout from '@/components/Checkout';
 import OrderHistory from '@/components/OrderHistory';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Droplets, ShieldCheck, Weight, Info } from 'lucide-react';
+import { X, Droplets, ShieldCheck, Weight, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function Home() {
   const [cart, setCart] = useState([]);
@@ -17,6 +17,17 @@ export default function Home() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
+
+  // Скидаємо індекс при зміні товару
+  useEffect(() => { setActiveImgIndex(0); }, [selectedProduct]);
+
+  const allImages = useMemo(() => {
+    if (!selectedProduct) return [];
+    const main = selectedProduct.image_url;
+    const extra = selectedProduct.image_urls || [];
+    return [main, ...extra].filter(Boolean);
+  }, [selectedProduct]);
 
   useEffect(() => {
     const initTG = () => {
@@ -168,15 +179,55 @@ export default function Home() {
 
               <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 100px' }}>
                 <div style={{ width: '100%', height: 320, position: 'relative', marginTop: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 32, overflow: 'hidden' }}>
-                  {selectedProduct.model_3d ? (
-                    <model-viewer
-                      src={selectedProduct.model_3d} alt={selectedProduct.name}
-                      auto-rotate camera-controls touch-action="pan-y"
-                      shadow-intensity="1" environment-image="neutral"
-                      style={{ width: '100%', height: '100%' }}
-                    ></model-viewer>
-                  ) : (
-                    <img src={selectedProduct.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 20 }} />
+                  <AnimatePresence mode="wait">
+                    {activeImgIndex === 0 && selectedProduct.model_3d ? (
+                      <motion.div 
+                        key="model" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        style={{ width: '100%', height: '100%' }}
+                      >
+                        <model-viewer
+                          src={selectedProduct.model_3d} alt={selectedProduct.name}
+                          auto-rotate camera-controls touch-action="pan-y"
+                          shadow-intensity="1" environment-image="neutral"
+                          style={{ width: '100%', height: '100%' }}
+                        ></model-viewer>
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        key={activeImgIndex} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <img 
+                          src={selectedProduct.model_3d ? allImages[activeImgIndex - 1] : allImages[activeImgIndex]} 
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 20 }} 
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Navigation Arrows */}
+                  {(allImages.length + (selectedProduct.model_3d ? 1 : 0)) > 1 && (
+                    <>
+                      <button 
+                        onClick={() => setActiveImgIndex(prev => prev > 0 ? prev - 1 : (allImages.length + (selectedProduct.model_3d ? 1 : 0)) - 1)}
+                        style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 5 }}
+                      >
+                        <ChevronLeft size={20} />
+                      </button>
+                      <button 
+                        onClick={() => setActiveImgIndex(prev => prev < (allImages.length + (selectedProduct.model_3d ? 1 : 0)) - 1 ? prev + 1 : 0)}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 5 }}
+                      >
+                        <ChevronRight size={20} />
+                      </button>
+
+                      {/* Dots */}
+                      <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 6, zIndex: 5 }}>
+                        {Array.from({ length: allImages.length + (selectedProduct.model_3d ? 1 : 0) }).map((_, i) => (
+                          <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: i === activeImgIndex ? '#7c3aed' : 'rgba(255,255,255,0.3)', transition: 'all 0.3s' }} />
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
 
