@@ -17,31 +17,33 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window?.Telegram?.WebApp) {
-      const webApp = window.Telegram.WebApp;
-      webApp.ready();
-      webApp.expand();
-      
-      const checkUser = () => {
-        const u = webApp.initDataUnsafe?.user;
-        if (u) {
-          setUser(u);
-          syncUser(u);
-        } else {
-          setDebugInfo('No User...');
-          setTimeout(checkUser, 1000);
-        }
-      };
-      checkUser();
+    const initTG = () => {
+      if (typeof window !== 'undefined' && window?.Telegram?.WebApp) {
+        const webApp = window.Telegram.WebApp;
+        webApp.ready();
+        webApp.expand();
+        
+        const checkUser = () => {
+          const u = webApp.initDataUnsafe?.user;
+          if (u) {
+            setUser(u);
+            syncUser(u);
+          } else {
+            setDebugInfo('No User...');
+            setTimeout(checkUser, 1000);
+          }
+        };
+        checkUser();
 
-      const h = () => setIsHistoryOpen(true);
-      window.addEventListener('openOrderHistory', h);
-      return () => {
-        window.removeEventListener('openOrderHistory', h);
-      };
-    } else {
-      setDebugInfo('No TG Object');
-    }
+        const h = () => setIsHistoryOpen(true);
+        window.addEventListener('openOrderHistory', h);
+        return () => window.removeEventListener('openOrderHistory', h);
+      } else {
+        setDebugInfo('Searching TG...');
+        setTimeout(initTG, 500);
+      }
+    };
+    initTG();
   }, []);
 
   const [debugInfo, setDebugInfo] = useState('Wait...');
