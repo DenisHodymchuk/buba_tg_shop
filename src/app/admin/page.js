@@ -33,26 +33,12 @@ export default function AdminPanel() {
   async function fetchUsers() {
     if (!supabase) return;
     try {
-      const { data, error } = await supabase.from('profiles').select('*');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .not('telegram_id', 'is', null); // Тільки ті, хто має TG ID
       if (!error && data) {
         setUsers(data);
-      } else {
-        const { data: orderData } = await supabase.from('orders').select('shipping_details, created_at');
-        if (orderData) {
-          const uniqueUsers = {};
-          orderData.forEach(o => {
-            const phone = o.shipping_details?.phone;
-            if (phone && !uniqueUsers[phone]) {
-              uniqueUsers[phone] = {
-                name: `${o.shipping_details?.firstName} ${o.shipping_details?.lastName}`,
-                phone: phone,
-                telegram_id: null,
-                bonuses: 0
-              };
-            }
-          });
-          setUsers(Object.values(uniqueUsers));
-        }
       }
     } catch (e) {
       console.error('Error fetching users:', e);
@@ -93,6 +79,17 @@ export default function AdminPanel() {
       fetchUsers();
     } catch (e) {
       alert('Помилка при нарахуванні: ' + e.message + '\n\nПереконайтеся, що у вас створена таблиця "profiles" з колонками phone (text, primary key), name (text) та bonuses (int4).');
+    }
+  }
+
+  async function deleteUser(phone) {
+    if (!supabase || !confirm('Видалити цього клієнта?')) return;
+    try {
+      const { error } = await supabase.from('profiles').delete().eq('phone', phone);
+      if (error) throw error;
+      fetchUsers();
+    } catch (e) {
+      alert('Помилка: ' + e.message);
     }
   }
 
@@ -441,10 +438,10 @@ export default function AdminPanel() {
                       <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                         <td style={{ padding: '20px 24px' }}>
                           <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{user.name}</div>
-                          {user.telegram_id && <div style={{ fontSize: 10, color: '#4a4a6a' }}>TG ID: {user.telegram_id}</div>}
                         </td>
                         <td style={{ padding: '20px 24px' }}>
-                          <div style={{ fontSize: 13, color: '#6b6b8a' }}>{user.phone}</div>
+                          <div style={{ fontSize: 13, color: '#fff', fontWeight: 800 }}>{user.telegram_id || '---'}</div>
+                          <div style={{ fontSize: 11, color: '#6b6b8a' }}>{user.phone}</div>
                         </td>
                         <td style={{ padding: '20px 24px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -453,12 +450,20 @@ export default function AdminPanel() {
                           </div>
                         </td>
                         <td style={{ padding: '20px 24px', textAlign: 'right' }}>
-                          <button 
-                            onClick={() => awardBonuses(user)}
-                            style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-                          >
-                            Нарахувати
-                          </button>
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                            <button 
+                              onClick={() => awardBonuses(user)}
+                              style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                            >
+                              Нарахувати
+                            </button>
+                            <button 
+                              onClick={() => deleteUser(user.phone)}
+                              style={{ padding: '8px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: 'none', cursor: 'pointer' }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
