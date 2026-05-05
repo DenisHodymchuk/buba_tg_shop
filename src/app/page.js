@@ -44,30 +44,32 @@ export default function Home() {
   async function syncUser(tgUser) {
     if (!supabase) return;
     try {
-      // Отримуємо або створюємо профіль за telegram_id
-      const { data, error } = await supabase
+      // Спробуємо знайти за telegram_id
+      const { data: existing, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('telegram_id', tgUser.id)
+        .eq('telegram_id', tgUser.id.toString())
         .single();
 
-      if (error && error.code === 'PGRST116') {
-        // Профілю ще немає, створюємо
-        const { data: newProfile } = await supabase
+      if (existing) {
+        setBonuses(existing.bonuses || 0);
+      } else {
+        // Якщо немає, створюємо новий профіль
+        // Використовуємо upsert для уникнення конфліктів
+        const { data: created } = await supabase
           .from('profiles')
-          .insert([{ 
-            telegram_id: tgUser.id, 
+          .upsert({ 
+            telegram_id: tgUser.id.toString(), 
             name: `${tgUser.first_name} ${tgUser.last_name || ''}`.trim(),
             bonuses: 0 
-          }])
+          }, { onConflict: 'telegram_id' })
           .select()
           .single();
-        if (newProfile) setBonuses(newProfile.bonuses || 0);
-      } else if (data) {
-        setBonuses(data.bonuses || 0);
+        
+        if (created) setBonuses(created.bonuses || 0);
       }
     } catch (e) {
-      console.error('Error syncing user:', e);
+      console.error('Sync error:', e);
     }
   }
 

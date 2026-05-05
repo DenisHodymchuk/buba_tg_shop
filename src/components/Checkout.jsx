@@ -126,6 +126,16 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
 
       if (error) throw error;
 
+      // Оновлюємо профіль користувача (прив'язуємо телефон до Telegram ID)
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user) {
+        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+        await supabase.from('profiles').upsert({
+          telegram_id: tgUser.id.toString(),
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          phone: formData.phone
+        }, { onConflict: 'telegram_id' });
+      }
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('buba_customer_phone', formData.phone);
       }
@@ -193,7 +203,9 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           <button 
             onClick={() => {
               onClose();
-              window.dispatchEvent(new CustomEvent('openOrderHistory'));
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('openOrderHistory'));
+              }, 100);
             }}
             style={{ 
               width: '100%', padding: '18px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)', 
