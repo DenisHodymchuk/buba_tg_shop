@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Storefront from '@/components/Storefront';
 import Cart from '@/components/Cart';
+import CheckoutBar from '@/components/CheckoutBar';
+import { AnimatePresence } from 'framer-motion';
 
 export default function Home() {
   const [cart, setCart] = useState([]);
@@ -18,18 +20,8 @@ export default function Home() {
         webApp.ready();
         webApp.expand();
         
-        webApp.MainButton.setParams({
-          text: 'ПЕРЕГЛЯНУТИ КОШИК',
-          color: '#7c3aed',
-          text_color: '#ffffff'
-        });
-        webApp.MainButton.onClick(() => setIsCartOpen(true));
-        
-        if (cart.length > 0) {
-          webApp.MainButton.show();
-        } else {
-          webApp.MainButton.hide();
-        }
+        // Вимикаємо стандартну кнопку Telegram, бо тепер маємо крутіший CheckoutBar
+        webApp.MainButton.hide();
       } catch (e) {
         console.warn('Error initializing Telegram WebApp:', e);
       }
@@ -55,7 +47,8 @@ export default function Home() {
       width: '100%', 
       margin: '0', 
       display: 'flex', 
-      flexDirection: 'column' 
+      flexDirection: 'column',
+      background: '#05050f'
     }}>
       <Header 
         cartCount={cart.length} 
@@ -64,7 +57,7 @@ export default function Home() {
         onSearch={setSearchQuery}
       />
 
-      <main style={{ flex: '1 0 auto' }}>
+      <main style={{ flex: '1 0 auto', paddingBottom: 120 }}>
         <Storefront addToCart={addToCart} searchQuery={searchQuery} />
       </main>
 
@@ -76,6 +69,12 @@ export default function Home() {
         discount={discount}
         bonuses={bonuses}
       />
+
+      <AnimatePresence>
+        {cart.length > 0 && !isCartOpen && (
+          <CheckoutBar items={cart} onCheckout={() => setIsCartOpen(true)} />
+        )}
+      </AnimatePresence>
       
       <footer style={{ 
         padding: '60px 20px 40px', 
