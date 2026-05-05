@@ -48,17 +48,24 @@ export default function Home() {
     if (!supabase) return;
     try {
       const tid = tgUser.id.toString();
-      const { data, error } = await supabase.from('customers').select('bonuses').eq('tg_id', tid).single();
+      
+      // Спробуємо знайти або створити запис
+      const { data, error } = await supabase
+        .from('customers')
+        .upsert({ 
+          tg_id: tid, 
+          first_name: tgUser.first_name, 
+          last_name: tgUser.last_name || '',
+          username: tgUser.username || ''
+        }, { onConflict: 'tg_id' })
+        .select('bonuses')
+        .single();
+
       if (data) {
         setBonuses(data.bonuses || 0);
-        setDebugInfo(`OK: ${tid}`);
-      } else if (error) {
-        setDebugInfo(`Err: ${error.code}`);
-      } else {
-        setDebugInfo(`None: ${tid}`);
       }
     } catch (e) {
-      setDebugInfo(`Err: Catch`);
+      console.error('Sync error:', e);
     }
   }
 
