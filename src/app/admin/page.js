@@ -80,8 +80,9 @@ export default function AdminPanel() {
 
   async function awardBonuses(user) {
     if (!supabase) return;
-    const amount = prompt(`Скільки бонусів нарахувати для ${user.name}?`, '50');
-    if (!amount || isNaN(amount)) return;
+    const currentName = user.first_name || user.name || 'клієнта';
+    const amount = prompt(`Керування бонусами для ${currentName}:\n\nВведіть число для додавання.\nВикористовуйте мінус (наприклад: -100), щоб забрати бонуси.`, '100');
+    if (amount === null || isNaN(amount)) return;
 
     try {
       const { data: customer } = await supabase
@@ -91,9 +92,10 @@ export default function AdminPanel() {
         .single();
       
       if (customer) {
+        const newBalance = (customer.bonuses || 0) + parseInt(amount);
         const { error } = await supabase
           .from('customers')
-          .update({ bonuses: (customer.bonuses || 0) + parseInt(amount) })
+          .update({ bonuses: Math.max(0, newBalance) }) // Не даємо піти в мінус, якщо не хочемо
           .eq('id', customer.id);
         if (error) throw error;
       } else {
@@ -102,16 +104,16 @@ export default function AdminPanel() {
           .insert([{ 
             phone: user.phone, 
             tg_id: user.tg_id,
-            first_name: user.name, 
-            bonuses: parseInt(amount) 
+            first_name: user.first_name || user.name, 
+            bonuses: Math.max(0, parseInt(amount)) 
           }]);
         if (error) throw error;
       }
       
-      alert('Бонуси успішно нараховано!');
+      alert('Баланс успішно оновлено!');
       fetchUsers();
     } catch (e) {
-      alert('Помилка при нарахуванні: ' + e.message);
+      alert('Помилка: ' + e.message);
     }
   }
 
