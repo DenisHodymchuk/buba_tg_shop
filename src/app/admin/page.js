@@ -311,11 +311,16 @@ export default function AdminPanel() {
     setFormData({ name: '', description: '', price: '', discount: 0, status: 'in_stock', model_3d: '', image_url: '', image_urls: [], category: '' });
   }
 
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null });
+
   async function handleDelete(id) {
     if (!supabase) return;
-    if (confirm('Видалити цей товар назавжди?')) {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (!error) setProducts(products.filter(p => p.id !== id));
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (!error) {
+      setProducts(products.filter(p => p.id !== id));
+      setDeleteConfirm({ open: false, id: null });
+    } else {
+      alert('Помилка при видаленні: ' + error.message);
     }
   }
 
@@ -328,7 +333,7 @@ export default function AdminPanel() {
             <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(135deg, #3b82f6, #2dd4bf)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Box className="text-white" size={20} />
             </div>
-            <span style={{ fontWeight: 900, fontSize: 18, color: '#fff', letterSpacing: '-0.02em' }}>TOVVERSE</span>
+            <span style={{ fontWeight: 900, fontSize: 18, color: '#fff', letterSpacing: '-0.02em' }}>BUBA ADMIN</span>
           </div>
         </div>
         <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -386,7 +391,7 @@ export default function AdminPanel() {
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button onClick={() => openEdit(p)} style={{ padding: 10, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: 10, border: 'none', cursor: 'pointer' }}><Edit3 size={18} /></button>
-                        <button onClick={() => handleDelete(p.id)} style={{ padding: 10, background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                        <button onClick={() => setDeleteConfirm({ open: true, id: p.id })} style={{ padding: 10, background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
                       </div>
                     </div>
                   );
@@ -816,7 +821,35 @@ export default function AdminPanel() {
             </div>
           </div>
         </div>
-      )}
+      {/* Custom Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirm.open && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={() => setDeleteConfirm({ open: false, id: null })} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }} />
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} style={{ position: 'relative', width: '100%', maxWidth: 400, background: '#0a192f', borderRadius: 32, border: '1px solid rgba(255,255,255,0.1)', padding: 32, textAlign: 'center' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(239,68,68,0.1)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                <Trash2 size={32} />
+              </div>
+              <h3 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 12 }}>Видалити товар?</h3>
+              <p style={{ fontSize: 14, color: '#6b6b8a', lineHeight: 1.6, marginBottom: 24 }}>Ви впевнені, що хочете видалити цей товар назавжди? Цю дію неможливо буде скасувати.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <button 
+                  onClick={() => setDeleteConfirm({ open: false, id: null })}
+                  style={{ padding: '14px 0', borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 800, cursor: 'pointer', fontSize: 13 }}
+                >
+                  СКАСУВАТИ
+                </button>
+                <button 
+                  onClick={() => handleDelete(deleteConfirm.id)}
+                  style={{ padding: '14px 0', borderRadius: 14, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', fontSize: 13, boxShadow: '0 8px 16px rgba(239,68,68,0.2)' }}
+                >
+                  ВИДАЛИТИ
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
