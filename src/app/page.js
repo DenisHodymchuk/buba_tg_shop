@@ -2,30 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Storefront from '@/components/Storefront';
-import WheelOfFortune from '@/components/WheelOfFortune';
 import Cart from '@/components/Cart';
-import { motion } from 'framer-motion';
 
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [bonuses, setBonuses] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [discount, setDiscount] = useState(0);
-  const [tgUser, setTgUser] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // Initialize Telegram Web App
     if (typeof window !== 'undefined' && window?.Telegram?.WebApp) {
       const webApp = window.Telegram.WebApp;
       try {
         webApp.ready();
         webApp.expand();
         
-        const user = webApp.initDataUnsafe?.user;
-        if (user) {
-          setTgUser(user);
-        }
-
         webApp.MainButton.setText('ПЕРЕГЛЯНУТИ КОШИК');
         webApp.MainButton.onClick(() => setIsCartOpen(true));
         
@@ -42,7 +34,7 @@ export default function Home() {
 
   const addToCart = (toy) => {
     setCart([...cart, toy]);
-    if (window.Telegram?.WebApp) {
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
   };
@@ -53,31 +45,23 @@ export default function Home() {
     setCart(newCart);
   };
 
-  const handleWin = (result) => {
-    if (result.label === 'БОНУС') {
-      setBonuses(prev => prev + 50);
-    } else if (result.label === 'ХАЛЯВА') {
-      setDiscount(0.5); // 50% discount
-    } else {
-      setDiscount(result.value);
-    }
-  };
-
   return (
-    <div className="min-h-screen pb-20 bg-background text-text">
+    <div style={{ 
+      minHeight: '100vh', 
+      width: '100%', 
+      margin: '0', 
+      display: 'flex', 
+      flexDirection: 'column' 
+    }}>
       <Header 
         cartCount={cart.length} 
         bonuses={bonuses} 
-        onOpenCart={() => setIsCartOpen(true)} 
+        onOpenCart={() => setIsCartOpen(true)}
+        onSearch={setSearchQuery}
       />
 
-      <main className="max-w-7xl mx-auto">
-        <Storefront addToCart={addToCart} />
-        
-        {/* Wheel Section - Clearly separated */}
-        <div className="mt-16 pt-16 border-t border-white/[0.03]">
-          <WheelOfFortune onWin={handleWin} />
-        </div>
+      <main style={{ flex: '1 0 auto' }}>
+        <Storefront addToCart={addToCart} searchQuery={searchQuery} />
       </main>
 
       <Cart 
@@ -89,9 +73,13 @@ export default function Home() {
         bonuses={bonuses}
       />
       
-      <footer className="px-4 py-12 text-center text-slate-700 text-[10px] font-bold uppercase tracking-[0.2em]">
-        <p>© 2026 3D Toy Shop Telegram App</p>
-        <p className="mt-2 text-slate-800">Premium Digital Toys Experience</p>
+      <footer style={{ 
+        padding: '60px 20px 40px', 
+        textAlign: 'center',
+        flexShrink: 0
+      }}>
+        <p style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em' }}>© 2026 BUBA STORE</p>
+        <p style={{ marginTop: 6, fontSize: 8, color: '#3a3a5a', textTransform: 'uppercase', letterSpacing: '0.3em' }}>3D друковані іграшки</p>
       </footer>
     </div>
   );

@@ -1,20 +1,25 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Plus, Trash2, Package, LayoutDashboard, Settings as SettingsIcon, 
-  BarChart3, Users, ShoppingBag, Search, Bell, LogOut, ExternalLink,
-  ChevronRight, Box, DollarSign, Activity, Filter, Download, MoreHorizontal
+  Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
+  Search, Bell, LogOut, Box, BarChart3, Settings,
+  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminPanel() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newProduct, setNewProduct] = useState({
-    name: '', description: '', price: '', status: 'in_stock', model_3d: '', images: []
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('Всі');
+
+  const [formData, setFormData] = useState({
+    name: '', description: '', price: '', discount: 0, status: 'in_stock', model_3d: '', image_url: '', category: ''
   });
 
   useEffect(() => {
@@ -24,7 +29,7 @@ export default function AdminPanel() {
   async function fetchProducts() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
@@ -36,222 +41,227 @@ export default function AdminPanel() {
     }
   }
 
-  async function handleAddProduct(e) {
-    e.preventDefault();
-    const { data, error } = await supabase.from('products').insert([newProduct]).select();
-    if (!error) {
-      setProducts([data[0], ...products]);
-      setNewProduct({ name: '', description: '', price: '', status: 'in_stock', model_3d: '', images: [] });
-      setShowAddForm(false);
-    } else {
+  const categories = useMemo(() => {
+    const cats = products.map(p => p.category).filter(Boolean);
+    return ['Всі', ...new Set(cats)];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = activeCategory === 'Всі' || p.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, activeCategory]);
+
+  const finalPricePreview = useMemo(() => {
+    const p = parseFloat(formData.price) || 0;
+    const d = parseFloat(formData.discount) || 0;
+    return (p * (1 - d / 100)).toFixed(0);
+  }, [formData.price, formData.discount]);
+
+  async function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+      setFormData({ ...formData, image_url: publicUrl });
+    } catch (error) {
       alert('Помилка: ' + error.message);
+    } finally {
+      setUploading(false);
     }
   }
 
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const dataToSave = {
+        ...formData,
+        price: parseFloat(formData.price),
+        discount: parseFloat(formData.discount) || 0
+      };
+
+      if (editingId) {
+        const { data, error } = await supabase.from('products').update(dataToSave).eq('id', editingId).select();
+        if (error) throw error;
+        setProducts(products.map(p => p.id === editingId ? data[0] : p));
+      } else {
+        const { data, error } = await supabase.from('products').insert([dataToSave]).select();
+        if (error) throw error;
+        setProducts([data[0], ...products]);
+      }
+      closeModal();
+    } catch (error) {
+      alert('Помилка: ' + error.message + '\nПереконайтеся, що ви додали колонку discount в базу даних (ALTER TABLE products ADD COLUMN discount NUMERIC DEFAULT 0)');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openEdit(product) {
+    setEditingId(product.id);
+    setFormData({
+      name: product.name || '',
+      description: product.description || '',
+      price: product.price || '',
+      discount: product.discount || 0,
+      status: product.status || 'in_stock',
+      model_3d: product.model_3d || '',
+      image_url: product.image_url || '',
+      category: product.category || ''
+    });
+    setShowForm(true);
+  }
+
+  function closeModal() {
+    setShowForm(false);
+    setEditingId(null);
+    setFormData({ name: '', description: '', price: '', discount: 0, status: 'in_stock', model_3d: '', image_url: '', category: '' });
+  }
+
   async function handleDelete(id) {
-    if (confirm('Видалити цей товар?')) {
+    if (confirm('Видалити цей товар назавжди?')) {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (!error) setProducts(products.filter(p => p.id !== id));
     }
   }
 
   return (
-    <div className="flex h-screen bg-[#020617] text-slate-300 overflow-hidden font-sans selection:bg-indigo-500/30">
-      
-      {/* SIDEBAR - Fixed Width & High Z-Index */}
-      <aside className="w-64 flex-shrink-0 bg-[#0b0f1a] border-r border-slate-800 flex flex-col z-50">
-        <div className="p-6 border-b border-slate-800/50">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/20">
+    <div style={{ display: 'flex', height: '100vh', background: '#020b18', color: '#e2e8f0', overflow: 'hidden' }}>
+      {/* Sidebar */}
+      <aside style={{ width: 260, flexShrink: 0, background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', zIndex: 50 }}>
+        <div style={{ padding: '32px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(135deg, #3b82f6, #2dd4bf)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Box className="text-white" size={20} />
             </div>
-            <span className="font-black text-lg tracking-tight text-white">BUBA <span className="text-indigo-500">CMS</span></span>
+            <span style={{ fontWeight: 900, fontSize: 18, color: '#fff', letterSpacing: '-0.02em' }}>TOVVERSE</span>
           </div>
         </div>
-
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1 mt-4">
-          <p className="px-4 py-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Основне</p>
-          <SidebarLink active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={18} />} label="Дашборд" />
-          <SidebarLink active={activeTab === 'products'} onClick={() => setActiveTab('products')} icon={<Package size={18} />} label="Товари" />
-          <SidebarLink active={activeTab === 'orders'} onClick={() => setActiveTab('orders')} icon={<ShoppingBag size={18} />} label="Замовлення" />
-          <SidebarLink active={activeTab === 'customers'} onClick={() => setActiveTab('customers')} icon={<Users size={18} />} label="Клієнти" />
-          
-          <p className="px-4 py-2 mt-6 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Система</p>
-          <SidebarLink active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} icon={<BarChart3 size={18} />} label="Аналітика" />
-          <SidebarLink active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<SettingsIcon size={18} />} label="Налаштування" />
+        <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <SidebarBtn active={activeTab === 'products'} onClick={() => setActiveTab('products')} icon={<Package size={18} />} label="Товари" />
+          <SidebarBtn active={activeTab === 'sales'} icon={<BarChart3 size={18} />} label="Продажі" />
+          <SidebarBtn active={activeTab === 'settings'} icon={<Settings size={18} />} label="Налаштування" />
         </nav>
-
-        <div className="p-4 border-t border-slate-800/50">
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-rose-400 hover:bg-rose-400/5 rounded-xl transition-all duration-200">
-            <LogOut size={18} />
-            <span className="text-sm font-semibold">Вийти</span>
-          </button>
-        </div>
       </aside>
 
-      {/* MAIN CONTENT AREA - Scrollable */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#020617] relative">
-        
-        {/* Header Section */}
-        <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-8 bg-[#020617]/80 backdrop-blur-md sticky top-0 z-40">
-          <div className="flex items-center gap-4">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">{activeTab}</h2>
+      {/* Main Content */}
+      <main style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <header style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'rgba(2,11,24,0.6)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)', zIndex: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '8px 16px', width: 350 }}>
+            <Search size={16} style={{ color: '#4a4a6a' }} />
+            <input type="text" placeholder="Пошук..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 13, outline: 'none', width: '100%' }} />
           </div>
-          
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center bg-slate-900/50 border border-slate-800 rounded-full px-4 py-1.5 focus-within:border-indigo-500/50 transition-all">
-              <Search size={16} className="text-slate-500" />
-              <input type="text" placeholder="Пошук..." className="bg-transparent border-none focus:ring-0 text-sm px-3 w-48 text-white" />
-            </div>
-            <button className="p-2 text-slate-400 hover:text-white transition-colors relative">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full border-2 border-[#020617]"></span>
-            </button>
-            <div className="h-8 w-px bg-slate-800"></div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-xs font-bold text-white leading-none">Адміністратор</p>
-                <p className="text-[10px] text-indigo-400 font-bold uppercase mt-1 tracking-tighter">Власник</p>
-              </div>
-              <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs">AD</div>
-            </div>
-          </div>
+          <button onClick={() => setShowForm(true)} style={{ background: '#fff', color: '#020b18', padding: '10px 24px', borderRadius: 12, fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>
+            <Plus size={18} /> ДОДАТИ ТОВАР
+          </button>
         </header>
 
-        {/* Dynamic Content Switching */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <AnimatePresence mode="wait">
-            {activeTab === 'products' ? (
-              <motion.div key="products" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                  <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight">Управління Товарами</h1>
-                    <p className="text-slate-500 text-sm mt-1">Керуйте асортиментом вашого 3D магазину</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <button className="p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors text-slate-400"><Download size={20} /></button>
-                    <button onClick={() => setShowAddForm(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
-                      <Plus size={20} /> Додати товар
-                    </button>
-                  </div>
-                </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 40 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Товари ({filteredProducts.length})</h1>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {categories.slice(0, 6).map(cat => (
+                <button key={cat} onClick={() => setActiveCategory(cat)} style={{ padding: '6px 14px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: activeCategory === cat ? 'rgba(59,130,246,0.1)' : 'transparent', border: '1px solid', borderColor: activeCategory === cat ? '#3b82f6' : 'rgba(255,255,255,0.05)', color: activeCategory === cat ? '#3b82f6' : '#6b6b8a', cursor: 'pointer' }}>{cat}</button>
+              ))}
+            </div>
+          </div>
 
-                {/* Table Section */}
-                <div className="bg-[#0b0f1a] border border-slate-800 rounded-2xl overflow-hidden">
-                  <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/30">
-                    <div className="flex items-center gap-2">
-                       <button className="px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-lg border border-slate-700">Всі ( {products.length} )</button>
-                       <button className="px-3 py-1.5 text-slate-500 text-xs font-bold rounded-lg hover:text-white transition-colors">В наявності</button>
-                       <button className="px-3 py-1.5 text-slate-500 text-xs font-bold rounded-lg hover:text-white transition-colors">Під замовлення</button>
-                    </div>
-                    <button className="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors"><Filter size={14} /> Фільтри</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {filteredProducts.map(p => {
+              const final = (p.price * (1 - (p.discount || 0) / 100)).toFixed(0);
+              return (
+                <div key={p.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 16, display: 'flex', alignItems: 'center', gap: 20 }}>
+                  <div style={{ width: 60, height: 60, background: '#f0eef5', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                     {p.model_3d ? <Box size={28} color="#3b82f6" /> : p.image_url ? <img src={p.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={28} color="#94a3b8" />}
                   </div>
-                  
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-separate border-spacing-0">
-                      <thead>
-                        <tr className="text-[11px] font-black uppercase tracking-widest text-slate-500">
-                          <th className="p-4 pl-8 border-b border-slate-800 font-bold">Назва та опис</th>
-                          <th className="p-4 border-b border-slate-800 font-bold">Ціна</th>
-                          <th className="p-4 border-b border-slate-800 font-bold text-center">Статус</th>
-                          <th className="p-4 pr-8 border-b border-slate-800 font-bold text-right">Дії</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/50">
-                        {loading ? (
-                          <tr><td colSpan="4" className="p-20 text-center"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div></td></tr>
-                        ) : products.length === 0 ? (
-                          <tr><td colSpan="4" className="p-20 text-center text-slate-600 font-medium">Товари відсутні. Створіть свій перший товар!</td></tr>
-                        ) : (
-                          products.map((p) => (
-                            <tr key={p.id} className="group hover:bg-indigo-500/[0.02] transition-colors">
-                              <td className="p-4 pl-8">
-                                <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center text-[10px] font-black text-indigo-500 group-hover:border-indigo-500/30 transition-colors">
-                                    {p.model_3d ? '3D' : 'IMG'}
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{p.name}</p>
-                                    <p className="text-xs text-slate-500 truncate w-64 mt-0.5">{p.description || 'Без опису'}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="p-4 font-mono font-bold text-white">{p.price} грн</td>
-                              <td className="p-4 text-center">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-                                  p.status === 'in_stock' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
-                                }`}>
-                                  {p.status === 'in_stock' ? 'В наявності' : 'Немає'}
-                                </span>
-                              </td>
-                              <td className="p-4 pr-8 text-right">
-                                <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
-                                  <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"><ExternalLink size={16} /></button>
-                                  <button onClick={() => handleDelete(p.id)} className="p-2 hover:bg-rose-500/10 rounded-lg text-slate-400 hover:text-rose-500 transition-colors"><Trash2 size={16} /></button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{p.name}</h3>
+                    <p style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 700 }}>{p.category || 'Без категорії'}</p>
+                  </div>
+                  <div style={{ textAlign: 'right', marginRight: 20 }}>
+                    {p.discount > 0 && <div style={{ fontSize: 10, color: '#ef4444', fontWeight: 900 }}>-{p.discount}%</div>}
+                    {p.discount > 0 && <div style={{ fontSize: 10, color: '#4a4a6a', textDecoration: 'line-through' }}>{p.price} ₴</div>}
+                    <div style={{ fontSize: 16, fontWeight: 900, color: '#3b82f6' }}>{final} ₴</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => openEdit(p)} style={{ padding: 10, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: 10, border: 'none', cursor: 'pointer' }}><Edit3 size={18} /></button>
+                    <button onClick={() => handleDelete(p.id)} style={{ padding: 10, background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
                   </div>
                 </div>
-              </motion.div>
-            ) : (
-              <motion.div key="other" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center h-[60vh] text-center">
-                <div className="p-6 bg-slate-900 rounded-3xl border border-slate-800 mb-6"><SettingsIcon size={48} className="text-slate-700 animate-spin-slow" /></div>
-                <h3 className="text-xl font-bold text-white mb-2">Розділ "{activeTab}" в розробці</h3>
-                <p className="text-slate-500 max-w-xs">Ми працюємо над тим, щоб зробити цей розділ таким же крутим, як і управління товарами.</p>
-                <button onClick={() => setActiveTab('products')} className="mt-6 text-indigo-400 font-bold hover:underline">Повернутися до товарів</button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              );
+            })}
+          </div>
         </div>
       </main>
 
-      {/* ADD PRODUCT MODAL */}
+      {/* Modal Form */}
       <AnimatePresence>
-        {showAddForm && (
-          <div className="fixed inset-0 flex items-center justify-center z-[100] p-6">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddForm(false)} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-2xl bg-[#0b0f1a] border border-slate-800 rounded-[32px] shadow-2xl overflow-hidden">
-               <div className="p-8 border-b border-slate-800 bg-slate-900/30">
-                 <h2 className="text-2xl font-black text-white">Додати новий товар</h2>
-                 <p className="text-slate-500 text-sm mt-1">Заповніть інформацію, щоб виставити товар на вітрину</p>
-               </div>
-               <form onSubmit={handleAddProduct} className="p-8 space-y-6">
-                 <div className="grid grid-cols-2 gap-6">
-                   <div className="col-span-2">
-                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">Назва</label>
-                     <input type="text" required value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full bg-[#020617] border border-slate-800 rounded-xl p-4 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all text-white outline-none" />
-                   </div>
-                    <div>
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">Ціна (грн)</label>
-                      <input type="number" step="0.01" required value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full bg-[#020617] border border-slate-800 rounded-xl p-4 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all text-white outline-none font-mono" />
+        {showForm && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={closeModal} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }} />
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ position: 'relative', width: '100%', maxWidth: 500, background: '#0a192f', borderRadius: 32, border: '1px solid rgba(255,255,255,0.1)', padding: 32, maxHeight: '90vh', overflowY: 'auto' }}>
+              <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 24 }}>{editingId ? 'Редагувати товар' : 'Новий товар'}</h2>
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ height: 140, border: '2px dashed rgba(255,255,255,0.1)', borderRadius: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.02)', position: 'relative', overflow: 'hidden' }}>
+                  {formData.image_url ? (
+                    <>
+                      <img src={formData.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      <button type="button" onClick={() => setFormData({...formData, image_url: ''})} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
+                    </>
+                  ) : (
+                    <div style={{ textAlign: 'center' }}>
+                      <Upload size={28} style={{ color: '#3b82f6', marginBottom: 8 }} />
+                      <p style={{ fontSize: 11, color: '#6b6b8a', fontWeight: 700 }}>Завантажити фото</p>
+                      <input type="file" accept="image/*" onChange={handleFileUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                     </div>
-                   <div>
-                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">Статус</label>
-                     <select value={newProduct.status} onChange={e => setNewProduct({...newProduct, status: e.target.value})} className="w-full bg-[#020617] border border-slate-800 rounded-xl p-4 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all text-white outline-none appearance-none">
-                        <option value="in_stock">В наявності</option>
-                        <option value="pre_order">Під замовлення</option>
-                        <option value="out_of_stock">Немає</option>
-                     </select>
-                   </div>
-                   <div className="col-span-2">
-                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">3D модель (URL)</label>
-                     <input type="text" value={newProduct.model_3d} onChange={e => setNewProduct({...newProduct, model_3d: e.target.value})} className="w-full bg-[#020617] border border-slate-800 rounded-xl p-4 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all text-white outline-none font-mono text-xs" placeholder="https://..." />
-                   </div>
-                   <div className="col-span-2">
-                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2 px-1">Опис</label>
-                     <textarea value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="w-full bg-[#020617] border border-slate-800 rounded-xl p-4 h-28 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all text-white outline-none resize-none" />
-                   </div>
-                 </div>
-                 <div className="flex gap-4 pt-4">
-                   <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 px-6 py-4 border border-slate-800 text-slate-400 font-bold rounded-xl hover:bg-slate-900 transition-colors">Скасувати</button>
-                   <button type="submit" className="flex-1 px-6 py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20">Зберегти товар</button>
-                 </div>
-               </form>
+                  )}
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва</label>
+                  <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />
+                </div>
+
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Базова Ціна (₴)</label>
+                    <input type="number" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', width: '100%' }} />
+                  </div>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Знижка (%)</label>
+                    <div style={{ position: 'relative' }}>
+                      <input type="number" value={formData.discount} onChange={e => setFormData({...formData, discount: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '14px 34px 14px 14px', color: '#fff', outline: 'none', width: '100%' }} />
+                      <Percent size={14} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ПРЕВ'Ю ФІНАЛЬНОЇ ЦІНИ */}
+                <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px dashed rgba(59,130,246,0.2)', borderRadius: 16, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#6b6b8a' }}>Фінальна ціна для клієнта:</span>
+                  <span style={{ fontSize: 18, fontWeight: 900, color: '#3b82f6' }}>{finalPricePreview} ₴</span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Категорія</label>
+                  <input type="text" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>3D Модель URL (.glb)</label>
+                  <input type="text" value={formData.model_3d} onChange={e => setFormData({...formData, model_3d: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 11 }} />
+                </div>
+
+                <button type="submit" style={{ marginTop: 10, padding: 16, borderRadius: 14, border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 900, cursor: 'pointer' }}>ЗБЕРЕГТИ ЗМІНИ</button>
+              </form>
             </motion.div>
           </div>
         )}
@@ -260,21 +270,10 @@ export default function AdminPanel() {
   );
 }
 
-function SidebarLink({ icon, label, active, onClick }) {
+function SidebarBtn({ active, icon, label, onClick }) {
   return (
-    <button 
-      onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${
-        active 
-        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
-        : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
-      }`}
-    >
-      <span className={`${active ? 'text-white' : 'group-hover:text-indigo-400 transition-colors'}`}>{icon}</span>
-      <span className="text-sm font-bold tracking-tight">{label}</span>
-      {active && (
-        <motion.div layoutId="active-pill" className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full" />
-      )}
+    <button onClick={onClick} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: 'none', background: active ? 'rgba(59,130,246,0.1)' : 'transparent', color: active ? '#3b82f6' : '#6b6b8a', fontWeight: 700, fontSize: 13, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+      {icon} {label}
     </button>
   );
 }
