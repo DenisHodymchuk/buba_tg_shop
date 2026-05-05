@@ -210,18 +210,33 @@ export default function Home() {
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {selectedProduct.color ? selectedProduct.color.split(',').map((c, i) => {
                           const val = c.trim().toLowerCase();
+                          // Словник кольорів
+                          const colorMap = {
+                            'білий': '#ffffff', 'white': '#ffffff',
+                            'чорний': '#000000', 'black': '#000000',
+                            'червоний': '#ef4444', 'red': '#ef4444',
+                            'синій': '#3b82f6', 'blue': '#3b82f6',
+                            'жовтий': '#facc15', 'yellow': '#facc15',
+                            'зелений': '#22c55e', 'green': '#22c55e',
+                            'рожевий': '#ec4899', 'pink': '#ec4899',
+                            'помаранчевий': '#f97316', 'orange': '#f97316',
+                            'салатовий': '#adff2f', 'lime': '#adff2f',
+                            'фіолетовий': '#a855f7', 'purple': '#a855f7',
+                            'блакитний': '#0ea5e9', 'sky': '#0ea5e9',
+                            'сірий': '#94a3b8', 'gray': '#94a3b8',
+                            'коричневий': '#78350f', 'brown': '#78350f',
+                            'золотий': '#fbbf24', 'gold': '#fbbf24',
+                            'срібний': '#cbd5e1', 'silver': '#cbd5e1',
+                            'бежевий': '#f5f5dc', 'beige': '#f5f5dc',
+                            'м\'ятний': '#2ed573', 'mint': '#2ed573'
+                          };
+
                           let bg = val;
-                          
-                          // Спеціальні випадки для популярних назв або градієнтів
-                          if (val.includes('веселк') || val.includes('rainb')) bg = 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)';
-                          else if (val === 'білий' || val === 'white') bg = '#ffffff';
-                          else if (val === 'чорний' || val === 'black') bg = '#000000';
-                          else if (val === 'червоний' || val === 'red') bg = '#ef4444';
-                          else if (val === 'синій' || val === 'blue') bg = '#3b82f6';
-                          else if (val === 'жовтий' || val === 'yellow') bg = '#facc15';
-                          else if (val === 'зелений' || val === 'green') bg = '#22c55e';
-                          else if (val === 'рожевий' || val === 'pink') bg = '#ec4899';
-                          else if (val === 'помаранчевий' || val === 'orange') bg = '#f97316';
+                          if (val.includes('веселк') || val.includes('rainb')) {
+                            bg = 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)';
+                          } else if (colorMap[val]) {
+                            bg = colorMap[val];
+                          }
                           
                           return (
                             <div 
