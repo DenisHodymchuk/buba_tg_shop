@@ -88,12 +88,11 @@ export default function Storefront({ addToCart, searchQuery }) {
               style={{ 
                 display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.02)', 
                 borderRadius: 32, padding: 10, border: '1px solid rgba(255,255,255,0.04)',
-                width: '100%', maxWidth: 240, position: 'relative',
+                width: '100%', position: 'relative',
                 backdropFilter: 'blur(10px)',
                 cursor: 'pointer'
               }}
             >
-              {/* Image Container */}
               <div style={{ position: 'relative', aspectRatio: '1', background: 'rgba(255,255,255,0.03)', borderRadius: 24, overflow: 'hidden', marginBottom: 12 }}>
                 {toy.model_3d ? (
                   <model-viewer
@@ -110,7 +109,6 @@ export default function Storefront({ addToCart, searchQuery }) {
                   </div>
                 )}
 
-                {/* Discount Tag */}
                 {toy.discount > 0 && (
                   <div style={{
                     position: 'absolute', top: 12, right: 12,
@@ -123,7 +121,6 @@ export default function Storefront({ addToCart, searchQuery }) {
                 )}
               </div>
 
-              {/* Info Section */}
               <div style={{ padding: '0 4px 4px' }}>
                 <h3 style={{ 
                   fontSize: 13, fontWeight: 800, color: '#fff', 
@@ -154,10 +151,7 @@ export default function Storefront({ addToCart, searchQuery }) {
                   </div>
                   
                   <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addToCart(toy);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); addToCart(toy); }}
                     style={{
                       width: 42, height: 42, borderRadius: 16, border: 'none', cursor: 'pointer',
                       background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
@@ -165,13 +159,10 @@ export default function Storefront({ addToCart, searchQuery }) {
                       color: '#fff', flexShrink: 0,
                       boxShadow: '0 6px 15px rgba(124,58,237,0.4), inset 0 2px 4px rgba(255,255,255,0.2)',
                       transition: 'all 0.2s',
-                      position: 'relative',
-                      overflow: 'hidden'
                     }}
                     className="active:scale-90 hover:brightness-110"
                   >
                     <Plus size={24} strokeWidth={3} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(255,255,255,0.1), transparent)', pointerEvents: 'none' }} />
                   </button>
                 </div>
               </div>
@@ -180,38 +171,33 @@ export default function Storefront({ addToCart, searchQuery }) {
         })}
       </div>
 
-      {/* Product Details Modal */}
       <AnimatePresence>
         {selectedProduct && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setSelectedProduct(null)}
-              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)' }}
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)' }}
             />
             <motion.div 
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
               style={{ 
-                position: 'relative', flex: 1, marginTop: '10vh', background: '#0a0a1a', 
-                borderTopLeftRadius: 40, borderTopRightRadius: 40, overflow: 'hidden',
-                display: 'flex', flexDirection: 'column',
-                borderTop: '1px solid rgba(255,255,255,0.1)'
+                position: 'relative', width: '100%', maxWidth: 450, background: '#0a0a1a', 
+                borderRadius: 40, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh', boxShadow: '0 40px 100px rgba(0,0,0,0.8)'
               }}
             >
-              {/* Modal Content Header with Close */}
               <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
                 <button 
                   onClick={() => setSelectedProduct(null)}
-                  style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 >
                   <X size={24} />
                 </button>
               </div>
 
               <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 100px' }}>
-                {/* Visual Area */}
-                <div style={{ width: '100%', aspectRatio: '1', position: 'relative', marginTop: 20 }}>
+                <div style={{ width: '100%', height: 320, position: 'relative', marginTop: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 32, overflow: 'hidden' }}>
                   {selectedProduct.model_3d ? (
                     <model-viewer
                       src={selectedProduct.model_3d} alt={selectedProduct.name}
@@ -220,70 +206,64 @@ export default function Storefront({ addToCart, searchQuery }) {
                       style={{ width: '100%', height: '100%' }}
                     ></model-viewer>
                   ) : (
-                    <img src={selectedProduct.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src={selectedProduct.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 20 }} />
                   )}
                 </div>
 
-                {/* Details */}
                 <div style={{ marginTop: 24 }}>
-                  <div style={{ fontSize: 12, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', marginBottom: 8 }}>{selectedProduct.category}</div>
-                  <h2 style={{ fontSize: 28, fontWeight: 900, color: '#fff', marginBottom: 16 }}>{selectedProduct.name}</h2>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', marginBottom: 4 }}>{selectedProduct.category}</div>
+                  <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 16 }}>{selectedProduct.name}</h2>
                   
-                  {/* Stats Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 32 }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b6b8a', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <Droplets size={14} style={{ color: '#3b82f6' }} /> Матеріал
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 30 }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
+                        <Droplets size={12} style={{ color: '#3b82f6' }} /> Матеріал
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>{selectedProduct.plastic_type || 'PLA Пластик'}</div>
+                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>{selectedProduct.plastic_type || 'PLA Пластик'}</div>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b6b8a', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <ShieldCheck size={14} style={{ color: '#22c55e' }} /> Безпека
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
+                        <ShieldCheck size={12} style={{ color: '#22c55e' }} /> Безпека
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>{selectedProduct.safety_info || 'Безпечний'}</div>
+                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>{selectedProduct.safety_info || 'Безпечний'}</div>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b6b8a', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <Weight size={14} style={{ color: '#ec4899' }} /> Вага
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
+                        <Weight size={12} style={{ color: '#ec4899' }} /> Вага
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>{selectedProduct.weight || '---'}</div>
+                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>{selectedProduct.weight || '---'}</div>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b6b8a', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <Droplets size={14} style={{ color: '#7c3aed' }} /> Колір
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
+                        <Droplets size={12} style={{ color: '#7c3aed' }} /> Колір
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 14 }}>{selectedProduct.color || 'Базовий'}</div>
+                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>{selectedProduct.color || 'Базовий'}</div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: 32 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b6b8a', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>
-                      <Info size={14} /> Опис товару
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
+                      <Info size={12} /> Опис товару
                     </div>
-                    <p style={{ color: '#6b6b8a', lineHeight: 1.6, fontSize: 15 }}>{selectedProduct.description || 'Опис скоро з\'явиться...'}</p>
+                    <p style={{ color: '#6b6b8a', lineHeight: 1.5, fontSize: 14 }}>{selectedProduct.description || 'Опис скоро з\'явиться...'}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Buy Area */}
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px', background: 'linear-gradient(transparent, #0a0a1a 40%)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 24px', background: '#0a0a1a', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontSize: 12, color: '#6b6b8a', marginBottom: 2 }}>Ціна товару</div>
-                    <div style={{ fontSize: 28, fontWeight: 950, color: '#f97316' }}>
+                    <div style={{ fontSize: 10, color: '#6b6b8a', marginBottom: 2 }}>Ціна товару</div>
+                    <div style={{ fontSize: 24, fontWeight: 950, color: '#f97316' }}>
                       {(selectedProduct.price * (1 - (selectedProduct.discount || 0) / 100)).toFixed(0)}₴
                     </div>
                   </div>
                   <button 
-                    onClick={() => {
-                      addToCart(selectedProduct);
-                      setSelectedProduct(null);
-                    }}
+                    onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
                     style={{ 
-                      padding: '16px 32px', borderRadius: 20, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', 
-                      color: '#fff', border: 'none', fontWeight: 900, fontSize: 16, cursor: 'pointer',
-                      boxShadow: '0 12px 24px rgba(124,58,237,0.3)'
+                      padding: '14px 28px', borderRadius: 16, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', 
+                      color: '#fff', border: 'none', fontWeight: 900, fontSize: 14, cursor: 'pointer',
+                      boxShadow: '0 8px 20px rgba(124,58,237,0.3)'
                     }}
                   >
                     В КОШИК
