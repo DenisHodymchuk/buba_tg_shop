@@ -130,7 +130,7 @@ export default function Storefront({ addToCart, searchQuery }) {
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                    <div style={{ height: 14 }}>
+                    <div style={{ height: 14, marginBottom: 4 }}>
                       {toy.discount > 0 && (
                         <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through', fontWeight: 700 }}>
                           {toy.price}₴
