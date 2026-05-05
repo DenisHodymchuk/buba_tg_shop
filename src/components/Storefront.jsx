@@ -53,20 +53,19 @@ export default function Storefront({ addToCart, searchQuery }) {
   }
 
   return (
-    <section style={{ padding: '0 32px 60px', width: '100%', position: 'relative', zIndex: 10 }}>
+    <section style={{ padding: '0 16px 60px', width: '100%', position: 'relative', zIndex: 10 }}>
       {/* Categories Bar */}
-      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '24px 0 32px', scrollbarWidth: 'none' }}>
+      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '20px 0 24px', scrollbarWidth: 'none' }}>
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
             style={{
-              whiteSpace: 'nowrap', padding: '10px 24px', borderRadius: 16,
-              fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              whiteSpace: 'nowrap', padding: '8px 20px', borderRadius: 14,
+              fontSize: 12, fontWeight: 700, cursor: 'pointer',
               border: activeCategory === cat ? 'none' : '1px solid rgba(255,255,255,0.08)',
               background: activeCategory === cat ? 'linear-gradient(135deg, #7c3aed, #ec4899)' : 'rgba(255,255,255,0.03)',
               color: activeCategory === cat ? '#fff' : '#6b6b8a',
-              boxShadow: activeCategory === cat ? '0 8px 20px rgba(124,58,237,0.3)' : 'none',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
@@ -76,23 +75,23 @@ export default function Storefront({ addToCart, searchQuery }) {
       </div>
 
       {/* Catalog Title */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-        <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', letterSpacing: '-0.03em' }}>Каталог іграшок</h2>
-        <span style={{ fontSize: 11, fontWeight: 900, color: '#ec4899', background: 'rgba(236,72,153,0.1)', padding: '6px 16px', borderRadius: 20, textTransform: 'uppercase' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff' }}>Каталог</h2>
+        <span style={{ fontSize: 10, fontWeight: 900, color: '#ec4899', background: 'rgba(236,72,153,0.1)', padding: '4px 12px', borderRadius: 20 }}>
           {filtered.length} ТОВАРІВ
         </span>
       </div>
 
-      {/* Product Grid - Smaller card sizes */}
+      {/* Product Grid - Optimized for 2 columns on mobile */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', // Зменшили з 260 до 220
-        gap: 20,
-        justifyItems: 'start'
+        gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', // Зменшено до 150px
+        gap: 12, // Зменшено відступи між картками
+        justifyItems: 'center'
       }}>
         {filtered.length === 0 ? (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '100px 0', width: '100%' }}>
-            <p style={{ color: '#6b6b8a', fontWeight: 700, fontSize: 18 }}>Порожньо</p>
+            <p style={{ color: '#6b6b8a', fontWeight: 700 }}>Нічого не знайдено</p>
           </div>
         ) : (
           filtered.map((toy) => (
@@ -100,13 +99,14 @@ export default function Storefront({ addToCart, searchQuery }) {
               display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.02)', 
               borderRadius: 24, padding: 8, border: '1px solid rgba(255,255,255,0.04)',
               transition: 'all 0.3s ease',
-              width: '100%', maxWidth: 240, // ОБМЕЖУЄМО ШИРИНУ ТУТ
-            }} className="hover:translate-y-[-4px] hover:border-[#7c3aed]/40 hover:bg-white/[0.04] group">
-              {/* Image/Model Box */}
-              <div style={{ position: 'relative', aspectRatio: '1', background: 'linear-gradient(135deg, #f0eef5, #e8e4f0)', borderRadius: 20, overflow: 'hidden' }}>
+              width: '100%', maxWidth: 220, // Зменшено макс. ширину
+              position: 'relative'
+            }} className="group">
+              {/* Image Box */}
+              <div style={{ position: 'relative', aspectRatio: '1', background: 'linear-gradient(135deg, #f0eef5, #e8e4f0)', borderRadius: 18, overflow: 'hidden' }}>
                 <div style={{
-                  position: 'absolute', top: 10, left: 10, zIndex: 2,
-                  padding: '4px 10px', borderRadius: 8, fontSize: 8, fontWeight: 900, 
+                  position: 'absolute', top: 8, left: 8, zIndex: 2,
+                  padding: '3px 8px', borderRadius: 7, fontSize: 8, fontWeight: 900, 
                   textTransform: 'uppercase', color: '#fff',
                   background: toy.status === 'in_stock' ? '#10b981' : '#ef4444',
                 }}>
@@ -120,44 +120,40 @@ export default function Storefront({ addToCart, searchQuery }) {
                     shadow-intensity="1" environment-image="neutral"
                     style={{ width: '100%', height: '100%', background: 'transparent' }}
                   ></model-viewer>
-                ) : toy.images?.[0] || toy.image_url ? (
-                  <img 
-                    src={toy.images?.[0] || toy.image_url} 
-                    alt={toy.name} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  />
+                ) : toy.image_url ? (
+                  <img src={toy.image_url} alt={toy.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Package size={40} style={{ color: '#c4b5fd', opacity: 0.4 }} />
+                    <Package size={32} style={{ color: '#c4b5fd', opacity: 0.4 }} />
                   </div>
                 )}
               </div>
 
               {/* Info Area */}
-              <div style={{ padding: '12px 6px 4px' }}>
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: '#fff', lineHeight: 1.3, marginBottom: 8, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
+              <div style={{ padding: '10px 4px 4px' }}>
+                <h3 style={{ fontSize: 13, fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 8, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: 32 }}>
                   {toy.name}
                 </h3>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                   <div>
                     {toy.discount > 0 && (
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through', fontWeight: 700, marginBottom: 4 }}>
+                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through', fontWeight: 700, marginBottom: 2 }}>
                         {toy.price} ₴
                       </div>
                     )}
-                    <div style={{ fontSize: 24, fontWeight: 900, color: '#f97316', lineHeight: 1 }}>
-                      {(toy.price * (1 - (toy.discount || 0) / 100)).toFixed(0)}<span style={{ fontSize: 14, marginLeft: 2, opacity: 0.8 }}>₴</span>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: '#f97316', lineHeight: 1 }}>
+                      {(toy.price * (1 - (toy.discount || 0) / 100)).toFixed(0)}<span style={{ fontSize: 11, marginLeft: 1, opacity: 0.8 }}>₴</span>
                     </div>
                   </div>
                   
                   <button onClick={() => addToCart(toy)} style={{
-                    width: 36, height: 36, borderRadius: 12, border: 'none', cursor: 'pointer',
+                    width: 32, height: 32, borderRadius: 10, border: 'none', cursor: 'pointer',
                     background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', boxShadow: '0 6px 12px rgba(124,58,237,0.3)'
+                    color: '#fff', boxShadow: '0 4px 10px rgba(124,58,237,0.3)'
                   }}>
-                    <Plus size={20} />
+                    <Plus size={18} />
                   </button>
                 </div>
               </div>
