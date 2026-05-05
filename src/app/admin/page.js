@@ -569,66 +569,24 @@ export default function AdminPanel() {
             <div onClick={closeModal} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }} />
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ position: 'relative', width: '100%', maxWidth: 500, background: '#0a192f', borderRadius: 32, border: '1px solid rgba(255,255,255,0.1)', padding: 32, maxHeight: '90vh', overflowY: 'auto' }}>
               <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 24 }}>{editingId ? 'Редагувати товар' : 'Новий товар'}</h2>
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ height: 140, border: '2px dashed rgba(255,255,255,0.1)', borderRadius: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.02)', position: 'relative', overflow: 'hidden' }}>
-                  {formData.image_url ? (
-                    <>
-                      <img src={formData.image_url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                      <button type="button" onClick={() => setFormData({...formData, image_url: ''})} style={{ position: 'absolute', top: 12, right: 12, background: '#ef4444', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
-                    </>
-                  ) : (
-                    <div style={{ textAlign: 'center' }}>
-                      <Upload size={28} style={{ color: '#3b82f6', marginBottom: 8 }} />
-                      <p style={{ fontSize: 11, color: '#6b6b8a', fontWeight: 700 }}>Завантажити фото</p>
-                      <input type="file" accept="image/*" onChange={handleFileUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
-                    </div>
-                  )}
-                </div>
-                
-                {/* Unified Gallery Management */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Галерея фотографій</label>
-                  
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* Simplified Gallery Management */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, background: 'rgba(255,255,255,0.02)', padding: 24, borderRadius: 28, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: 11, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Галерея фотографій</label>
+                    
                     <input 
-                      type="text" 
-                      value={newPhotoUrl}
-                      onChange={(e) => setNewPhotoUrl(e.target.value)}
-                      placeholder="Вставте URL або оберіть файл..." 
-                      style={{ flex: 1, minWidth: 180, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', color: '#fff', outline: 'none', fontSize: 13 }} 
+                      type="file" id="gallery-file-upload" accept="image/*" hidden 
+                      onChange={handleGalleryUpload}
                     />
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          const url = newPhotoUrl.trim();
-                          if (url) {
-                            const currentExtra = Array.isArray(formData.image_urls) ? formData.image_urls : [];
-                            if (!formData.image_url) {
-                              setFormData({...formData, image_url: url});
-                            } else {
-                              setFormData({...formData, image_urls: [...currentExtra, url]});
-                            }
-                            setNewPhotoUrl('');
-                          }
-                        }}
-                        style={{ padding: '0 16px', height: 44, borderRadius: 14, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: 11 }}
-                      >
-                        ДОДАТИ
-                      </button>
-
-                      <input 
-                        type="file" id="gallery-file-upload" accept="image/*" hidden 
-                        onChange={handleGalleryUpload}
-                      />
-                      <button 
-                        type="button"
-                        onClick={() => document.getElementById('gallery-file-upload').click()}
-                        style={{ padding: '0 16px', height: 44, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 800, cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}
-                      >
-                        <Upload size={14} /> ФАЙЛ
-                      </button>
-                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => document.getElementById('gallery-file-upload').click()}
+                      style={{ padding: '12px 24px', borderRadius: 16, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 16px rgba(124,58,237,0.2)' }}
+                    >
+                      <Upload size={18} /> ЗАВАНТАЖИТИ ФОТО
+                    </button>
                   </div>
 
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10 }}>
