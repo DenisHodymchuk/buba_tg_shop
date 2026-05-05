@@ -18,7 +18,11 @@ export default function Home() {
         webApp.ready();
         webApp.expand();
         
-        webApp.MainButton.setText('ПЕРЕГЛЯНУТИ КОШИК');
+        webApp.MainButton.setParams({
+          text: 'ПЕРЕГЛЯНУТИ КОШИК',
+          color: '#7c3aed',
+          text_color: '#ffffff'
+        });
         webApp.MainButton.onClick(() => setIsCartOpen(true));
         
         if (cart.length > 0) {
