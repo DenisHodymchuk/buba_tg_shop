@@ -558,19 +558,79 @@ export default function AdminPanel() {
                   )}
                 </div>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Головне фото (URL)</label>
-                  <input type="text" value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />
-                </div>
+                {/* Unified Gallery Management */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Галерея фотографій</label>
+                  
+                  {/* Add New Photo Input */}
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <input 
+                      type="text" id="new-photo-url" placeholder="Вставте URL нового фото..." 
+                      style={{ flex: 1, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', color: '#fff', outline: 'none', fontSize: 13 }} 
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const input = document.getElementById('new-photo-url');
+                        const url = input.value.trim();
+                        if (url) {
+                          const currentExtra = Array.isArray(formData.image_urls) ? formData.image_urls : [];
+                          if (!formData.image_url) {
+                            setFormData({...formData, image_url: url});
+                          } else {
+                            setFormData({...formData, image_urls: [...currentExtra, url]});
+                          }
+                          input.value = '';
+                        }
+                      }}
+                      style={{ padding: '0 20px', borderRadius: 14, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      ДОДАТИ
+                    </button>
+                  </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Додаткові фото (через кому)</label>
-                  <textarea 
-                    value={Array.isArray(formData.image_urls) ? formData.image_urls.join(', ') : ''} 
-                    onChange={e => setFormData({...formData, image_urls: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} 
-                    placeholder="URL1, URL2, URL3..."
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', minHeight: 80, fontSize: 12 }} 
-                  />
+                  {/* Visual List of Photos */}
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10 }}>
+                    {[formData.image_url, ...(Array.isArray(formData.image_urls) ? formData.image_urls : [])].filter(Boolean).map((url, index) => {
+                      const isMain = url === formData.image_url;
+                      return (
+                        <div key={index} style={{ position: 'relative', width: 100, height: 100, borderRadius: 16, border: isMain ? '2px solid #7c3aed' : '1px solid rgba(255,255,255,0.1)', overflow: 'hidden', background: 'rgba(0,0,0,0.3)' }}>
+                          <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          
+                          {/* Main Toggle */}
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const all = [formData.image_url, ...(formData.image_urls || [])].filter(Boolean);
+                              const newMain = url;
+                              const newExtra = all.filter(u => u !== newMain);
+                              setFormData({...formData, image_url: newMain, image_urls: newExtra});
+                            }}
+                            style={{ position: 'absolute', top: 5, left: 5, width: 24, height: 24, borderRadius: '50%', background: isMain ? '#7c3aed' : 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            title="Зробити головним"
+                          >
+                            <Award size={14} />
+                          </button>
+
+                          {/* Remove */}
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              if (isMain) {
+                                const extra = formData.image_urls || [];
+                                setFormData({...formData, image_url: extra[0] || '', image_urls: extra.slice(1)});
+                              } else {
+                                setFormData({...formData, image_urls: formData.image_urls.filter(u => u !== url)});
+                              }
+                            }}
+                            style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: '50%', background: 'rgba(239,68,68,0.8)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
