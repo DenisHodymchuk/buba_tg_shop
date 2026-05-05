@@ -820,7 +820,8 @@ export default function AdminPanel() {
               </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
       {/* Custom Delete Confirmation Modal */}
       <AnimatePresence>
         {deleteConfirm.open && (
