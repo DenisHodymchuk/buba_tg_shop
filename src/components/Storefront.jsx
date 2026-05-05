@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useMemo } from 'react';
-import { Plus, Package, Check } from 'lucide-react';
+import { Plus, Package } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function Storefront({ addToCart, searchQuery }) {
@@ -103,12 +103,13 @@ export default function Storefront({ addToCart, searchQuery }) {
                   </div>
                 )}
 
-                {/* Discount Tag */}
+                {/* Discount Tag - MOVED TO TOP RIGHT */}
                 {toy.discount > 0 && (
                   <div style={{
-                    position: 'absolute', bottom: 10, left: 10,
-                    background: 'linear-gradient(135deg, #ef4444, #f97316)', color: '#fff', fontSize: 10, fontWeight: 900,
-                    padding: '3px 10px', borderRadius: 10, boxShadow: '0 4px 12px rgba(239,68,68,0.4)'
+                    position: 'absolute', top: 12, right: 12,
+                    background: 'linear-gradient(135deg, #ef4444, #f97316)', color: '#fff', fontSize: 10, fontWeight: 950,
+                    padding: '4px 10px', borderRadius: 10, boxShadow: '0 4px 12px rgba(239,68,68,0.4)',
+                    zIndex: 20
                   }}>
                     -{toy.discount}%
                   </div>

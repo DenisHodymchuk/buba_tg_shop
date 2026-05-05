@@ -3,7 +3,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, X, Trash2, ArrowRight } from 'lucide-react';
 
-export default function Cart({ items, isOpen, onClose, onRemove, discount, bonuses }) {
+export default function Cart({ items, isOpen, onClose, onRemove, discount, bonuses, onCheckout }) {
   const subtotal = items.reduce((sum, item) => sum + Number(item.price), 0);
   const total = subtotal * (1 - discount);
 
@@ -100,8 +100,11 @@ export default function Cart({ items, isOpen, onClose, onRemove, discount, bonus
                   <span className="text-white">{total.toFixed(0)} ₴</span>
                 </div>
 
-                <button className="w-full btn-gradient py-4 text-sm font-black uppercase tracking-[0.1em] flex items-center justify-center gap-2 mt-2">
-                  Оформити замовлення
+                <button 
+                  onClick={onCheckout}
+                  className="w-full btn-gradient py-4 text-sm font-black uppercase tracking-[0.1em] flex items-center justify-center gap-2 mt-2"
+                >
+                  Перейти до оплати
                   <ArrowRight size={18} />
                 </button>
                 <p className="text-[8px] text-center text-[#4a4a6a] font-bold uppercase tracking-[0.2em] mt-2">
