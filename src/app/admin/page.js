@@ -630,20 +630,6 @@ export default function AdminPanel() {
                       </button>
                     </div>
                   </div>
-                const currentExtra = Array.isArray(formData.image_urls) ? formData.image_urls : [];
-                          if (!formData.image_url) {
-                            setFormData({...formData, image_url: url});
-                          } else {
-                            setFormData({...formData, image_urls: [...currentExtra, url]});
-                          }
-                          setNewPhotoUrl('');
-                        }
-                      }}
-                      style={{ padding: '0 20px', borderRadius: 14, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      ДОДАТИ
-                    </button>
-                  </div>
 
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10 }}>
                     {[formData.image_url, ...(Array.isArray(formData.image_urls) ? formData.image_urls : [])].filter(Boolean).map((url, index) => {
