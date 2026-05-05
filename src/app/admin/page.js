@@ -473,8 +473,20 @@ export default function AdminPanel() {
                       <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase', textAlign: 'right' }}>Дії</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {users.map((user, i) => (
+                   <tbody>
+                    {users
+                      .filter(user => {
+                        if (!searchQuery) return true;
+                        const q = searchQuery.toLowerCase();
+                        return (
+                          (user.first_name || '').toLowerCase().includes(q) ||
+                          (user.last_name || '').toLowerCase().includes(q) ||
+                          (user.phone || '').includes(q) ||
+                          (user.tg_id || '').includes(q) ||
+                          (user.username || '').toLowerCase().includes(q)
+                        );
+                      })
+                      .map((user, i) => (
                       <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                         <td style={{ padding: '20px 24px' }}>
                           <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{user.first_name} {user.last_name}</div>
