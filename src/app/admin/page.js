@@ -591,11 +591,33 @@ export default function AdminPanel() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Матеріал</label>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                      {['PLA', 'PETG', 'ABS', 'TPU'].map(p => (
+                        <button key={p} type="button" onClick={() => setFormData({...formData, plastic_type: p})} style={{ fontSize: 9, padding: '4px 8px', borderRadius: 6, background: formData.plastic_type === p ? '#7c3aed' : 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', cursor: 'pointer' }}>{p}</button>
+                      ))}
+                    </div>
                     <input type="text" value={formData.plastic_type} onChange={e => setFormData({...formData, plastic_type: e.target.value})} placeholder="напр. PLA Пластик" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 12 }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Кольори (через кому)</label>
-                    <input type="text" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} placeholder="напр. Червоний, Синій, Веселковий" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 12 }} />
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                      {['Червоний', 'Синій', 'Зелений', 'Жовтий', 'Білий', 'Чорний', 'Веселковий'].map(c => (
+                        <button 
+                          key={c} type="button" 
+                          onClick={() => {
+                            const current = formData.color ? formData.color.split(',').map(x => x.trim()).filter(Boolean) : [];
+                            if (!current.includes(c)) {
+                              setFormData({...formData, color: [...current, c].join(', ')});
+                            }
+                          }} 
+                          style={{ fontSize: 9, padding: '4px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', cursor: 'pointer' }}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                      <button type="button" onClick={() => setFormData({...formData, color: ''})} style={{ fontSize: 9, padding: '4px 8px', borderRadius: 6, background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: 'none', cursor: 'pointer' }}>Очистити</button>
+                    </div>
+                    <input type="text" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} placeholder="напр. Червоний, Синій" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 12 }} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Вага</label>
