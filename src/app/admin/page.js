@@ -19,6 +19,7 @@ export default function AdminPanel() {
   const [editingId, setEditingId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Всі');
+  const [bonusModal, setBonusModal] = useState({ open: false, user: null, amount: '100', mode: 'add' });
 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', discount: 0, status: 'in_stock', model_3d: '', image_url: '', category: ''
@@ -78,11 +79,13 @@ export default function AdminPanel() {
     }
   }
 
-  async function awardBonuses(user) {
-    if (!supabase) return;
-    const currentName = user.first_name || user.name || 'клієнта';
-    const amount = prompt(`Керування бонусами для ${currentName}:\n\nВведіть число для додавання.\nВикористовуйте мінус (наприклад: -100), щоб забрати бонуси.`, '100');
-    if (amount === null || isNaN(amount)) return;
+  async function confirmBonusUpdate() {
+    if (!supabase || !bonusModal.user) return;
+    const amount = parseInt(bonusModal.amount);
+    if (isNaN(amount)) return;
+    
+    const finalAmount = bonusModal.mode === 'add' ? amount : -amount;
+    const user = bonusModal.user;
 
     try {
       const { data: customer } = await supabase
@@ -92,10 +95,10 @@ export default function AdminPanel() {
         .single();
       
       if (customer) {
-        const newBalance = (customer.bonuses || 0) + parseInt(amount);
+        const newBalance = (customer.bonuses || 0) + finalAmount;
         const { error } = await supabase
           .from('customers')
-          .update({ bonuses: Math.max(0, newBalance) }) // Не даємо піти в мінус, якщо не хочемо
+          .update({ bonuses: Math.max(0, newBalance) })
           .eq('id', customer.id);
         if (error) throw error;
       } else {
@@ -105,16 +108,20 @@ export default function AdminPanel() {
             phone: user.phone, 
             tg_id: user.tg_id,
             first_name: user.first_name || user.name, 
-            bonuses: Math.max(0, parseInt(amount)) 
+            bonuses: Math.max(0, finalAmount) 
           }]);
         if (error) throw error;
       }
       
-      alert('Баланс успішно оновлено!');
+      setBonusModal({ ...bonusModal, open: false });
       fetchUsers();
     } catch (e) {
       alert('Помилка: ' + e.message);
     }
+  }
+
+  function openBonusModal(user) {
+    setBonusModal({ open: true, user, amount: '100', mode: 'add' });
   }
 
   async function deleteUser(phone) {
@@ -487,7 +494,7 @@ export default function AdminPanel() {
                         <td style={{ padding: '20px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                             <button 
-                              onClick={() => awardBonuses(user)}
+                              onClick={() => openBonusModal(user)}
                               style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                             >
                               Нарахувати
@@ -578,6 +585,82 @@ export default function AdminPanel() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Custom Bonus Modal */}
+      {bonusModal.open && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div 
+            onClick={() => setBonusModal({ ...bonusModal, open: false })}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}
+          />
+          <div style={{ 
+            position: 'relative', width: '100%', maxWidth: 400, background: '#0a0a1a', borderRadius: 32, 
+            border: '1px solid rgba(255,255,255,0.1)', padding: 40, boxShadow: '0 32px 64px rgba(0,0,0,0.5)',
+          }}>
+            <h3 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Керування бонусами</h3>
+            <p style={{ fontSize: 14, color: '#6b6b8a', marginBottom: 32 }}>
+              Клієнт: <span style={{ color: '#fff', fontWeight: 800 }}>{bonusModal.user?.first_name || bonusModal.user?.name}</span>
+            </p>
+
+            <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.03)', padding: 6, borderRadius: 16, marginBottom: 24 }}>
+              <button 
+                onClick={() => setBonusModal({ ...bonusModal, mode: 'add' })}
+                style={{ 
+                  flex: 1, padding: '12px', borderRadius: 12, border: 'none', fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                  background: bonusModal.mode === 'add' ? '#7c3aed' : 'transparent',
+                  color: bonusModal.mode === 'add' ? '#fff' : '#6b6b8a',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Нарахувати (+)
+              </button>
+              <button 
+                onClick={() => setBonusModal({ ...bonusModal, mode: 'sub' })}
+                style={{ 
+                  flex: 1, padding: '12px', borderRadius: 12, border: 'none', fontSize: 13, fontWeight: 800, cursor: 'pointer',
+                  background: bonusModal.mode === 'sub' ? '#ef4444' : 'transparent',
+                  color: bonusModal.mode === 'sub' ? '#fff' : '#6b6b8a',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Списати (-)
+              </button>
+            </div>
+
+            <div style={{ marginBottom: 32 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 12 }}>Кількість бонусів</label>
+              <input 
+                type="number"
+                value={bonusModal.amount}
+                onChange={(e) => setBonusModal({ ...bonusModal, amount: e.target.value })}
+                style={{ 
+                  width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 16, padding: '16px 20px', fontSize: 24, fontWeight: 900, color: '#fff', outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button 
+                onClick={() => setBonusModal({ ...bonusModal, open: false })}
+                style={{ flex: 1, padding: '16px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)', background: 'transparent', color: '#6b6b8a', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
+              >
+                Скасувати
+              </button>
+              <button 
+                onClick={confirmBonusUpdate}
+                style={{ 
+                  flex: 1, padding: '16px', borderRadius: 16, border: 'none', fontSize: 14, fontWeight: 800, cursor: 'pointer',
+                  background: bonusModal.mode === 'add' ? '#7c3aed' : '#ef4444',
+                  color: '#fff', boxShadow: `0 8px 24px ${bonusModal.mode === 'add' ? 'rgba(124,58,237,0.3)' : 'rgba(239,68,68,0.3)'}`
+                }}
+              >
+                Підтвердити
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
