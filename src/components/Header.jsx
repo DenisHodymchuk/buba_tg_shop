@@ -19,7 +19,7 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
           </div>
           <div className="hidden sm:block">
             <h1 style={{ fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>BUBA STORE</h1>
-            <p style={{ fontSize: 8, color: '#7c3aed', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 2 }}>Premium 3D Toys</p>
+            <div style={{ fontSize: 10, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.15em' }}>МАГАЗИН 3D ВИРОБІВ</div>
           </div>
         </div>
 
@@ -29,7 +29,7 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
             <Search size={16} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
             <input 
               type="text" 
-              placeholder="Яку іграшку шукаєте?..." 
+              placeholder="Який виріб шукаєте?..." 
               onChange={(e) => onSearch?.(e.target.value)}
               style={{
                 width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
@@ -93,7 +93,7 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
           <Search size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
           <input 
             type="text" 
-            placeholder="Пошук іграшок..."
+            placeholder="Пошук виробів..."
             onChange={(e) => onSearch?.(e.target.value)}
             style={{
               width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',

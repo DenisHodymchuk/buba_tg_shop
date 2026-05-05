@@ -341,7 +341,7 @@ export default function Home() {
 
       <footer style={{ padding: '60px 20px 40px', textAlign: 'center', flexShrink: 0 }}>
         <p style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em' }}>© 2026 BUBA STORE</p>
-        <p style={{ marginTop: 6, fontSize: 8, color: '#3a3a5a', textTransform: 'uppercase', letterSpacing: '0.3em' }}>3D друковані іграшки</p>
+        <p style={{ marginTop: 6, fontSize: 8, color: '#3a3a5a', textTransform: 'uppercase', letterSpacing: '0.3em' }}>3D ДРУКОВАНІ ВИРОБИ</p>
       </footer>
     </div>
   );
