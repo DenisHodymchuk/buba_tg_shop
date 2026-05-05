@@ -30,6 +30,39 @@ export default function AdminPanel() {
     fetchUsers();
   }, []);
 
+  async function syncUser(tgUser) {
+    if (!supabase) return;
+    try {
+      console.log('Syncing user with ID:', tgUser.id);
+      
+      const { data: existing, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('tg_id', tgUser.id.toString())
+        .single();
+
+      if (existing) {
+        console.log('Found existing customer:', existing);
+      } else {
+        console.log('Creating new customer profile');
+        const { data: created, error: insertError } = await supabase
+          .from('customers')
+          .upsert({ 
+            tg_id: tgUser.id.toString(), 
+            first_name: tgUser.first_name,
+            last_name: tgUser.last_name || '',
+            bonuses: 0 
+          }, { onConflict: 'tg_id' })
+          .select()
+          .single();
+        
+        if (insertError) console.error('Insert error:', insertError);
+      }
+    } catch (e) {
+      console.error('Full sync error:', e);
+    }
+  }
+
   async function fetchUsers() {
     if (!supabase) return;
     try {
@@ -245,7 +278,6 @@ export default function AdminPanel() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#020b18', color: '#e2e8f0', overflow: 'hidden' }}>
-      {/* Sidebar */}
       <aside style={{ width: 260, flexShrink: 0, background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', zIndex: 50 }}>
         <div style={{ padding: '32px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -263,7 +295,6 @@ export default function AdminPanel() {
         </nav>
       </aside>
 
-      {/* Main Content */}
       <main style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <header style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'rgba(2,11,24,0.6)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)', zIndex: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '8px 16px', width: 350 }}>
@@ -404,7 +435,6 @@ export default function AdminPanel() {
                       </div>
                     )}
 
-                    {/* Order Actions */}
                     <div style={{ marginTop: 24, display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                       <StatusBtn label="Підготовка" active={order.status === 'preparing'} color="#f59e0b" onClick={() => updateOrderStatus(order.id, 'preparing')} />
                       <StatusBtn label="Друкується" active={order.status === 'printing'} color="#7c3aed" onClick={() => updateOrderStatus(order.id, 'printing')} />
@@ -426,11 +456,12 @@ export default function AdminPanel() {
               <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
-                      <th style={{ padding: '20px 24px', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Клієнт</th>
-                      <th style={{ padding: '20px 24px', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Телефон</th>
-                      <th style={{ padding: '20px 24px', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Бонуси</th>
-                      <th style={{ padding: '20px 24px', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', textAlign: 'right' }}>Дії</th>
+                    <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Клієнт</th>
+                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Telegram ID</th>
+                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Телефон</th>
+                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Бонуси</th>
+                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase', textAlign: 'right' }}>Дії</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -440,8 +471,10 @@ export default function AdminPanel() {
                           <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{user.first_name} {user.last_name}</div>
                         </td>
                         <td style={{ padding: '20px 24px' }}>
-                          <div style={{ fontSize: 13, color: '#fff', fontWeight: 800 }}>{user.tg_id || '---'}</div>
-                          <div style={{ fontSize: 11, color: '#6b6b8a' }}>{user.phone}</div>
+                          <div style={{ fontSize: 13, color: '#7c3aed', fontWeight: 900 }}>{user.tg_id || '---'}</div>
+                        </td>
+                        <td style={{ padding: '20px 24px' }}>
+                          <div style={{ fontSize: 13, color: '#6b6b8a', fontWeight: 700 }}>{user.phone || '---'}</div>
                         </td>
                         <td style={{ padding: '20px 24px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

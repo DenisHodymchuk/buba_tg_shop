@@ -44,7 +44,7 @@ export default function Home() {
   async function syncUser(tgUser) {
     if (!supabase) return;
     try {
-      // Отримуємо або створюємо профіль за tg_id
+      console.log('Syncing user ID:', tgUser.id);
       const { data: existing, error } = await supabase
         .from('customers')
         .select('*')
