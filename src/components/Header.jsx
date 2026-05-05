@@ -2,7 +2,7 @@
 import React from 'react';
 import { ShoppingCart, Award, Search, Box, Clock } from 'lucide-react';
 
-export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, onSearch, debugInfo }) {
+export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, onSearch }) {
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 100,
@@ -44,13 +44,10 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
         {/* Right Side Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {/* Balance */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 16px', borderRadius: 14 }}>
               <Award size={16} style={{ color: '#fbbf24' }} />
               <span style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>{bonuses}</span>
             </div>
-            {debugInfo && <span style={{ fontSize: 7, color: '#6b6b8a', marginTop: 2, fontFamily: 'monospace' }}>{debugInfo}</span>}
-          </div>
 
           {/* History Button */}
           <button 

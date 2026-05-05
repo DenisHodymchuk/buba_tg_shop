@@ -29,7 +29,6 @@ export default function Home() {
             setUser(u);
             syncUser(u);
           } else {
-            setDebugInfo('No User...');
             setTimeout(checkUser, 1000);
           }
         };
@@ -39,20 +38,16 @@ export default function Home() {
         window.addEventListener('openOrderHistory', h);
         return () => window.removeEventListener('openOrderHistory', h);
       } else {
-        setDebugInfo('Searching TG...');
         setTimeout(initTG, 500);
       }
     };
     initTG();
   }, []);
 
-  const [debugInfo, setDebugInfo] = useState('Wait...');
-
   async function syncUser(tgUser) {
     if (!supabase) return;
     try {
       const tid = tgUser.id.toString();
-      setDebugInfo(`TID: ${tid}`);
       const { data, error } = await supabase.from('customers').select('bonuses').eq('tg_id', tid).single();
       if (data) {
         setBonuses(data.bonuses || 0);
@@ -122,7 +117,7 @@ export default function Home() {
       display: 'flex', flexDirection: 'column', background: '#05050f'
     }}>
       <Header 
-        cartCount={cartTotalItems} bonuses={bonuses} debugInfo={debugInfo}
+        cartCount={cartTotalItems} bonuses={bonuses}
         onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)} 
         onOpenHistory={() => setIsHistoryOpen(true)}
         onSearch={setSearchQuery}
