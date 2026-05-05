@@ -128,26 +128,29 @@ export default function Storefront({ addToCart, searchQuery }) {
                   {toy.name}
                 </h3>
                 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                     {toy.discount > 0 && (
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through', fontWeight: 700, marginBottom: -1 }}>
+                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through', fontWeight: 700, marginBottom: -1 }}>
                         {toy.price}₴
                       </span>
                     )}
-                    <span style={{ fontSize: 24, fontWeight: 950, color: '#f97316', letterSpacing: '-0.02em', lineHeight: 1 }}>
-                      {finalPrice}<span style={{ fontSize: 14, marginLeft: 2, opacity: 0.8 }}>₴</span>
+                    <span style={{ 
+                      fontSize: 21, fontWeight: 950, color: '#f97316', 
+                      letterSpacing: '-0.02em', lineHeight: 1,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                    }}>
+                      {finalPrice}<span style={{ fontSize: 13, marginLeft: 1, opacity: 0.8 }}>₴</span>
                     </span>
                   </div>
                   
-                  {/* PRETTIER ADD BUTTON */}
                   <button 
                     onClick={() => addToCart(toy)}
                     style={{
-                      width: 46, height: 46, borderRadius: 18, border: 'none', cursor: 'pointer',
+                      width: 42, height: 42, borderRadius: 16, border: 'none', cursor: 'pointer',
                       background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', 
+                      color: '#fff', flexShrink: 0,
                       boxShadow: '0 6px 15px rgba(124,58,237,0.4), inset 0 2px 4px rgba(255,255,255,0.2)',
                       transition: 'all 0.2s',
                       position: 'relative',
@@ -155,7 +158,7 @@ export default function Storefront({ addToCart, searchQuery }) {
                     }}
                     className="active:scale-90 hover:brightness-110"
                   >
-                    <Plus size={26} strokeWidth={3} />
+                    <Plus size={24} strokeWidth={3} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(255,255,255,0.1), transparent)', pointerEvents: 'none' }} />
                   </button>
                 </div>
