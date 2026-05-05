@@ -73,8 +73,8 @@ export default function Storefront({ addToCart, searchQuery }) {
       {/* Product Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-        gap: 16,
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '12px',
         justifyItems: 'center'
       }}>
         {filtered.map((toy) => {
