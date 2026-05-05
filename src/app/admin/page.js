@@ -598,9 +598,14 @@ export default function AdminPanel() {
             border: '1px solid rgba(255,255,255,0.1)', padding: 40, boxShadow: '0 32px 64px rgba(0,0,0,0.5)',
           }}>
             <h3 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Керування бонусами</h3>
-            <p style={{ fontSize: 14, color: '#6b6b8a', marginBottom: 32 }}>
-              Клієнт: <span style={{ color: '#fff', fontWeight: 800 }}>{bonusModal.user?.first_name || bonusModal.user?.name}</span>
-            </p>
+            <div style={{ marginBottom: 32 }}>
+              <p style={{ fontSize: 14, color: '#6b6b8a', margin: 0 }}>
+                Клієнт: <span style={{ color: '#fff', fontWeight: 800 }}>{bonusModal.user?.first_name} {bonusModal.user?.last_name || ''}</span>
+              </p>
+              <p style={{ fontSize: 14, color: '#6b6b8a', margin: '4px 0 0 0' }}>
+                Поточний баланс: <span style={{ color: '#f59e0b', fontWeight: 900 }}>{bonusModal.user?.bonuses || 0} ₴</span>
+              </p>
+            </div>
 
             <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.03)', padding: 6, borderRadius: 16, marginBottom: 24 }}>
               <button 
