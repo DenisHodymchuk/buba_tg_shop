@@ -36,13 +36,27 @@ export default function AdminPanel() {
     setLoading(true);
     if (!supabase) return;
 
-    const { data: p } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    const { data: c } = await supabase.from('customers').select('*').order('created_at', { ascending: false });
-    const { data: o } = await supabase.from('orders').select('*, customer:customers(*)').order('created_at', { ascending: false });
+    try {
+      const { data: p } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      const { data: c } = await supabase.from('customers').select('*').order('created_at', { ascending: false });
+      
+      // Спробуємо отримати замовлення з приєднаними клієнтами
+      const { data: o } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
 
-    if (p) setProducts(p);
-    if (c) setCustomers(c);
-    if (o) setOrders(o);
+      if (p) setProducts(p);
+      if (c) setCustomers(c);
+      
+      if (o && c) {
+        // Ручне об'єднання, якщо Supabase join не спрацював через відсутність FK
+        const ordersWithCustomers = o.map(order => ({
+          ...order,
+          customer: c.find(cust => cust.tg_id.toString() === order.user_id?.toString())
+        }));
+        setOrders(ordersWithCustomers);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
     setLoading(false);
   }
 
@@ -175,7 +189,7 @@ export default function AdminPanel() {
                 <h3 style={{ fontSize: 18, fontWeight: 900, marginBottom: 8 }}>{p.name}</h3>
                 <div style={{ fontSize: 24, fontWeight: 900, color: '#f97316', marginBottom: 24 }}>{p.price}₴</div>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button onClick={() => handleEdit(p)} style={{ flex: 1, padding: '12px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer', fontWeight: 800 }}>РЕДАГУВАТИ</button>
+                  <button onClick={() => handleEdit(p)} style={{ flex: 1, padding: '12px', borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', cursor: '#fff', fontWeight: 800 }}>РЕДАГУВАТИ</button>
                   <button onClick={() => handleDelete(p.id)} style={{ width: 50, borderRadius: 14, background: 'rgba(239,68,68,0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={20} /></button>
                 </div>
               </div>
@@ -234,7 +248,7 @@ export default function AdminPanel() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
                   <div>
                     <div style={{ fontSize: 12, color: '#6b6b8a', marginBottom: 4 }}>ЗАМОВЛЕННЯ #{o.id.slice(0, 8)}</div>
-                    <div style={{ fontSize: 18, fontWeight: 900 }}>{o.customer?.first_name} (@{o.customer?.tg_id})</div>
+                    <div style={{ fontSize: 18, fontWeight: 900 }}>{o.customer?.first_name || 'Клієнт'} (@{o.customer?.tg_id || o.user_id})</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 24, fontWeight: 900, color: '#22c55e' }}>{o.total_price}₴</div>
