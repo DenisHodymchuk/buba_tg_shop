@@ -103,7 +103,7 @@ export default function Storefront({ addToCart, searchQuery }) {
                   </div>
                 )}
 
-                {/* Discount Tag - MOVED TO TOP RIGHT */}
+                {/* Discount Tag */}
                 {toy.discount > 0 && (
                   <div style={{
                     position: 'absolute', top: 12, right: 12,
@@ -134,18 +134,23 @@ export default function Storefront({ addToCart, searchQuery }) {
                     </span>
                   </div>
                   
+                  {/* PRETTIER ADD BUTTON */}
                   <button 
                     onClick={() => addToCart(toy)}
                     style={{
-                      width: 44, height: 44, borderRadius: 16, border: 'none', cursor: 'pointer',
+                      width: 46, height: 46, borderRadius: 18, border: 'none', cursor: 'pointer',
                       background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', boxShadow: '0 8px 20px rgba(124,58,237,0.4)',
-                      transition: 'all 0.2s'
+                      color: '#fff', 
+                      boxShadow: '0 6px 15px rgba(124,58,237,0.4), inset 0 2px 4px rgba(255,255,255,0.2)',
+                      transition: 'all 0.2s',
+                      position: 'relative',
+                      overflow: 'hidden'
                     }}
-                    className="active:scale-90"
+                    className="active:scale-90 hover:brightness-110"
                   >
-                    <Plus size={24} />
+                    <Plus size={26} strokeWidth={3} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(255,255,255,0.1), transparent)', pointerEvents: 'none' }} />
                   </button>
                 </div>
               </div>
