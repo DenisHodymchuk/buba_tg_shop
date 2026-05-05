@@ -11,6 +11,8 @@ export const metadata = {
   description: "Преміальні 3D іграшки в Telegram",
 };
 
+export default function RootLayout({ children }) {
+  return (
     <html lang="uk" className="h-full antialiased" suppressHydrationWarning>
       <body className={`${geist.className} min-h-full flex flex-col`} suppressHydrationWarning>
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="afterInteractive" />
