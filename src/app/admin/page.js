@@ -633,7 +633,14 @@ export default function AdminPanel() {
                   </div>
 
                   <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Безпека</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                      <label style={{ fontSize: 10, fontWeight: 900, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Безпека</label>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {['Харчовий', 'Безпечний', 'Еко', '3+ роки'].map(s => (
+                          <button key={s} type="button" onClick={() => setFormData({...formData, safety_info: s === 'Харчовий' ? 'Харчовий пластик' : s === 'Еко' ? 'Еко-матеріал' : s})} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 6, background: formData.safety_info.includes(s) ? '#22c55e' : 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', cursor: 'pointer' }}>{s}</button>
+                        ))}
+                      </div>
+                    </div>
                     <input type="text" value={formData.safety_info} onChange={e => setFormData({...formData, safety_info: e.target.value})} placeholder="напр. Харчовий пластик" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '14px 16px', color: '#fff', outline: 'none', fontSize: 13, width: '100%' }} />
                   </div>
                 </div>
