@@ -49,14 +49,14 @@ export default function Storefront({ addToCart, searchQuery }) {
 
   return (
     <section style={{ padding: '0 16px 60px', width: '100%', position: 'relative', zIndex: 10 }}>
-      {/* Categories */}
+      {/* Categories Bar */}
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '20px 0 24px', scrollbarWidth: 'none' }}>
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
             style={{
-              whiteSpace: 'nowrap', padding: '10px 20px', borderRadius: 16,
+              whiteSpace: 'nowrap', padding: '10px 22px', borderRadius: 16,
               fontSize: 12, fontWeight: 800, cursor: 'pointer',
               border: activeCategory === cat ? 'none' : '1px solid rgba(255,255,255,0.06)',
               background: activeCategory === cat ? 'linear-gradient(135deg, #7c3aed, #ec4899)' : 'rgba(255,255,255,0.02)',
@@ -70,7 +70,7 @@ export default function Storefront({ addToCart, searchQuery }) {
         ))}
       </div>
 
-      {/* Grid */}
+      {/* Product Grid */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
@@ -81,14 +81,14 @@ export default function Storefront({ addToCart, searchQuery }) {
           const finalPrice = (toy.price * (1 - (toy.discount || 0) / 100)).toFixed(0);
           return (
             <div key={toy.id} style={{ 
-              display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.01)', 
-              borderRadius: 28, padding: 10, border: '1px solid rgba(255,255,255,0.03)',
+              display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.02)', 
+              borderRadius: 32, padding: 10, border: '1px solid rgba(255,255,255,0.04)',
               width: '100%', maxWidth: 240, position: 'relative',
               backdropFilter: 'blur(10px)'
             }}>
               {/* Badge: Top Right Pill */}
               <div style={{
-                position: 'absolute', top: 16, right: 16, zIndex: 10,
+                position: 'absolute', top: 14, right: 14, zIndex: 10,
                 padding: '4px 10px', borderRadius: 20, fontSize: 9, fontWeight: 900, 
                 textTransform: 'uppercase', color: '#fff',
                 background: toy.status === 'in_stock' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)',
@@ -100,7 +100,7 @@ export default function Storefront({ addToCart, searchQuery }) {
               </div>
 
               {/* Image Container */}
-              <div style={{ position: 'relative', aspectRatio: '1', background: 'rgba(255,255,255,0.02)', borderRadius: 22, overflow: 'hidden', marginBottom: 14 }}>
+              <div style={{ position: 'relative', aspectRatio: '1', background: 'rgba(255,255,255,0.03)', borderRadius: 24, overflow: 'hidden', marginBottom: 12 }}>
                 {toy.model_3d ? (
                   <model-viewer
                     src={toy.model_3d} alt={toy.name}
@@ -120,8 +120,8 @@ export default function Storefront({ addToCart, searchQuery }) {
                 {toy.discount > 0 && (
                   <div style={{
                     position: 'absolute', bottom: 10, left: 10,
-                    background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 900,
-                    padding: '2px 8px', borderRadius: 8, boxShadow: '0 4px 10px rgba(239,68,68,0.3)'
+                    background: 'linear-gradient(135deg, #ef4444, #f97316)', color: '#fff', fontSize: 10, fontWeight: 900,
+                    padding: '3px 10px', borderRadius: 10, boxShadow: '0 4px 12px rgba(239,68,68,0.4)'
                   }}>
                     -{toy.discount}%
                   </div>
@@ -129,35 +129,35 @@ export default function Storefront({ addToCart, searchQuery }) {
               </div>
 
               {/* Info Section */}
-              <div style={{ padding: '0 4px 6px' }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.2, marginBottom: 12, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: 34, opacity: 0.9 }}>
+              <div style={{ padding: '0 4px 4px' }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 10, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
                   {toy.name}
                 </h3>
                 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     {toy.discount > 0 && (
-                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', textDecoration: 'line-through', fontWeight: 600, marginBottom: -2 }}>
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through', fontWeight: 700, marginBottom: -1 }}>
                         {toy.price}₴
                       </span>
                     )}
-                    <span style={{ fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>
-                      {finalPrice}<span style={{ fontSize: 12, marginLeft: 2, color: '#7c3aed' }}>₴</span>
+                    <span style={{ fontSize: 24, fontWeight: 950, color: '#f97316', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                      {finalPrice}<span style={{ fontSize: 14, marginLeft: 2, opacity: 0.8 }}>₴</span>
                     </span>
                   </div>
                   
                   <button 
                     onClick={() => addToCart(toy)}
                     style={{
-                      width: 40, height: 40, borderRadius: 14, border: 'none', cursor: 'pointer',
+                      width: 44, height: 44, borderRadius: 16, border: 'none', cursor: 'pointer',
                       background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', boxShadow: '0 8px 16px rgba(124,58,237,0.3)',
+                      color: '#fff', boxShadow: '0 8px 20px rgba(124,58,237,0.4)',
                       transition: 'all 0.2s'
                     }}
                     className="active:scale-90"
                   >
-                    <Plus size={22} />
+                    <Plus size={24} />
                   </button>
                 </div>
               </div>
