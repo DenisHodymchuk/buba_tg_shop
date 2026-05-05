@@ -227,6 +227,31 @@ export default function AdminPanel() {
     }
   }
 
+  async function handleGalleryUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!supabase) {
+      alert('Помилка: З\'єднання з базою даних не встановлено');
+      return;
+    }
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+      
+      const currentExtra = Array.isArray(formData.image_urls) ? formData.image_urls : [];
+      if (!formData.image_url) {
+        setFormData({...formData, image_url: publicUrl});
+      } else {
+        setFormData({...formData, image_urls: [...currentExtra, publicUrl]});
+      }
+    } catch (error) {
+      alert('Помилка: ' + error.message);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -564,20 +589,48 @@ export default function AdminPanel() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Галерея фотографій</label>
                   
-                  <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     <input 
                       type="text" 
                       value={newPhotoUrl}
                       onChange={(e) => setNewPhotoUrl(e.target.value)}
-                      placeholder="Вставте URL нового фото..." 
-                      style={{ flex: 1, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', color: '#fff', outline: 'none', fontSize: 13 }} 
+                      placeholder="Вставте URL або оберіть файл..." 
+                      style={{ flex: 1, minWidth: 180, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', color: '#fff', outline: 'none', fontSize: 13 }} 
                     />
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const url = newPhotoUrl.trim();
-                        if (url) {
-                          const currentExtra = Array.isArray(formData.image_urls) ? formData.image_urls : [];
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const url = newPhotoUrl.trim();
+                          if (url) {
+                            const currentExtra = Array.isArray(formData.image_urls) ? formData.image_urls : [];
+                            if (!formData.image_url) {
+                              setFormData({...formData, image_url: url});
+                            } else {
+                              setFormData({...formData, image_urls: [...currentExtra, url]});
+                            }
+                            setNewPhotoUrl('');
+                          }
+                        }}
+                        style={{ padding: '0 16px', height: 44, borderRadius: 14, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: 11 }}
+                      >
+                        ДОДАТИ
+                      </button>
+
+                      <input 
+                        type="file" id="gallery-file-upload" accept="image/*" hidden 
+                        onChange={handleGalleryUpload}
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => document.getElementById('gallery-file-upload').click()}
+                        style={{ padding: '0 16px', height: 44, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 800, cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <Upload size={14} /> ФАЙЛ
+                      </button>
+                    </div>
+                  </div>
+                const currentExtra = Array.isArray(formData.image_urls) ? formData.image_urls : [];
                           if (!formData.image_url) {
                             setFormData({...formData, image_url: url});
                           } else {
