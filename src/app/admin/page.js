@@ -22,7 +22,9 @@ export default function AdminPanel() {
   const [bonusModal, setBonusModal] = useState({ open: false, user: null, amount: '100', mode: 'add' });
 
   const [formData, setFormData] = useState({
-    name: '', description: '', price: '', discount: 0, status: 'in_stock', model_3d: '', image_url: '', category: ''
+    name: '', description: '', price: '', discount: 0, status: 'in_stock', 
+    model_3d: '', image_url: '', category: '',
+    plastic_type: '', safety_info: '', weight: '', color: ''
   });
 
   useEffect(() => {
@@ -584,6 +586,25 @@ export default function AdminPanel() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Категорія</label>
                   <input type="text" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Матеріал</label>
+                    <input type="text" value={formData.plastic_type} onChange={e => setFormData({...formData, plastic_type: e.target.value})} placeholder="напр. PLA Пластик" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 12 }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Колір</label>
+                    <input type="text" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} placeholder="напр. Веселковий" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 12 }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Вага</label>
+                    <input type="text" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} placeholder="напр. 150г" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 12 }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Безпека</label>
+                    <input type="text" value={formData.safety_info} onChange={e => setFormData({...formData, safety_info: e.target.value})} placeholder="напр. Харчовий пластик" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 12 }} />
+                  </div>
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
