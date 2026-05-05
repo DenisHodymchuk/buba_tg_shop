@@ -19,25 +19,28 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== 'undefined' && window?.Telegram?.WebApp) {
       const webApp = window.Telegram.WebApp;
-      try {
-        webApp.ready();
-        webApp.expand();
-        webApp.MainButton.hide();
-
-        const tgUser = webApp.initDataUnsafe?.user;
-        if (tgUser) {
-          setUser(tgUser);
-          syncUser(tgUser);
+      webApp.ready();
+      webApp.expand();
+      
+      const checkUser = () => {
+        const u = webApp.initDataUnsafe?.user;
+        if (u) {
+          setUser(u);
+          syncUser(u);
+        } else {
+          setDebugInfo('No User...');
+          setTimeout(checkUser, 1000);
         }
-        const handleOpenHistory = () => setIsHistoryOpen(true);
-        window.addEventListener('openOrderHistory', handleOpenHistory);
+      };
+      checkUser();
 
-        return () => {
-          window.removeEventListener('openOrderHistory', handleOpenHistory);
-        };
-      } catch (e) {
-        console.warn('Error initializing Telegram WebApp:', e);
-      }
+      const h = () => setIsHistoryOpen(true);
+      window.addEventListener('openOrderHistory', h);
+      return () => {
+        window.removeEventListener('openOrderHistory', h);
+      };
+    } else {
+      setDebugInfo('No TG Object');
     }
   }, []);
 
