@@ -2,15 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Storefront from '@/components/Storefront';
-import Cart from '@/components/Cart';
 import CheckoutBar from '@/components/CheckoutBar';
 import Checkout from '@/components/Checkout';
 import { AnimatePresence } from 'framer-motion';
 
 export default function Home() {
   const [cart, setCart] = useState([]);
-  const [bonuses, setBonuses] = useState(150); // Наприклад, 150 монет
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [bonuses, setBonuses] = useState(150);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -25,24 +23,30 @@ export default function Home() {
         console.warn('Error initializing Telegram WebApp:', e);
       }
     }
-  }, [cart]);
+  }, []);
 
   const addToCart = (toy) => {
-    setCart([...cart, toy]);
+    // Переконуємося, що ціна - це число, щоб уникнути NaN
+    const itemToAdd = {
+      ...toy,
+      price: parseFloat(toy.price) || 0,
+      discount: parseFloat(toy.discount) || 0
+    };
+    setCart([...cart, itemToAdd]);
+    
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
   };
 
   const updateQuantity = (index, delta) => {
-    // В нашому випадку cart - це масив товарів, де кожен товар це окремий елемент.
-    // Якщо хочемо справжню кількість, треба групувати. Але поки просто додаємо/видаляємо.
     if (delta > 0) {
       setCart([...cart, cart[index]]);
     } else {
       const newCart = [...cart];
       newCart.splice(index, 1);
       setCart(newCart);
+      if (newCart.length === 0) setIsCheckoutOpen(false);
     }
   };
 
@@ -50,6 +54,7 @@ export default function Home() {
     const newCart = [...cart];
     newCart.splice(index, 1);
     setCart(newCart);
+    if (newCart.length === 0) setIsCheckoutOpen(false);
   };
 
   return (
@@ -59,21 +64,16 @@ export default function Home() {
     }}>
       <Header 
         cartCount={cart.length} bonuses={bonuses} 
-        onOpenCart={() => setIsCartOpen(true)} onSearch={setSearchQuery}
+        onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)} 
+        onSearch={setSearchQuery}
       />
 
-      <main style={{ flex: '1 0 auto', paddingBottom: 120 }}>
+      <main style={{ flex: '1 0 auto', paddingBottom: 140 }}>
         <Storefront addToCart={addToCart} searchQuery={searchQuery} />
       </main>
 
-      <Cart 
-        items={cart} isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} 
-        onRemove={removeFromCart} bonuses={bonuses}
-        onCheckout={() => { setIsCartOpen(false); setIsCheckoutOpen(true); }}
-      />
-
       <AnimatePresence>
-        {isCheckoutOpen && (
+        {isCheckoutOpen && cart.length > 0 && (
           <Checkout 
             items={cart} 
             bonuses={bonuses}
@@ -85,7 +85,7 @@ export default function Home() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {cart.length > 0 && !isCartOpen && !isCheckoutOpen && (
+        {cart.length > 0 && !isCheckoutOpen && (
           <CheckoutBar items={cart} onCheckout={() => setIsCheckoutOpen(true)} />
         )}
       </AnimatePresence>
