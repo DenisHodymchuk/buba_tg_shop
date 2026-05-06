@@ -14,7 +14,6 @@ export default function Home() {
   const [bonuses, setBonuses] = useState(0);
   const [user, setUser] = useState(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImgIndex, setActiveImgIndex] = useState(0);
@@ -119,7 +118,7 @@ export default function Home() {
       <Header 
         cartCount={cartTotalItems} bonuses={bonuses}
         onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)} 
-        onOpenHistory={() => setIsHistoryOpen(true)}
+        onOpenHistory={() => {}} 
         onSearch={setSearchQuery}
       />
 
@@ -131,9 +130,6 @@ export default function Home() {
         />
       </main>
 
-      <AnimatePresence>
-        {isHistoryOpen && <OrderHistory onClose={() => setIsHistoryOpen(false)} />}
-      </AnimatePresence>
 
       <AnimatePresence>
         {isCheckoutOpen && (

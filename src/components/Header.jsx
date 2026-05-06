@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { ShoppingCart, Award, Search, Box, Clock, User } from 'lucide-react';
+import { ShoppingCart, Award, Search, Box, User } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, onSearch }) {
@@ -66,19 +66,6 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
             </button>
           </Link>
 
-          {/* History Button */}
-          <button 
-            onClick={onOpenHistory}
-            style={{
-              width: 48, height: 48, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', cursor: 'pointer', transition: 'all 0.2s'
-            }}
-            className="hover:bg-white/[0.05] hover:scale-105 active:scale-95"
-          >
-            <Clock size={20} />
-          </button>
-          
           {/* Cart Button */}
           <button 
             onClick={onOpenCart}
