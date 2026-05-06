@@ -146,12 +146,38 @@ export default function AdminPanel() {
   async function updateOrderStatus(orderId, newStatus) {
     if (!supabase) return;
     try {
+      const order = orders.find(o => o.id === orderId);
+      
       const { error } = await supabase
         .from('orders')
         .update({ status: newStatus })
         .eq('id', orderId);
       
       if (error) throw error;
+
+      // Нарахування кешбеку 5% при завершенні замовлення
+      if (newStatus === 'completed' && order.status !== 'completed' && order.customer_id) {
+        const cashback = Math.floor(order.total * 0.05);
+        if (cashback > 0) {
+          const { data: customer } = await supabase
+            .from('customers')
+            .select('bonuses')
+            .eq('id', order.customer_id)
+            .single();
+          
+          if (customer) {
+            const newBalance = (customer.bonuses || 0) + cashback;
+            await supabase
+              .from('customers')
+              .update({ bonuses: newBalance })
+              .eq('id', order.customer_id);
+            
+            // Оновлюємо список користувачів, щоб бачити зміни
+            fetchUsers();
+          }
+        }
+      }
+      
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     } catch (e) {
       alert('Помилка оновлення статусу: ' + e.message);

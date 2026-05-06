@@ -135,16 +135,46 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
     }
 
     try {
+      let customerId = null;
+      const tgUser = typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user : null;
+
+      // 1. Отримуємо або створюємо клієнта
+      if (tgUser) {
+        const { data: existingCust } = await supabase
+          .from('customers')
+          .select('id, bonuses')
+          .eq('tg_id', tgUser.id.toString())
+          .single();
+
+        const bonusesToDeduct = useBonuses ? bonusDiscount : 0;
+        const newBonusBalance = existingCust ? Math.max(0, (existingCust.bonuses || 0) - bonusesToDeduct) : 0;
+
+        const { data: customerData, error: upsertError } = await supabase.from('customers').upsert({
+          tg_id: tgUser.id.toString(),
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone,
+          bonuses: newBonusBalance,
+          last_login: new Date().toISOString()
+        }, { onConflict: 'tg_id' }).select().single();
+        
+        if (customerData) customerId = customerData.id;
+        if (upsertError) console.error('Customer upsert error:', upsertError);
+      }
+
+      // 2. Створюємо замовлення
       const { data, error } = await supabase
         .from('orders')
         .insert([{
           total: total,
           status: 'new',
+          customer_id: customerId,
           shipping_method: deliveryMethod,
           payment_status: paymentMethod === 'online' ? 'pending' : 'cash',
           shipping_details: {
             ...formData,
-            bonus_used: useBonuses ? parseInt(bonusInput) || 0 : 0,
+            tg_id: tgUser?.id?.toString(),
+            bonus_used: useBonuses ? bonusDiscount : 0,
             items: items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1 }))
           },
           order_number: newOrderNumber
@@ -152,21 +182,6 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         .select();
 
       if (error) throw error;
-
-      // Оновлюємо профіль користувача (прив'язуємо телефон до Telegram ID)
-      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user) {
-        const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-        const { error: upsertError } = await supabase.from('customers').upsert({
-          tg_id: tgUser.id.toString(),
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          phone: formData.phone
-        }, { onConflict: 'tg_id' });
-        
-        if (upsertError) {
-          console.error('Profile upsert error:', upsertError);
-        }
-      }
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('buba_customer_phone', formData.phone);
