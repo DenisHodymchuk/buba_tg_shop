@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { novaPoshta } from '@/lib/novaposhta';
 import { Loader2 } from 'lucide-react';
 
-export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, bonuses }) {
+export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, bonuses, onOrderSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
@@ -172,6 +172,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         localStorage.setItem('buba_customer_phone', formData.phone);
       }
       setIsSuccess(true);
+      if (onOrderSuccess) onOrderSuccess();
     } catch (error) {
       console.error('Order error:', error);
       alert('Помилка при створенні замовлення. Спробуйте ще раз.');
@@ -221,7 +222,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <button 
             onClick={() => {
-              window.location.reload(); // Найпростіший спосіб скинути все
+              onClose();
             }}
             style={{ 
               width: '100%', padding: '18px', borderRadius: 20, border: 'none', 

@@ -136,11 +136,12 @@ export default function Home() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {isCheckoutOpen && cart.length > 0 && (
+        {isCheckoutOpen && (
           <Checkout 
             items={cart} bonuses={bonuses}
             onClose={() => setIsCheckoutOpen(false)} 
             onRemove={removeFromCart} onUpdateQuantity={updateQuantity}
+            onOrderSuccess={() => setCart([])}
           />
         )}
       </AnimatePresence>
