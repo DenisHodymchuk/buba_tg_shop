@@ -47,12 +47,7 @@ export async function GET() {
           body: JSON.stringify({
             chat_id: user.tg_id,
             text: message,
-            parse_mode: 'HTML',
-            reply_markup: {
-              inline_keyboard: [[
-                { text: "🛍️ ВІДКРИТИ МАГАЗИН", url: "https://t.me/bubalab_shop_bot/app" }
-              ]]
-            }
+            parse_mode: 'HTML'
           })
         });
 
