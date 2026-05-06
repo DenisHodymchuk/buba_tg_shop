@@ -371,7 +371,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           {bonuses === 0 && (
             <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(251,191,36,0.05)', borderRadius: 14, border: '1px dashed rgba(251,191,36,0.2)' }}>
               <p style={{ fontSize: 11, color: '#fbbf24', fontWeight: 700, lineHeight: 1.4, margin: 0 }}>
-                ✨ Купуйте іграшки та отримуйте кешбек монетами на наступні замовлення!
+                ✨ Купуйте вироби та отримуйте кешбек монетами на наступні замовлення!
               </p>
             </div>
           )}

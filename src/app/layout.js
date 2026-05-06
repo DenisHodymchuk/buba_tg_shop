@@ -7,8 +7,8 @@ const geist = Geist({
 });
 
 export const metadata = {
-  title: "3D Магазин Іграшок",
-  description: "Преміальні 3D іграшки в Telegram",
+  title: "BUBA STORE — Студія 3D Друку",
+  description: "Преміальні 3D вироби та аксесуари в Telegram",
 };
 
 export default function RootLayout({ children }) {

@@ -50,7 +50,7 @@ export default function Cart({ items, isOpen, onClose, onRemove, discount, bonus
                     <ShoppingBag size={36} className="text-[#4a4a6a]" />
                   </div>
                   <h3 className="text-base font-black text-white mb-1">Кошик порожній</h3>
-                  <p className="text-[#6b6b8a] text-xs mb-6">Оберіть іграшки з каталогу!</p>
+                  <p className="text-[#6b6b8a] text-xs mb-6">Оберіть вироби з каталогу!</p>
                   <button onClick={onClose} className="text-[#ec4899] font-bold text-sm flex items-center gap-2 hover:gap-3 transition-all">
                     До покупок <ArrowRight size={16} />
                   </button>
