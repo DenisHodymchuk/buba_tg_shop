@@ -67,48 +67,73 @@ export default function Home() {
           first_name: tgUser.first_name || 'Клієнт', 
           last_name: tgUser.last_name || ''
         }, { onConflict: 'tg_id' })
-        .select('bonuses')
+        .select('bonuses, cart_data')
         .single();
 
-      if (data) setBonuses(data.bonuses || 0);
+      if (data) {
+        setBonuses(data.bonuses || 0);
+        if (data.cart_data && data.cart_data.length > 0 && cart.length === 0) {
+          setCart(data.cart_data);
+        }
+      }
     } catch (e) {
       console.error('Full sync exception:', e);
     }
   }
 
+  // Sync Cart to Supabase
+  const syncCartToDB = async (newCart) => {
+    if (!user?.id) return;
+    try {
+      const tid = user.id.toString();
+      await supabase
+        .from('customers')
+        .update({ 
+          cart_data: newCart,
+          last_cart_activity: new Date().toISOString()
+        })
+        .eq('tg_id', tid);
+    } catch (e) {
+      console.error('Error syncing cart:', e);
+    }
+  };
+
   const addToCart = (toy) => {
+    let updated;
     const existingIndex = cart.findIndex(item => item.id === toy.id);
     if (existingIndex !== -1) {
-      const newCart = [...cart];
-      newCart[existingIndex] = { ...newCart[existingIndex], quantity: (newCart[existingIndex].quantity || 1) + 1 };
-      setCart(newCart);
+      updated = [...cart];
+      updated[existingIndex] = { ...updated[existingIndex], quantity: (updated[existingIndex].quantity || 1) + 1 };
     } else {
-      setCart([...cart, { ...toy, price: parseFloat(toy.price) || 0, discount: parseFloat(toy.discount) || 0, quantity: 1 }]);
+      updated = [...cart, { ...toy, price: parseFloat(toy.price) || 0, discount: parseFloat(toy.discount) || 0, quantity: 1 }];
     }
+    setCart(updated);
+    syncCartToDB(updated);
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
   };
 
   const updateQuantity = (index, delta) => {
-    const newCart = [...cart];
-    const item = newCart[index];
+    const updated = [...cart];
+    const item = updated[index];
     const newQty = (item.quantity || 1) + delta;
     if (newQty > 0) {
-      newCart[index] = { ...item, quantity: newQty };
-      setCart(newCart);
+      updated[index] = { ...item, quantity: newQty };
     } else {
-      newCart.splice(index, 1);
-      setCart(newCart);
-      if (newCart.length === 0) setIsCheckoutOpen(false);
+      updated.splice(index, 1);
     }
+    setCart(updated);
+    syncCartToDB(updated);
+    if (updated.length === 0) setIsCheckoutOpen(false);
   };
 
   const removeFromCart = (index) => {
-    const newCart = [...cart];
-    newCart.splice(index, 1);
-    setCart(newCart);
-    if (newCart.length === 0) setIsCheckoutOpen(false);
+    const updated = [...cart];
+    updated.splice(index, 1);
+    setCart(updated);
+    syncCartToDB(updated);
+    if (updated.length === 0) setIsCheckoutOpen(false);
   };
 
   const cartTotalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
@@ -137,7 +162,10 @@ export default function Home() {
             items={cart} bonuses={bonuses}
             onClose={() => setIsCheckoutOpen(false)} 
             onRemove={removeFromCart} onUpdateQuantity={updateQuantity}
-            onOrderSuccess={() => setCart([])}
+            onOrderSuccess={() => {
+              setCart([]);
+              syncCartToDB([]);
+            }}
           />
         )}
       </AnimatePresence>
