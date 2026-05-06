@@ -15,21 +15,24 @@ export async function GET() {
 
     const { data: allUsers, error } = await supabase
       .from('customers')
-      .select('tg_id, cart_data, first_name, allow_notifications, last_cart_activity');
+      .select('tg_id, cart_data, first_name, allow_notifications, last_cart_activity, last_abandoned_notified_at');
 
     if (error) throw error;
 
-    const threshold = 15 * 1000; // 15 seconds (TEST MODE)
+    const threshold = 30 * 60 * 1000; // 30 minutes
     const now = Date.now();
 
     const toNotify = (allUsers || []).filter(c => {
       const lastActivity = c.last_cart_activity ? new Date(c.last_cart_activity).getTime() : 0;
+      const lastNotified = c.last_abandoned_notified_at ? new Date(c.last_abandoned_notified_at).getTime() : 0;
+      
       return (
         c.allow_notifications === true &&
         Array.isArray(c.cart_data) && 
         c.cart_data.length > 0 &&
         c.tg_id &&
-        (now - lastActivity) > threshold
+        (now - lastActivity) > threshold && // Passed 30 mins since activity
+        lastActivity > lastNotified // New activity since last notification
       );
     });
 
