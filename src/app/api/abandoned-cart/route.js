@@ -19,7 +19,7 @@ export async function GET() {
 
     if (error) throw error;
 
-    const threshold = 60 * 1000; // 1 minute
+    const threshold = 30 * 60 * 1000; // 30 minutes
     const now = Date.now();
 
     const toNotify = (allUsers || []).filter(c => {
