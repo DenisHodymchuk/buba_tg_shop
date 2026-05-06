@@ -333,23 +333,34 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 900, color: '#fff' }}>Використати бонуси</div>
-                <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 700 }}>У вас {bonuses} монет (1 монета = 1 гривня)</div>
+                <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 700 }}>
+                  {bonuses > 0 ? `У вас ${bonuses} монет (1 монета = 1 гривня)` : 'Наразі у вас немає бонусних монет'}
+                </div>
               </div>
             </div>
-            <button 
-              onClick={() => {
-                setUseBonuses(!useBonuses);
-                if (!useBonuses) setBonusInput(Math.min(bonuses, subtotal).toString());
-              }}
-              style={{
-                width: 44, height: 24, borderRadius: 12, background: useBonuses ? '#7c3aed' : 'rgba(255,255,255,0.05)',
-                border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s'
-              }}
-            >
-              <div style={{ position: 'absolute', top: 3, left: useBonuses ? 23 : 3, width: 18, height: 18, background: '#fff', borderRadius: '50%', transition: 'all 0.3s' }} />
-            </button>
+            {bonuses > 0 && (
+              <button 
+                onClick={() => {
+                  setUseBonuses(!useBonuses);
+                  if (!useBonuses) setBonusInput(Math.min(bonuses, subtotal).toString());
+                }}
+                style={{
+                  width: 44, height: 24, borderRadius: 12, background: useBonuses ? '#7c3aed' : 'rgba(255,255,255,0.05)',
+                  border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s'
+                }}
+              >
+                <div style={{ position: 'absolute', top: 3, left: useBonuses ? 23 : 3, width: 18, height: 18, background: '#fff', borderRadius: '50%', transition: 'all 0.3s' }} />
+              </button>
+            )}
           </div>
-          {useBonuses && (
+          {bonuses === 0 && (
+            <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(251,191,36,0.05)', borderRadius: 14, border: '1px dashed rgba(251,191,36,0.2)' }}>
+              <p style={{ fontSize: 11, color: '#fbbf24', fontWeight: 700, lineHeight: 1.4, margin: 0 }}>
+                ✨ Купуйте іграшки та отримуйте кешбек монетами на наступні замовлення!
+              </p>
+            </div>
+          )}
+          {bonuses > 0 && useBonuses && (
             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ position: 'relative' }}>
                 <input 
