@@ -172,6 +172,7 @@ export default function Profile() {
         <p style={{ margin: '2px 0' }}>Internal ID: {user?.id || 'null'}</p>
         <p style={{ margin: '2px 0' }}>Telegram ID: {typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Not in TMA' : 'Loading...'}</p>
         <p style={{ margin: '2px 0' }}>Notifications: {user?.allow_notifications ? 'ENABLED' : 'DISABLED'}</p>
+        <p style={{ margin: '2px 0' }}>Cart Items in DB: {Array.isArray(user?.cart_data) ? user.cart_data.length : 0}</p>
       </div>
     </div>
   );
