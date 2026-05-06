@@ -19,12 +19,19 @@ export async function GET() {
 
     if (error) throw error;
 
-    const toNotify = (allUsers || []).filter(c => 
-      c.allow_notifications === true &&
-      Array.isArray(c.cart_data) && 
-      c.cart_data.length > 0 &&
-      c.tg_id
-    );
+    const threshold = 60 * 1000; // 1 minute
+    const now = Date.now();
+
+    const toNotify = (allUsers || []).filter(c => {
+      const lastActivity = c.last_cart_activity ? new Date(c.last_cart_activity).getTime() : 0;
+      return (
+        c.allow_notifications === true &&
+        Array.isArray(c.cart_data) && 
+        c.cart_data.length > 0 &&
+        c.tg_id &&
+        (now - lastActivity) > threshold
+      );
+    });
 
     let sentCount = 0;
     const message = `🛒 <b>Ваш кошик сумує! ✨</b>\n\nВи забули свої товари в магазині. Поверніться у додаток, щоб завершити покупку та отримати своє замовлення!`;
@@ -60,10 +67,8 @@ export async function GET() {
 
     return NextResponse.json({ 
       success: true, 
-      total_in_db: allUsers?.length || 0,
-      to_notify: toNotify.length,
-      sent: sentCount,
-      debug_users: allUsers
+      processed: toNotify.length,
+      sent: sentCount 
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
