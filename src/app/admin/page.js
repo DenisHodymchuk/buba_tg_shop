@@ -26,6 +26,7 @@ export default function AdminPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Всі');
   const [bonusModal, setBonusModal] = useState({ open: false, user: null, amount: '100', mode: 'add' });
+  const [modal, setModal] = useState({ open: false, title: '', message: '', onConfirm: null, type: 'info' });
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
 
@@ -135,14 +136,23 @@ export default function AdminPanel() {
   }
 
   async function deleteUser(phone) {
-    if (!supabase || !confirm('Видалити цього клієнта?')) return;
-    try {
-      const { error } = await supabase.from('profiles').delete().eq('phone', phone);
-      if (error) throw error;
-      fetchUsers();
-    } catch (e) {
-      alert('Помилка: ' + e.message);
-    }
+    if (!supabase) return;
+    setModal({
+      open: true,
+      title: 'Видалення клієнта',
+      message: 'Ви впевнені, що хочете видалити цього клієнта? Цю дію неможливо скасувати.',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('customers').delete().eq('phone', phone);
+          if (error) throw error;
+          fetchUsers();
+          setModal({ ...modal, open: false });
+        } catch (e) {
+          setModal({ open: true, title: 'Помилка', message: e.message, type: 'danger' });
+        }
+      }
+    });
   }
 
   async function updateOrderStatus(orderId, newStatus) {
@@ -188,28 +198,36 @@ export default function AdminPanel() {
 
   async function handleSendBroadcast() {
     if (!broadcastMessage.trim()) return;
-    if (!confirm(`Відправити це повідомлення всім підписаним клієнтам?`)) return;
-
-    setIsSendingBroadcast(true);
-    try {
-      const response = await fetch('/api/broadcast', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: broadcastMessage })
-      });
-      
-      const result = await response.json();
-      if (response.ok) {
-        alert(`Розсилку завершено! Відправлено: ${result.sent_count}`);
-        setBroadcastMessage('');
-      } else {
-        throw new Error(result.error || 'Помилка розсилки');
+    
+    setModal({
+      open: true,
+      title: 'Підтвердження розсилки 📣',
+      message: `Ви збираєтесь надіслати повідомлення всім підписаним клієнтам (${users.filter(u => u.allow_notifications).length} осіб). Продовжити?`,
+      type: 'confirm',
+      onConfirm: async () => {
+        setIsSendingBroadcast(true);
+        setModal({ ...modal, open: false });
+        try {
+          const response = await fetch('/api/broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: broadcastMessage })
+          });
+          
+          const result = await response.json();
+          if (response.ok) {
+            setModal({ open: true, title: 'Успіх! ✨', message: `Розсилку завершено! Відправлено: ${result.sent_count}`, type: 'success' });
+            setBroadcastMessage('');
+          } else {
+            throw new Error(result.error || 'Помилка розсилки');
+          }
+        } catch (e) {
+          setModal({ open: true, title: 'Помилка', message: e.message, type: 'danger' });
+        } finally {
+          setIsSendingBroadcast(false);
+        }
       }
-    } catch (e) {
-      alert('Помилка: ' + e.message);
-    } finally {
-      setIsSendingBroadcast(false);
-    }
+    });
   }
 
   async function fetchOrders() {
@@ -947,6 +965,58 @@ export default function AdminPanel() {
                 >
                   ВИДАЛИТИ
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      {/* Custom Global Modal */}
+      <AnimatePresence>
+        {modal.open && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setModal({ ...modal, open: false })}
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              style={{ 
+                position: 'relative', width: '100%', maxWidth: 400, background: '#0a192f', borderRadius: 32, 
+                border: '1px solid rgba(255,255,255,0.1)', padding: 40, textAlign: 'center',
+                boxShadow: '0 32px 64px rgba(0,0,0,0.5)'
+              }}
+            >
+              <div style={{ 
+                width: 64, height: 64, borderRadius: 20, margin: '0 auto 24px',
+                background: modal.type === 'danger' ? 'rgba(239,68,68,0.1)' : modal.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(124,58,237,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: modal.type === 'danger' ? '#ef4444' : modal.type === 'success' ? '#22c55e' : '#7c3aed'
+              }}>
+                {modal.type === 'danger' ? <Trash2 size={32}/> : modal.type === 'success' ? <CheckCircle size={32}/> : <Bell size={32}/>}
+              </div>
+              
+              <h3 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 12 }}>{modal.title}</h3>
+              <p style={{ fontSize: 14, color: '#6b6b8a', lineHeight: 1.6, marginBottom: 32 }}>{modal.message}</p>
+              
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button 
+                  onClick={() => setModal({ ...modal, open: false })}
+                  style={{ flex: 1, padding: '14px', borderRadius: 16, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  СКАСУВАТИ
+                </button>
+                {modal.onConfirm && (
+                  <button 
+                    onClick={modal.onConfirm}
+                    style={{ 
+                      flex: 1, padding: '14px', borderRadius: 16, border: 'none', fontWeight: 900, cursor: 'pointer',
+                      background: modal.type === 'danger' ? '#ef4444' : 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                      color: '#fff'
+                    }}
+                  >
+                    ПІДТВЕРДИТИ
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>
