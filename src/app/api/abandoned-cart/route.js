@@ -20,11 +20,12 @@ export async function GET(request) {
     const thirtySecondsAgo = new Date(Date.now() - 30 * 1000).toISOString();
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
+    const { data: allUsers } = await supabase.from('customers').select('tg_id, first_name, allow_notifications, last_cart_activity, cart_data');
+
     const { data: candidates, error } = await supabase
       .from('customers')
       .select('tg_id, cart_data, first_name')
       .eq('allow_notifications', true)
-      .not('cart_data', 'is', null)
       .not('tg_id', 'is', null)
       .lt('last_cart_activity', thirtySecondsAgo)
       .or(`last_abandoned_notified_at.is.null,last_abandoned_notified_at.lt.${twentyFourHoursAgo}`);
@@ -32,7 +33,7 @@ export async function GET(request) {
     if (error) throw error;
 
     // Filter candidates who have actual items (not empty array)
-    const toNotify = candidates.filter(c => Array.isArray(c.cart_data) && c.cart_data.length > 0);
+    const toNotify = (candidates || []).filter(c => Array.isArray(c.cart_data) && c.cart_data.length > 0);
 
     let sentCount = 0;
     const message = `🛒 <b>Ваш кошик сумує!</b>\n\nВи забули свої товари в магазині. Поверніться у додаток, щоб завершити покупку та отримати своє замовлення!`;
@@ -71,8 +72,9 @@ export async function GET(request) {
 
     return NextResponse.json({ 
       success: true, 
-      candidates_found: candidates.length,
-      notifications_sent: sentCount 
+      candidates_found: candidates?.length || 0,
+      notifications_sent: sentCount,
+      debug_all_users: allUsers
     });
   } catch (error) {
     console.error('Abandoned cart error:', error);
