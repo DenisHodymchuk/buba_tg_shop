@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
-import { ShoppingCart, Award, Search, Box, Clock } from 'lucide-react';
+import { ShoppingCart, Award, Search, Box, Clock, User } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, onSearch }) {
   return (
@@ -44,10 +45,26 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
         {/* Right Side Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {/* Balance */}
+          <Link href="/profile" style={{ textDecoration: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 16px', borderRadius: 14 }}>
               <Award size={16} style={{ color: '#fbbf24' }} />
               <span style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>{bonuses}</span>
             </div>
+          </Link>
+
+          {/* Profile Button */}
+          <Link href="/profile">
+            <button 
+              style={{
+                width: 48, height: 48, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', cursor: 'pointer', transition: 'all 0.2s'
+              }}
+              className="hover:bg-white/[0.05] hover:scale-105 active:scale-95"
+            >
+              <User size={20} />
+            </button>
+          </Link>
 
           {/* History Button */}
           <button 
