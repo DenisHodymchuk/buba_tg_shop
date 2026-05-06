@@ -13,20 +13,17 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000).toISOString();
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-    const { data: candidates, error } = await supabase
+    const { data: allUsers, error } = await supabase
       .from('customers')
-      .select('tg_id, cart_data, first_name')
-      .eq('allow_notifications', true)
-      .not('tg_id', 'is', null)
-      .or(`last_abandoned_notified_at.is.null,last_abandoned_notified_at.lt.${twentyFourHoursAgo}`);
+      .select('tg_id, cart_data, first_name, allow_notifications, last_cart_activity');
 
     if (error) throw error;
 
-    const toNotify = (candidates || []).filter(c => 
-      Array.isArray(c.cart_data) && c.cart_data.length > 0
+    const toNotify = (allUsers || []).filter(c => 
+      c.allow_notifications === true &&
+      Array.isArray(c.cart_data) && 
+      c.cart_data.length > 0 &&
+      c.tg_id
     );
 
     let sentCount = 0;
@@ -63,8 +60,10 @@ export async function GET() {
 
     return NextResponse.json({ 
       success: true, 
-      processed: toNotify.length,
-      sent: sentCount 
+      total_in_db: allUsers?.length || 0,
+      to_notify: toNotify.length,
+      sent: sentCount,
+      debug_users: allUsers
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
