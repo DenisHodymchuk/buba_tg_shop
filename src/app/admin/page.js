@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
-  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award
+  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,6 +26,8 @@ export default function AdminPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Всі');
   const [bonusModal, setBonusModal] = useState({ open: false, user: null, amount: '100', mode: 'add' });
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', discount: 0, status: 'in_stock', 
@@ -181,6 +183,32 @@ export default function AdminPanel() {
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     } catch (e) {
       alert('Помилка оновлення статусу: ' + e.message);
+    }
+  }
+
+  async function handleSendBroadcast() {
+    if (!broadcastMessage.trim()) return;
+    if (!confirm(`Відправити це повідомлення всім підписаним клієнтам?`)) return;
+
+    setIsSendingBroadcast(true);
+    try {
+      const response = await fetch('/api/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: broadcastMessage })
+      });
+      
+      const result = await response.json();
+      if (response.ok) {
+        alert(`Розсилку завершено! Відправлено: ${result.sent_count}`);
+        setBroadcastMessage('');
+      } else {
+        throw new Error(result.error || 'Помилка розсилки');
+      }
+    } catch (e) {
+      alert('Помилка: ' + e.message);
+    } finally {
+      setIsSendingBroadcast(false);
     }
   }
 
@@ -366,6 +394,7 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'products'} onClick={() => setActiveTab('products')} icon={<Package size={18} />} label="Товари" />
           <SidebarBtn active={activeTab === 'sales'} onClick={() => setActiveTab('sales')} icon={<ShoppingBag size={18} />} label="Замовлення" />
           <SidebarBtn active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<User size={18} />} label="Клієнти" />
+          <SidebarBtn active={activeTab === 'broadcast'} onClick={() => setActiveTab('broadcast')} icon={<Send size={18} />} label="Розсилка" />
           <SidebarBtn active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={18} />} label="Налаштування" />
         </nav>
       </aside>
@@ -591,6 +620,52 @@ export default function AdminPanel() {
                 </table>
               </div>
             </>
+          ) : activeTab === 'broadcast' ? (
+            <div style={{ maxWidth: 600 }}>
+               <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 32 }}>Нова розсилка 📣</h1>
+               
+               <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)', padding: 32 }}>
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase', marginBottom: 12 }}>Підписані клієнти</div>
+                    <div style={{ fontSize: 32, fontWeight: 950, color: '#7c3aed' }}>
+                      {users.filter(u => u.allow_notifications).length} <span style={{ fontSize: 14, color: '#4a4a6a' }}>осіб</span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 12 }}>Текст повідомлення</label>
+                    <textarea 
+                      value={broadcastMessage}
+                      onChange={(e) => setBroadcastMessage(e.target.value)}
+                      placeholder="Напишіть щось цікаве для ваших клієнтів..."
+                      style={{ 
+                        width: '100%', minHeight: 200, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 16, padding: 20, color: '#fff', fontSize: 14, outline: 'none', resize: 'none'
+                      }}
+                    />
+                  </div>
+
+                  <button 
+                    onClick={handleSendBroadcast}
+                    disabled={isSendingBroadcast || !broadcastMessage.trim()}
+                    style={{ 
+                      width: '100%', padding: '18px', borderRadius: 16, border: 'none', 
+                      background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff', fontWeight: 950,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                      opacity: (isSendingBroadcast || !broadcastMessage.trim()) ? 0.5 : 1,
+                      boxShadow: '0 10px 20px rgba(124,58,237,0.3)'
+                    }}
+                  >
+                    {isSendingBroadcast ? 'ВІДПРАВКА...' : <><Send size={18}/> ВІДПРАВИТИ ВСІМ</>}
+                  </button>
+               </div>
+               
+               <div style={{ marginTop: 24, padding: 16, background: 'rgba(59,130,246,0.05)', borderRadius: 16, border: '1px solid rgba(59,130,246,0.1)' }}>
+                 <p style={{ fontSize: 12, color: '#60a5fa', fontWeight: 700, margin: 0, lineHeight: 1.5 }}>
+                   💡 Порада: Використовуйте розсилки для анонсу нових виробів або спеціальних знижок. Це найкращий спосіб повернути клієнтів у ваш магазин!
+                 </p>
+               </div>
+            </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#4a4a6a' }}>
               Тут будуть налаштування магазину

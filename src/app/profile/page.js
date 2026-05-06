@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { User, Award, Clock, ChevronLeft } from 'lucide-react';
+import { User, Award, Clock, ChevronLeft, Bell, BellOff } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Profile() {
@@ -38,6 +38,22 @@ export default function Profile() {
     fetchUserData();
   }, []);
 
+  const toggleNotifications = async () => {
+    if (!user) return;
+    const newVal = !user.allow_notifications;
+    const { error } = await supabase
+      .from('customers')
+      .update({ allow_notifications: newVal })
+      .eq('id', user.id);
+    
+    if (!error) {
+      setUser({ ...user, allow_notifications: newVal });
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-text p-4">
       <header className="flex items-center gap-4 mb-8">
@@ -73,13 +89,32 @@ export default function Profile() {
             <div className="glass-card p-4 flex flex-col items-center text-center">
               <Award className="text-yellow-500 mb-2" size={24} />
               <div className="text-2xl font-bold">{user.bonuses}</div>
-              <div className="text-xs text-text-muted uppercase">Бонусні бали</div>
+              <div className="text-xs text-text-muted uppercase tracking-wider font-black">Бонуси</div>
             </div>
             <div className="glass-card p-4 flex flex-col items-center text-center">
               <Clock className="text-primary mb-2" size={24} />
               <div className="text-2xl font-bold">{orders.length}</div>
-              <div className="text-xs text-text-muted uppercase">Замовлень</div>
+              <div className="text-xs text-text-muted uppercase tracking-wider font-black">Замовлень</div>
             </div>
+          </div>
+
+          {/* Notifications Subscription */}
+          <div className="glass-card p-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${user.allow_notifications ? 'bg-primary/20 text-primary' : 'bg-white/5 text-text-muted'}`}>
+                {user.allow_notifications ? <Bell size={24} /> : <BellOff size={24} />}
+              </div>
+              <div>
+                <h3 className="font-bold">Сповіщення</h3>
+                <p className="text-xs text-text-muted">Новинки та акції в Telegram</p>
+              </div>
+            </div>
+            <button 
+              onClick={toggleNotifications}
+              className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${user.allow_notifications ? 'bg-primary' : 'bg-white/10'}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 ${user.allow_notifications ? 'left-7' : 'left-1'}`} />
+            </button>
           </div>
 
           {/* Orders Section */}
