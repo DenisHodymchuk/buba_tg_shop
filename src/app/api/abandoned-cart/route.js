@@ -21,7 +21,6 @@ export async function GET() {
       .select('tg_id, cart_data, first_name')
       .eq('allow_notifications', true)
       .not('tg_id', 'is', null)
-      .lt('last_cart_activity', thirtySecondsAgo)
       .or(`last_abandoned_notified_at.is.null,last_abandoned_notified_at.lt.${twentyFourHoursAgo}`);
 
     if (error) throw error;
