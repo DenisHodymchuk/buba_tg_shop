@@ -55,119 +55,107 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-white p-5 pb-10">
+    <div style={{ minHeight: '100vh', background: '#0a0a1a', color: '#fff', padding: '20px 16px', paddingBottom: 40, fontFamily: 'inherit' }}>
       {/* Header */}
-      <header className="flex items-center gap-4 mb-8">
-        <Link href="/" className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl border border-white/10 active:scale-95 transition-all">
-          <ChevronLeft size={20} />
+      <header style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
+            <ChevronLeft size={20} color="#fff" />
+          </div>
         </Link>
-        <h1 className="text-xl font-black tracking-tight">Особистий кабінет</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 900, margin: 0, letterSpacing: '-0.02em' }}>Особистий кабінет</h1>
       </header>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-[#6b6b8a] font-bold text-sm">Завантаження профілю...</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: 16 }}>
+          <div style={{ width: 32, height: 32, border: '3px solid #7c3aed', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          <p style={{ color: '#6b6b8a', fontWeight: 800, fontSize: 13 }}>Завантаження...</p>
         </div>
       ) : !user ? (
-        <div className="glass-card p-10 text-center flex flex-col items-center">
-          <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6">
-            <User size={40} className="text-[#4a4a6a]" />
-          </div>
-          <h2 className="text-lg font-black mb-2">Ви не авторизовані</h2>
-          <p className="text-[#6b6b8a] text-sm mb-8">Будь ласка, відкрийте додаток через Telegram, щоб отримати доступ до кабінету.</p>
-          <Link href="/" className="btn-gradient w-full text-center">ПОВЕРНУТИСЬ В МАГАЗИН</Link>
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 40, textAlign: 'center' }}>
+          <User size={48} color="#4a4a6a" style={{ marginBottom: 16 }} />
+          <h2 style={{ fontSize: 18, fontWeight: 900, marginBottom: 8 }}>Ви не авторизовані</h2>
+          <p style={{ color: '#6b6b8a', fontSize: 13, marginBottom: 24 }}>Увійдіть через Telegram для доступу</p>
+          <Link href="/" style={{ display: 'block', padding: 16, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', borderRadius: 16, color: '#fff', fontWeight: 900, textDecoration: 'none', fontSize: 13 }}>ПОВЕРНУТИСЬ</Link>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* User Info Card */}
-          <div className="glass-card p-6 flex items-center gap-5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -mr-10 -mt-10" />
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-2xl font-black shadow-lg shadow-primary/20">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* User Info */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 20, display: 'flex', alignItems: 'center', gap: 16, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ width: 64, height: 64, borderRadius: 18, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 900, boxShadow: '0 8px 16px rgba(124,58,237,0.2)' }}>
               {user.first_name?.[0]}
             </div>
-            <div className="relative z-10">
-              <h2 className="text-xl font-black leading-tight">{user.first_name} {user.last_name}</h2>
-              <p className="text-[#a78bfa] font-black text-xs uppercase tracking-widest mt-1">
-                @{user.username || (user.first_name?.toLowerCase() || 'user')}
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 900, margin: 0 }}>{user.first_name} {user.last_name}</h2>
+              <p style={{ fontSize: 12, fontWeight: 800, color: '#a78bfa', margin: '4px 0 0 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                @{user.username || user.first_name?.toLowerCase()}
               </p>
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="glass-card p-5 flex flex-col items-start relative overflow-hidden">
-              <div className="w-10 h-10 bg-yellow-500/10 rounded-xl flex items-center justify-center text-yellow-500 mb-4">
-                <Award size={24} />
-              </div>
-              <div className="text-3xl font-black mb-1">{user.bonuses}</div>
-              <div className="text-[10px] text-[#6b6b8a] uppercase font-black tracking-widest">Монет балансу</div>
+          {/* Stats Flex Grid */}
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 20 }}>
+              <Award size={20} color="#fbbf24" style={{ marginBottom: 12 }} />
+              <div style={{ fontSize: 28, fontWeight: 950, marginBottom: 4 }}>{user.bonuses}</div>
+              <div style={{ fontSize: 9, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>БОНУСИ</div>
             </div>
-            
-            <div className="glass-card p-5 flex flex-col items-start relative overflow-hidden">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-4">
-                <Clock size={24} />
-              </div>
-              <div className="text-3xl font-black mb-1">{orders.length}</div>
-              <div className="text-[10px] text-[#6b6b8a] uppercase font-black tracking-widest">Замовлень</div>
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 20 }}>
+              <Clock size={20} color="#7c3aed" style={{ marginBottom: 12 }} />
+              <div style={{ fontSize: 28, fontWeight: 950, marginBottom: 4 }}>{orders.length}</div>
+              <div style={{ fontSize: 9, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>ЗАМОВЛЕНЬ</div>
             </div>
           </div>
 
-          {/* Notifications Subscription */}
-          <div className="glass-card p-5 flex items-center justify-between border-dashed border-primary/30">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${user.allow_notifications ? 'bg-primary/20 text-primary' : 'bg-white/5 text-[#4a4a6a]'}`}>
-                {user.allow_notifications ? <Bell size={24} className="animate-pulse" /> : <BellOff size={24} />}
+          {/* Subscription */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 24, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: user.allow_notifications ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {user.allow_notifications ? <Bell size={20} color="#7c3aed" /> : <BellOff size={20} color="#4a4a6a" />}
               </div>
               <div>
-                <h3 className="font-black text-sm">Сповіщення</h3>
-                <p className="text-[10px] text-[#6b6b8a] font-bold">Новинки та акції в Telegram</p>
+                <h3 style={{ fontSize: 14, fontWeight: 900, margin: 0 }}>Сповіщення</h3>
+                <p style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 700, margin: '2px 0 0 0' }}>Новинки та акції в Telegram</p>
               </div>
             </div>
             <button 
               onClick={toggleNotifications}
-              className={`w-12 h-6 rounded-full relative transition-all duration-300 ${user.allow_notifications ? 'bg-primary shadow-lg shadow-primary/40' : 'bg-white/10'}`}
+              style={{ width: 48, height: 24, borderRadius: 100, background: user.allow_notifications ? '#7c3aed' : 'rgba(255,255,255,0.1)', border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s' }}
             >
-              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 ${user.allow_notifications ? 'left-7' : 'left-1'}`} />
+              <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: user.allow_notifications ? 27 : 3, transition: 'all 0.3s shadow 0.2s', boxShadow: user.allow_notifications ? '0 0 10px rgba(0,0,0,0.2)' : 'none' }} />
             </button>
           </div>
 
-          {/* Orders Section */}
-          <div className="space-y-4 pt-4">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="font-black text-lg tracking-tight">Історія замовлень</h3>
-              <div className="text-[10px] font-black text-[#4a4a6a] uppercase">Всього: {orders.length}</div>
+          {/* History */}
+          <div style={{ marginTop: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 900, margin: 0 }}>Історія замовлень</h3>
+              <span style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Всього: {orders.length}</span>
             </div>
-            
+
             {orders.length === 0 ? (
-              <div className="glass-card p-10 text-center">
-                <p className="text-[#6b6b8a] font-bold text-sm">У вас ще немає замовлень. <br/>Час це виправити! ✨</p>
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
+                <p style={{ color: '#6b6b8a', fontSize: 13, fontWeight: 700, margin: 0 }}>Ще немає замовлень ✨</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {orders.map(order => (
-                  <div key={order.id} className="glass-card p-4 flex justify-between items-center group active:scale-[0.98] transition-all">
-                    <div className="flex flex-col gap-1">
-                      <div className="font-black text-sm">Замовлення #{order.order_number?.split('-')[1] || order.id.slice(0, 6)}</div>
-                      <div className="text-[10px] font-bold text-[#6b6b8a] flex items-center gap-2">
-                        <span>{new Date(order.created_at).toLocaleDateString()}</span>
-                        <span className="w-1 h-1 bg-white/10 rounded-full" />
-                        <span>{order.shipping_method === 'nova_poshta' ? 'Нова Пошта' : 'Самовивіз'}</span>
+                  <div key={order.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ fontSize: 14, fontWeight: 900 }}>#{order.order_number?.split('-')[1] || order.id.slice(0, 6)}</div>
+                      <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 700 }}>
+                        {new Date(order.created_at).toLocaleDateString()} • {order.shipping_method === 'nova_poshta' ? 'НП' : 'Самовивіз'}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-black text-primary mb-1">{order.total} ₴</div>
-                      <div className={`text-[9px] uppercase font-black px-2 py-1 rounded-lg inline-block ${
-                        order.status === 'completed' ? 'bg-green-500/10 text-green-500' : 
-                        order.status === 'cancelled' ? 'bg-red-500/10 text-red-500' :
-                        'bg-blue-500/10 text-blue-500'
-                      }`}>
-                        {
-                          order.status === 'completed' ? 'Виконано' : 
-                          order.status === 'new' ? 'Нове' :
-                          order.status === 'preparing' ? 'Підготовка' :
-                          order.status === 'shipping' ? 'В дорозі' : order.status
-                        }
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: '#7c3aed', marginBottom: 4 }}>{order.total} ₴</div>
+                      <div style={{ 
+                        fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '4px 8px', borderRadius: 8, 
+                        background: order.status === 'completed' ? 'rgba(34,197,94,0.1)' : 'rgba(59,130,246,0.1)',
+                        color: order.status === 'completed' ? '#22c55e' : '#3b82f6'
+                      }}>
+                        {order.status === 'completed' ? 'Виконано' : 'В роботі'}
                       </div>
                     </div>
                   </div>
