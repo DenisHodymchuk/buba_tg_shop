@@ -16,7 +16,8 @@ export async function GET(request) {
     // 1. Haven't been notified in the last 24 hours
     // 2. Last activity was more than 30 minutes ago
     // 3. Allow notifications
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    // TEST MODE: 30 seconds instead of 30 minutes
+    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000).toISOString();
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const { data: candidates, error } = await supabase
@@ -25,7 +26,7 @@ export async function GET(request) {
       .eq('allow_notifications', true)
       .not('cart_data', 'is', null)
       .not('tg_id', 'is', null)
-      .lt('last_cart_activity', thirtyMinutesAgo)
+      .lt('last_cart_activity', thirtySecondsAgo)
       .or(`last_abandoned_notified_at.is.null,last_abandoned_notified_at.lt.${twentyFourHoursAgo}`);
 
     if (error) throw error;
