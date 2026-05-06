@@ -1,9 +1,9 @@
 "use client";
 import React from 'react';
-import { ShoppingCart, Award, Search, Box, User } from 'lucide-react';
+import { ShoppingCart, Award, Search, Box, User, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 
-export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, onSearch }) {
+export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, onOpenReviews, onSearch }) {
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 100,
@@ -51,6 +51,19 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
               <span style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>{bonuses}</span>
             </div>
           </Link>
+
+          {/* Reviews Button */}
+          <button 
+            onClick={onOpenReviews}
+            style={{
+              width: 48, height: 48, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', cursor: 'pointer', transition: 'all 0.2s'
+            }}
+            className="hover:bg-white/[0.05] hover:scale-105 active:scale-95"
+          >
+            <MessageSquare size={20} />
+          </button>
 
           {/* Profile Button */}
           <Link href="/profile">

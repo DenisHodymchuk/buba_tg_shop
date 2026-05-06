@@ -7,13 +7,15 @@ import CheckoutBar from '@/components/CheckoutBar';
 import Checkout from '@/components/Checkout';
 import OrderHistory from '@/components/OrderHistory';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Droplets, ShieldCheck, Weight, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Droplets, ShieldCheck, Weight, Info, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import Reviews from '@/components/Reviews';
 
 export default function Home() {
   const [cart, setCart] = useState([]);
   const [bonuses, setBonuses] = useState(0);
   const [user, setUser] = useState(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImgIndex, setActiveImgIndex] = useState(0);
@@ -144,7 +146,14 @@ export default function Home() {
         cartCount={cartTotalItems} bonuses={bonuses}
         onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)} 
         onOpenHistory={() => {}} 
+        onOpenReviews={() => setIsReviewsOpen(true)}
         onSearch={setSearchQuery}
+      />
+
+      <Reviews 
+        isOpen={isReviewsOpen} 
+        onClose={() => setIsReviewsOpen(false)} 
+        tgUser={user} 
       />
 
       <main style={{ flex: '1 0 auto', paddingBottom: 140 }}>
