@@ -29,6 +29,33 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
   const [loadingWarehouses, setLoadingWarehouses] = useState(false);
   const [showCityResults, setShowCityResults] = useState(false);
   const [showWarehouseResults, setShowWarehouseResults] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  // Detect keyboard/focus
+  React.useEffect(() => {
+    const handleFocus = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        setIsKeyboardOpen(true);
+      }
+    };
+    const handleBlur = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        // Delay blur to handle quick switch between inputs
+        setTimeout(() => {
+          if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            setIsKeyboardOpen(false);
+          }
+        }, 100);
+      }
+    };
+
+    window.addEventListener('focusin', handleFocus);
+    window.addEventListener('focusout', handleBlur);
+    return () => {
+      window.removeEventListener('focusin', handleFocus);
+      window.removeEventListener('focusout', handleBlur);
+    };
+  }, []);
 
   // Пошук міст
   React.useEffect(() => {
@@ -257,7 +284,12 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         </div>
       </header>
 
-      <div style={{ padding: '24px 16px 120px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+      <div style={{ 
+        padding: `24px 16px ${isKeyboardOpen ? '24px' : '120px'}`, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: 32 
+      }}>
         
         {/* Your Order */}
         <section>
@@ -489,7 +521,9 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
 
       {/* Sticky Footer Summary */}
       <footer style={{
-        position: 'sticky', bottom: 0, padding: '24px 16px 32px',
+        position: isKeyboardOpen ? 'relative' : 'sticky', 
+        bottom: 0, 
+        padding: '24px 16px 32px',
         background: 'rgba(5,5,15,0.9)', backdropFilter: 'blur(30px)',
         borderTop: '1px solid rgba(255,255,255,0.05)',
         display: 'flex', flexDirection: 'column', gap: 16
