@@ -36,7 +36,7 @@ export async function GET(request) {
     const toNotify = (candidates || []).filter(c => Array.isArray(c.cart_data) && c.cart_data.length > 0);
 
     let sentCount = 0;
-    const message = `🛒 <b>Ваш кошик сумує!</b>\n\nВи забули свої товари в магазині. Поверніться у додаток, щоб завершити покупку та отримати своє замовлення!`;
+    const message = `🛒 <b>Ваш кошик сумує! ✨</b>\n\nВи забули свої товари в магазині. Поверніться у додаток, щоб завершити покупку та отримати своє замовлення!`;
 
     const sendPromises = toNotify.map(async (user) => {
       try {
