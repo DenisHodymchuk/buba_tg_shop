@@ -969,6 +969,8 @@ export default function AdminPanel() {
             </motion.div>
           </div>
         )}
+      </AnimatePresence>
+
       {/* Custom Global Modal */}
       <AnimatePresence>
         {modal.open && (
