@@ -47,7 +47,7 @@ export async function GET(request) {
             parse_mode: 'HTML',
             reply_markup: {
               inline_keyboard: [[
-                { text: "🛍️ ВІДКРИТИ МАГАЗИН", url: "https://t.me/ваш_бот_username/app" }
+                { text: "🛍️ ВІДКРИТИ МАГАЗИН", url: "https://t.me/bubalab_shop_bot/app" }
               ]]
             }
           })
