@@ -109,14 +109,19 @@ export async function POST(req) {
                      `🧵 PETG (пластик): ~${(weightKg * 450).toFixed(2)} грн\n` +
                      `✅ Разом (PETG): ~${petgCost.toFixed(0)} грн`;
 
-    // --- Переклад та очищення ---
+    // --- Переклад та очищення через Google Translate API ---
     const translateText = async (text) => {
       if (!text) return '';
       try {
-        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 500))}&langpair=auto|uk`);
+        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=uk&dt=t&q=${encodeURIComponent(text)}`);
         const data = await res.json();
-        return data.responseData?.translatedText || text;
+        // Google повертає масив, де [0][0][0] - це перекладений текст
+        if (data && data[0]) {
+          return data[0].map(item => item[0]).join('') || text;
+        }
+        return text;
       } catch (e) {
+        console.error('Translation error:', e);
         return text;
       }
     };
