@@ -702,18 +702,6 @@ export default function AdminPanel() {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
                           <span style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{order.order_number || `#${order.id.slice(0, 8)}`}</span>
-                          <button 
-                            onClick={() => setModal({ 
-                              open: true, 
-                              title: 'Видалити замовлення?', 
-                              message: `Ви впевнені, що хочете видалити замовлення ${order.order_number}? Цю дію неможливо скасувати.`, 
-                              type: 'danger',
-                              onConfirm: () => deleteOrder(order.id)
-                            })}
-                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.5, padding: 4 }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
                         </div>
                         <div style={{ fontSize: 11, color: '#6b6b8a', fontWeight: 700 }}>
                           {new Date(order.created_at).toLocaleString('uk-UA')}
@@ -767,33 +755,32 @@ export default function AdminPanel() {
                              🪙 -{order.shipping_details.bonus_used} бонусів
                           </div>
                         )}
-                        <div style={{ 
-                          fontSize: 10, 
-                          color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b', 
-                          fontWeight: 900, 
-                          marginTop: 6,
-                          background: order.payment_status === 'verifying' ? 'rgba(249,115,22,0.1)' : 'transparent',
-                          padding: order.payment_status === 'verifying' ? '4px 8px' : 0,
-                          borderRadius: 8,
-                          display: 'inline-block'
-                        }}>
-                          {order.payment_status === 'paid' ? '✅ ОПЛАЧЕНО' : 
-                           order.payment_status === 'verifying' ? '🔍 ПЕРЕВІРИТИ ОПЛАТУ' : 
-                           '⏳ ОЧІКУЄ ОПЛАТИ'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                          <div style={{ 
+                            fontSize: 10, 
+                            color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b', 
+                            fontWeight: 900, 
+                            background: order.payment_status === 'verifying' ? 'rgba(249,115,22,0.1)' : 'transparent',
+                            padding: order.payment_status === 'verifying' ? '4px 8px' : 0,
+                            borderRadius: 8,
+                            display: 'inline-block'
+                          }}>
+                            {order.payment_status === 'paid' ? '✅ ОПЛАЧЕНО' : 
+                             order.payment_status === 'verifying' ? '🔍 ПЕРЕВІРИТИ' : 
+                             '⏳ ОЧІКУЄ ОПЛАТИ'}
+                          </div>
+                          {order.payment_status === 'verifying' && (
+                            <button 
+                              onClick={() => updatePaymentStatus(order.id, 'paid')}
+                              style={{ 
+                                padding: '4px 8px', borderRadius: 6, background: 'rgba(34,197,94,0.1)', color: '#22c55e', 
+                                border: '1px solid rgba(34,197,94,0.2)', fontSize: 9, fontWeight: 900, cursor: 'pointer'
+                              }}
+                            >
+                              ПІДТВЕРДИТИ
+                            </button>
+                          )}
                         </div>
-                        {order.payment_status === 'verifying' && (
-                          <button 
-                            onClick={() => updatePaymentStatus(order.id, 'paid')}
-                            style={{ 
-                              display: 'block', width: '100%', marginTop: 8, padding: '6px', 
-                              borderRadius: 8, background: '#22c55e', color: '#fff', 
-                              border: 'none', fontSize: 9, fontWeight: 900, cursor: 'pointer',
-                              boxShadow: '0 4px 12px rgba(34,197,94,0.3)'
-                            }}
-                          >
-                            ПІДТВЕРДИТИ ОПЛАТУ
-                          </button>
-                        )}
                       </div>
                     </div>
 
@@ -815,7 +802,24 @@ export default function AdminPanel() {
                       <StatusBtn label="Друкується" active={order.status === 'printing'} color="#7c3aed" onClick={() => updateOrderStatus(order.id, 'printing')} />
                       <StatusBtn label="Відправка" active={order.status === 'shipping'} color="#ec4899" onClick={() => updateOrderStatus(order.id, 'shipping')} />
                       <StatusBtn label="Виконано" active={order.status === 'completed'} color="#22c55e" onClick={() => updateOrderStatus(order.id, 'completed')} />
-                      <StatusBtn label="Скасувати" active={order.status === 'cancelled'} color="#ef4444" onClick={() => updateOrderStatus(order.id, 'cancelled')} />
+                      <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                         <StatusBtn label="Скасувати" active={order.status === 'cancelled'} color="#ef4444" onClick={() => updateOrderStatus(order.id, 'cancelled')} />
+                         <button 
+                            onClick={() => setModal({ 
+                              open: true, 
+                              title: 'Видалити замовлення?', 
+                              message: `Ви впевнені, що хочете видалити замовлення ${order.order_number}? Цю дію неможливо скасувати.`, 
+                              type: 'danger',
+                              onConfirm: () => deleteOrder(order.id)
+                            })}
+                            style={{ 
+                              padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.2)', 
+                              background: 'rgba(239,68,68,0.05)', color: '#ef4444', fontSize: 10, fontWeight: 900, cursor: 'pointer'
+                            }}
+                          >
+                            ВИДАЛИТИ
+                         </button>
+                      </div>
                     </div>
                   </div>
                 ))}
