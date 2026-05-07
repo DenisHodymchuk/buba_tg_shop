@@ -333,7 +333,7 @@ export default function Home() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10 }}>
                       <Info size={12} /> Про цей виріб
                     </div>
-                    <p style={{ color: '#6b6b8a', lineHeight: 1.6, fontSize: 15, margin: 0 }}>{selectedProduct.description || 'Опис скоро з\'явиться...'}</p>
+                    <p style={{ color: '#6b6b8a', lineHeight: 1.6, fontSize: 15, margin: 0 }}>{(selectedProduct.description || '').split('|||ADMIN_NOTES|||')[0]?.trim() || 'Опис скоро з\'явиться...'}</p>
                   </div>
                 </div>
               </div>

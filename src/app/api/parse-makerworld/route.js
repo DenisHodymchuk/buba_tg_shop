@@ -85,10 +85,10 @@ export async function POST(req) {
     const name = translateAndClean(data.title);
 
     // --- Розрахунок собівартості ---
-    // На MakerWorld час друку лежить у полі 'prediction' (у секундах)
-    const printTimeSeconds = data.instances?.reduce((acc, inst) => acc + (inst.prediction || 0), 0) || firstInstance?.prediction || 0;
+    // Беремо ТІЛЬКИ перший інстанс, щоб не сумувати всі варіанти принтерів
+    const printTimeSeconds = firstInstance?.prediction || 0;
     const printTimeHours = printTimeSeconds / 3600;
-    const weightG = data.instances?.reduce((acc, inst) => acc + (inst.weight || 0), 0) || firstInstance?.weight || 0;
+    const weightG = firstInstance?.weight || 0;
     const weightKg = weightG / 1000;
 
     // Формула: (Вага * Ціна пластику) + (Час * Потужність * Ціна квт)
@@ -100,16 +100,30 @@ export async function POST(req) {
     const color = firstInstance?.instanceFilaments?.[0]?.color || '';
     const licenseInfo = data.license ? `Ліцензія: ${data.license}` : 'Безпечно для дому';
 
-    const costNote = `\n\n--- Орієнтовна собівартість ---\n` +
+    const costNote = `Орієнтовна собівартість:\n` +
                      `⚡ Електрика: ~${electricityCost.toFixed(2)} грн (${(printTimeHours).toFixed(1)} год)\n` +
                      `🧵 PLA: ~${plaCost.toFixed(0)} грн\n` +
                      `🧵 PETG: ~${petgCost.toFixed(0)} грн`;
 
-    const description = stripHtml(data.summary) + costNote;
+    // --- Переклад опису ---
+    let finalDescription = stripHtml(data.summary);
+    try {
+      // Використовуємо MyMemory API для перекладу (обмежимо 500 символами для стабільності)
+      const transRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(finalDescription.slice(0, 500))}&langpair=en|uk`);
+      const transData = await transRes.json();
+      if (transData.responseData?.translatedText) {
+        finalDescription = transData.responseData.translatedText;
+      }
+    } catch (e) {
+      console.error('Translation error:', e);
+    }
+
+    // Розділяємо опис та примітку для адміна спеціальним сепаратором
+    const combinedDescription = `${finalDescription}\n\n|||ADMIN_NOTES|||\n${costNote}`;
 
     return NextResponse.json({
       name: name,
-      description: description,
+      description: combinedDescription,
       image_url: mainImage,
       image_urls: extraImages,
       category: data.categories?.[0]?.name || '3D Модель',
@@ -117,7 +131,7 @@ export async function POST(req) {
       plastic_type: plasticType,
       color: color,
       safety_info: licenseInfo,
-      source: 'MakerWorld (Smart API)'
+      source: 'MakerWorld (Clean API)'
     });
 
   } catch (error) {
