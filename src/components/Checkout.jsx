@@ -170,7 +170,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           status: 'new',
           customer_id: customerId,
           shipping_method: deliveryMethod,
-          payment_status: paymentMethod === 'online' ? 'pending' : 'cash',
+          payment_status: paymentMethod === 'card_transfer' ? 'pending_transfer' : 'cash',
           shipping_details: {
             ...formData,
             tg_id: tgUser?.id?.toString(),
@@ -183,39 +183,6 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         .single();
 
       if (error) throw error;
-
-      // 3. Якщо онлайн оплата — створюємо інвойс Monobank
-      if (paymentMethod === 'online') {
-        try {
-          const monoRes = await fetch('/api/monobank/create-invoice', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              amount: total,
-              orderId: newOrderNumber,
-              items: items
-            })
-          });
-          
-          const monoData = await monoRes.json();
-          
-          if (monoData.pageUrl) {
-            // Зберігаємо invoiceId в замовленні для звірки
-            await supabase.from('orders').update({ 
-              payment_details: { invoiceId: monoData.invoiceId } 
-            }).eq('order_number', newOrderNumber);
-
-            // Перенаправляємо на оплату
-            if (typeof window !== 'undefined') {
-              window.location.href = monoData.pageUrl;
-              return; // Виходимо, щоб не показувати успіх тут (він покажеться після редіректу)
-            }
-          }
-        } catch (monoErr) {
-          console.error('Monobank invoice error:', monoErr);
-          // Якщо моно впав, просто йдемо далі як звичайне замовлення, але з помилкою
-        }
-      }
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('buba_customer_phone', formData.phone);
@@ -262,10 +229,17 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           <h3 style={{ fontSize: 18, color: '#5b5bff', fontWeight: 900, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
             Що далі? 🚚
           </h3>
-          <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6, fontWeight: 600 }}>
+          <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6, fontWeight: 600, marginBottom: paymentMethod === 'card_transfer' ? 16 : 0 }}>
             Невдовзі наш менеджер обробить ваше замовлення та підготує його до відправки. 
-            Ми створимо електронну накладну "Нової Пошти" і відразу надішлемо вам номер ТТН для відстеження посилки!
+            Ми створимо електронну накладну "Нової Пошти" і відразу надішлемо вам номер ТТН!
           </p>
+          {paymentMethod === 'card_transfer' && (
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>Очікуємо оплату на карту:</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', marginBottom: 4, letterSpacing: '0.05em' }}>4441 1110 5788 6511</div>
+              <div style={{ fontSize: 12, color: '#2dd4bf', fontWeight: 700 }}>Годимчук Денис Д.</div>
+            </div>
+          )}
         </div>
 
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -447,8 +421,40 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         <section>
           <h3 style={{ fontSize: 14, fontWeight: 900, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Оплата</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <SelectorItem active={paymentMethod === 'online'} onClick={() => setPaymentMethod('online')} icon={<CreditCard size={20}/>} title="Онлайн Оплата" sub="Monobank / Apple Pay / Картка" />
-            <SelectorItem active={paymentMethod === 'cash'} onClick={() => setPaymentMethod('cash')} icon={<MapPin size={20}/>} title="При отриманні" sub="Оплата у відділенні (післяплата)" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <SelectorItem 
+                active={paymentMethod === 'card_transfer'} 
+                onClick={() => setPaymentMethod('card_transfer')} 
+                icon={<CreditCard size={20}/>} 
+                title="Переказ на карту Mono" 
+                sub="Реквізити з'являться після вибору" 
+              />
+              <AnimatePresence>
+                {paymentMethod === 'card_transfer' && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 16, padding: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 900, color: '#fff' }}>4441 1110 5788 6511</span>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText('4441111057886511');
+                            alert('Номер карти скопійовано!');
+                          }}
+                          style={{ background: '#7c3aed', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}
+                        >
+                          КОПІЮВАТИ
+                        </button>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#6b6b8a', fontWeight: 700 }}>Годимчук Денис Дмитрович</div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <SelectorItem active={paymentMethod === 'cash'} onClick={() => setPaymentMethod('cash')} icon={<ReceiptText size={20}/>} title="При отриманні" sub="Оплата у відділенні (післяплата)" />
           </div>
         </section>
 
