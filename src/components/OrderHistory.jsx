@@ -4,9 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Package, Clock, Truck, CheckCircle2, XCircle, Search, Box } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-export default function OrderHistory({ onClose }) {
+export default function OrderHistory({ isOpen, onClose }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  if (!isOpen) return null;
 
   useEffect(() => {
     async function fetchMyOrders() {

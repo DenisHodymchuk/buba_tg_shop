@@ -154,11 +154,15 @@ export default function Home() {
         onSearch={setSearchQuery}
       />
 
-      <OrderHistory 
-        isOpen={isHistoryOpen} 
-        onClose={() => setIsHistoryOpen(false)} 
-        tgUser={user} 
-      />
+      <AnimatePresence>
+        {isHistoryOpen && (
+          <OrderHistory 
+            isOpen={isHistoryOpen} 
+            onClose={() => setIsHistoryOpen(false)} 
+            tgUser={user} 
+          />
+        )}
+      </AnimatePresence>
 
       <Reviews 
         isOpen={isReviewsOpen} 
