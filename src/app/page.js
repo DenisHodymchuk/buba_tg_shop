@@ -7,7 +7,10 @@ import CheckoutBar from '@/components/CheckoutBar';
 import Checkout from '@/components/Checkout';
 import OrderHistory from '@/components/OrderHistory';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Droplets, ShieldCheck, Weight, Info, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { 
+  Plus, ShoppingCart, Award, Package, Search, Box, X, 
+  ChevronLeft, ChevronRight, Droplets, ShieldCheck, Info, Weight 
+} from 'lucide-react';
 import Reviews from '@/components/Reviews';
 
 export default function Home() {
@@ -275,6 +278,43 @@ export default function Home() {
                         <ShieldCheck size={12} style={{ color: '#22c55e' }} /> Безпека
                       </div>
                       <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>{selectedProduct.safety_info || '100% Безпечно'}</div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
+                        <Weight size={12} style={{ color: '#ec4899' }} /> Вага
+                      </div>
+                      <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>{selectedProduct.weight || '---'}</div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
+                        <Droplets size={12} style={{ color: '#7c3aed' }} /> Кольори
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {selectedProduct.color ? selectedProduct.color.split(',').map((c, i) => {
+                          const val = c.trim().toLowerCase();
+                          const colorMap = {
+                            'білий': '#ffffff', 'white': '#ffffff',
+                            'чорний': '#000000', 'black': '#000000',
+                            'червоний': '#ef4444', 'red': '#ef4444',
+                            'синій': '#3b82f6', 'blue': '#3b82f6',
+                            'жовтий': '#facc15', 'yellow': '#facc15',
+                            'зелений': '#22c55e', 'green': '#22c55e',
+                            'рожевий': '#ec4899', 'pink': '#ec4899',
+                            'помаранчевий': '#f97316', 'orange': '#f97316',
+                            'салатовий': '#adff2f', 'lime': '#adff2f',
+                            'фіолетовий': '#a855f7', 'purple': '#a855f7',
+                            'блакитний': '#0ea5e9', 'sky': '#0ea5e9',
+                            'сірий': '#94a3b8', 'gray': '#94a3b8',
+                            'золотий': '#fbbf24', 'gold': '#fbbf24',
+                            'срібний': '#cbd5e1', 'silver': '#cbd5e1'
+                          };
+                          let bg = colorMap[val] || val;
+                          if (val.includes('веселк')) bg = 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)';
+                          return (
+                            <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: bg, border: '1px solid rgba(255,255,255,0.2)' }} />
+                          );
+                        }) : <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>Базовий</div>}
+                      </div>
                     </div>
                   </div>
 
