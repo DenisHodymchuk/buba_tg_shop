@@ -312,11 +312,31 @@ export default function AdminPanel() {
           });
           const notifyData = await notifyRes.json();
           console.log('Notification API response:', notifyData);
+          
+          if (!notifyData.success) {
+            const errorMsg = notifyData.details?.description || 'Невідома помилка Telegram';
+            setModal({ 
+              open: true, 
+              title: 'Відповідь збережена, але...', 
+              message: `Відгук збережено, але сповіщення НЕ надіслано: ${errorMsg}. Переконайтеся, що клієнт не заблокував бота.`, 
+              type: 'warning' 
+            });
+            return;
+          }
         } catch (notificationError) {
           console.error('Failed to send telegram notification:', notificationError);
+          setModal({ open: true, title: 'Помилка мережі', message: 'Не вдалося з\'єднатися з сервісом сповіщень.', type: 'danger' });
+          return;
         }
       } else {
         console.warn('Cannot send notification: tg_id is missing for this customer.');
+        setModal({ 
+          open: true, 
+          title: 'Увага', 
+          message: 'Відповідь збережена, але ми не змогли надіслати сповіщення, бо у цього клієнта в базі відсутній Telegram ID (можливо, це старий відгук).', 
+          type: 'warning' 
+        });
+        return;
       }
       
       setReviews(reviews.map(r => r.id === reviewId ? { ...r, admin_reply: replyData.text, replied_at: new Date().toISOString() } : r));
