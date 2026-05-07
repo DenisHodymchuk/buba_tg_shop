@@ -226,16 +226,42 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         <p style={{ color: '#6b6b8a', fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Номер вашого замовлення:</p>
         <div style={{ fontSize: 24, fontWeight: 950, color: '#fff', marginBottom: 40, letterSpacing: '0.05em' }}>{orderNumber}</div>
 
-        <div style={{ width: '100%', maxWidth: 400, background: 'rgba(255,255,255,0.03)', borderRadius: 24, padding: 24, border: '1px solid rgba(255,255,255,0.1)', marginBottom: 24, textAlign: 'left' }}>
-          <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>
-            {paymentMethod === 'card_transfer' ? 'Очікуємо повну оплату на карту:' : 'Очікуємо передоплату 30% на карту:'}
-          </div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginBottom: 4, letterSpacing: '0.05em' }}>4441 1110 5788 6511</div>
-          <div style={{ fontSize: 13, color: '#2dd4bf', fontWeight: 700, marginBottom: 16 }}>Годимчук Денис Д.</div>
-          <div style={{ fontSize: 16, fontWeight: 950, color: '#f97316' }}>
-            Сума до оплати: {paymentMethod === 'card_transfer' ? finalAmount.toFixed(0) : (finalAmount * 0.3).toFixed(0)} ₴
-          </div>
-        </div>
+        <AnimatePresence>
+          {!paymentConfirmed && (
+            <motion.div 
+              initial={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              style={{ width: '100%', maxWidth: 400, background: 'rgba(255,255,255,0.03)', borderRadius: 24, padding: 24, border: '1px solid rgba(255,255,255,0.1)', marginBottom: 24, textAlign: 'left', overflow: 'hidden' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>
+                    {paymentMethod === 'card_transfer' ? 'Очікуємо повну оплату на карту:' : 'Очікуємо передоплату 30% на карту:'}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginBottom: 4, letterSpacing: '0.05em' }}>4441 1110 5788 6511</div>
+                  <div style={{ fontSize: 13, color: '#2dd4bf', fontWeight: 700 }}>Годимчук Денис Д.</div>
+                </div>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText('4441111057886511');
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  style={{ 
+                    background: copied ? '#22c55e' : 'rgba(124,58,237,0.2)', 
+                    border: `1px solid ${copied ? '#22c55e' : 'rgba(124,58,237,0.3)'}`, 
+                    borderRadius: 10, padding: '6px 12px', color: '#fff', fontSize: 10, fontWeight: 900, 
+                    cursor: 'pointer', minWidth: 100, transition: 'all 0.3s' 
+                  }}
+                >
+                  {copied ? 'ГОТОВО ✅' : 'КОПІЮВАТИ'}
+                </button>
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 950, color: '#f97316', paddingTop: 12, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                Сума до оплати: {paymentMethod === 'card_transfer' ? finalAmount.toFixed(0) : (finalAmount * 0.3).toFixed(0)} ₴
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <AnimatePresence mode="wait">

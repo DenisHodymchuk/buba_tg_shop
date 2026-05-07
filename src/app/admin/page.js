@@ -379,6 +379,20 @@ export default function AdminPanel() {
     }
   }
 
+  async function updatePaymentStatus(orderId, newStatus) {
+    if (!supabase) return;
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ payment_status: newStatus })
+        .eq('id', orderId);
+      if (error) throw error;
+      setOrders(orders.map(o => o.id === orderId ? { ...o, payment_status: newStatus } : o));
+    } catch (e) {
+      alert('Помилка при оновленні статусу оплати: ' + e.message);
+    }
+  }
+  
   async function fetchProducts() {
     if (!supabase) {
       setLoading(false);
@@ -675,9 +689,33 @@ export default function AdminPanel() {
                              🪙 -{order.shipping_details.bonus_used} бонусів
                           </div>
                         )}
-                        <div style={{ fontSize: 10, color: order.payment_status === 'paid' ? '#22c55e' : '#f59e0b', fontWeight: 900, marginTop: 4 }}>
-                          {order.payment_status === 'paid' ? 'Оплачено' : 'Очікує оплати'}
+                        <div style={{ 
+                          fontSize: 10, 
+                          color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b', 
+                          fontWeight: 900, 
+                          marginTop: 6,
+                          background: order.payment_status === 'verifying' ? 'rgba(249,115,22,0.1)' : 'transparent',
+                          padding: order.payment_status === 'verifying' ? '4px 8px' : 0,
+                          borderRadius: 8,
+                          display: 'inline-block'
+                        }}>
+                          {order.payment_status === 'paid' ? '✅ ОПЛАЧЕНО' : 
+                           order.payment_status === 'verifying' ? '🔍 ПЕРЕВІРИТИ ОПЛАТУ' : 
+                           '⏳ ОЧІКУЄ ОПЛАТИ'}
                         </div>
+                        {order.payment_status === 'verifying' && (
+                          <button 
+                            onClick={() => updatePaymentStatus(order.id, 'paid')}
+                            style={{ 
+                              display: 'block', width: '100%', marginTop: 8, padding: '6px', 
+                              borderRadius: 8, background: '#22c55e', color: '#fff', 
+                              border: 'none', fontSize: 9, fontWeight: 900, cursor: 'pointer',
+                              boxShadow: '0 4px 12px rgba(34,197,94,0.3)'
+                            }}
+                          >
+                            ПІДТВЕРДИТИ ОПЛАТУ
+                          </button>
+                        )}
                       </div>
                     </div>
 
