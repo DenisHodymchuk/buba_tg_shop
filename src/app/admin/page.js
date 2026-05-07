@@ -251,7 +251,7 @@ export default function AdminPanel() {
     try {
       const { data, error } = await supabase
         .from('reviews')
-        .select('*, customers(first_name, last_name)')
+        .select('*, customers(first_name, last_name, tg_id)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       setReviews(data || []);
@@ -283,6 +283,8 @@ export default function AdminPanel() {
   async function handleSendReply(reviewId) {
     if (!supabase || !replyData.text.trim()) return;
     try {
+      const review = reviews.find(r => r.id === reviewId);
+      
       const { error } = await supabase
         .from('reviews')
         .update({ 
@@ -292,10 +294,27 @@ export default function AdminPanel() {
         .eq('id', reviewId);
       
       if (error) throw error;
+
+      // Надсилаємо сповіщення в Telegram клієнту
+      if (review?.customers?.tg_id) {
+        try {
+          await fetch('/api/review-reply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tg_id: review.customers.tg_id,
+              reply_text: replyData.text,
+              original_comment: review.comment
+            })
+          });
+        } catch (notificationError) {
+          console.error('Failed to send telegram notification:', notificationError);
+        }
+      }
       
       setReviews(reviews.map(r => r.id === reviewId ? { ...r, admin_reply: replyData.text, replied_at: new Date().toISOString() } : r));
       setReplyData({ reviewId: null, text: '' });
-      setModal({ open: true, title: 'Успіх!', message: 'Відповідь надіслана ✨', type: 'success' });
+      setModal({ open: true, title: 'Успіх!', message: 'Відповідь надіслана та клієнт отримав сповіщення ✨', type: 'success' });
     } catch (e) {
       alert('Помилка: ' + e.message);
     }
