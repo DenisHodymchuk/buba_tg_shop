@@ -341,7 +341,12 @@ export default function AdminPanel() {
       
       setReviews(reviews.map(r => r.id === reviewId ? { ...r, admin_reply: replyData.text, replied_at: new Date().toISOString() } : r));
       setReplyData({ reviewId: null, text: '' });
-      setModal({ open: true, title: 'Успіх!', message: 'Відповідь надіслана та клієнт отримав сповіщення ✨', type: 'success' });
+      setModal({ 
+        open: true, 
+        title: 'Успіх!', 
+        message: `Відповідь збережена. Бот відправив сповіщення на ID: ${customer.tg_id} ✨`, 
+        type: 'success' 
+      });
     } catch (e) {
       alert('Помилка: ' + e.message);
     }
