@@ -102,8 +102,12 @@ export async function POST(req) {
 
     const costNote = `Орієнтовна собівартість:\n` +
                      `⚡ Електрика: ~${electricityCost.toFixed(2)} грн (${(printTimeHours).toFixed(1)} год)\n` +
-                     `🧵 PLA: ~${plaCost.toFixed(0)} грн\n` +
-                     `🧵 PETG: ~${petgCost.toFixed(0)} грн`;
+                     `--------------------------\n` +
+                     `🧵 PLA (пластик): ~${(weightKg * 550).toFixed(2)} грн\n` +
+                     `✅ Разом (PLA): ~${plaCost.toFixed(0)} грн\n` +
+                     `--------------------------\n` +
+                     `🧵 PETG (пластик): ~${(weightKg * 450).toFixed(2)} грн\n` +
+                     `✅ Разом (PETG): ~${petgCost.toFixed(0)} грн`;
 
     // --- Переклад опису ---
     let finalDescription = stripHtml(data.summary);
