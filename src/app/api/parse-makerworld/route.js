@@ -109,24 +109,36 @@ export async function POST(req) {
                      `🧵 PETG (пластик): ~${(weightKg * 450).toFixed(2)} грн\n` +
                      `✅ Разом (PETG): ~${petgCost.toFixed(0)} грн`;
 
-    // --- Переклад опису ---
-    let finalDescription = stripHtml(data.summary);
-    try {
-      // Використовуємо MyMemory API для перекладу (обмежимо 500 символами для стабільності)
-      const transRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(finalDescription.slice(0, 500))}&langpair=en|uk`);
-      const transData = await transRes.json();
-      if (transData.responseData?.translatedText) {
-        finalDescription = transData.responseData.translatedText;
+    // --- Переклад та очищення ---
+    const translateText = async (text) => {
+      if (!text) return '';
+      try {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 500))}&langpair=auto|uk`);
+        const data = await res.json();
+        return data.responseData?.translatedText || text;
+      } catch (e) {
+        return text;
       }
-    } catch (e) {
-      console.error('Translation error:', e);
-    }
+    };
+
+    const cleanTitle = (text) => {
+      return text
+        .replace(/Flexi|Articulated|3D|Print|Bambu|Lab|Model|Toy|Gift|Cute/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
+    const rawName = cleanTitle(data.title);
+    const translatedName = await translateText(rawName);
+    const finalName = translatedName.charAt(0).toUpperCase() + translatedName.slice(1);
+
+    let finalDescription = await translateText(stripHtml(data.summary));
 
     // Розділяємо опис та примітку для адміна спеціальним сепаратором
     const combinedDescription = `${finalDescription}\n\n|||ADMIN_NOTES|||\n${costNote}`;
 
     return NextResponse.json({
-      name: name,
+      name: finalName,
       description: combinedDescription,
       image_url: mainImage,
       image_urls: extraImages,
