@@ -150,13 +150,26 @@ export default function Profile() {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 14, fontWeight: 900, color: '#7c3aed', marginBottom: 4 }}>{order.total} ₴</div>
-                      <div style={{ 
-                        fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '4px 8px', borderRadius: 8, 
-                        background: order.status === 'completed' ? 'rgba(34,197,94,0.1)' : 'rgba(59,130,246,0.1)',
-                        color: order.status === 'completed' ? '#22c55e' : '#3b82f6'
-                      }}>
-                        {order.status === 'completed' ? 'Виконано' : 'В роботі'}
-                      </div>
+                      {(() => {
+                        const statusMap = {
+                          'new': { label: 'Отримано', color: '#3b82f6' },
+                          'preparing': { label: 'Підготовка', color: '#f59e0b' },
+                          'printing': { label: 'Друкується', color: '#7c3aed' },
+                          'shipping': { label: 'Відправлено', color: '#ec4899' },
+                          'completed': { label: 'Виконано', color: '#22c55e' },
+                          'cancelled': { label: 'Скасовано', color: '#ef4444' }
+                        };
+                        const s = statusMap[order.status] || { label: order.status, color: '#6b6b8a' };
+                        return (
+                          <div style={{ 
+                            fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '4px 8px', borderRadius: 8, 
+                            background: `${s.color}15`,
+                            color: s.color
+                          }}>
+                            {s.label}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}
