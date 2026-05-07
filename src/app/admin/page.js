@@ -33,6 +33,8 @@ export default function AdminPanel() {
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [replyData, setReplyData] = useState({ reviewId: null, text: '' });
+  const [importUrl, setImportUrl] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', discount: 0, status: 'in_stock', 
@@ -443,6 +445,43 @@ export default function AdminPanel() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleImportFromMakerWorld() {
+    if (!importUrl.trim() || !importUrl.includes('makerworld.com')) {
+      alert('Будь ласка, вставте коректне посилання на MakerWorld');
+      return;
+    }
+    setIsImporting(true);
+    try {
+      const res = await fetch('/api/parse-makerworld', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: importUrl })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      setFormData({
+        ...formData,
+        name: data.name || formData.name,
+        description: data.description || formData.description,
+        image_url: data.image_url || formData.image_url,
+        category: data.category || formData.category
+      });
+      
+      setModal({
+        open: true,
+        title: 'Успішно! ✨',
+        message: 'Дані з MakerWorld імпортовані. Ви можете відредагувати їх та встановити ціну.',
+        type: 'success'
+      });
+      setImportUrl('');
+    } catch (e) {
+      alert('Помилка імпорту: ' + e.message);
+    } finally {
+      setIsImporting(false);
     }
   }
 
@@ -1091,6 +1130,30 @@ export default function AdminPanel() {
                     })}
                   </div>
                 </div>
+
+                {/* MakerWorld Import Section */}
+                {!editingId && (
+                  <div style={{ background: 'rgba(59,130,246,0.05)', padding: 20, borderRadius: 24, border: '1px solid rgba(59,130,246,0.1)', marginBottom: 10 }}>
+                    <label style={{ fontSize: 10, fontWeight: 950, color: '#60a5fa', textTransform: 'uppercase', marginBottom: 12, display: 'block' }}>💨 Швидкий імпорт з MakerWorld</label>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <input 
+                        type="text" 
+                        placeholder="Вставте посилання на модель..." 
+                        value={importUrl}
+                        onChange={(e) => setImportUrl(e.target.value)}
+                        style={{ flex: 1, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 16px', color: '#fff', fontSize: 13, outline: 'none' }}
+                      />
+                      <button 
+                        type="button"
+                        onClick={handleImportFromMakerWorld}
+                        disabled={isImporting}
+                        style={{ padding: '12px 20px', borderRadius: 12, background: '#1e40af', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', fontSize: 11, whiteSpace: 'nowrap', opacity: isImporting ? 0.5 : 1 }}
+                      >
+                        {isImporting ? 'ПАРСИНГ...' : 'ІМПОРТ'}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва</label>
