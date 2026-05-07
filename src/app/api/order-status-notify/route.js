@@ -25,11 +25,9 @@ export async function POST(req) {
       'cancelled': 'На жаль, замовлення було скасовано. Якщо у вас є питання — пишіть нам.'
     };
 
-    const message = `📦 *ОНОВЛЕННЯ ЗАМОВЛЕННЯ #${order_number}*\n\n` +
+    const message = `📦 *ОНОВЛЕННЯ ЗАМОВЛЕННЯ*\n\n` +
                     `Статус: *${statusIcons[status] || status}*\n\n` +
-                    `${statusMessages[status] || 'Статус вашого замовлення було змінено.'}\n\n` +
-                    `Сума: *${total_amount} ₴*\n\n` +
-                    `🛸 *BUBA LAB* — творимо космос разом!`;
+                    `${statusMessages[status] || 'Статус вашого замовлення було змінено.'}`;
 
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
