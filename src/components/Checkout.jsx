@@ -163,7 +163,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
       }
 
       // 2. Створюємо замовлення
-      const { data, error } = await supabase
+      const { data: orderData, error } = await supabase
         .from('orders')
         .insert([{
           total: total,
@@ -179,9 +179,43 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           },
           order_number: newOrderNumber
         }])
-        .select();
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // 3. Якщо онлайн оплата — створюємо інвойс Monobank
+      if (paymentMethod === 'online') {
+        try {
+          const monoRes = await fetch('/api/monobank/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: total,
+              orderId: newOrderNumber,
+              items: items
+            })
+          });
+          
+          const monoData = await monoRes.json();
+          
+          if (monoData.pageUrl) {
+            // Зберігаємо invoiceId в замовленні для звірки
+            await supabase.from('orders').update({ 
+              payment_details: { invoiceId: monoData.invoiceId } 
+            }).eq('order_number', newOrderNumber);
+
+            // Перенаправляємо на оплату
+            if (typeof window !== 'undefined') {
+              window.location.href = monoData.pageUrl;
+              return; // Виходимо, щоб не показувати успіх тут (він покажеться після редіректу)
+            }
+          }
+        } catch (monoErr) {
+          console.error('Monobank invoice error:', monoErr);
+          // Якщо моно впав, просто йдемо далі як звичайне замовлення, але з помилкою
+        }
+      }
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('buba_customer_phone', formData.phone);

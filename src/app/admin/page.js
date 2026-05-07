@@ -170,6 +170,25 @@ export default function AdminPanel() {
       
       if (error) throw error;
 
+      // Надсилаємо сповіщення клієнту
+      const customer = order?.customers;
+      if (customer?.tg_id) {
+        try {
+          await fetch('/api/order-status-notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tg_id: customer.tg_id,
+              order_number: order.order_id || order.id,
+              status: newStatus,
+              total_amount: order.total_amount
+            })
+          });
+        } catch (notifyErr) {
+          console.error('Failed to send status notification:', notifyErr);
+        }
+      }
+
       // Нарахування кешбеку 5% при завершенні замовлення
       if (newStatus === 'completed' && order.status !== 'completed' && order.customer_id) {
         const cashback = Math.floor(order.total * 0.05);
@@ -194,6 +213,7 @@ export default function AdminPanel() {
       }
       
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      setModal({ open: true, title: 'Успіх!', message: 'Статус змінено та клієнт отримав сповіщення ✅', type: 'success' });
     } catch (e) {
       alert('Помилка оновлення статусу: ' + e.message);
     }
@@ -236,9 +256,16 @@ export default function AdminPanel() {
   async function fetchOrders() {
     if (!supabase) return;
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          customers (
+            first_name,
+            last_name,
+            tg_id
+          )
+        `)
         .order('created_at', { ascending: false });
       if (data) setOrders(data);
     } catch (e) {

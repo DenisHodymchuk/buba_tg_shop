@@ -120,8 +120,10 @@ const Reviews = ({ isOpen, onClose, productId = null, tgUser = null }) => {
               style={{ 
                 position: 'relative', width: '100%', maxWidth: 450, background: '#0a0a1a', 
                 borderRadius: 32, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                border: '1px solid rgba(255,255,255,0.1)', maxHeight: '85vh', boxShadow: '0 40px 100px rgba(0,0,0,0.8)',
-                touchAction: 'pan-y', overflowX: 'hidden'
+                border: '1px solid rgba(255,255,255,0.1)', height: 'auto', maxHeight: 'min(650px, 92vh)',
+                boxShadow: '0 40px 100px rgba(0,0,0,0.8)',
+                touchAction: 'pan-y', overflowX: 'hidden',
+                margin: 'auto 0'
               }}
             >
               {/* Header */}
