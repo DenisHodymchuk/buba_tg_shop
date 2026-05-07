@@ -224,7 +224,18 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
 
         <h2 style={{ fontSize: 32, fontWeight: 950, color: '#fff', marginBottom: 12 }}>Замовлення Прийнято!</h2>
         <p style={{ color: '#6b6b8a', fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Номер вашого замовлення:</p>
-        <div style={{ fontSize: 24, fontWeight: 950, color: '#fff', marginBottom: 40, letterSpacing: '0.05em' }}>{orderNumber}</div>
+        <div style={{ fontSize: 24, fontWeight: 950, color: '#fff', marginBottom: 12, letterSpacing: '0.05em' }}>{orderNumber}</div>
+
+        <AnimatePresence>
+          {paymentConfirmed && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+              style={{ padding: '12px 24px', borderRadius: 20, background: 'rgba(34,197,94,0.15)', color: '#22c55e', fontWeight: 950, fontSize: 13, textAlign: 'center', border: '1px solid rgba(34,197,94,0.2)', marginBottom: 24 }}
+            >
+              ДЯКУЄМО! ПЕРЕВІРЯЄМО ОПЛАТУ ⏳
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {!paymentConfirmed && (
@@ -288,15 +299,11 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                 {isConfirmingPayment ? <Loader2 className="animate-spin" size={20}/> : '✅ Я ОПЛАТИВ(ЛА)'}
               </motion.button>
             ) : (
-              <motion.div 
-                key="confirmed-status"
-                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}
-              >
-                <div style={{ padding: '18px', borderRadius: 22, background: 'rgba(34,197,94,0.15)', color: '#22c55e', fontWeight: 950, fontSize: 14, textAlign: 'center', border: '1px solid rgba(34,197,94,0.2)' }}>
-                  ДЯКУЄМО! ПЕРЕВІРЯЄМО ОПЛАТУ ⏳
-                </div>
-
+            <motion.div 
+              key="confirmed-status"
+              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+              style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}
+            >
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 24, textAlign: 'left' }}>
                   <h3 style={{ fontSize: 18, color: '#5b5bff', fontWeight: 900, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
                     Що далі? 🚚

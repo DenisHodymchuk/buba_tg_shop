@@ -19,6 +19,7 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImgIndex, setActiveImgIndex] = useState(0);
@@ -148,9 +149,15 @@ export default function Home() {
       <Header 
         cartCount={cartTotalItems} bonuses={bonuses}
         onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)} 
-        onOpenHistory={() => {}} 
+        onOpenHistory={() => setIsHistoryOpen(true)} 
         onOpenReviews={() => setIsReviewsOpen(true)}
         onSearch={setSearchQuery}
+      />
+
+      <OrderHistory 
+        isOpen={isHistoryOpen} 
+        onClose={() => setIsHistoryOpen(false)} 
+        tgUser={user} 
       />
 
       <Reviews 
@@ -273,7 +280,6 @@ export default function Home() {
                       </div>
                       <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>{selectedProduct.plastic_type || 'PLA Eco'}</div>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
                         <ShieldCheck size={12} style={{ color: '#22c55e' }} /> Безпека
                       </div>
