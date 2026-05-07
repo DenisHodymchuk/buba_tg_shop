@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
-  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send
+  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -29,6 +29,8 @@ export default function AdminPanel() {
   const [modal, setModal] = useState({ open: false, title: '', message: '', onConfirm: null, type: 'info' });
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [replyData, setReplyData] = useState({ reviewId: null, text: '' });
 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', discount: 0, status: 'in_stock', 
@@ -40,6 +42,7 @@ export default function AdminPanel() {
     fetchProducts();
     fetchOrders();
     fetchUsers();
+    fetchReviews();
   }, []);
 
   async function syncUser(tgUser) {
@@ -243,6 +246,61 @@ export default function AdminPanel() {
     }
   }
 
+  async function fetchReviews() {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*, customers(first_name, last_name)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setReviews(data || []);
+    } catch (e) {
+      console.error('Error fetching reviews:', e);
+    }
+  }
+
+  async function handleDeleteReview(id) {
+    if (!supabase) return;
+    setModal({
+      open: true,
+      title: 'Видалити відгук?',
+      message: 'Ця дія назавжди видалить відгук із бази даних.',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('reviews').delete().eq('id', id);
+          if (error) throw error;
+          setReviews(reviews.filter(r => r.id !== id));
+          setModal({ ...modal, open: false });
+        } catch (e) {
+          alert('Помилка: ' + e.message);
+        }
+      }
+    });
+  }
+
+  async function handleSendReply(reviewId) {
+    if (!supabase || !replyData.text.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .update({ 
+          admin_reply: replyData.text,
+          replied_at: new Date().toISOString()
+        })
+        .eq('id', reviewId);
+      
+      if (error) throw error;
+      
+      setReviews(reviews.map(r => r.id === reviewId ? { ...r, admin_reply: replyData.text, replied_at: new Date().toISOString() } : r));
+      setReplyData({ reviewId: null, text: '' });
+      setModal({ open: true, title: 'Успіх!', message: 'Відповідь надіслана ✨', type: 'success' });
+    } catch (e) {
+      alert('Помилка: ' + e.message);
+    }
+  }
+
   async function fetchProducts() {
     if (!supabase) {
       setLoading(false);
@@ -412,6 +470,7 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'products'} onClick={() => setActiveTab('products')} icon={<Package size={18} />} label="Товари" />
           <SidebarBtn active={activeTab === 'sales'} onClick={() => setActiveTab('sales')} icon={<ShoppingBag size={18} />} label="Замовлення" />
           <SidebarBtn active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<User size={18} />} label="Клієнти" />
+          <SidebarBtn active={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} icon={<MessageSquare size={18} />} label="Відгуки" />
           <SidebarBtn active={activeTab === 'broadcast'} onClick={() => setActiveTab('broadcast')} icon={<Send size={18} />} label="Розсилка" />
           <SidebarBtn active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={18} />} label="Налаштування" />
         </nav>
@@ -636,6 +695,79 @@ export default function AdminPanel() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </>
+          ) : activeTab === 'reviews' ? (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+                <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Керування відгуками ({reviews.length})</h1>
+                <button onClick={fetchReviews} style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer' }}>Оновити</button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {reviews.map(review => (
+                  <div key={review.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 24 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
+                          <User size={20} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{review.customers?.first_name} {review.customers?.last_name}</div>
+                          <div style={{ display: 'flex', gap: 2, marginTop: 4 }}>
+                            {[1,2,3,4,5].map(s => <Star key={s} size={12} fill={s <= review.rating ? "#fbbf24" : "transparent"} color={s <= review.rating ? "#fbbf24" : "#4a4a6a"} />)}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 11, color: '#6b6b8a', fontWeight: 700 }}>{new Date(review.created_at).toLocaleDateString('uk-UA')}</div>
+                        <button onClick={() => handleDeleteReview(review.id)} style={{ marginTop: 8, padding: 8, background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: 'none', borderRadius: 8, cursor: 'pointer' }}><Trash2 size={16}/></button>
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: 16, borderRadius: 16, color: '#e2e8f0', fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>
+                      {review.comment}
+                    </div>
+
+                    {review.admin_reply ? (
+                      <div style={{ background: 'rgba(124,58,237,0.05)', borderLeft: '3px solid #7c3aed', padding: 16, borderRadius: '0 16px 16px 0', marginLeft: 12 }}>
+                        <div style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <CheckCircle size={12} /> ВАША ВІДПОВІДЬ
+                        </div>
+                        <div style={{ fontSize: 13, color: '#a78bfa' }}>{review.admin_reply}</div>
+                        <button 
+                          onClick={() => setReplyData({ reviewId: review.id, text: review.admin_reply })}
+                          style={{ marginTop: 12, background: 'none', border: 'none', color: '#6b6b8a', fontSize: 11, cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}
+                        >
+                          Редагувати відповідь
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: 12 }}>
+                        {replyData.reviewId === review.id ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <textarea 
+                              value={replyData.text} onChange={e => setReplyData({...replyData, text: e.target.value})}
+                              placeholder="Напишіть вашу відповідь..."
+                              style={{ width: '100%', minHeight: 80, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', resize: 'none' }}
+                            />
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button onClick={() => handleSendReply(review.id)} style={{ padding: '8px 20px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12, cursor: 'pointer' }}>ВІДПРАВИТИ</button>
+                              <button onClick={() => setReplyData({ reviewId: null, text: '' })} style={{ padding: '8px 20px', background: 'rgba(255,255,255,0.05)', color: '#6b6b8a', border: 'none', borderRadius: 10, fontWeight: 800, fontSize: 12, cursor: 'pointer' }}>СКАСУВАТИ</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => setReplyData({ reviewId: review.id, text: '' })}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(124,58,237,0.1)', color: '#a78bfa', padding: '10px 20px', borderRadius: 12, border: '1px solid rgba(124,58,237,0.2)', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            <MessageSquare size={16} /> ВІДПОВІСТИ
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </>
           ) : activeTab === 'broadcast' ? (

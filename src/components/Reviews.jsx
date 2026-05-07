@@ -218,10 +218,22 @@ const Reviews = ({ isOpen, onClose, productId = null, tgUser = null }) => {
                           ))}
                         </div>
                       </div>
-                      <p style={{ margin: 0, fontSize: 14, color: '#6b6b8a', lineHeight: 1.5 }}>{rev.comment}</p>
-                      <div style={{ marginTop: 8, fontSize: 9, color: '#3a3a5a', fontWeight: 900, textTransform: 'uppercase' }}>
+                      <p style={{ margin: 0, fontSize: 14, color: '#e2e8f0', lineHeight: 1.5 }}>{rev.comment}</p>
+                      <div style={{ marginTop: 8, fontSize: 9, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase' }}>
                         {new Date(rev.created_at).toLocaleDateString('uk-UA')}
                       </div>
+
+                      {rev.admin_reply && (
+                        <div style={{ marginTop: 16, background: 'rgba(124,58,237,0.05)', borderLeft: '2px solid #7c3aed', padding: '12px 16px', borderRadius: '0 16px 16px 0', position: 'relative' }}>
+                          <div style={{ fontSize: 9, fontWeight: 950, color: '#a78bfa', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <MessageSquare size={8} color="#fff" fill="#fff" />
+                            </div>
+                            ВІДПОВІДЬ МАГАЗИНУ
+                          </div>
+                          <p style={{ margin: 0, fontSize: 13, color: '#a78bfa', lineHeight: 1.4 }}>{rev.admin_reply}</p>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
