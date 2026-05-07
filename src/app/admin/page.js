@@ -19,6 +19,8 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
+  const [statusFilter, setStatusFilter] = useState('Всі');
+  const [paymentFilter, setPaymentFilter] = useState('Всі');
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -153,6 +155,26 @@ export default function AdminPanel() {
           setModal({ ...modal, open: false });
         } catch (e) {
           setModal({ open: true, title: 'Помилка', message: e.message, type: 'danger' });
+        }
+      }
+    });
+  }
+
+  async function handleDeleteOrder(orderId) {
+    if (!supabase) return;
+    setModal({
+      open: true,
+      title: 'Видалити замовлення?',
+      message: 'Ця дія назавжди видалить замовлення з бази даних.',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('orders').delete().eq('id', orderId);
+          if (error) throw error;
+          setOrders(orders.filter(o => o.id !== orderId));
+          setModal({ ...modal, open: false });
+        } catch (e) {
+          alert('Помилка видалення: ' + e.message);
         }
       }
     });
@@ -393,6 +415,18 @@ export default function AdminPanel() {
     }
   }
   
+  async function deleteOrder(id) {
+    if (!supabase) return;
+    try {
+      const { error } = await supabase.from('orders').delete().eq('id', id);
+      if (error) throw error;
+      setOrders(orders.filter(o => o.id !== id));
+      setModal({ open: false });
+    } catch (e) {
+      alert('Помилка при видаленні: ' + e.message);
+    }
+  }
+
   async function fetchProducts() {
     if (!supabase) {
       setLoading(false);
@@ -624,18 +658,62 @@ export default function AdminPanel() {
             </>
           ) : activeTab === 'sales' ? (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Замовлення ({orders.length})</h1>
                 <button onClick={fetchOrders} style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer' }}>Оновити</button>
               </div>
 
+              {/* Filters */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 32, padding: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус замовлення:</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {['Всі', 'new', 'preparing', 'printing', 'shipping', 'completed', 'cancelled'].map(s => (
+                      <button key={s} onClick={() => setStatusFilter(s)} style={{ padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, background: statusFilter === s ? '#3b82f6' : 'rgba(255,255,255,0.03)', color: statusFilter === s ? '#fff' : '#6b6b8a', border: 'none', cursor: 'pointer' }}>
+                        {s === 'Всі' ? 'ВСІ' : s === 'new' ? 'НОВІ' : s === 'preparing' ? 'ПІДГОТОВКА' : s === 'printing' ? 'ДРУК' : s === 'shipping' ? 'ДОСТАВКА' : s === 'completed' ? 'ВИКОНАНО' : 'СКАСОВАНО'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ width: 1, background: 'rgba(255,255,255,0.05)', margin: '0 10px' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус оплати:</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {['Всі', 'pending', 'verifying', 'paid'].map(p => (
+                      <button key={p} onClick={() => setPaymentFilter(p)} style={{ padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, background: paymentFilter === p ? '#f97316' : 'rgba(255,255,255,0.03)', color: paymentFilter === p ? '#fff' : '#6b6b8a', border: 'none', cursor: 'pointer' }}>
+                        {p === 'Всі' ? 'ВСІ' : p === 'pending' ? 'ОЧІКУЄ' : p === 'verifying' ? 'ПЕРЕВІРКА' : 'ОПЛАЧЕНО'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {orders.map(order => (
+                {orders
+                  .filter(o => {
+                    const matchesStatus = statusFilter === 'Всі' || o.status === statusFilter;
+                    const matchesPayment = paymentFilter === 'Всі' || o.payment_status === paymentFilter;
+                    const matchesSearch = !searchQuery || (o.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) || o.shipping_details?.phone?.includes(searchQuery));
+                    return matchesStatus && matchesPayment && matchesSearch;
+                  })
+                  .map(order => (
                   <div key={order.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 20 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                       <div>
-                        <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', marginBottom: 4 }}>
-                          {order.order_number || `#${order.id.slice(0, 8)}`}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                          <span style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{order.order_number || `#${order.id.slice(0, 8)}`}</span>
+                          <button 
+                            onClick={() => setModal({ 
+                              open: true, 
+                              title: 'Видалити замовлення?', 
+                              message: `Ви впевнені, що хочете видалити замовлення ${order.order_number}? Цю дію неможливо скасувати.`, 
+                              type: 'danger',
+                              onConfirm: () => deleteOrder(order.id)
+                            })}
+                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', opacity: 0.5, padding: 4 }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                         <div style={{ fontSize: 11, color: '#6b6b8a', fontWeight: 700 }}>
                           {new Date(order.created_at).toLocaleString('uk-UA')}
