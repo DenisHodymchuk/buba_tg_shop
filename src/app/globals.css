@@ -31,10 +31,17 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+  touch-action: manipulation;
+}
+
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  overflow-x: hidden;
   min-height: 100vh;
 }
 

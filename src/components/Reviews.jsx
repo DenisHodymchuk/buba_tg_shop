@@ -40,35 +40,65 @@ const Reviews = ({ isOpen, onClose, productId = null, tgUser = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!comment.trim() || submitting || !tgUser) return;
+    console.log('Attempting to submit review...', { comment, rating, tgUser });
+    
+    if (!comment.trim()) return alert('Будь ласка, введіть текст відгуку');
+    if (submitting) return;
+    if (!tgUser) return alert('Помилка: користувач Telegram не знайдений. Спробуйте перезапустити додаток.');
 
     setSubmitting(true);
     try {
-      // Get internal customer ID
-      const { data: customer } = await supabase
+      const tid = tgUser.id.toString();
+      
+      // First, ensure customer exists and get their ID
+      const { data: customer, error: fetchError } = await supabase
         .from('customers')
         .select('id')
-        .eq('tg_id', tgUser.id.toString())
-        .single();
+        .eq('tg_id', tid)
+        .maybeSingle();
 
-      if (!customer) throw new Error('Customer not found');
+      if (fetchError) throw fetchError;
 
-      const { error } = await supabase
+      let customerId;
+      if (!customer) {
+        console.log('Customer not found in DB, creating...');
+        const { data: newCustomer, error: createError } = await supabase
+          .from('customers')
+          .upsert({ 
+            tg_id: tid, 
+            first_name: tgUser.first_name || 'Клієнт', 
+            last_name: tgUser.last_name || '' 
+          }, { onConflict: 'tg_id' })
+          .select('id')
+          .single();
+        
+        if (createError) throw createError;
+        customerId = newCustomer.id;
+      } else {
+        customerId = customer.id;
+      }
+
+      console.log('Submitting review for customer ID:', customerId);
+
+      const { error: submitError } = await supabase
         .from('reviews')
         .insert({
-          customer_id: customer.id,
+          customer_id: customerId,
           product_id: productId,
           rating,
           comment: comment.trim()
         });
 
-      if (error) throw error;
+      if (submitError) throw submitError;
 
+      console.log('Review submitted successfully!');
       setComment('');
       setRating(5);
       fetchReviews();
+      alert('Дякуємо за ваш відгук! ✨');
     } catch (err) {
       console.error('Error submitting review:', err);
+      alert('Помилка при відправці: ' + (err.message || 'невідома помилка'));
     } finally {
       setSubmitting(false);
     }
