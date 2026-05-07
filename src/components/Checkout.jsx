@@ -30,6 +30,9 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
   const [showCityResults, setShowCityResults] = useState(false);
   const [showWarehouseResults, setShowWarehouseResults] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   // Detect keyboard/focus
   React.useEffect(() => {
@@ -229,17 +232,48 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           <h3 style={{ fontSize: 18, color: '#5b5bff', fontWeight: 900, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
             Що далі? 🚚
           </h3>
-          <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6, fontWeight: 600, marginBottom: paymentMethod === 'card_transfer' ? 16 : 0 }}>
-            Невдовзі наш менеджер обробить ваше замовлення та підготує його до відправки. 
-            Ми створимо електронну накладну "Нової Пошти" і відразу надішлемо вам номер ТТН!
+          <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6, fontWeight: 600, marginBottom: 16 }}>
+            Невдовзі наш менеджер обробить замовлення. 
+            Ми створимо ТТН "Нової Пошти" і надішлемо вам номер!
           </p>
-          {paymentMethod === 'card_transfer' && (
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>Очікуємо оплату на карту:</div>
-              <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', marginBottom: 4, letterSpacing: '0.05em' }}>4441 1110 5788 6511</div>
-              <div style={{ fontSize: 12, color: '#2dd4bf', fontWeight: 700 }}>Годимчук Денис Д.</div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, border: '1px solid rgba(255,255,255,0.1)', marginBottom: 24 }}>
+            <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>
+              {paymentMethod === 'card_transfer' ? 'Очікуємо повну оплату на карту:' : 'Очікуємо передоплату 30% на карту:'}
             </div>
-          )}
+            <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', marginBottom: 4, letterSpacing: '0.05em' }}>4441 1110 5788 6511</div>
+            <div style={{ fontSize: 12, color: '#2dd4bf', fontWeight: 700, marginBottom: 12 }}>Годимчук Денис Д.</div>
+            <div style={{ fontSize: 14, fontWeight: 950, color: '#f97316' }}>
+              Сума до переказу: {paymentMethod === 'card_transfer' ? total.toFixed(0) : (total * 0.3).toFixed(0)} ₴
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {!paymentConfirmed ? (
+              <button 
+                onClick={async () => {
+                  setIsConfirmingPayment(true);
+                  try {
+                    await supabase.from('orders').update({ payment_status: 'verifying' }).eq('order_number', orderNumber);
+                    setPaymentConfirmed(true);
+                  } catch (e) { console.error(e); }
+                  setIsConfirmingPayment(false);
+                }}
+                disabled={isConfirmingPayment}
+                style={{ 
+                  width: '100%', padding: '16px', borderRadius: 18, border: '2px solid #22c55e', 
+                  background: 'rgba(34,197,94,0.1)', color: '#22c55e', fontWeight: 950, 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
+                  marginBottom: 12, fontSize: 14, textTransform: 'uppercase'
+                }}
+              >
+                {isConfirmingPayment ? <Loader2 className="animate-spin" size={18}/> : '✅ Я ОПЛАТИВ(ЛА)'}
+              </button>
+            ) : (
+              <div style={{ padding: '14px', borderRadius: 18, background: 'rgba(34,197,94,0.2)', color: '#22c55e', fontWeight: 900, fontSize: 13, marginBottom: 12 }}>
+                ДЯКУЄМО! ПЕРЕВІРЯЄМО ОПЛАТУ ⏳
+              </div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -427,10 +461,10 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                 onClick={() => setPaymentMethod('card_transfer')} 
                 icon={<CreditCard size={20}/>} 
                 title="Переказ на карту Mono" 
-                sub="Реквізити з'являться після вибору" 
+                sub="Повна оплата замовлення на карту" 
               />
               <AnimatePresence>
-                {paymentMethod === 'card_transfer' && (
+                {(paymentMethod === 'card_transfer' || paymentMethod === 'cash') && (
                   <motion.div 
                     initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                     style={{ overflow: 'hidden' }}
@@ -441,20 +475,36 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                         <button 
                           onClick={() => {
                             navigator.clipboard.writeText('4441111057886511');
-                            alert('Номер карти скопійовано!');
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
                           }}
-                          style={{ background: '#7c3aed', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}
+                          style={{ 
+                            background: copied ? '#22c55e' : '#7c3aed', 
+                            border: 'none', borderRadius: 8, padding: '4px 10px', 
+                            color: '#fff', fontSize: 10, fontWeight: 900, 
+                            cursor: 'pointer', minWidth: 110, transition: 'all 0.3s' 
+                          }}
                         >
-                          КОПІЮВАТИ
+                          {copied ? 'СКОПІЙОВАНО ✅' : 'КОПІЮВАТИ'}
                         </button>
                       </div>
-                      <div style={{ fontSize: 12, color: '#6b6b8a', fontWeight: 700 }}>Годимчук Денис Дмитрович</div>
+                      <div style={{ fontSize: 12, color: '#6b6b8a', fontWeight: 700, marginBottom: 12 }}>Годимчук Денис Дмитрович</div>
+                      
+                      {paymentMethod === 'cash' && (
+                        <div style={{ paddingTop: 12, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                           <div style={{ fontSize: 11, color: '#f97316', fontWeight: 900, marginBottom: 4 }}>Необхідна передоплата 30%:</div>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 13, color: '#fff', fontWeight: 800 }}>{(total * 0.3).toFixed(0)} ₴</span>
+                              <span style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 700 }}>Залишок {(total * 0.7).toFixed(0)} ₴ при отриманні</span>
+                           </div>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-            <SelectorItem active={paymentMethod === 'cash'} onClick={() => setPaymentMethod('cash')} icon={<ReceiptText size={20}/>} title="При отриманні" sub="Оплата у відділенні (післяплата)" />
+            <SelectorItem active={paymentMethod === 'cash'} onClick={() => setPaymentMethod('cash')} icon={<ReceiptText size={20}/>} title="Післяплата (наложка)" sub="30% передоплата, решта на пошті" />
           </div>
         </section>
 
