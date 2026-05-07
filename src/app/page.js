@@ -188,21 +188,21 @@ export default function Home() {
       {/* Product Details Modal (Direct child of Root to overlay Header) */}
       <AnimatePresence>
         {selectedProduct && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 10001, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 20px' }}>
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setSelectedProduct(null)}
-              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)' }}
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(20px)' }}
             />
             <motion.div 
-              initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }}
+              initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '100%', opacity: 0 }}
               style={{ 
                 position: 'relative', width: '100%', maxWidth: 450, background: '#0a0a1a', 
                 borderRadius: 40, overflow: 'hidden', display: 'flex', flexDirection: 'column',
                 border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh', boxShadow: '0 40px 100px rgba(0,0,0,0.8)'
               }}
             >
-              <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
+              <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 100 }}>
                 <button 
                   onClick={() => setSelectedProduct(null)}
                   style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
@@ -211,8 +211,9 @@ export default function Home() {
                 </button>
               </div>
 
-              <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 100px' }}>
-                <div style={{ width: '100%', height: 320, position: 'relative', marginTop: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 32, overflow: 'hidden' }}>
+              {/* Scrollable Content Area */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 100px', scrollbarWidth: 'none' }}>
+                <div style={{ width: '100%', height: 320, position: 'relative', marginTop: 24, background: 'rgba(255,255,255,0.02)', borderRadius: 32, overflow: 'hidden' }}>
                   <AnimatePresence mode="wait">
                     {activeImgIndex === 0 && selectedProduct.model_3d ? (
                       <motion.div 
@@ -228,7 +229,7 @@ export default function Home() {
                       </motion.div>
                     ) : (
                       <motion.div 
-                        key={activeImgIndex} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                        key={activeImgIndex} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1 }}
                         style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         <img 
@@ -254,117 +255,60 @@ export default function Home() {
                       >
                         <ChevronRight size={20} />
                       </button>
-
-                      {/* Dots */}
-                      <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 6, zIndex: 5 }}>
-                        {Array.from({ length: allImages.length + (selectedProduct.model_3d ? 1 : 0) }).map((_, i) => (
-                          <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: i === activeImgIndex ? '#7c3aed' : 'rgba(255,255,255,0.3)', transition: 'all 0.3s' }} />
-                        ))}
-                      </div>
                     </>
                   )}
                 </div>
 
                 <div style={{ marginTop: 24 }}>
-                  <div style={{ fontSize: 11, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', marginBottom: 4 }}>{selectedProduct.category}</div>
-                  <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 16 }}>{selectedProduct.name}</h2>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', marginBottom: 4, letterSpacing: '0.1em' }}>{selectedProduct.category}</div>
+                  <h2 style={{ fontSize: 24, fontWeight: 950, color: '#fff', marginBottom: 20, lineHeight: 1.2 }}>{selectedProduct.name}</h2>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 30 }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 30 }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
                         <Droplets size={12} style={{ color: '#3b82f6' }} /> Матеріал
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>{selectedProduct.plastic_type || 'PLA Пластик'}</div>
+                      <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>{selectedProduct.plastic_type || 'PLA Eco'}</div>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
                         <ShieldCheck size={12} style={{ color: '#22c55e' }} /> Безпека
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>{selectedProduct.safety_info || 'Безпечний'}</div>
-                    </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
-                        <Weight size={12} style={{ color: '#ec4899' }} /> Вага
-                      </div>
-                      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>{selectedProduct.weight || '---'}</div>
-                    </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>
-                        <Droplets size={12} style={{ color: '#7c3aed' }} /> Кольори
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {selectedProduct.color ? selectedProduct.color.split(',').map((c, i) => {
-                          const val = c.trim().toLowerCase();
-                          // Словник кольорів
-                          const colorMap = {
-                            'білий': '#ffffff', 'white': '#ffffff',
-                            'чорний': '#000000', 'black': '#000000',
-                            'червоний': '#ef4444', 'red': '#ef4444',
-                            'синій': '#3b82f6', 'blue': '#3b82f6',
-                            'жовтий': '#facc15', 'yellow': '#facc15',
-                            'зелений': '#22c55e', 'green': '#22c55e',
-                            'рожевий': '#ec4899', 'pink': '#ec4899',
-                            'помаранчевий': '#f97316', 'orange': '#f97316',
-                            'салатовий': '#adff2f', 'lime': '#adff2f',
-                            'фіолетовий': '#a855f7', 'purple': '#a855f7',
-                            'блакитний': '#0ea5e9', 'sky': '#0ea5e9',
-                            'сірий': '#94a3b8', 'gray': '#94a3b8',
-                            'коричневий': '#78350f', 'brown': '#78350f',
-                            'золотий': '#fbbf24', 'gold': '#fbbf24',
-                            'срібний': '#cbd5e1', 'silver': '#cbd5e1',
-                            'бежевий': '#f5f5dc', 'beige': '#f5f5dc',
-                            'м\'ятний': '#2ed573', 'mint': '#2ed573'
-                          };
-
-                          let bg = val;
-                          if (val.includes('веселк') || val.includes('rainb')) {
-                            bg = 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)';
-                          } else if (colorMap[val]) {
-                            bg = colorMap[val];
-                          }
-                          
-                          return (
-                            <div 
-                              key={i} 
-                              title={c.trim()}
-                              style={{ 
-                                width: 18, height: 18, borderRadius: '50%', 
-                                background: bg, border: '2px solid rgba(255,255,255,0.2)',
-                                boxShadow: '0 2px 5px rgba(0,0,0,0.3)'
-                              }} 
-                            />
-                          );
-                        }) : <div style={{ color: '#fff', fontWeight: 800, fontSize: 13 }}>Базовий</div>}
-                      </div>
+                      <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>{selectedProduct.safety_info || '100% Безпечно'}</div>
                     </div>
                   </div>
 
                   <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
-                      <Info size={12} /> Опис товару
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10 }}>
+                      <Info size={12} /> Про цей виріб
                     </div>
-                    <p style={{ color: '#6b6b8a', lineHeight: 1.5, fontSize: 14 }}>{selectedProduct.description || 'Опис скоро з\'явиться...'}</p>
+                    <p style={{ color: '#6b6b8a', lineHeight: 1.6, fontSize: 15, margin: 0 }}>{selectedProduct.description || 'Опис скоро з\'явиться...'}</p>
                   </div>
                 </div>
               </div>
 
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 24px', background: '#0a0a1a', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {/* Fixed Bottom Action Bar */}
+              <div style={{ 
+                flexShrink: 0, padding: '24px 24px 32px', background: 'linear-gradient(to top, #0a0a1a 80%, transparent)', 
+                borderTop: '1px solid rgba(255,255,255,0.05)', position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10 
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
                   <div>
-                    <div style={{ fontSize: 10, color: '#6b6b8a', marginBottom: 2 }}>Ціна товару</div>
-                    <div style={{ fontSize: 24, fontWeight: 950, color: '#f97316' }}>
-                      {(selectedProduct.price * (1 - (selectedProduct.discount || 0) / 100)).toFixed(0)}₴
+                    <div style={{ fontSize: 10, color: '#6b6b8a', marginBottom: 4, fontWeight: 800, textTransform: 'uppercase' }}>Вартість</div>
+                    <div style={{ fontSize: 26, fontWeight: 1000, color: '#f97316', display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                      {(selectedProduct.price * (1 - (selectedProduct.discount || 0) / 100)).toFixed(0)}
+                      <span style={{ fontSize: 16 }}>₴</span>
                     </div>
                   </div>
                   <button 
                     onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
                     style={{ 
-                      padding: '14px 28px', borderRadius: 16, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', 
-                      color: '#fff', border: 'none', fontWeight: 900, fontSize: 14, cursor: 'pointer',
-                      boxShadow: '0 8px 20px rgba(124,58,237,0.3)'
+                      flex: 1, padding: '16px 20px', borderRadius: 20, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', 
+                      color: '#fff', border: 'none', fontWeight: 1000, fontSize: 15, cursor: 'pointer',
+                      boxShadow: '0 12px 24px rgba(124,58,237,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em'
                     }}
                   >
-                    В КОШИК
+                    В кошик
                   </button>
                 </div>
               </div>

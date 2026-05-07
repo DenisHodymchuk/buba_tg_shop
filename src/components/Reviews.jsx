@@ -9,6 +9,7 @@ const Reviews = ({ isOpen, onClose, productId = null, tgUser = null }) => {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -94,8 +95,9 @@ const Reviews = ({ isOpen, onClose, productId = null, tgUser = null }) => {
       console.log('Review submitted successfully!');
       setComment('');
       setRating(5);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
       fetchReviews();
-      alert('Дякуємо за ваш відгук! ✨');
     } catch (err) {
       console.error('Error submitting review:', err);
       alert('Помилка при відправці: ' + (err.message || 'невідома помилка'));
@@ -163,11 +165,22 @@ const Reviews = ({ isOpen, onClose, productId = null, tgUser = null }) => {
                     placeholder="Ваш відгук..."
                     style={{ 
                       width: '100%', minHeight: 80, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: 16, padding: '12px 16px', color: '#fff', fontSize: 14, outline: 'none', resize: 'none'
+                      borderRadius: 16, padding: '12px 16px', color: '#fff', fontSize: 14, outline: 'none', resize: 'none',
+                      transition: 'all 0.3s'
                     }}
                   />
+                  <AnimatePresence>
+                    {success && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        style={{ position: 'absolute', inset: 0, background: 'rgba(124,58,237,0.9)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 14, zIndex: 10 }}
+                      >
+                        ДЯКУЄМО ЗА ВІДГУК! ✨
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   <button 
-                    onClick={handleSubmit} disabled={!comment.trim() || submitting}
+                    onClick={handleSubmit} disabled={!comment.trim() || submitting || success}
                     style={{ 
                       position: 'absolute', bottom: 10, right: 10, width: 40, height: 40, borderRadius: 12,
                       background: comment.trim() ? 'linear-gradient(135deg, #7c3aed, #ec4899)' : 'rgba(255,255,255,0.05)',
