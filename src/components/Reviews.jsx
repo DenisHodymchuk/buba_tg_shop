@@ -115,70 +115,78 @@ const Reviews = ({ isOpen, onClose, productId = null, tgUser = null }) => {
             onClick={onClose}
             style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}
           />
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            style={{ 
-              position: 'relative', width: '100%', maxWidth: 450, background: '#0a0a1a', 
-              borderRadius: 32, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-              border: '1px solid rgba(255,255,255,0.1)', maxHeight: '85vh', boxShadow: '0 40px 100px rgba(0,0,0,0.8)'
-            }}
-          >
-            {/* Header */}
-            <div style={{ padding: '24px 24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <div>
-                <h2 style={{ fontSize: 20, fontWeight: 950, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <MessageSquare size={20} style={{ color: '#7c3aed' }} /> 
-                  {productId ? 'Відгуки про товар' : 'Відгуки про магазин'}
-                </h2>
-                <p style={{ fontSize: 11, color: '#6b6b8a', marginTop: 4 }}>Думка наших клієнтів дуже важлива</p>
-              </div>
-              <button 
-                onClick={onClose}
-                style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-              {/* Form */}
-              <div style={{ background: 'rgba(124,58,237,0.05)', borderRadius: 24, padding: 20, border: '1px solid rgba(124,58,237,0.1)', marginBottom: 30 }}>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <button 
-                      key={s} onClick={() => setRating(s)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
-                    >
-                      <Star 
-                        size={28} 
-                        fill={s <= rating ? '#facc15' : 'none'} 
-                        color={s <= rating ? '#facc15' : '#4a4a6a'} 
-                        style={{ filter: s <= rating ? 'drop-shadow(0 0 8px rgba(250,204,21,0.4))' : 'none', transition: 'all 0.2s' }}
-                      />
-                    </button>
-                  ))}
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              style={{ 
+                position: 'relative', width: '100%', maxWidth: 450, background: '#0a0a1a', 
+                borderRadius: 32, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                border: '1px solid rgba(255,255,255,0.1)', maxHeight: '85vh', boxShadow: '0 40px 100px rgba(0,0,0,0.8)',
+                touchAction: 'pan-y', overflowX: 'hidden'
+              }}
+            >
+              {/* Header */}
+              <div style={{ padding: '24px 24px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div>
+                  <h2 style={{ fontSize: 20, fontWeight: 950, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <MessageSquare size={20} style={{ color: '#7c3aed' }} /> 
+                    {productId ? 'Відгуки про товар' : 'Відгуки про магазин'}
+                  </h2>
+                  <p style={{ fontSize: 11, color: '#6b6b8a', marginTop: 4 }}>Думка наших клієнтів дуже важлива</p>
                 </div>
-                <div style={{ position: 'relative' }}>
-                  <textarea 
-                    value={comment} onChange={(e) => setComment(e.target.value)}
-                    placeholder="Ваш відгук..."
-                    style={{ 
-                      width: '100%', minHeight: 80, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: 16, padding: '12px 16px', color: '#fff', fontSize: 14, outline: 'none', resize: 'none',
-                      transition: 'all 0.3s'
-                    }}
-                  />
-                  <AnimatePresence>
-                    {success && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                        style={{ position: 'absolute', inset: 0, background: 'rgba(124,58,237,0.9)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 14, zIndex: 10 }}
+                <button 
+                  onClick={onClose}
+                  style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: 24, overflowX: 'hidden' }}>
+                {/* Form */}
+                <div style={{ background: 'rgba(124,58,237,0.05)', borderRadius: 24, padding: 20, border: '1px solid rgba(124,58,237,0.1)', marginBottom: 30, position: 'relative' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button 
+                        key={s} onClick={() => setRating(s)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
                       >
-                        ДЯКУЄМО ЗА ВІДГУК! ✨
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        <Star 
+                          size={28} 
+                          fill={s <= rating ? '#facc15' : 'none'} 
+                          color={s <= rating ? '#facc15' : '#4a4a6a'} 
+                          style={{ filter: s <= rating ? 'drop-shadow(0 0 8px rgba(250,204,21,0.4))' : 'none', transition: 'all 0.2s' }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <textarea 
+                      value={comment} onChange={(e) => setComment(e.target.value)}
+                      placeholder="Ваш відгук..."
+                      style={{ 
+                        width: '100%', minHeight: 80, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 16, padding: '12px 16px', color: '#fff', fontSize: 16, outline: 'none', resize: 'none',
+                        transition: 'all 0.3s'
+                      }}
+                    />
+                    <AnimatePresence>
+                      {success && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                          style={{ 
+                            position: 'absolute', inset: 0, background: 'rgba(10,10,26,0.95)', 
+                            borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', 
+                            justifyContent: 'center', color: '#fff', zIndex: 10, backdropFilter: 'blur(4px)'
+                          }}
+                        >
+                          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                            <Star size={20} fill="#fff" />
+                          </div>
+                          <span style={{ fontWeight: 900, fontSize: 12, letterSpacing: '0.05em' }}>ДЯКУЄМО ЗА ВІДГУК! ✨</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   <button 
                     onClick={handleSubmit} disabled={!comment.trim() || submitting || success}
                     style={{ 
