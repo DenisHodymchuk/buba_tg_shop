@@ -11,8 +11,8 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Missing token or chat_id' }, { status: 400 });
     }
 
-    const message = `🛸 Магазин *BUBA LAB* відповів на ваш відгук _"${original_comment}"_\n\n` +
-                    `💬 *"${reply_text}"*`;
+    const message = `🛸 Магазин *BUBA LAB* відповів на ваш відгук ${original_comment}\n\n` +
+                    `💬 ${reply_text}`;
 
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
