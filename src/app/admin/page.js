@@ -1206,7 +1206,7 @@ export default function AdminPanel() {
                         />
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(59,130,246,0.05)', padding: 20, borderRadius: 24, border: '1px solid rgba(59,130,246,0.1)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(59,130,246,0.05)', padding: '16px 20px', borderRadius: 24, border: '1px solid rgba(59,130,246,0.1)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Calculator size={14} style={{ color: '#60a5fa' }} />
@@ -1223,12 +1223,12 @@ export default function AdminPanel() {
                             const newPublic = (formData.description || '').split('|||ADMIN_NOTES|||')[0] || '';
                             setFormData({...formData, description: `${newPublic}\n\n|||ADMIN_NOTES|||\n${e.target.value}`});
                           }} 
-                          style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: 16, color: '#93c5fd', outline: 'none', minHeight: 120, resize: 'vertical', fontSize: 13, lineHeight: 1.6, fontFamily: 'monospace', borderLeft: '3px solid #3b82f6' }} 
+                          style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: 16, color: '#93c5fd', outline: 'none', height: 180, resize: 'none', fontSize: 13, lineHeight: 1.6, fontFamily: 'monospace', borderLeft: '3px solid #3b82f6' }} 
                           placeholder="Тут будуть ваші розрахунки..."
                         />
                         
                         <p style={{ fontSize: 10, color: '#4a4a6a', margin: 0, fontStyle: 'italic' }}>
-                          * Ці дані бачите тільки ви. Вони автоматично відфільтровуються для клієнтів магазину.
+                          * Ці дані бачите тільки ви.
                         </p>
                       </div>
                     </>
