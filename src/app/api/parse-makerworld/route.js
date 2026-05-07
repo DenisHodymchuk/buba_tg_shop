@@ -29,12 +29,43 @@ export async function POST(req) {
 
     const data = await response.json();
 
+    // Збираємо всі унікальні зображення з різних масивів
+    const allImages = new Set();
+    if (data.coverUrl) allImages.add(data.coverUrl);
+    
+    // Фото від автора дизайну
+    data.designExtension?.design_pictures?.forEach(pic => {
+      if (pic.url) allImages.add(pic.url);
+    });
+    
+    // Фото з першого профілю друку (інстансу)
+    const firstInstance = data.instances?.[0];
+    firstInstance?.pictures?.forEach(pic => {
+      if (pic.url) allImages.add(pic.url);
+    });
+    if (firstInstance?.cover) allImages.add(firstInstance.cover);
+
+    const imagesArray = Array.from(allImages);
+    const mainImage = imagesArray[0] || '';
+    const extraImages = imagesArray.slice(1);
+
+    // Технічні параметри з першого профілю
+    const weight = firstInstance?.weight ? `${firstInstance.weight}г` : '';
+    const plasticType = firstInstance?.instanceFilaments?.[0]?.type || 'PLA';
+    const color = firstInstance?.instanceFilaments?.[0]?.color || '';
+    const licenseInfo = data.license ? `Ліцензія: ${data.license}` : 'Безпечно для дому';
+
     return NextResponse.json({
       name: data.title || '',
       description: data.summary || '',
-      image_url: data.coverUrl || '',
+      image_url: mainImage,
+      image_urls: extraImages,
       category: data.categories?.[0]?.name || '3D Модель',
-      source: 'MakerWorld (API)'
+      weight: weight,
+      plastic_type: plasticType,
+      color: color,
+      safety_info: licenseInfo,
+      source: 'MakerWorld (Full API)'
     });
 
   } catch (error) {

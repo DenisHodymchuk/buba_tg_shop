@@ -468,7 +468,12 @@ export default function AdminPanel() {
         name: data.name || formData.name,
         description: data.description || formData.description,
         image_url: data.image_url || formData.image_url,
-        category: data.category || formData.category
+        image_urls: data.image_urls || formData.image_urls,
+        category: data.category || formData.category,
+        weight: data.weight || formData.weight,
+        plastic_type: data.plastic_type || formData.plastic_type,
+        color: data.color || formData.color,
+        safety_info: data.safety_info || formData.safety_info
       });
       
       setModal({
