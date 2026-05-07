@@ -1074,222 +1074,134 @@ export default function AdminPanel() {
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} 
               className="hide-scrollbar"
-              style={{ position: 'relative', width: '100%', maxWidth: 500, background: '#0a192f', borderRadius: 32, border: '1px solid rgba(255,255,255,0.1)', padding: 32, maxHeight: '90vh', overflowY: 'auto' }}
+              style={{ position: 'relative', width: '100%', maxWidth: 900, background: '#0a192f', borderRadius: 32, border: '1px solid rgba(255,255,255,0.1)', padding: 32, maxHeight: '95vh', overflowY: 'auto' }}
             >
-              <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 24 }}>{editingId ? 'Редагувати товар' : 'Новий товар'}</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: 0 }}>{editingId ? 'Редагувати товар' : 'Новий товар'}</h2>
+                <button onClick={closeModal} style={{ background: 'none', border: 'none', color: '#6b6b8a', cursor: 'pointer' }}><X size={24} /></button>
+              </div>
               
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {/* Simplified Gallery Management */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, background: 'rgba(255,255,255,0.02)', padding: 24, borderRadius: 28, border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label style={{ fontSize: 11, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Галерея фотографій</label>
-                    
-                    <input 
-                      type="file" id="gallery-file-upload" accept="image/*" hidden 
-                      onChange={handleGalleryUpload}
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => document.getElementById('gallery-file-upload').click()}
-                      style={{ padding: '12px 24px', borderRadius: 16, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 16px rgba(124,58,237,0.2)' }}
-                    >
-                      <Upload size={18} /> ЗАВАНТАЖИТИ ФОТО
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10 }}>
-                    {[formData.image_url, ...(Array.isArray(formData.image_urls) ? formData.image_urls : [])].filter(Boolean).map((url, index) => {
-                      const isMain = url === formData.image_url;
-                      return (
-                        <div key={index} style={{ position: 'relative', width: 100, height: 100, borderRadius: 16, border: isMain ? '2px solid #7c3aed' : '1px solid rgba(255,255,255,0.1)', overflow: 'hidden', background: 'rgba(0,0,0,0.3)' }}>
+                {/* Top Row: Gallery & Quick Import */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase' }}>Галерея фото</label>
+                      <button type="button" onClick={() => document.getElementById('gallery-file-upload').click()} style={{ fontSize: 10, padding: '8px 16px', borderRadius: 10, background: 'rgba(124,58,237,0.2)', color: '#7c3aed', border: 'none', fontWeight: 900, cursor: 'pointer' }}>+ ДОДАТИ</button>
+                      <input type="file" id="gallery-file-upload" accept="image/*" hidden onChange={handleGalleryUpload} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {[formData.image_url, ...(formData.image_urls || [])].filter(Boolean).map((url, index) => (
+                        <div key={index} style={{ position: 'relative', width: 60, height: 60, borderRadius: 10, border: url === formData.image_url ? '2px solid #7c3aed' : '1px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
                           <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              const all = [formData.image_url, ...(formData.image_urls || [])].filter(Boolean);
-                              const newMain = url;
-                              const newExtra = all.filter(u => u !== newMain);
-                              setFormData({...formData, image_url: newMain, image_urls: newExtra});
-                            }}
-                            style={{ position: 'absolute', top: 5, left: 5, width: 24, height: 24, borderRadius: '50%', background: isMain ? '#7c3aed' : 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                            title="Зробити головним"
-                          >
-                            <Award size={14} />
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              if (isMain) {
-                                const extra = formData.image_urls || [];
-                                setFormData({...formData, image_url: extra[0] || '', image_urls: extra.slice(1)});
-                              } else {
-                                setFormData({...formData, image_urls: formData.image_urls.filter(u => u !== url)});
-                              }
-                            }}
-                            style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: '50%', background: 'rgba(239,68,68,0.8)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                          >
-                            <X size={14} />
-                          </button>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* MakerWorld Import Section */}
-                {!editingId && (
-                  <div style={{ background: 'rgba(59,130,246,0.05)', padding: 20, borderRadius: 24, border: '1px solid rgba(59,130,246,0.1)', marginBottom: 10 }}>
-                    <label style={{ fontSize: 10, fontWeight: 950, color: '#60a5fa', textTransform: 'uppercase', marginBottom: 12, display: 'block' }}>💨 Швидкий імпорт з MakerWorld</label>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <input 
-                        type="text" 
-                        placeholder="Вставте посилання на модель..." 
-                        value={importUrl}
-                        onChange={(e) => setImportUrl(e.target.value)}
-                        style={{ flex: 1, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 16px', color: '#fff', fontSize: 13, outline: 'none' }}
-                      />
-                      <button 
-                        type="button"
-                        onClick={handleImportFromMakerWorld}
-                        disabled={isImporting}
-                        style={{ padding: '12px 20px', borderRadius: 12, background: '#1e40af', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', fontSize: 11, whiteSpace: 'nowrap', opacity: isImporting ? 0.5 : 1 }}
-                      >
-                        {isImporting ? 'ПАРСИНГ...' : 'ІМПОРТ'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва</label>
-                  <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />
-                </div>
-
-                <div style={{ display: 'flex', gap: 16 }}>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Базова Ціна (₴)</label>
-                    <input type="number" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', width: '100%' }} />
-                  </div>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Знижка (%)</label>
-                    <div style={{ position: 'relative' }}>
-                      <input type="number" value={formData.discount} onChange={e => setFormData({...formData, discount: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '14px 34px 14px 14px', color: '#fff', outline: 'none', width: '100%' }} />
-                      <Percent size={14} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* ПРЕВ'Ю ФІНАЛЬНОЇ ЦІНИ */}
-                <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px dashed rgba(59,130,246,0.2)', borderRadius: 16, padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#6b6b8a' }}>Фінальна ціна для клієнта:</span>
-                  <span style={{ fontSize: 18, fontWeight: 900, color: '#3b82f6' }}>{finalPricePreview} ₴</span>
-                </div>
-
-                {/* Опис та Примітки (Розділені) */}
-                {(() => {
-                  const parts = (formData.description || '').split('|||ADMIN_NOTES|||');
-                  const publicDesc = parts[0]?.trim() || '';
-                  const adminNotes = parts[1]?.trim() || '';
-                  
-                  return (
-                    <>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Опис (бачать клієнти)</label>
-                        <textarea 
-                          value={publicDesc} 
-                          onChange={e => {
-                            const newNotes = (formData.description || '').split('|||ADMIN_NOTES|||')[1] || '';
-                            setFormData({...formData, description: `${e.target.value}\n\n|||ADMIN_NOTES|||\n${newNotes}`});
-                          }} 
-                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', minHeight: 100, resize: 'vertical', fontSize: 13, lineHeight: 1.5 }} 
-                          placeholder="Опис товару для магазину..."
-                        />
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <label style={{ fontSize: 9, fontWeight: 900, color: '#60a5fa', textTransform: 'uppercase' }}>Примітки та Собівартість (тільки для вас)</label>
-                        <textarea 
-                          value={adminNotes} 
-                          onChange={e => {
-                            const newPublic = (formData.description || '').split('|||ADMIN_NOTES|||')[0] || '';
-                            setFormData({...formData, description: `${newPublic}\n\n|||ADMIN_NOTES|||\n${e.target.value}`});
-                          }} 
-                          style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.1)', borderRadius: 12, padding: 14, color: '#93c5fd', outline: 'none', minHeight: 80, resize: 'vertical', fontSize: 12, lineHeight: 1.5, fontFamily: 'monospace' }} 
-                          placeholder="Розрахунки собівартості..."
-                        />
-                      </div>
-                    </>
-                  );
-                })()}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Категорія</label>
-                  <input type="text" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />
-                </div>
-                
-                <div style={{ 
-                  display: 'flex', flexWrap: 'wrap', gap: 20, 
-                  background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 24, 
-                  border: '1px solid rgba(255,255,255,0.05)' 
-                }}>
-                  <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Матеріал</label>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {['PLA', 'PETG', 'ABS', 'TPU'].map(p => (
-                          <button key={p} type="button" onClick={() => setFormData({...formData, plastic_type: p})} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 6, background: formData.plastic_type === p ? '#7c3aed' : 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', cursor: 'pointer' }}>{p}</button>
-                        ))}
-                      </div>
-                    </div>
-                    <input type="text" value={formData.plastic_type} onChange={e => setFormData({...formData, plastic_type: e.target.value})} placeholder="напр. PLA Пластик" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '14px 16px', color: '#fff', outline: 'none', fontSize: 13, width: '100%' }} />
-                  </div>
-
-                  <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: '#ec4899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Кольори</label>
-                      <button type="button" onClick={() => setFormData({...formData, color: ''})} style={{ fontSize: 9, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800 }}>ОЧИСТИТИ</button>
-                    </div>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                      {['Червоний', 'Синій', 'Зелений', 'Жовтий', 'Білий', 'Чорний', 'Веселковий'].map(c => (
-                        <button 
-                          key={c} type="button" 
-                          onClick={() => {
-                            const current = formData.color ? formData.color.split(',').map(x => x.trim()).filter(Boolean) : [];
-                            if (!current.includes(c)) setFormData({...formData, color: [...current, c].join(', ')});
-                          }} 
-                          style={{ fontSize: 9, padding: '4px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }}
-                        >
-                          {c}
-                        </button>
                       ))}
                     </div>
-                    <input type="text" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} placeholder="напр. Червоний, Синій" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '14px 16px', color: '#fff', outline: 'none', fontSize: 13, width: '100%' }} />
                   </div>
 
-                  <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Вага</label>
-                    <input type="text" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} placeholder="напр. 150г" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '14px 16px', color: '#fff', outline: 'none', fontSize: 13, width: '100%' }} />
-                  </div>
-
-                  <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Безпека</label>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {['Харчовий', 'Безпечний', 'Еко', '3+ роки'].map(s => (
-                          <button key={s} type="button" onClick={() => setFormData({...formData, safety_info: s === 'Харчовий' ? 'Харчовий пластик' : s === 'Еко' ? 'Еко-матеріал' : s})} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 6, background: formData.safety_info?.includes(s) ? '#22c55e' : 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', cursor: 'pointer' }}>{s}</button>
-                        ))}
+                  {!editingId && (
+                    <div style={{ background: 'rgba(59,130,246,0.05)', padding: 20, borderRadius: 24, border: '1px solid rgba(59,130,246,0.1)' }}>
+                      <label style={{ fontSize: 10, fontWeight: 950, color: '#60a5fa', textTransform: 'uppercase', marginBottom: 12, display: 'block' }}>💨 Швидкий імпорт MakerWorld</label>
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <input type="text" placeholder="Посилання на модель..." value={importUrl} onChange={(e) => setImportUrl(e.target.value)} style={{ flex: 1, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 16px', color: '#fff', fontSize: 13, outline: 'none' }} />
+                        <button type="button" onClick={handleImportFromMakerWorld} disabled={isImporting} style={{ padding: '12px 20px', borderRadius: 12, background: '#1e40af', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', fontSize: 11, opacity: isImporting ? 0.5 : 1 }}>{isImporting ? '...' : 'ІМПОРТ'}</button>
                       </div>
                     </div>
-                    <input type="text" value={formData.safety_info} onChange={e => setFormData({...formData, safety_info: e.target.value})} placeholder="напр. Харчовий пластик" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '14px 16px', color: '#fff', outline: 'none', fontSize: 13, width: '100%' }} />
-                  </div>
-                </div>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>3D Модель URL (.glb)</label>
-                  <input type="text" value={formData.model_3d} onChange={e => setFormData({...formData, model_3d: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 11 }} />
+                  )}
                 </div>
 
-                <button type="submit" style={{ marginTop: 10, padding: 16, borderRadius: 14, border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 900, cursor: 'pointer' }}>ЗБЕРЕГТИ ЗМІНИ</button>
+                {/* Main Content: Two Columns */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 24 }}>
+                  {/* Left Column: Text Data */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва</label>
+                      <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Категорія</label>
+                      <input type="text" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />
+                    </div>
+
+                    {(() => {
+                      const parts = (formData.description || '').split('|||ADMIN_NOTES|||');
+                      const publicDesc = parts[0]?.trim() || '';
+                      const adminNotes = parts[1]?.trim() || '';
+                      return (
+                        <>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Опис (для клієнтів)</label>
+                            <textarea value={publicDesc} onChange={e => {
+                                const newNotes = (formData.description || '').split('|||ADMIN_NOTES|||')[1] || '';
+                                setFormData({...formData, description: `${e.target.value}\n\n|||ADMIN_NOTES|||\n${newNotes}`});
+                              }} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', minHeight: 120, resize: 'vertical', fontSize: 13, lineHeight: 1.5 }} />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <label style={{ fontSize: 9, fontWeight: 900, color: '#60a5fa', textTransform: 'uppercase' }}>Примітки (Admin)</label>
+                            <textarea value={adminNotes} onChange={e => {
+                                const newPublic = (formData.description || '').split('|||ADMIN_NOTES|||')[0] || '';
+                                setFormData({...formData, description: `${newPublic}\n\n|||ADMIN_NOTES|||\n${e.target.value}`});
+                              }} style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.1)', borderRadius: 12, padding: 14, color: '#93c5fd', outline: 'none', minHeight: 100, resize: 'vertical', fontSize: 12, fontFamily: 'monospace' }} />
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Right Column: Numbers & Params */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Ціна (₴)</label>
+                          <input type="number" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }} />
+                        </div>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Знижка (%)</label>
+                          <input type="number" value={formData.discount} onChange={e => setFormData({...formData, discount: e.target.value})} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }} />
+                        </div>
+                      </div>
+                      <div style={{ background: 'rgba(59,130,246,0.1)', padding: '10px 16px', borderRadius: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#60a5fa' }}>ФІНАЛЬНА:</span>
+                        <span style={{ fontSize: 20, fontWeight: 950, color: '#fff' }}>{finalPricePreview} ₴</span>
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={{ fontSize: 9, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase' }}>Матеріал</label>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          {['PLA', 'PETG', 'ABS'].map(p => (
+                            <button key={p} type="button" onClick={() => setFormData({...formData, plastic_type: p})} style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, background: formData.plastic_type === p ? '#7c3aed' : 'rgba(255,255,255,0.05)', color: '#fff', border: 'none' }}>{p}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <input type="text" value={formData.plastic_type} onChange={e => setFormData({...formData, plastic_type: e.target.value})} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 12 }} />
+
+                      <label style={{ fontSize: 9, fontWeight: 900, color: '#ec4899', textTransform: 'uppercase' }}>Кольори</label>
+                      <input type="text" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 12 }} />
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <label style={{ fontSize: 9, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Вага</label>
+                          <input type="text" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 12, width: '100%' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: 9, fontWeight: 900, color: '#22c55e', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Безпека</label>
+                          <input type="text" value={formData.safety_info} onChange={e => setFormData({...formData, safety_info: e.target.value})} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 12, width: '100%' }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>3D Модель URL (.glb)</label>
+                      <input type="text" value={formData.model_3d} onChange={e => setFormData({...formData, model_3d: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 11 }} />
+                    </div>
+                    
+                    <button type="submit" style={{ padding: 16, borderRadius: 14, border: 'none', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: '#fff', fontWeight: 900, cursor: 'pointer', boxShadow: '0 8px 20px rgba(59,130,246,0.3)' }}>ЗБЕРЕГТИ ЗМІНИ</button>
+                  </div>
+                </div>
               </form>
             </motion.div>
           </div>
