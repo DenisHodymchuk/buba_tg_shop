@@ -755,7 +755,7 @@ export default function AdminPanel() {
                              🪙 -{order.shipping_details.bonus_used} бонусів
                           </div>
                         )}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, justifyContent: 'flex-end' }}>
                           <div style={{ 
                             fontSize: 10, 
                             color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b', 
