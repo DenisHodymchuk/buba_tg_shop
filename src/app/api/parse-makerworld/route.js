@@ -50,22 +50,62 @@ export async function POST(req) {
     const extraImages = imagesArray.slice(1);
 
     // Технічні параметри з першого профілю
-    const weight = firstInstance?.weight ? `${firstInstance.weight}г` : '';
+    // --- Логіка перекладу та очищення назви ---
+    const translateAndClean = (text) => {
+      if (!text) return '';
+      let cleaned = text
+        .replace(/Flexi|Articulated|3D|Print|Bambu|Lab|Model|Toy|Gift/gi, '') // Прибираємо технічні слова
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      const dictionary = {
+        'Dragon': 'Дракон', 'Egg': 'Яйце', 'Dino': 'Динозавр', 'Cat': 'Кіт', 'Dog': 'Пес',
+        'Box': 'Коробка', 'Stand': 'Підставка', 'Holder': 'Тримач', 'Organizer': 'Органайзер',
+        'Toy': 'Іграшка', 'Figure': 'Фігурка', 'Sculpture': 'Скульптура', 'Keychain': 'Брелок'
+      };
+
+      Object.entries(dictionary).forEach(([eng, ukr]) => {
+        const regex = new RegExp(eng, 'gi');
+        cleaned = cleaned.replace(regex, ukr);
+      });
+      return cleaned || text;
+    };
+
+    const name = translateAndClean(data.title);
+
+    // --- Розрахунок собівартості ---
+    const printTimeSeconds = firstInstance?.printTime || 0;
+    const printTimeHours = printTimeSeconds / 3600;
+    const weightG = firstInstance?.weight || 0;
+    const weightKg = weightG / 1000;
+
+    // Формула: (Вага * Ціна пластику) + (Час * Потужність * Ціна квт)
+    const electricityCost = printTimeHours * 0.15 * 4.32;
+    const plaCost = (weightKg * 550) + electricityCost;
+    const petgCost = (weightKg * 450) + electricityCost;
+
     const plasticType = firstInstance?.instanceFilaments?.[0]?.type || 'PLA';
     const color = firstInstance?.instanceFilaments?.[0]?.color || '';
     const licenseInfo = data.license ? `Ліцензія: ${data.license}` : 'Безпечно для дому';
 
+    const costNote = `\n\n--- Орієнтовна собівартість ---\n` +
+                     `⚡ Електрика: ~${electricityCost.toFixed(2)} грн (${(printTimeHours).toFixed(1)} год)\n` +
+                     `🧵 PLA: ~${plaCost.toFixed(0)} грн\n` +
+                     `🧵 PETG: ~${petgCost.toFixed(0)} грн`;
+
+    const description = (data.summary || '') + costNote;
+
     return NextResponse.json({
-      name: data.title || '',
-      description: data.summary || '',
+      name: name,
+      description: description,
       image_url: mainImage,
       image_urls: extraImages,
       category: data.categories?.[0]?.name || '3D Модель',
-      weight: weight,
+      weight: weightG ? `${weightG}г` : '',
       plastic_type: plasticType,
       color: color,
       safety_info: licenseInfo,
-      source: 'MakerWorld (Full API)'
+      source: 'MakerWorld (Smart API)'
     });
 
   } catch (error) {
