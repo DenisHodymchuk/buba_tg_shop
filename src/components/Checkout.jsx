@@ -14,6 +14,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [finalAmount, setFinalAmount] = useState(0);
   const [useBonuses, setUseBonuses] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('online');
   const [deliveryMethod, setDeliveryMethod] = useState('nova_poshta');
@@ -190,6 +191,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
       if (typeof window !== 'undefined') {
         localStorage.setItem('buba_customer_phone', formData.phone);
       }
+      setFinalAmount(total);
       setIsSuccess(true);
       if (onOrderSuccess) onOrderSuccess();
     } catch (error) {
@@ -224,32 +226,23 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         <p style={{ color: '#6b6b8a', fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Номер вашого замовлення:</p>
         <div style={{ fontSize: 24, fontWeight: 950, color: '#fff', marginBottom: 40, letterSpacing: '0.05em' }}>{orderNumber}</div>
 
-        <div style={{ 
-          width: '100%', maxWidth: 400, background: 'rgba(255,255,255,0.02)', 
-          border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 24,
-          textAlign: 'left', marginBottom: 24
-        }}>
-          <h3 style={{ fontSize: 18, color: '#5b5bff', fontWeight: 900, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-            Що далі? 🚚
-          </h3>
-          <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6, fontWeight: 600, marginBottom: 16 }}>
-            Невдовзі наш менеджер обробить замовлення. 
-            Ми створимо ТТН "Нової Пошти" і надішлемо вам номер!
-          </p>
-          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, border: '1px solid rgba(255,255,255,0.1)', marginBottom: 24 }}>
-            <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>
-              {paymentMethod === 'card_transfer' ? 'Очікуємо повну оплату на карту:' : 'Очікуємо передоплату 30% на карту:'}
-            </div>
-            <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', marginBottom: 4, letterSpacing: '0.05em' }}>4441 1110 5788 6511</div>
-            <div style={{ fontSize: 12, color: '#2dd4bf', fontWeight: 700, marginBottom: 12 }}>Годимчук Денис Д.</div>
-            <div style={{ fontSize: 14, fontWeight: 950, color: '#f97316' }}>
-              Сума до переказу: {paymentMethod === 'card_transfer' ? total.toFixed(0) : (total * 0.3).toFixed(0)} ₴
-            </div>
+        <div style={{ width: '100%', maxWidth: 400, background: 'rgba(255,255,255,0.03)', borderRadius: 24, padding: 24, border: '1px solid rgba(255,255,255,0.1)', marginBottom: 24, textAlign: 'left' }}>
+          <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>
+            {paymentMethod === 'card_transfer' ? 'Очікуємо повну оплату на карту:' : 'Очікуємо передоплату 30% на карту:'}
           </div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginBottom: 4, letterSpacing: '0.05em' }}>4441 1110 5788 6511</div>
+          <div style={{ fontSize: 13, color: '#2dd4bf', fontWeight: 700, marginBottom: 16 }}>Годимчук Денис Д.</div>
+          <div style={{ fontSize: 16, fontWeight: 950, color: '#f97316' }}>
+            Сума до оплати: {paymentMethod === 'card_transfer' ? finalAmount.toFixed(0) : (finalAmount * 0.3).toFixed(0)} ₴
+          </div>
+        </div>
 
-          <AnimatePresence>
+        <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <AnimatePresence mode="wait">
             {!paymentConfirmed ? (
-              <button 
+              <motion.button 
+                key="confirm-btn"
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
                 onClick={async () => {
                   setIsConfirmingPayment(true);
                   try {
@@ -260,52 +253,64 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                 }}
                 disabled={isConfirmingPayment}
                 style={{ 
-                  width: '100%', padding: '16px', borderRadius: 18, border: '2px solid #22c55e', 
-                  background: 'rgba(34,197,94,0.1)', color: '#22c55e', fontWeight: 950, 
+                  width: '100%', padding: '20px', borderRadius: 22, border: '2px solid #22c55e', 
+                  background: 'rgba(34,197,94,0.05)', color: '#22c55e', fontWeight: 950, 
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
-                  marginBottom: 12, fontSize: 14, textTransform: 'uppercase'
+                  fontSize: 16, textTransform: 'uppercase', letterSpacing: '0.05em'
                 }}
               >
-                {isConfirmingPayment ? <Loader2 className="animate-spin" size={18}/> : '✅ Я ОПЛАТИВ(ЛА)'}
-              </button>
+                {isConfirmingPayment ? <Loader2 className="animate-spin" size={20}/> : '✅ Я ОПЛАТИВ(ЛА)'}
+              </motion.button>
             ) : (
-              <div style={{ padding: '14px', borderRadius: 18, background: 'rgba(34,197,94,0.2)', color: '#22c55e', fontWeight: 900, fontSize: 13, marginBottom: 12 }}>
-                ДЯКУЄМО! ПЕРЕВІРЯЄМО ОПЛАТУ ⏳
-              </div>
+              <motion.div 
+                key="confirmed-status"
+                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}
+              >
+                <div style={{ padding: '18px', borderRadius: 22, background: 'rgba(34,197,94,0.15)', color: '#22c55e', fontWeight: 950, fontSize: 14, textAlign: 'center', border: '1px solid rgba(34,197,94,0.2)' }}>
+                  ДЯКУЄМО! ПЕРЕВІРЯЄМО ОПЛАТУ ⏳
+                </div>
+
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 24, textAlign: 'left' }}>
+                  <h3 style={{ fontSize: 18, color: '#5b5bff', fontWeight: 900, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    Що далі? 🚚
+                  </h3>
+                  <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6, fontWeight: 600 }}>
+                    Невдовзі наш менеджер обробить замовлення. 
+                    Ми створимо ТТН "Нової Пошти" і надішлемо вам номер!
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <button 
+                    onClick={() => onClose()}
+                    style={{ 
+                      width: '100%', padding: '18px', borderRadius: 20, border: 'none', 
+                      background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff', fontWeight: 950, 
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
+                      boxShadow: '0 10px 30px rgba(124, 58, 237, 0.4)', fontSize: 15
+                    }}
+                  >
+                    ПОВЕРНУТИСЬ ДО МАГАЗИНУ
+                  </button>
+                  <button 
+                    onClick={() => {
+                      onClose();
+                      setTimeout(() => window.dispatchEvent(new CustomEvent('openOrderHistory')), 100);
+                    }}
+                    style={{ 
+                      width: '100%', padding: '18px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)', 
+                      background: 'rgba(255,255,255,0.03)', color: '#fff', fontWeight: 800, 
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
+                      fontSize: 14
+                    }}
+                  >
+                    МОЇ ЗАМОВЛЕННЯ
+                  </button>
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
-        </div>
-
-        <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <button 
-            onClick={() => {
-              onClose();
-            }}
-            style={{ 
-              width: '100%', padding: '18px', borderRadius: 20, border: 'none', 
-              background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff', fontWeight: 950, 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
-              boxShadow: '0 10px 30px rgba(124, 58, 237, 0.4)', fontSize: 16
-            }}
-          >
-            ПОВЕРНУТИСЬ ДО МАГАЗИНУ
-          </button>
-          <button 
-            onClick={() => {
-              onClose();
-              setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('openOrderHistory'));
-              }, 100);
-            }}
-            style={{ 
-              width: '100%', padding: '18px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)', 
-              background: 'rgba(255,255,255,0.03)', color: '#fff', fontWeight: 800, 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
-              fontSize: 14
-            }}
-          >
-            МОЇ ЗАМОВЛЕННЯ
-          </button>
         </div>
       </motion.div>
     );
