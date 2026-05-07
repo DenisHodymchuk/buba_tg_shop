@@ -35,12 +35,7 @@ export async function POST(req) {
       body: JSON.stringify({
         chat_id: tg_id,
         text: message,
-        parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "🌌 ВІДКРИТИ МАГАЗИН", url: `https://t.me/buba_lab_bot/shop` }]
-          ]
-        }
+        parse_mode: 'Markdown'
       })
     });
 
