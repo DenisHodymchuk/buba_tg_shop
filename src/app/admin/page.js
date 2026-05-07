@@ -296,20 +296,27 @@ export default function AdminPanel() {
       if (error) throw error;
 
       // Надсилаємо сповіщення в Telegram клієнту
-      if (review?.customers?.tg_id) {
+      const customer = Array.isArray(review?.customers) ? review.customers[0] : review?.customers;
+      console.log('Attempting to send notification to:', customer?.tg_id, 'for review:', reviewId);
+
+      if (customer?.tg_id) {
         try {
-          await fetch('/api/review-reply', {
+          const notifyRes = await fetch('/api/review-reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              tg_id: review.customers.tg_id,
+              tg_id: customer.tg_id,
               reply_text: replyData.text,
               original_comment: review.comment
             })
           });
+          const notifyData = await notifyRes.json();
+          console.log('Notification API response:', notifyData);
         } catch (notificationError) {
           console.error('Failed to send telegram notification:', notificationError);
         }
+      } else {
+        console.warn('Cannot send notification: tg_id is missing for this customer.');
       }
       
       setReviews(reviews.map(r => r.id === reviewId ? { ...r, admin_reply: replyData.text, replied_at: new Date().toISOString() } : r));
