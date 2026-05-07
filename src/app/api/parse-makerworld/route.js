@@ -50,22 +50,33 @@ export async function POST(req) {
     const extraImages = imagesArray.slice(1);
 
     // Технічні параметри з першого профілю
-    // --- Логіка перекладу та очищення назви ---
+    // --- Допоміжні функції ---
+    const stripHtml = (html) => {
+      if (!html) return '';
+      return html
+        .replace(/<[^>]*>?/gm, '') // Видаляємо всі теги
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/\n\s*\n/g, '\n') // Прибираємо зайві пусті рядки
+        .trim();
+    };
+
     const translateAndClean = (text) => {
       if (!text) return '';
       let cleaned = text
-        .replace(/Flexi|Articulated|3D|Print|Bambu|Lab|Model|Toy|Gift/gi, '') // Прибираємо технічні слова
+        .replace(/Flexi|Articulated|3D|Print|Bambu|Lab|Model|Toy|Gift|Cute/gi, '') 
         .replace(/\s+/g, ' ')
         .trim();
       
       const dictionary = {
-        'Dragon': 'Дракон', 'Egg': 'Яйце', 'Dino': 'Динозавр', 'Cat': 'Кіт', 'Dog': 'Пес',
+        'Dragon': 'Дракон', 'Egg': 'Яйце', 'Dino': 'Динозавр', 'Cat': 'Котик', 'Dog': 'Песик',
         'Box': 'Коробка', 'Stand': 'Підставка', 'Holder': 'Тримач', 'Organizer': 'Органайзер',
-        'Toy': 'Іграшка', 'Figure': 'Фігурка', 'Sculpture': 'Скульптура', 'Keychain': 'Брелок'
+        'Toy': 'Іграшка', 'Figure': 'Фігурка', 'Sculpture': 'Скульптура', 'Keychain': 'Брелок',
+        'Axolotl': 'Аксолотль', 'Shark': 'Акула', 'Snake': 'Змія', 'Turtle': 'Черепаха'
       };
 
       Object.entries(dictionary).forEach(([eng, ukr]) => {
-        const regex = new RegExp(eng, 'gi');
+        const regex = new RegExp(`\\b${eng}\\b`, 'gi');
         cleaned = cleaned.replace(regex, ukr);
       });
       return cleaned || text;
@@ -74,9 +85,10 @@ export async function POST(req) {
     const name = translateAndClean(data.title);
 
     // --- Розрахунок собівартості ---
-    const printTimeSeconds = firstInstance?.printTime || 0;
+    // На MakerWorld час друку лежить у полі 'prediction' (у секундах)
+    const printTimeSeconds = data.instances?.reduce((acc, inst) => acc + (inst.prediction || 0), 0) || firstInstance?.prediction || 0;
     const printTimeHours = printTimeSeconds / 3600;
-    const weightG = firstInstance?.weight || 0;
+    const weightG = data.instances?.reduce((acc, inst) => acc + (inst.weight || 0), 0) || firstInstance?.weight || 0;
     const weightKg = weightG / 1000;
 
     // Формула: (Вага * Ціна пластику) + (Час * Потужність * Ціна квт)
@@ -93,7 +105,7 @@ export async function POST(req) {
                      `🧵 PLA: ~${plaCost.toFixed(0)} грн\n` +
                      `🧵 PETG: ~${petgCost.toFixed(0)} грн`;
 
-    const description = (data.summary || '') + costNote;
+    const description = stripHtml(data.summary) + costNote;
 
     return NextResponse.json({
       name: name,
