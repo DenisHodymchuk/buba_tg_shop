@@ -108,39 +108,27 @@ export default function Storefront({ addToCart, searchQuery, onProductClick }) {
                   </div>
                 )}
 
-                {/* Dark overlay for better badge readability */}
-                <div style={{ 
-                  position: 'absolute', top: 0, left: 0, right: 0, height: 60, 
-                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.4), transparent)', 
-                  zIndex: 15, pointerEvents: 'none'
-                }} />
-
                 {toy.is_trending && (
                   <div style={{
-                    position: 'absolute', top: 12, left: 12,
-                    background: 'rgba(124, 58, 237, 0.8)', 
-                    backdropFilter: 'blur(10px)',
-                    color: '#fff', fontSize: 9, fontWeight: 950,
-                    padding: '5px 10px', borderRadius: 12, 
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    boxShadow: '0 8px 16px rgba(124,58,237,0.3)',
+                    position: 'absolute', top: 10, left: 10,
+                    background: 'rgba(0, 0, 0, 0.6)', 
+                    backdropFilter: 'blur(12px)',
+                    color: '#fff', fontSize: 9, fontWeight: 900,
+                    padding: '4px 10px', borderRadius: 8, 
+                    border: '1px solid rgba(255,255,255,0.1)',
                     zIndex: 20, textTransform: 'uppercase', letterSpacing: '0.05em',
-                    display: 'flex', alignItems: 'center', gap: 4
                   }}>
-                    <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#fff', boxShadow: '0 0 10px #fff', animation: 'pulse 2s infinite' }}></span>
-                    TRENDING 🔥
+                    ТРЕНД 🔥
                   </div>
                 )}
 
                 {toy.discount > 0 && (
                   <div style={{
-                    position: 'absolute', top: 12, right: 12,
-                    background: 'rgba(239, 68, 68, 0.8)', 
-                    backdropFilter: 'blur(10px)',
+                    position: 'absolute', top: 10, right: 10,
+                    background: '#f97316', 
                     color: '#fff', fontSize: 10, fontWeight: 950,
-                    padding: '5px 10px', borderRadius: 12, 
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    boxShadow: '0 8px 16px rgba(239,68,68,0.3)',
+                    padding: '4px 8px', borderRadius: 8, 
+                    boxShadow: '0 4px 12px rgba(249,115,22,0.3)',
                     zIndex: 20
                   }}>
                     -{toy.discount}%
