@@ -49,14 +49,25 @@ export default function AdminPanel() {
     fetchUsers();
     fetchReviews();
 
-    // Автоматичне оновлення даних кожні 10 секунд (замовлення, клієнти для розсилки, відгуки)
+    // 1. Налаштовуємо Realtime для миттєвих оновлень
+    const channel = supabase
+      .channel('admin-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchOrders())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => fetchUsers())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, () => fetchReviews())
+      .subscribe();
+
+    // 2. Фонове оновлення кожні 30 секунд як запасний варіант
     const intervalId = setInterval(() => {
       fetchOrders();
       fetchUsers();
       fetchReviews();
-    }, 10000);
+    }, 30000);
 
-    return () => clearInterval(intervalId);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(intervalId);
+    };
   }, []);
 
   async function syncUser(tgUser) {
