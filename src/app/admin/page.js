@@ -48,6 +48,15 @@ export default function AdminPanel() {
     fetchOrders();
     fetchUsers();
     fetchReviews();
+
+    // Автоматичне оновлення даних кожні 10 секунд (замовлення, клієнти для розсилки, відгуки)
+    const intervalId = setInterval(() => {
+      fetchOrders();
+      fetchUsers();
+      fetchReviews();
+    }, 10000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   async function syncUser(tgUser) {
