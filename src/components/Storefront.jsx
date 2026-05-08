@@ -107,6 +107,7 @@ export default function Storefront({ addToCart, searchQuery, onProductClick }) {
                     <Package size={32} style={{ color: '#4a4a6a', opacity: 0.2 }} />
                   </div>
                 )}
+              </div>
 
               <div style={{ padding: '0 4px 4px' }}>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 8, height: 20 }}>
