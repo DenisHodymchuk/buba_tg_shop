@@ -107,34 +107,46 @@ export default function Storefront({ addToCart, searchQuery, onProductClick }) {
                     <Package size={32} style={{ color: '#4a4a6a', opacity: 0.2 }} />
                   </div>
                 )}
+
+                {/* Subtle grey strip for badges */}
+                {(toy.is_trending || toy.discount > 0) && (
+                  <div style={{ 
+                    position: 'absolute', top: 0, left: 0, right: 0, height: 44, 
+                    background: 'rgba(255,255,255,0.03)', 
+                    backdropFilter: 'blur(10px)',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    zIndex: 15, pointerEvents: 'none'
+                  }} />
+                )}
+
+                {toy.is_trending && (
+                  <div style={{
+                    position: 'absolute', top: 10, left: 10,
+                    background: 'rgba(124, 58, 237, 0.8)', 
+                    color: '#fff', fontSize: 8, fontWeight: 900,
+                    padding: '3px 10px', borderRadius: 8, 
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    zIndex: 20, textTransform: 'uppercase', letterSpacing: '0.05em',
+                  }}>
+                    ТРЕНД 🔥
+                  </div>
+                )}
+
+                {toy.discount > 0 && (
+                  <div style={{
+                    position: 'absolute', top: 10, right: 10,
+                    background: 'rgba(249, 115, 22, 0.8)', 
+                    color: '#fff', fontSize: 9, fontWeight: 950,
+                    padding: '3px 10px', borderRadius: 8, 
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    zIndex: 20
+                  }}>
+                    -{toy.discount}%
+                  </div>
+                )}
               </div>
 
               <div style={{ padding: '0 4px 4px' }}>
-                <div style={{ display: 'flex', gap: 6, marginBottom: 8, height: 20 }}>
-                  {toy.is_trending && (
-                    <div style={{
-                      background: 'rgba(124, 58, 237, 0.1)', 
-                      color: '#a78bfa', fontSize: 8, fontWeight: 900,
-                      padding: '2px 8px', borderRadius: 6, 
-                      border: '1px solid rgba(124, 58, 237, 0.2)',
-                      textTransform: 'uppercase', letterSpacing: '0.05em',
-                      display: 'flex', alignItems: 'center', gap: 3
-                    }}>
-                      ТРЕНД 🔥
-                    </div>
-                  )}
-                  {toy.discount > 0 && (
-                    <div style={{
-                      background: 'rgba(249, 115, 22, 0.1)', 
-                      color: '#f97316', fontSize: 8, fontWeight: 900,
-                      padding: '2px 8px', borderRadius: 6, 
-                      border: '1px solid rgba(249, 115, 22, 0.2)',
-                      textTransform: 'uppercase'
-                    }}>
-                      -{toy.discount}%
-                    </div>
-                  )}
-                </div>
 
                 <h3 style={{ 
                   fontSize: 13, fontWeight: 800, color: '#fff', 
