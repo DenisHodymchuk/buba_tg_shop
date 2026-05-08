@@ -621,7 +621,11 @@ export default function AdminPanel() {
       model_3d: product.model_3d || '',
       image_url: product.image_url || '',
       image_urls: product.image_urls || [],
-      category: product.category || ''
+      category: product.category || '',
+      plastic_type: product.plastic_type || '',
+      color: product.color || '',
+      weight: product.weight || '',
+      safety_info: product.safety_info || ''
     });
     setShowForm(true);
   }
@@ -629,7 +633,11 @@ export default function AdminPanel() {
   function closeModal() {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', description: '', price: '', discount: 0, status: 'in_stock', model_3d: '', image_url: '', image_urls: [], category: '' });
+    setFormData({ 
+      name: '', description: '', price: '', discount: 0, status: 'in_stock', 
+      model_3d: '', image_url: '', image_urls: [], category: '',
+      plastic_type: '', color: '', weight: '', safety_info: '' 
+    });
   }
 
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null });
