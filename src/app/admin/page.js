@@ -1035,7 +1035,10 @@ export default function AdminPanel() {
             </>
           ) : activeTab === 'broadcast' ? (
             <div style={{ maxWidth: 600 }}>
-               <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 32 }}>Нова розсилка 📣</h1>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+                 <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Нова розсилка 📣</h1>
+                 <button onClick={fetchUsers} style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer' }}>Оновити</button>
+               </div>
                
                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)', padding: 32 }}>
                   <div style={{ marginBottom: 24 }}>
