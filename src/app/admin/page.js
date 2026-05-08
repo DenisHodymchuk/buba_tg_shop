@@ -36,6 +36,7 @@ export default function AdminPanel() {
   const [replyData, setReplyData] = useState({ reviewId: null, text: '' });
   const [importUrl, setImportUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', discount: 0, status: 'in_stock', 
@@ -329,6 +330,22 @@ export default function AdminPanel() {
       setReviews(data || []);
     } catch (e) {
       console.error('Error fetching reviews:', e);
+    }
+  }
+
+  async function handleManualRefresh() {
+    if (!supabase || refreshing) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        fetchUsers(),
+        fetchOrders(),
+        fetchReviews()
+      ]);
+    } catch (e) {
+      console.error('Refresh error:', e);
+    } finally {
+      setTimeout(() => setRefreshing(false), 1000);
     }
   }
 
@@ -733,7 +750,13 @@ export default function AdminPanel() {
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Замовлення ({orders.length})</h1>
-                <button onClick={fetchOrders} style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer' }}>Оновити</button>
+                <button 
+                  onClick={handleManualRefresh} 
+                  disabled={refreshing}
+                  style={{ padding: '8px 16px', borderRadius: 10, background: refreshing ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', color: refreshing ? '#22c55e' : '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer', transition: 'all 0.3s' }}
+                >
+                  {refreshing ? 'Оновлено ✅' : 'Оновити'}
+                </button>
               </div>
 
               {/* Filters */}
@@ -902,7 +925,13 @@ export default function AdminPanel() {
             <>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
                 <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Клієнти та Бонуси ({users.length})</h1>
-                <button onClick={fetchUsers} style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer' }}>Оновити</button>
+                <button 
+                  onClick={handleManualRefresh}
+                  disabled={refreshing}
+                  style={{ padding: '8px 16px', borderRadius: 10, background: refreshing ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', color: refreshing ? '#22c55e' : '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer', transition: 'all 0.3s' }}
+                >
+                  {refreshing ? 'Оновлено ✅' : 'Оновити'}
+                </button>
               </div>
 
               <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
@@ -972,7 +1001,13 @@ export default function AdminPanel() {
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
                 <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Керування відгуками ({reviews.length})</h1>
-                <button onClick={fetchReviews} style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer' }}>Оновити</button>
+                <button 
+                  onClick={handleManualRefresh}
+                  disabled={refreshing}
+                  style={{ padding: '8px 16px', borderRadius: 10, background: refreshing ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', color: refreshing ? '#22c55e' : '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer', transition: 'all 0.3s' }}
+                >
+                  {refreshing ? 'Оновлено ✅' : 'Оновити'}
+                </button>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1045,7 +1080,13 @@ export default function AdminPanel() {
             <div style={{ maxWidth: 600 }}>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
                  <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Нова розсилка 📣</h1>
-                 <button onClick={fetchUsers} style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer' }}>Оновити</button>
+                 <button 
+                   onClick={handleManualRefresh}
+                   disabled={refreshing}
+                   style={{ padding: '8px 16px', borderRadius: 10, background: refreshing ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', color: refreshing ? '#22c55e' : '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer', transition: 'all 0.3s' }}
+                 >
+                   {refreshing ? 'Оновлено ✅' : 'Оновити'}
+                 </button>
                </div>
                
                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)', padding: 32 }}>
