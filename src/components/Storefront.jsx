@@ -111,39 +111,38 @@ export default function Storefront({ addToCart, searchQuery, onProductClick }) {
                 {/* Subtle grey strip for badges */}
                 {(toy.is_trending || toy.discount > 0) && (
                   <div style={{ 
-                    position: 'absolute', top: 0, left: 0, right: 0, height: 44, 
+                    position: 'absolute', top: 0, left: 0, right: 0, height: 36, 
                     background: 'rgba(255,255,255,0.03)', 
-                    backdropFilter: 'blur(10px)',
+                    backdropFilter: 'blur(4px)',
                     borderBottom: '1px solid rgba(255,255,255,0.05)',
                     zIndex: 15, pointerEvents: 'none'
                   }} />
                 )}
 
-                {toy.is_trending && (
-                  <div style={{
-                    position: 'absolute', top: 10, left: 10,
-                    background: 'rgba(124, 58, 237, 0.8)', 
-                    color: '#fff', fontSize: 8, fontWeight: 900,
-                    padding: '3px 10px', borderRadius: 8, 
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    zIndex: 20, textTransform: 'uppercase', letterSpacing: '0.05em',
-                  }}>
-                    ТРЕНД 🔥
-                  </div>
-                )}
+                <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 6, zIndex: 20 }}>
+                  {toy.is_trending && (
+                    <div style={{
+                      background: 'rgba(124, 58, 237, 0.8)', 
+                      color: '#fff', fontSize: 8, fontWeight: 900,
+                      padding: '2px 8px', borderRadius: 6, 
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      textTransform: 'uppercase', letterSpacing: '0.05em',
+                    }}>
+                      ТРЕНД 🔥
+                    </div>
+                  )}
 
-                {toy.discount > 0 && (
-                  <div style={{
-                    position: 'absolute', top: 10, right: 10,
-                    background: 'rgba(249, 115, 22, 0.8)', 
-                    color: '#fff', fontSize: 9, fontWeight: 950,
-                    padding: '3px 10px', borderRadius: 8, 
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    zIndex: 20
-                  }}>
-                    -{toy.discount}%
-                  </div>
-                )}
+                  {toy.discount > 0 && (
+                    <div style={{
+                      background: 'rgba(249, 115, 22, 0.8)', 
+                      color: '#fff', fontSize: 9, fontWeight: 950,
+                      padding: '2px 8px', borderRadius: 6, 
+                      border: '1px solid rgba(255,255,255,0.2)',
+                    }}>
+                      -{toy.discount}%
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div style={{ padding: '0 4px 4px' }}>
