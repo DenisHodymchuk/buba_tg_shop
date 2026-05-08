@@ -19,7 +19,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
   const [paymentMethod, setPaymentMethod] = useState('online');
   const [deliveryMethod, setDeliveryMethod] = useState('nova_poshta');
   const [formData, setFormData] = useState({
-    firstName: '', lastName: '', phone: '', city: '', cityRef: '', warehouse: '', warehouseRef: '', comment: '', noCall: false
+    firstName: '', lastName: '', phone: '+380', city: '', cityRef: '', warehouse: '', warehouseRef: '', comment: '', noCall: false
   });
   const [bonusInput, setBonusInput] = useState('');
   const [cityQuery, setCityQuery] = useState('');
@@ -563,7 +563,21 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                <Input icon={<User size={16}/>} placeholder="Ім'я" value={formData.firstName} onChange={v => setFormData({...formData, firstName: v})} />
                <Input placeholder="Прізвище" value={formData.lastName} onChange={v => setFormData({...formData, lastName: v})} />
             </div>
-            <Input icon={<Phone size={16}/>} placeholder="+38 (0XX) XXX XX XX" value={formData.phone} onChange={v => setFormData({...formData, phone: v})} />
+            <Input 
+              icon={<Phone size={16}/>} 
+              placeholder="+380" 
+              value={formData.phone} 
+              onChange={v => {
+                // Тільки цифри та знак +
+                const cleaned = v.replace(/[^\d+]/g, '');
+                // Не дозволяємо видалити +380
+                if (cleaned.length < 4) {
+                  setFormData({...formData, phone: '+380'});
+                } else {
+                  setFormData({...formData, phone: cleaned});
+                }
+              }} 
+            />
             
             {deliveryMethod === 'nova_poshta' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -650,7 +664,14 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                 )}
               </div>
             ) : (
-              <Input icon={<MapPin size={16}/>} placeholder="Адреса (для самовивозу)" value={formData.city} onChange={v => setFormData({...formData, city: v})} />
+              <div style={{ 
+                padding: '14px 16px', background: 'rgba(45, 212, 191, 0.05)', 
+                border: '1px solid rgba(45, 212, 191, 0.2)', borderRadius: 16, 
+                display: 'flex', alignItems: 'center', gap: 12 
+              }}>
+                <MapPin size={18} color="#2dd4bf" />
+                <div style={{ fontSize: 14, color: '#fff', fontWeight: 700 }}>м. Хмельницький, ТЦ Дитячий світ</div>
+              </div>
             )}
             <div style={{ position: 'relative' }}>
               <textarea 

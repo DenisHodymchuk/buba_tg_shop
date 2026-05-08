@@ -89,7 +89,7 @@ export default function Profile() {
             <div>
               <h2 style={{ fontSize: 18, fontWeight: 900, margin: 0 }}>{user.first_name} {user.last_name}</h2>
               <p style={{ fontSize: 12, fontWeight: 800, color: '#a78bfa', margin: '4px 0 0 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                @{user.username || user.first_name?.toLowerCase()}
+                ID: {user.tg_id}
               </p>
             </div>
           </div>
