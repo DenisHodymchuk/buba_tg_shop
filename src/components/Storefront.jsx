@@ -108,35 +108,33 @@ export default function Storefront({ addToCart, searchQuery, onProductClick }) {
                   </div>
                 )}
 
-                {toy.is_trending && (
-                  <div style={{
-                    position: 'absolute', top: 10, left: 10,
-                    background: 'rgba(0, 0, 0, 0.6)', 
-                    backdropFilter: 'blur(12px)',
-                    color: '#fff', fontSize: 9, fontWeight: 900,
-                    padding: '4px 10px', borderRadius: 8, 
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    zIndex: 20, textTransform: 'uppercase', letterSpacing: '0.05em',
-                  }}>
-                    ТРЕНД 🔥
-                  </div>
-                )}
-
-                {toy.discount > 0 && (
-                  <div style={{
-                    position: 'absolute', top: 10, right: 10,
-                    background: '#f97316', 
-                    color: '#fff', fontSize: 10, fontWeight: 950,
-                    padding: '4px 8px', borderRadius: 8, 
-                    boxShadow: '0 4px 12px rgba(249,115,22,0.3)',
-                    zIndex: 20
-                  }}>
-                    -{toy.discount}%
-                  </div>
-                )}
-              </div>
-
               <div style={{ padding: '0 4px 4px' }}>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8, height: 20 }}>
+                  {toy.is_trending && (
+                    <div style={{
+                      background: 'rgba(124, 58, 237, 0.1)', 
+                      color: '#a78bfa', fontSize: 8, fontWeight: 900,
+                      padding: '2px 8px', borderRadius: 6, 
+                      border: '1px solid rgba(124, 58, 237, 0.2)',
+                      textTransform: 'uppercase', letterSpacing: '0.05em',
+                      display: 'flex', alignItems: 'center', gap: 3
+                    }}>
+                      ТРЕНД 🔥
+                    </div>
+                  )}
+                  {toy.discount > 0 && (
+                    <div style={{
+                      background: 'rgba(249, 115, 22, 0.1)', 
+                      color: '#f97316', fontSize: 8, fontWeight: 900,
+                      padding: '2px 8px', borderRadius: 6, 
+                      border: '1px solid rgba(249, 115, 22, 0.2)',
+                      textTransform: 'uppercase'
+                    }}>
+                      -{toy.discount}%
+                    </div>
+                  )}
+                </div>
+
                 <h3 style={{ 
                   fontSize: 13, fontWeight: 800, color: '#fff', 
                   lineHeight: '1.25', marginBottom: 10, 
