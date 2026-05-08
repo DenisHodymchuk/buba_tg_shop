@@ -108,17 +108,6 @@ export default function Storefront({ addToCart, searchQuery, onProductClick }) {
                   </div>
                 )}
 
-                {/* Subtle grey strip for badges */}
-                {(toy.is_trending || toy.discount > 0) && (
-                  <div style={{ 
-                    position: 'absolute', top: 0, left: 0, right: 0, height: 36, 
-                    background: 'rgba(255,255,255,0.03)', 
-                    backdropFilter: 'blur(2px)',
-                    borderBottom: '1px solid rgba(255,255,255,0.05)',
-                    zIndex: 15, pointerEvents: 'none'
-                  }} />
-                )}
-
                 <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 6, zIndex: 20 }}>
                   {toy.is_trending && (
                     <div style={{
