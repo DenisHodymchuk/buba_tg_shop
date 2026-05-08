@@ -41,7 +41,8 @@ export default function AdminPanel() {
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', discount: 0, status: 'in_stock', 
     model_3d: '', image_url: '', image_urls: [], category: '',
-    plastic_type: '', safety_info: '', weight: '', color: ''
+    plastic_type: '', safety_info: '', weight: '', color: '',
+    is_trending: false
   });
 
   useEffect(() => {
@@ -642,7 +643,8 @@ export default function AdminPanel() {
       plastic_type: product.plastic_type || '',
       color: product.color || '',
       weight: product.weight || '',
-      safety_info: product.safety_info || ''
+      safety_info: product.safety_info || '',
+      is_trending: product.is_trending || false
     });
     setShowForm(true);
   }
@@ -653,7 +655,8 @@ export default function AdminPanel() {
     setFormData({ 
       name: '', description: '', price: '', discount: 0, status: 'in_stock', 
       model_3d: '', image_url: '', image_urls: [], category: '',
-      plastic_type: '', color: '', weight: '', safety_info: '' 
+      plastic_type: '', color: '', weight: '', safety_info: '',
+      is_trending: false
     });
   }
 
@@ -1373,6 +1376,21 @@ export default function AdminPanel() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>3D Модель URL (.glb)</label>
                   <input type="text" value={formData.model_3d} onChange={e => setFormData({...formData, model_3d: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none', fontSize: 11 }} />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.02)', padding: 16, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }} onClick={() => setFormData({...formData, is_trending: !formData.is_trending})}>
+                  <div style={{ 
+                    width: 44, height: 24, borderRadius: 20, background: formData.is_trending ? 'linear-gradient(135deg, #f97316, #ef4444)' : 'rgba(255,255,255,0.1)',
+                    position: 'relative', transition: 'all 0.3s ease'
+                  }}>
+                    <div style={{ 
+                      width: 18, height: 18, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, 
+                      left: formData.is_trending ? 23 : 3, transition: 'all 0.3s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' 
+                    }} />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 900, color: formData.is_trending ? '#fff' : '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    ТРЕНДОВИЙ ТОВАР 🔥
+                  </span>
                 </div>
 
                 <button type="submit" style={{ marginTop: 10, padding: 16, borderRadius: 14, border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 900, cursor: 'pointer' }}>ЗБЕРЕГТИ ЗМІНИ</button>

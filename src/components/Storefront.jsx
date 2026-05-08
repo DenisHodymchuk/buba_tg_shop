@@ -15,6 +15,7 @@ export default function Storefront({ addToCart, searchQuery, onProductClick }) {
       const { data } = await supabase
         .from('products')
         .select('*')
+        .order('is_trending', { ascending: false })
         .order('created_at', { ascending: false });
       if (data) setProducts(data);
       setLoading(false);
@@ -104,6 +105,17 @@ export default function Storefront({ addToCart, searchQuery, onProductClick }) {
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Package size={32} style={{ color: '#4a4a6a', opacity: 0.2 }} />
+                  </div>
+                )}
+
+                {toy.is_trending && (
+                  <div style={{
+                    position: 'absolute', top: 12, left: 12,
+                    background: 'linear-gradient(135deg, #f97316, #7c3aed)', color: '#fff', fontSize: 9, fontWeight: 950,
+                    padding: '4px 10px', borderRadius: 10, boxShadow: '0 4px 12px rgba(249,115,22,0.4)',
+                    zIndex: 20, textTransform: 'uppercase', letterSpacing: '0.05em'
+                  }}>
+                    TRENDING 🔥
                   </div>
                 )}
 
