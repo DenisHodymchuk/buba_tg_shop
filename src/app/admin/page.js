@@ -944,6 +944,7 @@ export default function AdminPanel() {
                       <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Клієнт</th>
                       <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Telegram ID</th>
                       <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Телефон</th>
+                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Джерело</th>
                       <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Бонуси</th>
                       <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase', textAlign: 'right' }}>Дії</th>
                     </tr>
@@ -971,6 +972,20 @@ export default function AdminPanel() {
                         </td>
                         <td style={{ padding: '20px 24px' }}>
                           <div style={{ fontSize: 13, color: '#6b6b8a', fontWeight: 700 }}>{user.phone || '---'}</div>
+                        </td>
+                        <td style={{ padding: '20px 24px' }}>
+                          <div style={{ 
+                            fontSize: 10, 
+                            fontWeight: 900, 
+                            color: user.acquisition_source ? '#ec4899' : '#4a4a6a',
+                            background: user.acquisition_source ? 'rgba(236,72,153,0.1)' : 'transparent',
+                            padding: user.acquisition_source ? '4px 8px' : 0,
+                            borderRadius: 8,
+                            display: 'inline-block',
+                            textTransform: 'uppercase'
+                          }}>
+                            {user.acquisition_source || 'ОРГАНІКА'}
+                          </div>
                         </td>
                         <td style={{ padding: '20px 24px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

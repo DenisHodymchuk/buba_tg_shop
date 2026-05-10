@@ -31,6 +31,7 @@ CREATE TABLE customers (
   bonuses INTEGER DEFAULT 0,
   discount_expires_at TIMESTAMP WITH TIME ZONE,
   last_login TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  acquisition_source TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

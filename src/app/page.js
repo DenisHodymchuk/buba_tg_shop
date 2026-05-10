@@ -43,9 +43,10 @@ export default function Home() {
         
         const checkUser = () => {
           const u = webApp.initDataUnsafe?.user;
+          const s = webApp.initDataUnsafe?.start_param;
           if (u) {
             setUser(u);
-            syncUser(u);
+            syncUser(u, s);
           } else {
             setTimeout(checkUser, 1000);
           }
@@ -62,17 +63,33 @@ export default function Home() {
     initTG();
   }, []);
 
-  async function syncUser(tgUser) {
+  async function syncUser(tgUser, source) {
     if (!supabase) return;
     try {
       const tid = tgUser.id.toString();
+      
+      // Спершу перевіряємо чи є такий користувач і чи має він вже джерело
+      const { data: existing } = await supabase
+        .from('customers')
+        .select('acquisition_source')
+        .eq('tg_id', tid)
+        .single();
+
+      const upsertData = { 
+        tg_id: tid, 
+        first_name: tgUser.first_name || 'Клієнт', 
+        last_name: tgUser.last_name || ''
+      };
+
+      // Зберігаємо джерело тільки якщо воно прийшло і у користувача в базі ще немає джерела
+      // (Первинна атрибуція)
+      if (source && (!existing || !existing.acquisition_source)) {
+        upsertData.acquisition_source = source;
+      }
+
       const { data, error } = await supabase
         .from('customers')
-        .upsert({ 
-          tg_id: tid, 
-          first_name: tgUser.first_name || 'Клієнт', 
-          last_name: tgUser.last_name || ''
-        }, { onConflict: 'tg_id' })
+        .upsert(upsertData, { onConflict: 'tg_id' })
         .select('bonuses, cart_data')
         .single();
 
