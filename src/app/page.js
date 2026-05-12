@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
+import Link from 'next/link';
 import Storefront from '@/components/Storefront';
 import { supabase } from '@/lib/supabase';
 import CheckoutBar from '@/components/CheckoutBar';
@@ -186,6 +187,38 @@ export default function Home() {
         onClose={() => setIsReviewsOpen(false)} 
         tgUser={user} 
       />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ padding: '20px 20px 0', maxWidth: 1200, margin: '0 auto', width: '100%' }}
+      >
+        <Link href="/lego-crane" style={{ textDecoration: 'none' }}>
+          <div style={{ 
+            background: 'linear-gradient(135deg, rgba(124,58,237,0.2), rgba(236,72,153,0.2))',
+            borderRadius: 32, padding: '20px 30px', border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', overflow: 'hidden', position: 'relative'
+          }}>
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', marginBottom: 4, letterSpacing: '0.1em' }}>Новинка</div>
+              <h2 style={{ fontSize: 24, fontWeight: 950, color: '#fff', margin: 0 }}>LEGO TECHNIC CRANE</h2>
+              <p style={{ fontSize: 13, color: '#6b6b8a', margin: '4px 0 0' }}>Відкрий для себе шедевр інженерії</p>
+            </div>
+            <div style={{ 
+              width: 80, height: 80, borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)',
+              background: '#000', position: 'relative', zIndex: 1
+            }}>
+              <img src="/images/lego-crane.png" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            {/* Glow effect */}
+            <div style={{ 
+              position: 'absolute', top: '50%', right: '-10%', width: 200, height: 200, 
+              background: 'radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 70%)', 
+              transform: 'translateY(-50%)', pointerEvents: 'none' 
+            }} />
+          </div>
+        </Link>
+      </motion.div>
 
       <main style={{ flex: '1 0 auto', paddingBottom: 140 }}>
         <Storefront 
