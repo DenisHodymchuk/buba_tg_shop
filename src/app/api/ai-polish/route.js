@@ -14,18 +14,29 @@ export async function POST(request) {
     }
 
     // Step 1: Remove background using Hugging Face (RMBG-1.4)
-    // This model returns a transparent PNG
+    // We need to send raw bytes to the Inference API
+    const imageRes = await fetch(imageUrl);
+    if (!imageRes.ok) throw new Error('Failed to fetch original image');
+    const imageData = await imageRes.arrayBuffer();
+
     const hfResponse = await fetch(
       "https://api-inference.huggingface.co/models/briaai/RMBG-1.4",
       {
-        headers: { Authorization: `Bearer ${hfToken}` },
+        headers: { 
+          "Authorization": `Bearer ${hfToken}`,
+          "Content-Type": "application/octet-stream"
+        },
         method: "POST",
-        body: JSON.stringify({ inputs: imageUrl }),
+        body: imageData,
       }
     );
 
     if (!hfResponse.ok) {
       const errorText = await hfResponse.text();
+      // If the model is loading, it returns a specific JSON
+      if (errorText.includes("is currently loading")) {
+        throw new Error("ШІ-модель завантажується... Будь ласка, спробуйте ще раз через 20 секунд.");
+      }
       throw new Error(`Hugging Face error: ${errorText}`);
     }
 
@@ -35,7 +46,7 @@ export async function POST(request) {
     const base64Image = `data:image/png;base64,${buffer.toString('base64')}`;
 
     // Note: Since we don't have a background generation step here for free,
-    // we return the transparent PNG. The storefront will display it nicely on its dark background.
+    // we return the transparent PNG.
     return NextResponse.json({ imageUrl: base64Image });
 
   } catch (error) {
