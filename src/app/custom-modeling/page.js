@@ -171,7 +171,7 @@ export default function CustomModelingPage() {
           viewport={{ once: true }}
         >
           <h2 style={{ fontSize: 40, fontWeight: 950, marginBottom: 30 }}>МАЄТЕ ІДЕЮ?</h2>
-          <a href="https://t.me/Denis_Buba" target="_blank" rel="noopener noreferrer" style={{ 
+          <a href="https://t.me/buba_lab_manager" target="_blank" rel="noopener noreferrer" style={{ 
             display: 'inline-block', padding: '20px 40px', borderRadius: '20px',
             background: 'linear-gradient(135deg, #3b82f6, #9333ea)', color: '#fff',
             textDecoration: 'none', fontWeight: 1000, fontSize: 18,
