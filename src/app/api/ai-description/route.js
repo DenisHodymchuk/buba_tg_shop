@@ -11,8 +11,8 @@ export async function POST(request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Use the most compatible stable model
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // Force stable v1 API
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" }, { apiVersion: "v1" });
 
     const prompt = `Ти — експерт з маркетингу та копірайтингу для інтернет-магазину 3D-іграшок та механічних моделей "BUBA STORE". 
     Напиши привабливий, короткий та продаючий опис для товару: "${productName}" у категорії "${category}".
