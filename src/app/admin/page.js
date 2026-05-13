@@ -33,6 +33,7 @@ export default function AdminPanel() {
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [broadcastImageUrl, setBroadcastImageUrl] = useState('');
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [individualMessageModal, setIndividualMessageModal] = useState({ open: false, user: null, message: '', imageUrl: '', isSending: false });
   const [reviews, setReviews] = useState([]);
   const [replyData, setReplyData] = useState({ reviewId: null, text: '' });
@@ -265,6 +266,31 @@ export default function AdminPanel() {
       setModal({ open: true, title: 'Успіх!', message: 'Статус змінено та клієнт отримав сповіщення ✅', type: 'success' });
     } catch (e) {
       alert('Помилка оновлення статусу: ' + e.message);
+    }
+  }
+
+  async function handleMessageImageUpload(e, target) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setIsUploadingMedia(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `broadcast-${Math.random()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+      
+      if (target === 'broadcast') {
+        setBroadcastImageUrl(publicUrl);
+      } else if (target === 'individual') {
+        setIndividualMessageModal(prev => ({ ...prev, imageUrl: publicUrl }));
+      }
+    } catch (error) {
+      alert('Помилка завантаження: ' + error.message);
+    } finally {
+      setIsUploadingMedia(false);
     }
   }
 
@@ -1158,17 +1184,31 @@ export default function AdminPanel() {
                   </div>
 
                   <div style={{ marginBottom: 24 }}>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 12 }}>Посилання на фото (необов'язково)</label>
-                    <input 
-                      type="text"
-                      value={broadcastImageUrl}
-                      onChange={(e) => setBroadcastImageUrl(e.target.value)}
-                      placeholder="https://example.com/photo.jpg"
-                      style={{ 
-                        width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: 16, padding: '14px 20px', color: '#fff', fontSize: 14, outline: 'none'
-                      }}
-                    />
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 12 }}>Зображення розсилки</label>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      {broadcastImageUrl ? (
+                        <div style={{ position: 'relative', width: 100, height: 100, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          <img src={broadcastImageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button 
+                            onClick={() => setBroadcastImageUrl('')}
+                            style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: '50%', background: 'rgba(239,68,68,0.8)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <label style={{ 
+                          width: 100, height: 100, borderRadius: 16, border: '2px dashed rgba(255,255,255,0.1)', 
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                          cursor: 'pointer', gap: 8, color: '#6b6b8a', transition: 'all 0.2s'
+                        }}>
+                          <Upload size={24} />
+                          <span style={{ fontSize: 10, fontWeight: 800 }}>ДОДАТИ ФОТО</span>
+                          <input type="file" hidden accept="image/*" onChange={(e) => handleMessageImageUpload(e, 'broadcast')} disabled={isUploadingMedia} />
+                        </label>
+                      )}
+                      {isUploadingMedia && <div style={{ fontSize: 12, color: '#3b82f6', fontWeight: 700 }}>Завантаження...</div>}
+                    </div>
                   </div>
 
                   <div style={{ marginBottom: 24 }}>
@@ -1492,17 +1532,31 @@ export default function AdminPanel() {
               </p>
 
               <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 12 }}>Посилання на фото (необов'язково)</label>
-                <input 
-                  type="text"
-                  value={individualMessageModal.imageUrl}
-                  onChange={(e) => setIndividualMessageModal({ ...individualMessageModal, imageUrl: e.target.value })}
-                  placeholder="https://example.com/photo.jpg"
-                  style={{ 
-                    width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 16, padding: '14px 20px', color: '#fff', fontSize: 14, outline: 'none'
-                  }}
-                />
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 12 }}>Зображення повідомлення</label>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  {individualMessageModal.imageUrl ? (
+                    <div style={{ position: 'relative', width: 80, height: 80, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <img src={individualMessageModal.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button 
+                        onClick={() => setIndividualMessageModal(prev => ({ ...prev, imageUrl: '' }))}
+                        style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(239,68,68,0.8)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label style={{ 
+                      width: 80, height: 80, borderRadius: 12, border: '2px dashed rgba(255,255,255,0.1)', 
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                      cursor: 'pointer', gap: 4, color: '#6b6b8a'
+                    }}>
+                      <Upload size={20} />
+                      <span style={{ fontSize: 8, fontWeight: 800 }}>ФОТО</span>
+                      <input type="file" hidden accept="image/*" onChange={(e) => handleMessageImageUpload(e, 'individual')} disabled={isUploadingMedia} />
+                    </label>
+                  )}
+                  {isUploadingMedia && <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 700 }}>Завантаження...</div>}
+                </div>
               </div>
 
               <div style={{ marginBottom: 32 }}>
