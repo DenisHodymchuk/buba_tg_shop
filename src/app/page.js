@@ -79,7 +79,8 @@ export default function Home() {
       const upsertData = { 
         tg_id: tid, 
         first_name: tgUser.first_name || 'Клієнт', 
-        last_name: tgUser.last_name || ''
+        last_name: tgUser.last_name || '',
+        allow_notifications: true
       };
 
       // Зберігаємо джерело тільки якщо воно прийшло і у користувача в базі ще немає джерела

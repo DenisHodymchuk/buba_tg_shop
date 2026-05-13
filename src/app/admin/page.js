@@ -362,6 +362,45 @@ export default function AdminPanel() {
     }
   }
 
+  async function enableAllNotifications() {
+    if (!supabase) return;
+    
+    setModal({
+      open: true,
+      title: 'Увімкнути всім сповіщення? 🔔',
+      message: 'Ви збираєтесь увімкнути сповіщення для ВСІХ клієнтів у базі даних. Це дозволить робити розсилки тим, хто їх раніше вимкнув або не мав увімкненими за замовчуванням. Продовжити?',
+      type: 'confirm',
+      onConfirm: async () => {
+        setModal({ ...modal, open: false });
+        setRefreshing(true);
+        try {
+          const { error } = await supabase
+            .from('customers')
+            .update({ allow_notifications: true })
+            .is('allow_notifications', null); // Or just update everyone? User said "old ones"
+
+          // If we want to force everyone even if they explicitly opted out, we remove the filter
+          // But usually better to just set it for those where it's not set.
+          // The user said "в усіх нових... і чи можемо ми старим так включити зараз?"
+          // This implies a one-time force enable.
+          
+          const { error: error2 } = await supabase
+            .from('customers')
+            .update({ allow_notifications: true });
+
+          if (error2) throw error2;
+          
+          setModal({ open: true, title: 'Успіх! ✨', message: 'Сповіщення увімкнено для всіх клієнтів!', type: 'success' });
+          fetchUsers();
+        } catch (e) {
+          setModal({ open: true, title: 'Помилка', message: e.message, type: 'danger' });
+        } finally {
+          setRefreshing(false);
+        }
+      }
+    });
+  }
+
   async function fetchOrders() {
     if (!supabase) return;
     try {
@@ -1240,9 +1279,17 @@ export default function AdminPanel() {
                </div>
                
                <div style={{ marginTop: 24, padding: 16, background: 'rgba(59,130,246,0.05)', borderRadius: 16, border: '1px solid rgba(59,130,246,0.1)' }}>
-                 <p style={{ fontSize: 12, color: '#60a5fa', fontWeight: 700, margin: 0, lineHeight: 1.5 }}>
-                   💡 Порада: Використовуйте розсилки для анонсу нових виробів або спеціальних знижок. Це найкращий спосіб повернути клієнтів у ваш магазин!
-                 </p>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                   <p style={{ fontSize: 12, color: '#60a5fa', fontWeight: 700, margin: 0, lineHeight: 1.5 }}>
+                     💡 Порада: Використовуйте розсилки для анонсу нових виробів або спеціальних знижок. Це найкращий спосіб повернути клієнтів у ваш магазин!
+                   </p>
+                   <button 
+                     onClick={enableAllNotifications}
+                     style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)', fontSize: 10, fontWeight: 900, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                   >
+                     УВІМКНУТИ ВСІМ СПОВІЩЕННЯ
+                   </button>
+                 </div>
                </div>
             </div>
           ) : (

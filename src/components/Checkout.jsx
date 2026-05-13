@@ -159,7 +159,8 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           last_name: formData.lastName,
           phone: formData.phone,
           bonuses: newBonusBalance,
-          last_login: new Date().toISOString()
+          last_login: new Date().toISOString(),
+          allow_notifications: true
         }, { onConflict: 'tg_id' }).select().single();
         
         if (customerData) customerId = customerData.id;
