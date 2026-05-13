@@ -31,7 +31,9 @@ export default function AdminPanel() {
   const [bonusModal, setBonusModal] = useState({ open: false, user: null, amount: '100', mode: 'add' });
   const [modal, setModal] = useState({ open: false, title: '', message: '', onConfirm: null, type: 'info' });
   const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcastImageUrl, setBroadcastImageUrl] = useState('');
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
+  const [individualMessageModal, setIndividualMessageModal] = useState({ open: false, user: null, message: '', imageUrl: '', isSending: false });
   const [reviews, setReviews] = useState([]);
   const [replyData, setReplyData] = useState({ reviewId: null, text: '' });
   const [importUrl, setImportUrl] = useState('');
@@ -281,13 +283,17 @@ export default function AdminPanel() {
           const response = await fetch('/api/broadcast', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: broadcastMessage })
+            body: JSON.stringify({ 
+              message: broadcastMessage,
+              imageUrl: broadcastImageUrl
+            })
           });
           
           const result = await response.json();
           if (response.ok) {
             setModal({ open: true, title: 'Успіх! ✨', message: `Розсилку завершено! Відправлено: ${result.sent_count}`, type: 'success' });
             setBroadcastMessage('');
+            setBroadcastImageUrl('');
           } else {
             throw new Error(result.error || 'Помилка розсилки');
           }
@@ -298,6 +304,36 @@ export default function AdminPanel() {
         }
       }
     });
+  }
+
+  async function handleSendIndividualMessage() {
+    const { user, message, imageUrl } = individualMessageModal;
+    if (!user || !message.trim()) return;
+
+    setIndividualMessageModal(prev => ({ ...prev, isSending: true }));
+    try {
+      const response = await fetch('/api/individual-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tg_id: user.tg_id,
+          message,
+          imageUrl
+        })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        setModal({ open: true, title: 'Успіх! ✨', message: 'Повідомлення надіслано!', type: 'success' });
+        setIndividualMessageModal({ open: false, user: null, message: '', imageUrl: '', isSending: false });
+      } else {
+        throw new Error(result.error || 'Помилка відправки');
+      }
+    } catch (e) {
+      setModal({ open: true, title: 'Помилка', message: e.message, type: 'danger' });
+    } finally {
+      setIndividualMessageModal(prev => ({ ...prev, isSending: false }));
+    }
   }
 
   async function fetchOrders() {
@@ -996,10 +1032,16 @@ export default function AdminPanel() {
                         <td style={{ padding: '20px 24px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                             <button 
+                              onClick={() => setIndividualMessageModal({ open: true, user, message: '', imageUrl: '', isSending: false })}
+                              style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                            >
+                              Написати
+                            </button>
+                            <button 
                               onClick={() => openBonusModal(user)}
                               style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                             >
-                              Нарахувати
+                              Бонуси
                             </button>
                             <button 
                               onClick={() => deleteUser(user.phone)}
@@ -1113,6 +1155,20 @@ export default function AdminPanel() {
                     <div style={{ fontSize: 32, fontWeight: 950, color: '#7c3aed' }}>
                       {users.filter(u => u.allow_notifications).length} <span style={{ fontSize: 14, color: '#4a4a6a' }}>осіб</span>
                     </div>
+                  </div>
+
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 12 }}>Посилання на фото (необов'язково)</label>
+                    <input 
+                      type="text"
+                      value={broadcastImageUrl}
+                      onChange={(e) => setBroadcastImageUrl(e.target.value)}
+                      placeholder="https://example.com/photo.jpg"
+                      style={{ 
+                        width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 16, padding: '14px 20px', color: '#fff', fontSize: 14, outline: 'none'
+                      }}
+                    />
                   </div>
 
                   <div style={{ marginBottom: 24 }}>
@@ -1410,6 +1466,78 @@ export default function AdminPanel() {
 
                 <button type="submit" style={{ marginTop: 10, padding: 16, borderRadius: 14, border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 900, cursor: 'pointer' }}>ЗБЕРЕГТИ ЗМІНИ</button>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Individual Message Modal */}
+      <AnimatePresence>
+        {individualMessageModal.open && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div 
+              onClick={() => setIndividualMessageModal({ ...individualMessageModal, open: false })}
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              style={{ 
+                position: 'relative', width: '100%', maxWidth: 500, background: '#0a0a1a', borderRadius: 32, 
+                border: '1px solid rgba(255,255,255,0.1)', padding: 40, boxShadow: '0 32px 64px rgba(0,0,0,0.5)',
+              }}
+            >
+              <h3 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 8 }}>Повідомлення клієнту</h3>
+              <p style={{ fontSize: 14, color: '#6b6b8a', marginBottom: 32 }}>
+                Отримувач: <span style={{ color: '#fff', fontWeight: 800 }}>{individualMessageModal.user?.first_name} {individualMessageModal.user?.last_name || ''}</span>
+              </p>
+
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 12 }}>Посилання на фото (необов'язково)</label>
+                <input 
+                  type="text"
+                  value={individualMessageModal.imageUrl}
+                  onChange={(e) => setIndividualMessageModal({ ...individualMessageModal, imageUrl: e.target.value })}
+                  placeholder="https://example.com/photo.jpg"
+                  style={{ 
+                    width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 16, padding: '14px 20px', color: '#fff', fontSize: 14, outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 32 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 12 }}>Текст повідомлення</label>
+                <textarea 
+                  value={individualMessageModal.message}
+                  onChange={(e) => setIndividualMessageModal({ ...individualMessageModal, message: e.target.value })}
+                  placeholder="Ваше повідомлення..."
+                  style={{ 
+                    width: '100%', minHeight: 150, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 16, padding: 20, color: '#fff', fontSize: 14, outline: 'none', resize: 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button 
+                  onClick={() => setIndividualMessageModal({ ...individualMessageModal, open: false })}
+                  style={{ flex: 1, padding: '16px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)', background: 'transparent', color: '#6b6b8a', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Скасувати
+                </button>
+                <button 
+                  onClick={handleSendIndividualMessage}
+                  disabled={individualMessageModal.isSending || !individualMessageModal.message.trim()}
+                  style={{ 
+                    flex: 1, padding: '16px', borderRadius: 16, border: 'none', fontSize: 14, fontWeight: 900, cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff',
+                    opacity: (individualMessageModal.isSending || !individualMessageModal.message.trim()) ? 0.5 : 1,
+                    boxShadow: '0 10px 20px rgba(124,58,237,0.3)'
+                  }}
+                >
+                  {individualMessageModal.isSending ? 'ВІДПРАВКА...' : 'ВІДПРАВИТИ'}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

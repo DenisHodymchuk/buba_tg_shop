@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request) {
   try {
-    const { message } = await request.json();
+    const { message, imageUrl } = await request.json();
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
     if (!botToken) {
@@ -26,14 +26,22 @@ export async function POST(request) {
     let sentCount = 0;
     const sendPromises = subscribers.map(async (sub) => {
       try {
-        const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        const endpoint = imageUrl ? 'sendPhoto' : 'sendMessage';
+        const body = imageUrl ? {
+          chat_id: sub.tg_id,
+          photo: imageUrl,
+          caption: message,
+          parse_mode: 'HTML'
+        } : {
+          chat_id: sub.tg_id,
+          text: message,
+          parse_mode: 'HTML'
+        };
+
+        const res = await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: sub.tg_id,
-            text: message,
-            parse_mode: 'HTML'
-          })
+          body: JSON.stringify(body)
         });
         if (res.ok) sentCount++;
       } catch (err) {
