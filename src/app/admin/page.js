@@ -796,7 +796,10 @@ export default function AdminPanel() {
       const parts = (formData.description || '').split('|||ADMIN_NOTES|||');
       const adminNotes = parts[1] || '';
       
-      setFormData({ ...formData, description: `${result.description}\n\n|||ADMIN_NOTES|||\n${adminNotes}` });
+      setFormData({ 
+        ...formData, 
+        description: adminNotes ? `${result.description}\n\n|||ADMIN_NOTES|||\n${adminNotes.trim()}` : result.description 
+      });
       setModal({ open: true, title: 'Успіх! 🤖', message: 'Опис згенеровано через Gemini!', type: 'success' });
     } catch (e) {
       setModal({ open: true, title: 'Помилка Gemini', message: e.message, type: 'danger' });
