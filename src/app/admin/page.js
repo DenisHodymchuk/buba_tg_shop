@@ -377,18 +377,9 @@ export default function AdminPanel() {
           const { error } = await supabase
             .from('customers')
             .update({ allow_notifications: true })
-            .is('allow_notifications', null); // Or just update everyone? User said "old ones"
+            .neq('tg_id', '0'); // Фільтр для того, щоб оновити всіх (Supabase потребує WHERE)
 
-          // If we want to force everyone even if they explicitly opted out, we remove the filter
-          // But usually better to just set it for those where it's not set.
-          // The user said "в усіх нових... і чи можемо ми старим так включити зараз?"
-          // This implies a one-time force enable.
-          
-          const { error: error2 } = await supabase
-            .from('customers')
-            .update({ allow_notifications: true });
-
-          if (error2) throw error2;
+          if (error) throw error;
           
           setModal({ open: true, title: 'Успіх! ✨', message: 'Сповіщення увімкнено для всіх клієнтів!', type: 'success' });
           fetchUsers();
