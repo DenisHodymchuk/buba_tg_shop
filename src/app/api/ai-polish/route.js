@@ -13,8 +13,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
     }
 
-    // Step 1: Remove background using Hugging Face (RMBG-1.4)
-    // We need to send raw bytes to the Inference API
+    // Step 1: Remove background using Hugging Face
     const imageRes = await fetch(imageUrl);
     if (!imageRes.ok) throw new Error('Failed to fetch original image');
     const imageData = await imageRes.arrayBuffer();
@@ -33,20 +32,19 @@ export async function POST(request) {
 
     if (!hfResponse.ok) {
       const errorText = await hfResponse.text();
-      // If the model is loading, it returns a specific JSON
+      if (errorText.includes("Cannot POST") || hfResponse.status === 404) {
+        throw new Error("ШІ-модель наразі недоступна безкоштовно на цьому сервері Hugging Face. Спробуйте пізніше або перейдіть на Cloudinary.");
+      }
       if (errorText.includes("is currently loading")) {
-        throw new Error("ШІ-модель завантажується... Будь ласка, спробуйте ще раз через 20 секунд.");
+        throw new Error("ШІ-модель завантажується... Спробуйте ще раз за 20 секунд.");
       }
       throw new Error(`Hugging Face error: ${errorText}`);
     }
 
-    // Hugging Face returns the image as a blob
     const blob = await hfResponse.blob();
     const buffer = Buffer.from(await blob.arrayBuffer());
     const base64Image = `data:image/png;base64,${buffer.toString('base64')}`;
 
-    // Note: Since we don't have a background generation step here for free,
-    // we return the transparent PNG.
     return NextResponse.json({ imageUrl: base64Image });
 
   } catch (error) {
