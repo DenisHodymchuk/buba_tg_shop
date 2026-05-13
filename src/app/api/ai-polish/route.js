@@ -3,69 +3,40 @@ import { NextResponse } from 'next/server';
 export async function POST(request) {
   try {
     const { imageUrl } = await request.json();
-    const falKey = process.env.FAL_KEY;
+    const hfToken = process.env.HF_TOKEN;
 
-    if (!falKey) {
-      return NextResponse.json({ error: 'FAL_KEY not configured in .env.local' }, { status: 500 });
+    if (!hfToken) {
+      return NextResponse.json({ error: 'HF_TOKEN not configured in .env.local' }, { status: 500 });
     }
 
     if (!imageUrl) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
     }
 
-    // Step 1: Remove background using Bria via Fal.ai
-    // Note: We use the bria background removal model
-    const removeBgResponse = await fetch('https://fal.run/fal-ai/bria/background-removal', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Key ${falKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        image_url: imageUrl,
-      }),
-    });
+    // Step 1: Remove background using Hugging Face (RMBG-1.4)
+    // This model returns a transparent PNG
+    const hfResponse = await fetch(
+      "https://api-inference.huggingface.co/models/briaai/RMBG-1.4",
+      {
+        headers: { Authorization: `Bearer ${hfToken}` },
+        method: "POST",
+        body: JSON.stringify({ inputs: imageUrl }),
+      }
+    );
 
-    if (!removeBgResponse.ok) {
-      const errorData = await removeBgResponse.json();
-      throw new Error(errorData.detail || 'Failed to remove background');
+    if (!hfResponse.ok) {
+      const errorText = await hfResponse.text();
+      throw new Error(`Hugging Face error: ${errorText}`);
     }
 
-    const { image: transparentImage } = await removeBgResponse.json();
+    // Hugging Face returns the image as a blob
+    const blob = await hfResponse.blob();
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    const base64Image = `data:image/png;base64,${buffer.toString('base64')}`;
 
-    // Step 2: Place on a stylish background
-    // We can use an image-to-image or a background generator
-    // For simplicity and speed, we'll use the "Product Background" model if available, 
-    // or we'll just return the transparent one for now and let the frontend handle the "Studio" look if needed.
-    // Actually, let's use a "Background Replacement" flow.
-    
-    // Specialized model for product background replacement
-    const productBgResponse = await fetch('https://fal.run/fal-ai/stable-diffusion-v1-5-inpainting', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Key ${falKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        image_url: imageUrl,
-        prompt: "A premium professional dark studio background with subtle neon purple and blue rim lighting, cinematic lighting, high-end product photography, charcoal gray texture, bokeh effect",
-        negative_prompt: "clutter, mess, bright colors, outdoors, sunlight, low quality, distorted, watermark",
-        strength: 0.95,
-      }),
-    });
-
-    if (!productBgResponse.ok) {
-      const errorData = await productBgResponse.json();
-      throw new Error(errorData.detail || 'Fal.ai API error');
-    }
-
-    const result = await productBgResponse.json();
-    
-    if (result.image && result.image.url) {
-      return NextResponse.json({ imageUrl: result.image.url });
-    } else {
-      throw new Error('No image returned from AI');
-    }
+    // Note: Since we don't have a background generation step here for free,
+    // we return the transparent PNG. The storefront will display it nicely on its dark background.
+    return NextResponse.json({ imageUrl: base64Image });
 
   } catch (error) {
     console.error('AI Polish error:', error);

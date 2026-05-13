@@ -36,6 +36,7 @@ export default function AdminPanel() {
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
   const [isAIPolishing, setIsAIPolishing] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [queueStatus, setQueueStatus] = useState({ sent: 0, total: 0, nextBatchIn: 0, batches: [] });
   const [individualMessageModal, setIndividualMessageModal] = useState({ open: false, user: null, message: '', imageUrl: '', isSending: false });
   const [reviews, setReviews] = useState([]);
@@ -772,6 +773,35 @@ export default function AdminPanel() {
       setModal({ open: true, title: 'Помилка ШІ', message: e.message, type: 'danger' });
     } finally {
       setIsAIPolishing(false);
+    }
+  }
+
+  async function handleGenerateDescription() {
+    if (!formData.name.trim()) {
+      alert('Будь ласка, введіть назву товару спочатку');
+      return;
+    }
+    
+    setIsGeneratingDescription(true);
+    try {
+      const response = await fetch('/api/ai-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productName: formData.name, category: formData.category })
+      });
+      
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Помилка Gemini');
+      
+      const parts = (formData.description || '').split('|||ADMIN_NOTES|||');
+      const adminNotes = parts[1] || '';
+      
+      setFormData({ ...formData, description: `${result.description}\n\n|||ADMIN_NOTES|||\n${adminNotes}` });
+      setModal({ open: true, title: 'Успіх! 🤖', message: 'Опис згенеровано через Gemini!', type: 'success' });
+    } catch (e) {
+      setModal({ open: true, title: 'Помилка Gemini', message: e.message, type: 'danger' });
+    } finally {
+      setIsGeneratingDescription(false);
     }
   }
 
@@ -1558,7 +1588,17 @@ export default function AdminPanel() {
                   return (
                     <>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Опис (бачать клієнти)</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Опис (бачать клієнти)</label>
+                          <button 
+                            type="button"
+                            onClick={handleGenerateDescription}
+                            disabled={isGeneratingDescription || !formData.name.trim()}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(124,58,237,0.1)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.2)', padding: '4px 10px', borderRadius: 8, fontSize: 9, fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s' }}
+                          >
+                            {isGeneratingDescription ? <Loader2 size={10} className="animate-spin" /> : <><Sparkles size={10} /> ГЕНЕРУВАТИ ШІ</>}
+                          </button>
+                        </div>
                         <textarea 
                           value={publicDesc} 
                           onChange={e => {
