@@ -769,7 +769,7 @@ export default function AdminPanel() {
       
       setModal({ open: true, title: 'Успіх! ✨', message: 'Зображення стилізовано через ШІ!', type: 'success' });
     } catch (e) {
-      setModal({ open: true, title: 'Помилка ШІ', message: e.message + '. Перевірте чи додано FAL_KEY у .env.local', type: 'danger' });
+      setModal({ open: true, title: 'Помилка ШІ', message: e.message, type: 'danger' });
     } finally {
       setIsAIPolishing(false);
     }
