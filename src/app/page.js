@@ -193,31 +193,45 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         style={{ padding: '20px 20px 0', maxWidth: 1200, margin: '0 auto', width: '100%' }}
       >
-        <Link href="/lego-crane" style={{ textDecoration: 'none' }}>
+        <div style={{ textDecoration: 'none' }}>
           <div style={{ 
-            background: 'linear-gradient(135deg, rgba(124,58,237,0.2), rgba(236,72,153,0.2))',
-            borderRadius: 32, padding: '20px 30px', border: '1px solid rgba(255,255,255,0.1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', overflow: 'hidden', position: 'relative'
+            background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(147,51,234,0.15))',
+            borderRadius: 32, padding: '24px', border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
           }}>
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', marginBottom: 4, letterSpacing: '0.1em' }}>Новинка</div>
-              <h2 style={{ fontSize: 24, fontWeight: 950, color: '#fff', margin: 0 }}>LEGO TECHNIC CRANE</h2>
-              <p style={{ fontSize: 13, color: '#6b6b8a', margin: '4px 0 0' }}>Відкрий для себе шедевр інженерії</p>
+              <div style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Box size={14} /> <span>Послуга</span>
+              </div>
+              <h2 style={{ fontSize: 22, fontWeight: 950, color: '#fff', margin: '0 0 8px', lineHeight: 1.2 }}>МОДЕЛЮВАННЯ<br/>НА ЗАМОВЛЕННЯ</h2>
+              <p style={{ fontSize: 13, color: '#94a3b8', margin: '0 0 16px', lineHeight: 1.4, maxWidth: '90%' }}>
+                Вироби будь-якої складності. Вартість та терміни визначаються індивідуально після аналізу.
+              </p>
+              
+              <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 20, padding: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#fff', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Що потрібно для моделювання:</div>
+                <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, color: '#cbd5e1', lineHeight: 1.6 }}>
+                  <li>Заміри</li>
+                  <li>Креслення (при можливості)</li>
+                  <li>Фото</li>
+                </ul>
+              </div>
             </div>
+            
+            {/* Glow and decoration effects */}
             <div style={{ 
-              width: 80, height: 80, borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)',
-              background: '#000', position: 'relative', zIndex: 1
-            }}>
-              <img src="/images/lego-crane.png" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-            {/* Glow effect */}
+              position: 'absolute', top: '-10%', right: '-10%', width: 250, height: 250, 
+              background: 'radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)', 
+              pointerEvents: 'none', zIndex: 0
+            }} />
             <div style={{ 
-              position: 'absolute', top: '50%', right: '-10%', width: 200, height: 200, 
-              background: 'radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 70%)', 
-              transform: 'translateY(-50%)', pointerEvents: 'none' 
+              position: 'absolute', bottom: '-20%', left: '-10%', width: 200, height: 200, 
+              background: 'radial-gradient(circle, rgba(147,51,234,0.15) 0%, transparent 70%)', 
+              pointerEvents: 'none', zIndex: 0
             }} />
           </div>
-        </Link>
+        </div>
       </motion.div>
 
       <main style={{ flex: '1 0 auto', paddingBottom: 140 }}>
