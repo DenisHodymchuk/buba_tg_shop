@@ -34,6 +34,8 @@ export default function AdminPanel() {
   const [broadcastImageUrl, setBroadcastImageUrl] = useState('');
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
+  const [queueStatus, setQueueStatus] = useState({ sent: 0, total: 0, nextBatchIn: 0, batches: [] });
   const [individualMessageModal, setIndividualMessageModal] = useState({ open: false, user: null, message: '', imageUrl: '', isSending: false });
   const [reviews, setReviews] = useState([]);
   const [replyData, setReplyData] = useState({ reviewId: null, text: '' });
@@ -297,39 +299,93 @@ export default function AdminPanel() {
   async function handleSendBroadcast() {
     if (!broadcastMessage.trim()) return;
     
+    const subscribers = users.filter(u => u.allow_notifications && u.tg_id);
+    if (subscribers.length === 0) {
+      alert('Немає підписаних клієнтів з Telegram ID');
+      return;
+    }
+
     setModal({
       open: true,
-      title: 'Підтвердження розсилки 📣',
-      message: `Ви збираєтесь надіслати повідомлення всім підписаним клієнтам (${users.filter(u => u.allow_notifications).length} осіб). Продовжити?`,
+      title: 'Підтвердження черги розсилки 📣',
+      message: `Ви збираєтесь надіслати повідомлення ${subscribers.length} клієнтам. Розсилка буде йти пакетами по 10 осіб з інтервалом 2 хвилини. Не закривайте цю вкладку до завершення!`,
       type: 'confirm',
       onConfirm: async () => {
-        setIsSendingBroadcast(true);
         setModal({ ...modal, open: false });
-        try {
-          const response = await fetch('/api/broadcast', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              message: broadcastMessage,
-              imageUrl: broadcastImageUrl
-            })
-          });
-          
-          const result = await response.json();
-          if (response.ok) {
-            setModal({ open: true, title: 'Успіх! ✨', message: `Розсилку завершено! Відправлено: ${result.sent_count}`, type: 'success' });
-            setBroadcastMessage('');
-            setBroadcastImageUrl('');
-          } else {
-            throw new Error(result.error || 'Помилка розсилки');
-          }
-        } catch (e) {
-          setModal({ open: true, title: 'Помилка', message: e.message, type: 'danger' });
-        } finally {
-          setIsSendingBroadcast(false);
-        }
+        setIsProcessingQueue(true);
+        setQueueStatus({ sent: 0, total: subscribers.length, nextBatchIn: 0, batches: [] });
+        
+        // Start processing
+        startQueueProcessing(subscribers, broadcastMessage, broadcastImageUrl);
       }
     });
+  }
+
+  async function startQueueProcessing(allSubscribers, msg, img) {
+    const BATCH_SIZE = 10;
+    const DELAY_MS = 2 * 60 * 1000; // 2 minutes
+    
+    let currentSent = 0;
+    const total = allSubscribers.length;
+    const queue = [...allSubscribers];
+
+    while (queue.length > 0) {
+      const batch = queue.splice(0, BATCH_SIZE);
+      const batchIds = batch.map(u => ({ tg_id: u.tg_id }));
+      
+      const batchStartTime = new Date();
+      
+      try {
+        const response = await fetch('/api/broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: msg,
+            imageUrl: img,
+            subscribers: batchIds
+          })
+        });
+        
+        const result = await response.json();
+        currentSent += (result.sent_count || 0);
+        
+        const batchInfo = {
+          time: batchStartTime.toLocaleTimeString(),
+          count: batch.length,
+          sent: result.sent_count || 0,
+          status: 'success'
+        };
+
+        setQueueStatus(prev => ({
+          ...prev,
+          sent: currentSent,
+          batches: [batchInfo, ...prev.batches]
+        }));
+
+        if (queue.length > 0) {
+          // countdown for next batch
+          let timeLeft = 120; // 2 minutes
+          while (timeLeft > 0) {
+            setQueueStatus(prev => ({ ...prev, nextBatchIn: timeLeft }));
+            await new Promise(r => setTimeout(r, 1000));
+            timeLeft--;
+          }
+        }
+      } catch (e) {
+        console.error('Batch error:', e);
+        setQueueStatus(prev => ({
+          ...prev,
+          batches: [{ time: batchStartTime.toLocaleTimeString(), count: batch.length, status: 'error', error: e.message }, ...prev.batches]
+        }));
+        // Optional: break or continue? Let's continue for now.
+        await new Promise(r => setTimeout(r, 5000)); // wait a bit before next attempt if error
+      }
+    }
+
+    setIsProcessingQueue(false);
+    setBroadcastMessage('');
+    setBroadcastImageUrl('');
+    setModal({ open: true, title: 'Готово! ✨', message: `Розсилку завершено. Успішно надіслано ${currentSent} з ${total} повідомлень.`, type: 'success' });
   }
 
   async function handleSendIndividualMessage() {
@@ -1282,6 +1338,46 @@ export default function AdminPanel() {
                    </button>
                  </div>
                </div>
+
+               {isProcessingQueue && (
+                 <div style={{ marginTop: 24, background: 'rgba(0,0,0,0.3)', borderRadius: 24, padding: 32, border: '1px solid #7c3aed' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                     <div>
+                       <h3 style={{ fontSize: 18, fontWeight: 900, color: '#fff', margin: 0 }}>Черга розсилки... ⏳</h3>
+                       <p style={{ fontSize: 12, color: '#6b6b8a', margin: '4px 0 0 0' }}>Прогрес: {queueStatus.sent} / {queueStatus.total}</p>
+                     </div>
+                     {queueStatus.nextBatchIn > 0 && (
+                        <div style={{ background: 'rgba(124,58,237,0.1)', padding: '10px 20px', borderRadius: 12, border: '1px solid #7c3aed', textAlign: 'right' }}>
+                          <div style={{ fontSize: 10, color: '#a78bfa', fontWeight: 900 }}>НАСТУПНИЙ ПАКЕТ ЧЕРЕЗ</div>
+                          <div style={{ fontSize: 24, color: '#fff', fontWeight: 950 }}>{Math.floor(queueStatus.nextBatchIn / 60)}:{(queueStatus.nextBatchIn % 60).toString().padStart(2, '0')}</div>
+                        </div>
+                     )}
+                   </div>
+
+                   <div style={{ width: '100%', height: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden', marginBottom: 32 }}>
+                      <motion.div 
+                        animate={{ width: `${(queueStatus.sent / queueStatus.total) * 100}%` }}
+                        style={{ height: '100%', background: 'linear-gradient(90deg, #7c3aed, #ec4899)' }}
+                      />
+                   </div>
+
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ fontSize: 11, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Журнал відправки</div>
+                      {queueStatus.batches.map((batch, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: batch.status === 'success' ? '#22c55e' : '#ef4444' }} />
+                            <span style={{ fontSize: 13, color: '#fff', fontWeight: 700 }}>{batch.time}</span>
+                            <span style={{ fontSize: 12, color: '#6b6b8a' }}>Пакет {batch.count} осіб</span>
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 900, color: batch.status === 'success' ? '#22c55e' : '#ef4444' }}>
+                            {batch.status === 'success' ? `✅ Надіслано: ${batch.sent}` : `❌ Помилка: ${batch.error}`}
+                          </div>
+                        </div>
+                      ))}
+                   </div>
+                 </div>
+               )}
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#4a4a6a' }}>

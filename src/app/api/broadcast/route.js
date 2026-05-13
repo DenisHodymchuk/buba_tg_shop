@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request) {
   try {
-    const { message, imageUrl } = await request.json();
+    const { message, imageUrl, subscribers: targetSubscribers } = await request.json();
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
     if (!botToken) {
@@ -14,14 +14,19 @@ export async function POST(request) {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get all users who allowed notifications
-    const { data: subscribers, error } = await supabase
-      .from('customers')
-      .select('tg_id')
-      .eq('allow_notifications', true)
-      .not('tg_id', 'is', null);
+    let subscribers = targetSubscribers;
 
-    if (error) throw error;
+    if (!subscribers) {
+      // Fallback: Get all users who allowed notifications if no targetSubscribers provided
+      const { data, error } = await supabase
+        .from('customers')
+        .select('tg_id')
+        .eq('allow_notifications', true)
+        .not('tg_id', 'is', null);
+      
+      if (error) throw error;
+      subscribers = data;
+    }
 
     let sentCount = 0;
     const sendPromises = subscribers.map(async (sub) => {
