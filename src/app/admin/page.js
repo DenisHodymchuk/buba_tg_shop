@@ -1080,7 +1080,6 @@ export default function AdminPanel() {
               <Plus size={18} /> ДОДАТИ ТОВАР
             </button>
           </header>
-        )}
 
         <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '20px' : '40px' }}>
           {!supabase && (
@@ -1358,52 +1357,6 @@ export default function AdminPanel() {
                     </div>
                   </div>
                 ))}
-              </div>
-                          <div style={{ 
-                            fontSize: 10, 
-                            fontWeight: 900, 
-                            color: user.acquisition_source ? '#ec4899' : '#4a4a6a',
-                            background: user.acquisition_source ? 'rgba(236,72,153,0.1)' : 'transparent',
-                            padding: user.acquisition_source ? '4px 8px' : 0,
-                            borderRadius: 8,
-                            display: 'inline-block',
-                            textTransform: 'uppercase'
-                          }}>
-                            {user.acquisition_source || 'ОРГАНІКА'}
-                          </div>
-                        </td>
-                        <td style={{ padding: '20px 24px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(251,191,36,0.1)', color: '#fbbf24', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Coins size={16}/></div>
-                            <span style={{ fontSize: 16, fontWeight: 900, color: '#fbbf24' }}>{user.bonuses || 0}</span>
-                          </div>
-                        </td>
-                        <td style={{ padding: '20px 24px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button 
-                              onClick={() => setIndividualMessageModal({ open: true, user, message: '', imageUrl: '', isSending: false })}
-                              style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-                            >
-                              Написати
-                            </button>
-                            <button 
-                              onClick={() => openBonusModal(user)}
-                              style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-                            >
-                              Бонуси
-                            </button>
-                            <button 
-                              onClick={() => deleteUser(user.phone)}
-                              style={{ padding: '8px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: 'none', cursor: 'pointer' }}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </>
           ) : activeTab === 'inventory' ? (
