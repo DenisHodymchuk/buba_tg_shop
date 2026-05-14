@@ -361,9 +361,6 @@ export default function Calculator() {
                   </div>
                 </div>
               </div>
-pan style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>₴/кг</span>
-                </div>
-              </div>
             </div>
 
             {/* Printer Presets */}
