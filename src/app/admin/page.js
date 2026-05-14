@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
-  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon
+  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
@@ -70,6 +70,12 @@ export default function AdminPanel() {
   const [isImporting, setIsImporting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [notification, setNotification] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
 
   const [formData, setFormData] = useState({
@@ -1955,6 +1961,29 @@ export default function AdminPanel() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 20, x: '-50%' }}
+            style={{
+              position: 'fixed', bottom: 40, left: '50%',
+              padding: '16px 24px', borderRadius: 20,
+              background: notification.type === 'error' ? 'rgba(239,68,68,0.9)' : 'rgba(124,58,237,0.9)',
+              color: '#fff', fontWeight: 800, fontSize: 14,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 9999, display: 'flex', alignItems: 'center', gap: 12,
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
+          >
+            {notification.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
+            {notification.message}
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
