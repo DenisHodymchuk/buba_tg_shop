@@ -571,7 +571,7 @@ export default function InventoryDashboard({ showToast }) {
                             />
                             <AnimatePresence>
                               {showNameSuggestions && uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).length > 0 && (
-                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: 'absolute', top: '100%', left: 8, right: 8, background: '#1e293b', borderRadius: 12, marginTop: 4, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 8, right: 8, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
                                   {uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).map(n => (
                                     <div key={n} onClick={() => setNewItem({ ...newItem, name: n })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{n}</div>
                                   ))}
@@ -590,7 +590,7 @@ export default function InventoryDashboard({ showToast }) {
                             />
                             <AnimatePresence>
                               {showMakerSuggestions && uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).length > 0 && (
-                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: 'absolute', top: '100%', left: 8, right: 8, background: '#1e293b', borderRadius: 12, marginTop: 4, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 8, right: 8, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
                                   {uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).map(m => (
                                     <div key={m} onClick={() => setNewItem({ ...newItem, maker: m })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{m}</div>
                                   ))}
