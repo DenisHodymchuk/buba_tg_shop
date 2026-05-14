@@ -560,23 +560,22 @@ export default function Calculator() {
 
         {/* Saved List */}
         <div style={{ background: 'rgba(255,255,255,0.01)', borderRadius: 32, padding: 24, border: '1px solid rgba(255,255,255,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h4 style={{ fontSize: 14, fontWeight: 900, color: '#fff', margin: 0 }}>Збережені ({calculations.length})</h4>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button 
-                onClick={fetchCalculations}
-                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: 8, borderRadius: 10, color: '#fff', cursor: 'pointer' }}
-              >
-                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              </button>
-               <div style={{ position: 'relative', width: '100%' }}>
-                  <input 
-                    type="text" placeholder="Пошук..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px 8px 32px', color: 'var(--text-main)', fontSize: 11, outline: 'none' }}
-                  />
-                  <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-               </div>
-            </div>
+            <button 
+              onClick={fetchCalculations}
+              style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: 8, borderRadius: 10, color: '#fff', cursor: 'pointer' }}
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
+
+          <div style={{ position: 'relative', width: '100%', marginBottom: 20 }}>
+            <input 
+              type="text" placeholder="Пошук розрахунків..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 12px 10px 36px', color: 'var(--text-main)', fontSize: 12, outline: 'none', boxSizing: 'border-box' }}
+            />
+            <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 400, overflowY: 'auto' }} className="hide-scrollbar">
