@@ -19,6 +19,18 @@ export default function InventoryDashboard({ showToast }) {
   const [newItem, setNewItem] = useState({ batch_id: null, name: '', maker: '', quantity: 1, price_unit: 50, sold_count: 0, paid_amount: 0 });
   const [moveMenu, setMoveMenu] = useState({ open: false, itemId: null, oldBatchId: null, x: 0, y: 0 });
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const [showMakerSuggestions, setShowMakerSuggestions] = useState(false);
+
+  const uniqueNames = useMemo(() => {
+    const names = batches.flatMap(b => b.inventory_items?.map(i => i.name) || []);
+    return [...new Set(names)].filter(Boolean).sort();
+  }, [batches]);
+
+  const uniqueMakers = useMemo(() => {
+    const makers = batches.flatMap(b => b.inventory_items?.map(i => i.maker) || []);
+    return [...new Set(makers)].filter(Boolean).sort();
+  }, [batches]);
 
   useEffect(() => {
     fetchData();
@@ -548,11 +560,43 @@ export default function InventoryDashboard({ showToast }) {
                         ))}
                         {/* Add Item Row */}
                         <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
-                          <td style={{ padding: '14px 8px' }}>
-                            <input placeholder="Назва товару..." value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} />
+                          <td style={{ padding: '14px 8px', position: 'relative' }}>
+                            <input 
+                              placeholder="Назва товару..." 
+                              value={newItem.name} 
+                              onChange={e => setNewItem({...newItem, name: e.target.value})} 
+                              onFocus={() => setShowNameSuggestions(true)}
+                              onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
+                              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} 
+                            />
+                            <AnimatePresence>
+                              {showNameSuggestions && uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).length > 0 && (
+                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: 'absolute', top: '100%', left: 8, right: 8, background: '#1e293b', borderRadius: 12, marginTop: 4, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                                  {uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).map(n => (
+                                    <div key={n} onClick={() => setNewItem({ ...newItem, name: n })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{n}</div>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </td>
-                          <td style={{ padding: '14px 8px' }}>
-                            <input placeholder="Хто зробив..." value={newItem.maker} onChange={e => setNewItem({...newItem, maker: e.target.value})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} />
+                          <td style={{ padding: '14px 8px', position: 'relative' }}>
+                            <input 
+                              placeholder="Хто зробив..." 
+                              value={newItem.maker} 
+                              onChange={e => setNewItem({...newItem, maker: e.target.value})} 
+                              onFocus={() => setShowMakerSuggestions(true)}
+                              onBlur={() => setTimeout(() => setShowMakerSuggestions(false), 200)}
+                              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} 
+                            />
+                            <AnimatePresence>
+                              {showMakerSuggestions && uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).length > 0 && (
+                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: 'absolute', top: '100%', left: 8, right: 8, background: '#1e293b', borderRadius: 12, marginTop: 4, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                                  {uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).map(m => (
+                                    <div key={m} onClick={() => setNewItem({ ...newItem, maker: m })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{m}</div>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </td>
                           <td style={{ padding: '14px 8px', textAlign: 'center' }}>
                             <input type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value) || 0})} style={{ width: 50, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12, textAlign: 'center' }} />
