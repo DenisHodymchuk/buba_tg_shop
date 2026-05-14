@@ -41,7 +41,7 @@ export default function InventoryDashboard({ showToast }) {
       }
     } catch (err) {
       console.error('Error fetching inventory:', err);
-      showToast('Помилка завантаження даних', 'error');
+      showToast('Помилка завантаження: ' + (err.message || err.details || 'Невідома помилка'), 'error');
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,10 @@ export default function InventoryDashboard({ showToast }) {
       setBatches([ { ...data[0], inventory_items: [] }, ...batches]);
       setShowBatchForm(false);
       showToast('Партію створено');
-    } catch (err) { showToast('Помилка створення партії', 'error'); }
+    } catch (err) { 
+      console.error('Add batch error:', err);
+      showToast('Помилка створення партії: ' + (err.message || 'Перевірте SQL запит у Supabase'), 'error'); 
+    }
   }
 
   async function handleAddItem(batchId) {
@@ -90,7 +93,10 @@ export default function InventoryDashboard({ showToast }) {
       ));
       setNewItem({ batch_id: null, name: '', maker: '', quantity: 1, price_unit: 50, sold_count: 0, paid_amount: 0 });
       showToast('Товар додано');
-    } catch (err) { showToast('Помилка додавання товару', 'error'); }
+    } catch (err) { 
+      console.error('Add item error:', err);
+      showToast('Помилка додавання: ' + (err.message || 'Перевірте SQL'), 'error'); 
+    }
   }
 
   async function handleUpdateItem(item) {
