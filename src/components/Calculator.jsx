@@ -155,10 +155,10 @@ export default function Calculator() {
     // 5. Failure margin
     const elec = kwh * Number(formData.electricity_cost_kwh);
     const wear = Number(formData.time_h) * Number(formData.wear_cost_h);
-    const prime = plasticCost + elec + wear + ((plasticCost + elec + wear) * (Number(formData.failure_margin) / 100));
-    
     const labor = Number(formData.time_h) * Number(formData.labor_cost_h);
-    const suggested = (prime + labor) * (1 + Number(formData.profit_margin) / 100);
+    const prime = plasticCost + elec + wear + ((plasticCost + elec + wear) * (Number(formData.failure_margin) / 100)) + labor;
+    
+    const suggested = prime * (1 + Number(formData.profit_margin) / 100);
     const discountAmount = suggested * (Number(formData.discount) / 100);
     const final = suggested - discountAmount;
 
@@ -748,6 +748,10 @@ export default function Calculator() {
               <span style={{ color: '#94a3b8', fontSize: 14 }}>Ризики (брак)</span>
               <span style={{ color: '#ef4444', fontWeight: 700 }}>+ {results.failure} ₴</span>
             </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94a3b8', fontSize: 14 }}>Робота</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>+ {results.labor} ₴</span>
+            </div>
 
             <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '10px 0' }} />
 
@@ -759,10 +763,6 @@ export default function Calculator() {
               <span style={{ color: '#22c55e', fontSize: 24, fontWeight: 950 }}>{results.prime} ₴</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>Робота</span>
-              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>+ {results.labor} ₴</span>
-            </div>
 
             <div style={{ marginTop: 20, padding: 24, background: 'rgba(255,255,255,0.05)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ fontSize: 10, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', marginBottom: 8 }}>Рекомендована ціна</div>
