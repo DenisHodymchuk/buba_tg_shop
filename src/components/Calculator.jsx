@@ -61,6 +61,11 @@ export default function Calculator() {
     fetchMaterials();
   }, []);
 
+  useEffect(() => {
+    const autoName = `${newMaterial.type} ${newMaterial.color} (${newMaterial.cost_per_kg} грн)`.replace(/\s+/g, ' ').trim();
+    setNewMaterial(prev => ({ ...prev, name: autoName }));
+  }, [newMaterial.type, newMaterial.color, newMaterial.cost_per_kg]);
+
   async function fetchMaterials() {
     try {
       const { data, error } = await supabase.from('material_library').select('*').order('name');
@@ -301,15 +306,19 @@ export default function Calculator() {
                     <input value={newMaterial.name} onChange={e => setNewMaterial({...newMaterial, name: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
                   </div>
                   <div>
+                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Тип</label>
+                    <input placeholder="напр. PLA" value={newMaterial.type} onChange={e => setNewMaterial({...newMaterial, type: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                  </div>
+                  <div>
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Виробник</label>
-                    <input value={newMaterial.manufacturer} onChange={e => setNewMaterial({...newMaterial, manufacturer: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                    <input placeholder="напр. Sunlu" value={newMaterial.manufacturer} onChange={e => setNewMaterial({...newMaterial, manufacturer: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Колір</label>
-                    <input value={newMaterial.color} onChange={e => setNewMaterial({...newMaterial, color: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                    <input placeholder="напр. Чорний" value={newMaterial.color} onChange={e => setNewMaterial({...newMaterial, color: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна ₴/кг</label>
+                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна грн/кг</label>
                     <input type="number" value={newMaterial.cost_per_kg} onChange={e => setNewMaterial({...newMaterial, cost_per_kg: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
                   </div>
                   <button onClick={handleSaveToLibrary} style={{ gridColumn: '1/-1', background: '#7c3aed', color: 'var(--text-main)', border: 'none', padding: 12, borderRadius: 10, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>ЗБЕРЕГТИ В БІБЛІОТЕКУ</button>
