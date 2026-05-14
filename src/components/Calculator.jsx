@@ -39,6 +39,7 @@ export default function Calculator() {
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [newMaterial, setNewMaterial] = useState({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
   const [editingMaterialId, setEditingMaterialId] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   const [formData, setFormData] = useState({
     name: 'Новий розрахунок',
@@ -61,6 +62,17 @@ export default function Calculator() {
     fetchCalculations();
     fetchMaterials();
   }, []);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const showToast = (message, type = 'success') => {
+    setNotification({ message, type });
+  };
 
   useEffect(() => {
     const autoName = `${newMaterial.type} ${newMaterial.color} (${newMaterial.cost_per_kg} грн)`.replace(/\s+/g, ' ').trim();
@@ -150,9 +162,9 @@ export default function Calculator() {
         setCalculations([data[0], ...calculations]);
       }
       
-      alert(isEdit ? 'Розрахунок оновлено!' : 'Розрахунок збережено!');
+      showToast(isEdit ? 'Розрахунок оновлено!' : 'Розрахунок збережено!');
     } catch (e) {
-      alert('Помилка збереження: ' + e.message);
+      showToast('Помилка збереження: ' + e.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -184,7 +196,7 @@ export default function Calculator() {
       if (error) throw error;
       setCalculations(calculations.filter(c => c.id !== id));
     } catch (e) {
-      alert('Помилка видалення: ' + e.message);
+      showToast('Помилка видалення: ' + e.message, 'error');
     }
   }
 
@@ -210,16 +222,12 @@ export default function Calculator() {
         const { data, error } = await supabase.from('material_library').update(newMaterial).eq('id', editingMaterialId).select();
         if (error) throw error;
         setMaterialsLibrary(materialsLibrary.map(m => m.id === editingMaterialId ? data[0] : m));
-        setEditingMaterialId(null);
-      } else {
-        const { data, error } = await supabase.from('material_library').insert([newMaterial]).select();
-        if (error) throw error;
-        setMaterialsLibrary([...materialsLibrary, data[0]]);
+        showToast(editingMaterialId ? 'Матеріал оновлено!' : 'Матеріал додано!');
       }
       setShowMaterialForm(false);
       setNewMaterial({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
     } catch (e) {
-      alert('Помилка збереження матеріалу: ' + e.message);
+      showToast('Помилка збереження матеріалу: ' + e.message, 'error');
     }
   }
 
@@ -230,8 +238,9 @@ export default function Calculator() {
       const { error } = await supabase.from('material_library').delete().eq('id', id);
       if (error) throw error;
       setMaterialsLibrary(materialsLibrary.filter(m => m.id !== id));
+      showToast('Матеріал видалено');
     } catch (e) {
-      alert('Помилка видалення: ' + e.message);
+      showToast('Помилка видалення: ' + e.message, 'error');
     }
   }
 
@@ -636,7 +645,7 @@ export default function Calculator() {
               onClick={() => {
                 const text = `Собівартість: ${results.prime} ₴\nПластик: ${results.plastic} ₴ (${results.totalWeight}г)\nЧас: ${formData.time_h} год\nРекомендована ціна: ${results.suggested} ₴`;
                 navigator.clipboard.writeText(text);
-                alert('Скопійовано для Admin Notes!');
+                showToast('Скопійовано для Admin Notes!');
               }}
               style={{ 
                 width: '100%', padding: 16, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
@@ -717,6 +726,29 @@ export default function Calculator() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 20, x: '-50%' }}
+            style={{
+              position: 'fixed', bottom: 40, left: '50%',
+              padding: '16px 24px', borderRadius: 20,
+              background: notification.type === 'error' ? 'rgba(239,68,68,0.9)' : 'rgba(124,58,237,0.9)',
+              color: '#fff', fontWeight: 800, fontSize: 14,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 9999, display: 'flex', alignItems: 'center', gap: 12,
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
+          >
+            {notification.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
