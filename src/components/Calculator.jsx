@@ -138,39 +138,54 @@ export default function Calculator() {
   }
 
   const results = useMemo(() => {
+    const weight = Number(formData.weight_g || 0);
+    const swaps = Number(formData.ams_swaps || 0);
+    const purge = Number(formData.purge_g || 0);
+    const time = Number(formData.time_h || 0);
+    const pCost = Number(formData.plastic_cost_roll || 0);
+    const wattage = Number(formData.printer_wattage || 0);
+    const elecTariff = Number(formData.electricity_cost_kwh || 0);
+    const wearH = Number(formData.wear_cost_h || 0);
+    const failMargin = Number(formData.failure_margin || 0);
+    const laborH = Number(formData.labor_cost_h || 0);
+    const profit = Number(formData.profit_margin || 0);
+    const discount = Number(formData.discount || 0);
+
     // 1. Plastic cost
-    const totalWeight = Number(formData.weight_g) + (Number(formData.ams_swaps) * Number(formData.purge_g));
-    const plasticCost = (totalWeight / 1000) * Number(formData.plastic_cost_roll);
+    const totalWeight = weight + (swaps * purge);
+    const plasticCost = (totalWeight / 1000) * pCost;
     
     // 2. Electricity cost
-    const kwh = (Number(formData.time_h) * Number(formData.printer_wattage)) / 1000;
-    const electricityCost = kwh * Number(formData.electricity_cost_kwh);
+    const kwh = (time * wattage) / 1000;
+    const electricityCost = kwh * elecTariff;
     
     // 3. Wear cost
-    const wearCost = Number(formData.time_h) * Number(formData.wear_cost_h);
+    const wearCost = time * wearH;
     
-    // 4. Base prime cost
-    const basePrimeCost = plasticCost + electricityCost + wearCost;
+    // 4. Labor cost
+    const laborTotal = time * laborH;
     
-    // 5. Failure margin
-    const elec = kwh * Number(formData.electricity_cost_kwh);
-    const wear = Number(formData.time_h) * Number(formData.wear_cost_h);
-    const labor = Number(formData.time_h) * Number(formData.labor_cost_h);
-    const prime = plasticCost + elec + wear + ((plasticCost + elec + wear) * (Number(formData.failure_margin) / 100)) + labor;
+    // 5. Failure/Risk cost (based on plastic+elec+wear)
+    const baseHardwareCost = plasticCost + electricityCost + wearCost;
+    const failureCost = baseHardwareCost * (failMargin / 100);
     
-    const suggested = prime * (1 + Number(formData.profit_margin) / 100);
-    const discountAmount = suggested * (Number(formData.discount) / 100);
-    const final = suggested - discountAmount;
+    // 6. Total Prime Cost (including labor now)
+    const prime = baseHardwareCost + failureCost + laborTotal;
+    
+    // 7. Pricing
+    const suggested = prime * (1 + profit / 100);
+    const discountAmount = suggested * (discount / 100);
+    const finalPrice = suggested - discountAmount;
 
     return {
       plastic: plasticCost.toFixed(0),
-      electricity: elec.toFixed(0),
-      wear: wear.toFixed(0),
-      failure: (prime - (plasticCost + elec + wear)).toFixed(0),
+      electricity: electricityCost.toFixed(0),
+      wear: wearCost.toFixed(0),
+      failure: failureCost.toFixed(0),
       prime: prime.toFixed(0),
-      labor: labor.toFixed(0),
+      labor: laborTotal.toFixed(0),
       suggested: suggested.toFixed(0),
-      final: final.toFixed(0),
+      final: finalPrice.toFixed(0),
       totalWeight: totalWeight.toFixed(0)
     };
   }, [formData]);
@@ -181,8 +196,8 @@ export default function Calculator() {
       const isEdit = !!formData.id;
       const dataToSave = {
         ...formData,
-        total_prime_cost: parseFloat(results.prime),
-        suggested_price: parseFloat(results.final)
+        total_prime_cost: parseInt(results.prime) || 0,
+        suggested_price: parseInt(results.final) || 0
       };
 
       const { data, error } = await supabase
