@@ -110,10 +110,37 @@ export default function AdminPanel() {
       fetchReviews();
     }, 30000);
 
+    // 3. Telegram Mini App Initialization & Auto-Auth
+    const initTMA = () => {
+      if (typeof window !== 'undefined' && window?.Telegram?.WebApp) {
+        const webApp = window.Telegram.WebApp;
+        webApp.ready();
+        webApp.expand();
+        
+        const tgUser = webApp.initDataUnsafe?.user;
+        if (tgUser) {
+          const adminIds = (process.env.NEXT_PUBLIC_ADMIN_TELEGRAM_IDS || '').split(',').map(id => id.trim());
+          if (adminIds.includes(tgUser.id.toString())) {
+            setIsAuthenticated(true);
+            localStorage.setItem('admin_session_type', 'telegram');
+            showToast(`Привіт, ${tgUser.first_name}! Авторизація через Telegram успішна`, 'success');
+          }
+        }
+      }
+    };
+
     const savedAuth = localStorage.getItem('admin_session');
+    const savedAuthType = localStorage.getItem('admin_session_type');
+
     if (savedAuth && savedAuth === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       setIsAuthenticated(true);
+    } else if (savedAuthType === 'telegram') {
+      // Re-verify TMA if possible, or just trust session if we're still in TMA
+      initTMA();
+    } else {
+      initTMA();
     }
+    
     setMounted(true);
 
     return () => {
@@ -137,6 +164,7 @@ export default function AdminPanel() {
 
   const handleLogout = () => {
     localStorage.removeItem('admin_session');
+    localStorage.removeItem('admin_session_type');
     setIsAuthenticated(false);
     showToast('Ви вийшли', 'info');
   };
