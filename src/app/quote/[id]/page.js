@@ -161,7 +161,7 @@ export default function QuotePage() {
                      initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                      style={{ background: '#ec4899', color: '#fff', padding: '4px 12px', borderRadius: 10, fontSize: 12, fontWeight: 900, boxShadow: '0 0 20px rgba(236,72,153,0.3)' }}
                    >
-                     -{quote.discount}% OFF
+                     -{quote.discount}% ЗНИЖКА
                    </motion.div>
                  )}
                </div>

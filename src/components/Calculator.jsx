@@ -596,7 +596,7 @@ export default function Calculator() {
                       type="number" value={formData.discount} onChange={e => setFormData({...formData, discount: parseFloat(e.target.value) || 0})}
                       style={{ width: '100%', background: 'rgba(236,72,153,0.05)', border: '1px solid rgba(236,72,153,0.2)', borderRadius: 10, padding: '10px 35px 10px 10px', color: 'var(--text-main)', outline: 'none', fontSize: 13 }}
                     />
-                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#ec4899', fontSize: 9, fontWeight: 900 }}>% OFF</span>
+                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#ec4899', fontSize: 9, fontWeight: 900 }}>% ЗНИЖКИ</span>
                   </div>
                 </div>
               </div>
