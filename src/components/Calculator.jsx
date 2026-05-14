@@ -966,18 +966,22 @@ const ModernSelect = ({ label, value, options, onChange, onAdd, placeholder = "�
                     onChange={e => setNewValue(e.target.value)}
                     style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid #7c3aed40', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, outline: 'none', marginBottom: 12 }}
                   />
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 10 }}>
                     <button 
                       onClick={() => { if(newValue) { onAdd(newValue); onChange(newValue); } setIsAddMode(false); setNewValue(''); setIsOpen(false); }}
-                      style={{ flex: 1, padding: 8, borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
+                      style={{ flex: 1, height: 40, borderRadius: 10, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 900, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}
+                      onMouseEnter={(e) => e.target.style.background = '#6d28d9'}
+                      onMouseLeave={(e) => e.target.style.background = '#7c3aed'}
                     >
-                      ЗБЕРЕГТИ
+                      Зберегти
                     </button>
                     <button 
                       onClick={() => { setIsAddMode(false); setNewValue(''); }}
-                      style={{ flex: 1, padding: 8, borderRadius: 8, background: 'rgba(255,255,255,0.05)', color: '#6b6b8a', border: 'none', fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
+                      style={{ flex: 1, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 800, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}
+                      onMouseEnter={(e) => { e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.color = '#fff'; }}
+                      onMouseLeave={(e) => { e.target.style.background = 'rgba(255,255,255,0.05)'; e.target.style.color = '#94a3b8'; }}
                     >
-                      СКАСУВАТИ
+                      Скасувати
                     </button>
                   </div>
                 </div>
