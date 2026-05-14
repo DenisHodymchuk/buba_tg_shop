@@ -88,6 +88,101 @@ export default function Calculator() {
     } catch (err) { console.error('Error adding to catalog:', err); }
   }
 
+  // CUSTOM MODERN SELECT COMPONENT
+  const ModernSelect = ({ label, value, options, onChange, onAdd, placeholder = "Виберіть..." }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isAddMode, setIsAddMode] = useState(false);
+    const [newValue, setNewValue] = useState('');
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
+        <label style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 900, textTransform: 'uppercase' }}>{label}</label>
+        <div 
+          onClick={() => setIsOpen(!isOpen)}
+          style={{ 
+            width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', 
+            color: value ? 'var(--text-main)' : 'var(--text-muted)', fontSize: 13, cursor: 'pointer',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s'
+          }}
+        >
+          <span style={{ fontWeight: 600 }}>{value || placeholder}</span>
+          <ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
+        </div>
+
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 100 }} onClick={() => { setIsOpen(false); setIsAddMode(false); }} />
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                style={{ 
+                  position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 8, 
+                  background: '#161b22', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, 
+                  boxShadow: '0 20px 40px rgba(0,0,0,0.4)', zIndex: 101, overflow: 'hidden', padding: 6
+                }}
+              >
+                {!isAddMode ? (
+                  <>
+                    <div style={{ maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                      {options.map(opt => (
+                        <div 
+                          key={opt}
+                          onClick={() => { onChange(opt); setIsOpen(false); }}
+                          style={{ 
+                            padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontSize: 13, color: '#e6edf3',
+                            background: value === opt ? 'rgba(124,58,237,0.2)' : 'transparent',
+                            fontWeight: value === opt ? 800 : 500, transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                          onMouseLeave={(e) => e.target.style.background = value === opt ? 'rgba(124,58,237,0.2)' : 'transparent'}
+                        >
+                          {opt}
+                        </div>
+                      ))}
+                    </div>
+                    <div 
+                      onClick={(e) => { e.stopPropagation(); setIsAddMode(true); }}
+                      style={{ 
+                        padding: '12px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)',
+                        color: '#7c3aed', fontSize: 12, fontWeight: 900, cursor: 'pointer', textAlign: 'center'
+                      }}
+                    >
+                      + ДОДАТИ НОВИЙ
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ padding: 12 }}>
+                    <input 
+                      autoFocus
+                      placeholder={`Назва ${label.toLowerCase()}...`}
+                      value={newValue}
+                      onChange={e => setNewValue(e.target.value)}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid #7c3aed40', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, outline: 'none', marginBottom: 12 }}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button 
+                        onClick={() => { if(newValue) { onAdd(newValue); onChange(newValue); } setIsAddMode(false); setNewValue(''); setIsOpen(false); }}
+                        style={{ flex: 1, padding: 8, borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
+                      >
+                        ЗБЕРЕГТИ
+                      </button>
+                      <button 
+                        onClick={() => { setIsAddMode(false); setNewValue(''); }}
+                        style={{ flex: 1, padding: 8, borderRadius: 8, background: 'rgba(255,255,255,0.05)', color: '#6b6b8a', border: 'none', fontWeight: 800, fontSize: 11, cursor: 'pointer' }}
+                      >
+                        СКАСУВАТИ
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 3000);
@@ -467,65 +562,27 @@ export default function Calculator() {
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Назва (автоматично)</label>
                     <input disabled value={newMaterial.name} style={{ width: '100%', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-muted)', fontSize: 12 }} />
                   </div>
-                  <div>
-                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Тип пластику</label>
-                    <select 
-                      value={newMaterial.type} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        if (val === 'NEW') {
-                          const p = prompt('Введіть новий тип:');
-                          if (p) { addToCatalog('m_plastic_types', p); setNewMaterial({...newMaterial, type: p}); }
-                        } else {
-                          setNewMaterial({...newMaterial, type: val});
-                        }
-                      }}
-                      style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12, outline: 'none' }}
-                    >
-                      {catalogs.types.map(t => <option key={t} value={t}>{t}</option>)}
-                      <option value="NEW">+ ДОДАТИ НОВИЙ...</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Виробник</label>
-                    <select 
-                      value={newMaterial.manufacturer} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        if (val === 'NEW') {
-                          const p = prompt('Введіть назву виробника:');
-                          if (p) { addToCatalog('m_manufacturers', p); setNewMaterial({...newMaterial, manufacturer: p}); }
-                        } else {
-                          setNewMaterial({...newMaterial, manufacturer: val});
-                        }
-                      }}
-                      style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12, outline: 'none' }}
-                    >
-                      <option value="">— Виберіть —</option>
-                      {catalogs.manufacturers.map(m => <option key={m} value={m}>{m}</option>)}
-                      <option value="NEW">+ ДОДАТИ НОВИЙ...</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Колір</label>
-                    <select 
-                      value={newMaterial.color} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        if (val === 'NEW') {
-                          const p = prompt('Введіть назву кольору:');
-                          if (p) { addToCatalog('m_colors', p); setNewMaterial({...newMaterial, color: p}); }
-                        } else {
-                          setNewMaterial({...newMaterial, color: val});
-                        }
-                      }}
-                      style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12, outline: 'none' }}
-                    >
-                      <option value="">— Виберіть —</option>
-                      {catalogs.colors.map(c => <option key={c} value={c}>{c}</option>)}
-                      <option value="NEW">+ ДОДАТИ НОВИЙ...</option>
-                    </select>
-                  </div>
+                  <ModernSelect 
+                    label="Тип пластику"
+                    value={newMaterial.type}
+                    options={catalogs.types}
+                    onChange={(val) => setNewMaterial({...newMaterial, type: val})}
+                    onAdd={(val) => addToCatalog('m_plastic_types', val)}
+                  />
+                  <ModernSelect 
+                    label="Виробник"
+                    value={newMaterial.manufacturer}
+                    options={catalogs.manufacturers}
+                    onChange={(val) => setNewMaterial({...newMaterial, manufacturer: val})}
+                    onAdd={(val) => addToCatalog('m_manufacturers', val)}
+                  />
+                  <ModernSelect 
+                    label="Колір"
+                    value={newMaterial.color}
+                    options={catalogs.colors}
+                    onChange={(val) => setNewMaterial({...newMaterial, color: val})}
+                    onAdd={(val) => addToCatalog('m_colors', val)}
+                  />
                   <div>
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна грн/кг</label>
                     <input type="number" value={newMaterial.cost_per_kg} onChange={e => setNewMaterial({...newMaterial, cost_per_kg: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
