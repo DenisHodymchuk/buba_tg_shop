@@ -166,12 +166,12 @@ export default function Calculator() {
   );
 
   return (
-    <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', width: '100%' }}>
       {/* LEFT: CALCULATION FORM */}
-      <div style={{ flex: '2 1 600px' }}>
+      <div style={{ flex: '1 1 600px', minWidth: 0 }}>
         <div style={{ 
           background: 'rgba(255,255,255,0.02)', borderRadius: 32, border: '1px solid rgba(255,255,255,0.05)',
-          padding: 32, backdropFilter: 'blur(10px)'
+          padding: 32, backdropFilter: 'blur(10px)', boxSizing: 'border-box', width: '100%'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -389,12 +389,12 @@ export default function Calculator() {
       </div>
 
       {/* RIGHT: RESULTS & SAVED */}
-      <div style={{ flex: '1 1 400px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+      <div style={{ flex: '1 1 400px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 32 }}>
         {/* Results Card */}
         <div style={{ 
           background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderRadius: 32, padding: 32,
           boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-          position: 'sticky', top: 32
+          position: 'sticky', top: 32, boxSizing: 'border-box', width: '100%'
         }}>
           <h3 style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={20} style={{ color: '#f59e0b' }} /> Результат
