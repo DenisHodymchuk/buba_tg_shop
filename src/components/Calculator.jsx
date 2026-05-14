@@ -1,0 +1,529 @@
+"use client";
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Calculator as CalcIcon, Trash2, Save, Plus, 
+  Zap, Clock, Package, RefreshCw, AlertCircle, 
+  TrendingUp, DollarSign, Layers, CheckCircle2,
+  ChevronDown, ChevronUp, Search, Filter, Copy, 
+  ShieldCheck, Sparkles, Loader2
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
+
+const PRESETS = {
+  materials: [
+    { name: 'PLA Standard', cost: 650, density: 1.24 },
+    { name: 'PLA Premium', cost: 950, density: 1.24 },
+    { name: 'PETG', cost: 700, density: 1.27 },
+    { name: 'ABS', cost: 600, density: 1.04 },
+    { name: 'TPU', cost: 1200, density: 1.21 },
+    { name: 'ASA', cost: 1100, density: 1.07 },
+  ],
+  printers: [
+    { name: 'Bambu Lab X1C', wattage: 150, wear: 6 },
+    { name: 'Bambu Lab P1S/P1P', wattage: 150, wear: 5 },
+    { name: 'Bambu Lab A1', wattage: 90, wear: 4 },
+    { name: 'Bambu Lab A1 Mini', wattage: 70, wear: 3 },
+    { name: 'Voron 2.4 (350)', wattage: 250, wear: 4 },
+    { name: 'Creality K1 Max', wattage: 200, wear: 5 },
+  ]
+};
+
+export default function Calculator() {
+  const [calculations, setCalculations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activePreset, setActivePreset] = useState(null);
+
+  const [formData, setFormData] = useState({
+    name: 'Новий розрахунок',
+    model_name: '',
+    weight_g: 100,
+    time_h: 5,
+    plastic_cost_roll: 750,
+    plastic_type: 'PLA',
+    electricity_cost_kwh: 4.32,
+    printer_wattage: 350,
+    wear_cost_h: 5,
+    failure_margin: 10,
+    ams_swaps: 0,
+    purge_g: 0.5,
+    labor_cost_h: 50,
+    profit_margin: 50
+  });
+
+  useEffect(() => {
+    fetchCalculations();
+  }, []);
+
+  async function fetchCalculations() {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('calculations')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (data) setCalculations(data);
+    } catch (e) {
+      console.error('Error fetching calculations:', e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const results = useMemo(() => {
+    // 1. Plastic cost
+    const totalWeight = Number(formData.weight_g) + (Number(formData.ams_swaps) * Number(formData.purge_g));
+    const plasticCost = (totalWeight / 1000) * Number(formData.plastic_cost_roll);
+    
+    // 2. Electricity cost
+    const kwh = (Number(formData.time_h) * Number(formData.printer_wattage)) / 1000;
+    const electricityCost = kwh * Number(formData.electricity_cost_kwh);
+    
+    // 3. Wear cost
+    const wearCost = Number(formData.time_h) * Number(formData.wear_cost_h);
+    
+    // 4. Base prime cost
+    const basePrimeCost = plasticCost + electricityCost + wearCost;
+    
+    // 5. Failure margin
+    const failureCost = basePrimeCost * (Number(formData.failure_margin) / 100);
+    
+    const totalPrimeCost = basePrimeCost + failureCost;
+    
+    // 6. Labor & Profit
+    const laborTotal = Number(formData.time_h) * Number(formData.labor_cost_h);
+    const suggestedPrice = (totalPrimeCost + laborTotal) * (1 + Number(formData.profit_margin) / 100);
+    
+    return {
+      plastic: plasticCost.toFixed(2),
+      electricity: electricityCost.toFixed(2),
+      wear: wearCost.toFixed(2),
+      failure: failureCost.toFixed(2),
+      prime: totalPrimeCost.toFixed(2),
+      labor: laborTotal.toFixed(2),
+      suggested: Math.ceil(suggestedPrice),
+      totalWeight: totalWeight.toFixed(1)
+    };
+  }, [formData]);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const dataToSave = {
+        ...formData,
+        total_prime_cost: parseFloat(results.prime),
+        suggested_price: parseFloat(results.suggested)
+      };
+
+      const { data, error } = await supabase
+        .from('calculations')
+        .insert([dataToSave])
+        .select();
+
+      if (error) throw error;
+      setCalculations([data[0], ...calculations]);
+      
+      // Reset after save
+      // setFormData({ ...formData, name: 'Новий розрахунок', model_name: '' });
+    } catch (e) {
+      alert('Помилка збереження: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(id) {
+    try {
+      const { error } = await supabase.from('calculations').delete().eq('id', id);
+      if (error) throw error;
+      setCalculations(calculations.filter(c => c.id !== id));
+    } catch (e) {
+      alert('Помилка видалення: ' + e.message);
+    }
+  }
+
+  const applyMaterialPreset = (preset) => {
+    setFormData(prev => ({
+      ...prev,
+      plastic_type: preset.name,
+      plastic_cost_roll: preset.cost
+    }));
+  };
+
+  const applyPrinterPreset = (preset) => {
+    setFormData(prev => ({
+      ...prev,
+      printer_wattage: preset.wattage,
+      wear_cost_h: preset.wear
+    }));
+  };
+
+  const filteredCalculations = calculations.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    c.model_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+      {/* LEFT: CALCULATION FORM */}
+      <div style={{ flex: '2 1 600px' }}>
+        <div style={{ 
+          background: 'rgba(255,255,255,0.02)', borderRadius: 32, border: '1px solid rgba(255,255,255,0.05)',
+          padding: 32, backdropFilter: 'blur(10px)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ 
+                width: 48, height: 48, borderRadius: 16, background: 'rgba(124,58,237,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed'
+              }}>
+                <CalcIcon size={24} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: 24, fontWeight: 950, color: '#fff', margin: 0 }}>Smart Calc 3.0</h2>
+                <p style={{ fontSize: 12, color: '#6b6b8a', margin: 0 }}>Точний розрахунок собівартості</p>
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleSave}
+              disabled={saving}
+              style={{ 
+                padding: '12px 24px', borderRadius: 14, border: 'none',
+                background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff',
+                fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                boxShadow: '0 8px 16px rgba(124,58,237,0.2)', opacity: saving ? 0.7 : 1
+              }}
+            >
+              {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+              ЗБЕРЕГТИ
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
+            {/* Model Info */}
+            <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва розрахунку</label>
+                <input 
+                  type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва моделі</label>
+                <input 
+                  type="text" value={formData.model_name} onChange={e => setFormData({...formData, model_name: e.target.value})}
+                  placeholder="напр. Dragon_Articulated_v2"
+                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                />
+              </div>
+            </div>
+
+            {/* Core Stats */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Вага моделі (г)</label>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="number" value={formData.weight_g} onChange={e => setFormData({...formData, weight_g: e.target.value})}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                />
+                <Package size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Час друку (год)</label>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="number" value={formData.time_h} onChange={e => setFormData({...formData, time_h: e.target.value})}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                />
+                <Clock size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
+              </div>
+            </div>
+
+            {/* Material Presets */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase' }}>Матеріал та вартість</label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {PRESETS.materials.map(m => (
+                    <button 
+                      key={m.name} onClick={() => applyMaterialPreset(m)}
+                      style={{ 
+                        fontSize: 9, padding: '4px 8px', borderRadius: 6, background: formData.plastic_type === m.name ? '#7c3aed' : 'rgba(255,255,255,0.05)',
+                        color: '#fff', border: 'none', cursor: 'pointer'
+                      }}
+                    >
+                      {m.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <input 
+                  type="text" value={formData.plastic_type} onChange={e => setFormData({...formData, plastic_type: e.target.value})}
+                  placeholder="Тип пластику"
+                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                />
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type="number" value={formData.plastic_cost_roll} onChange={e => setFormData({...formData, plastic_cost_roll: e.target.value})}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                  />
+                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a', fontSize: 12, fontWeight: 800 }}>₴/кг</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Printer Presets */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Обладнання та енергія</label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {PRESETS.printers.map(p => (
+                    <button 
+                      key={p.name} onClick={() => applyPrinterPreset(p)}
+                      style={{ 
+                        fontSize: 9, padding: '4px 8px', borderRadius: 6, background: 'rgba(59,130,246,0.1)',
+                        color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', cursor: 'pointer'
+                      }}
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 9, color: '#4a4a6a' }}>Потужність (Вт)</span>
+                  <input 
+                    type="number" value={formData.printer_wattage} onChange={e => setFormData({...formData, printer_wattage: e.target.value})}
+                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 9, color: '#4a4a6a' }}>Знос (₴/год)</span>
+                  <input 
+                    type="number" value={formData.wear_cost_h} onChange={e => setFormData({...formData, wear_cost_h: e.target.value})}
+                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 9, color: '#4a4a6a' }}>Тариф (₴/кВт)</span>
+                  <input 
+                    type="number" value={formData.electricity_cost_kwh} onChange={e => setFormData({...formData, electricity_cost_kwh: e.target.value})}
+                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* AMS Section */}
+            <div style={{ background: 'rgba(236,72,153,0.05)', borderRadius: 20, padding: 20, border: '1px solid rgba(236,72,153,0.1)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: '#ec4899', textTransform: 'uppercase', marginBottom: 16 }}>
+                <Layers size={14} /> AMS / Multi-color
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 9, color: '#6b6b8a' }}>Замін кольору</span>
+                  <input 
+                    type="number" value={formData.ams_swaps} onChange={e => setFormData({...formData, ams_swaps: e.target.value})}
+                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 9, color: '#6b6b8a' }}>Purge (г/заміна)</span>
+                  <input 
+                    type="number" step="0.1" value={formData.purge_g} onChange={e => setFormData({...formData, purge_g: e.target.value})}
+                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Margin Section */}
+            <div style={{ background: 'rgba(34,197,94,0.05)', borderRadius: 20, padding: 20, border: '1px solid rgba(34,197,94,0.1)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: '#22c55e', textTransform: 'uppercase', marginBottom: 16 }}>
+                <TrendingUp size={14} /> Рентабельність
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 9, color: '#6b6b8a' }}>Брак (%)</span>
+                  <input 
+                    type="number" value={formData.failure_margin} onChange={e => setFormData({...formData, failure_margin: e.target.value})}
+                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 9, color: '#6b6b8a' }}>Прибуток (%)</span>
+                  <input 
+                    type="number" value={formData.profit_margin} onChange={e => setFormData({...formData, profit_margin: e.target.value})}
+                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Labor Section */}
+            <div style={{ gridColumn: '1 / -1', background: 'rgba(59,130,246,0.05)', borderRadius: 20, padding: 20, border: '1px solid rgba(59,130,246,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <DollarSign size={14} style={{ color: '#3b82f6' }} />
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Вартість вашої праці</label>
+                </div>
+                <div style={{ position: 'relative', width: 200 }}>
+                  <input 
+                    type="number" value={formData.labor_cost_h} onChange={e => setFormData({...formData, labor_cost_h: e.target.value})}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '10px 40px 10px 10px', color: '#fff', outline: 'none', fontSize: 13 }}
+                  />
+                  <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a', fontSize: 10, fontWeight: 800 }}>₴/год</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT: RESULTS & SAVED */}
+      <div style={{ flex: '1 1 400px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+        {/* Results Card */}
+        <div style={{ 
+          background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderRadius: 32, padding: 32,
+          boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
+          position: 'sticky', top: 32
+        }}>
+          <h3 style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Sparkles size={20} style={{ color: '#f59e0b' }} /> Результат
+          </h3>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94a3b8', fontSize: 14 }}>Пластик {formData.ams_swaps > 0 && `(+AMS)`}</span>
+              <span style={{ color: '#fff', fontWeight: 700 }}>{results.plastic} ₴</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94a3b8', fontSize: 14 }}>Електроенергія</span>
+              <span style={{ color: '#fff', fontWeight: 700 }}>{results.electricity} ₴</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94a3b8', fontSize: 14 }}>Амортизація</span>
+              <span style={{ color: '#fff', fontWeight: 700 }}>{results.wear} ₴</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94a3b8', fontSize: 14 }}>Ризики (брак)</span>
+              <span style={{ color: '#ef4444', fontWeight: 700 }}>+ {results.failure} ₴</span>
+            </div>
+
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '10px 0' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ShieldCheck size={16} style={{ color: '#22c55e' }} />
+                <span style={{ color: '#fff', fontWeight: 900, fontSize: 14, letterSpacing: '0.05em' }}>СОБІВАРТІСТЬ</span>
+              </div>
+              <span style={{ color: '#22c55e', fontSize: 24, fontWeight: 950 }}>{results.prime} ₴</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94a3b8', fontSize: 14 }}>Робота</span>
+              <span style={{ color: '#fff', fontWeight: 700 }}>+ {results.labor} ₴</span>
+            </div>
+
+            <div style={{ marginTop: 20, padding: 24, background: 'rgba(255,255,255,0.05)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ fontSize: 10, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', marginBottom: 8 }}>Рекомендована ціна</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <span style={{ fontSize: 42, fontWeight: 950, color: '#fff', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>{results.suggested}</span>
+                <span style={{ fontSize: 18, fontWeight: 900, color: '#7c3aed' }}>₴</span>
+              </div>
+              <p style={{ fontSize: 11, color: '#6b6b8a', margin: '12px 0 0 0', lineHeight: 1.5 }}>
+                Враховуючи роботу та {formData.profit_margin}% маржі.
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => {
+                const text = `Собівартість: ${results.prime} ₴\nПластик: ${results.plastic} ₴ (${results.totalWeight}г)\nЧас: ${formData.time_h} год\nРекомендована ціна: ${results.suggested} ₴`;
+                navigator.clipboard.writeText(text);
+                alert('Скопійовано для Admin Notes!');
+              }}
+              style={{ 
+                width: '100%', padding: 16, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
+                background: 'transparent', color: '#fff', fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.2s'
+              }}
+            >
+              <Copy size={16} /> КОПІЮВАТИ В НОТАТКИ
+            </button>
+          </div>
+        </div>
+
+        {/* Saved List */}
+        <div style={{ background: 'rgba(255,255,255,0.01)', borderRadius: 32, padding: 24, border: '1px solid rgba(255,255,255,0.03)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h4 style={{ fontSize: 14, fontWeight: 900, color: '#fff', margin: 0 }}>Збережені ({calculations.length})</h4>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button 
+                onClick={fetchCalculations}
+                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: 8, borderRadius: 10, color: '#fff', cursor: 'pointer' }}
+              >
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              </button>
+              <div style={{ position: 'relative' }}>
+                 <input 
+                   type="text" placeholder="Пошук..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                   style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 12px 8px 32px', color: '#fff', fontSize: 11, outline: 'none' }}
+                 />
+                 <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 400, overflowY: 'auto' }} className="hide-scrollbar">
+            <AnimatePresence>
+              {filteredCalculations.map((calc) => (
+                <motion.div 
+                  key={calc.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
+                  style={{ 
+                    background: 'rgba(255,255,255,0.02)', padding: 16, borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{calc.name}</div>
+                    <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 4 }}>{calc.plastic_type} • {calc.weight_g}г • {calc.time_h}г</div>
+                  </div>
+                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 950, color: '#22c55e' }}>{calc.suggested_price} ₴</div>
+                      <div style={{ fontSize: 9, color: '#4a4a6a', textTransform: 'uppercase' }}>Ціна</div>
+                    </div>
+                    <button 
+                      onClick={() => handleDelete(calc.id)}
+                      style={{ background: 'rgba(239,68,68,0.1)', border: 'none', padding: 8, borderRadius: 10, color: '#ef4444', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {filteredCalculations.length === 0 && !loading && (
+              <div style={{ textAlign: 'center', padding: 40, color: '#4a4a6a', fontSize: 12 }}>
+                Нічого не знайдено
+              </div>
+            )}
+            {loading && (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <Loader2 size={24} className="animate-spin" style={{ color: '#7c3aed' }} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

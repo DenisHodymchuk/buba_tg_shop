@@ -8,6 +8,8 @@ import {
   Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import CalculatorComp from '@/components/Calculator';
+
 
 const scrollbarHide = `
   .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -839,6 +841,8 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<User size={18} />} label="Клієнти" />
           <SidebarBtn active={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} icon={<MessageSquare size={18} />} label="Відгуки" />
           <SidebarBtn active={activeTab === 'broadcast'} onClick={() => setActiveTab('broadcast')} icon={<Send size={18} />} label="Розсилка" />
+          <SidebarBtn active={activeTab === 'calculator'} onClick={() => setActiveTab('calculator')} icon={<Calculator size={18} />} label="Калькулятор" />
+
           <SidebarBtn active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={18} />} label="Налаштування" />
         </nav>
       </aside>
@@ -1378,6 +1382,14 @@ export default function AdminPanel() {
                    </div>
                  </div>
                )}
+            </div>
+          ) : activeTab === 'calculator' ? (
+            <div style={{ maxWidth: 1200 }}>
+              <div style={{ marginBottom: 32 }}>
+                <h1 style={{ fontSize: 28, fontWeight: 950, color: '#fff', margin: 0 }}>🖩 Калькулятор собівартості</h1>
+                <p style={{ fontSize: 14, color: '#6b6b8a', marginTop: 4 }}>Розрахуйте витрати на 3D друк з урахуванням амортизації та електрики</p>
+              </div>
+              <CalculatorComp />
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#4a4a6a' }}>
