@@ -5,7 +5,7 @@ import {
   Zap, Clock, Package, RefreshCw, AlertCircle, 
   TrendingUp, DollarSign, Layers, CheckCircle2,
   ChevronDown, ChevronUp, Search, Filter, Copy, 
-  ShieldCheck, Sparkles, Loader2
+  ShieldCheck, Sparkles, Loader2, Share2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -199,6 +199,12 @@ export default function Calculator() {
       showToast('Помилка видалення: ' + e.message, 'error');
     }
   }
+
+  const handleShare = (calc) => {
+    const url = `${window.location.origin}/quote/${calc.id}`;
+    navigator.clipboard.writeText(url);
+    showToast('Посилання для клієнта скопійовано!');
+  };
 
   const applyMaterialPreset = (preset) => {
     setFormData(prev => ({
@@ -697,6 +703,13 @@ export default function Calculator() {
                       <div style={{ fontSize: 13, fontWeight: 950, color: '#22c55e' }}>{calc.suggested_price} ₴</div>
                       <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ціна</div>
                     </div>
+                    <button 
+                      onClick={() => handleShare(calc)}
+                      style={{ background: 'rgba(124,58,237,0.1)', border: 'none', padding: 8, borderRadius: 10, color: '#7c3aed', cursor: 'pointer' }}
+                      title="Поділитися з клієнтом"
+                    >
+                      <Share2 size={14} />
+                    </button>
                     <button 
                       onClick={() => startEditCalculation(calc)}
                       style={{ background: 'rgba(59,130,246,0.1)', border: 'none', padding: 8, borderRadius: 10, color: '#3b82f6', cursor: 'pointer' }}
