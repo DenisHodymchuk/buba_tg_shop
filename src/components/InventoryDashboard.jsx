@@ -52,17 +52,27 @@ export default function InventoryDashboard({ showToast }) {
     let totalSold = 0;
     let totalPaid = 0;
     let itemsCount = 0;
+    let makerDebt = {};
 
     batches.forEach(b => {
       b.inventory_items?.forEach(i => {
-        totalValue += i.quantity * i.price_unit;
-        totalSold += i.sold_count * i.price_unit;
-        totalPaid += Number(i.paid_amount || 0);
-        itemsCount += i.quantity;
+        const itemTotalSold = (i.sold_count || 0) * (i.price_unit || 0);
+        const itemPaid = Number(i.paid_amount || 0);
+        const itemDebt = itemTotalSold - itemPaid;
+
+        totalValue += (i.quantity || 0) * (i.price_unit || 0);
+        totalSold += itemTotalSold;
+        totalPaid += itemPaid;
+        itemsCount += (i.quantity || 0);
+
+        if (i.maker) {
+          if (!makerDebt[i.maker]) makerDebt[i.maker] = 0;
+          makerDebt[i.maker] += itemDebt;
+        }
       });
     });
 
-    return { totalValue, totalSold, totalPaid, itemsCount, debt: totalSold - totalPaid };
+    return { totalValue, totalSold, totalPaid, itemsCount, debt: totalSold - totalPaid, makerDebt };
   }, [batches]);
 
   const toggleBatch = (id) => {
@@ -164,9 +174,21 @@ export default function InventoryDashboard({ showToast }) {
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Сума реалізованого товару</div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(234,88,12,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(245,158,11,0.2)' }}>
-          <div style={{ color: '#fbbf24', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Борг майстрам</div>
           <div style={{ fontSize: 28, fontWeight: 950, color: '#fbbf24' }}>{stats.debt} <span style={{ fontSize: 16 }}>₴</span></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Оплачено: {stats.totalPaid} ₴</div>
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {Object.entries(stats.makerDebt).map(([maker, debt]) => (
+              debt > 0 && (
+                <div key={maker} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                  <span style={{ color: 'var(--text-muted)' }}>{maker}:</span>
+                  <span style={{ fontWeight: 800, color: '#fbbf24' }}>{debt} ₴</span>
+                </div>
+              )
+            ))}
+            {stats.debt === 0 && <div style={{ fontSize: 12, color: '#22c55e' }}>Боргів немає ✅</div>}
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 8 }}>
+            Оплачено всього: {stats.totalPaid} ₴
+          </div>
         </div>
       </div>
 
