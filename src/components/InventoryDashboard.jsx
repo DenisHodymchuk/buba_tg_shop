@@ -323,11 +323,25 @@ export default function InventoryDashboard({ showToast }) {
                 </div>
               )
             ))}
-            {stats.debt === 0 && <div style={{ fontSize: 12, color: '#22c55e' }}>Боргів немає ✅</div>}
+            {stats.debt === 0 && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '6px 12px', borderRadius: 100, fontSize: 10, fontWeight: 900, border: '1px solid rgba(34,197,94,0.2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <CheckCircle2 size={12} /> Боргів немає
+              </div>
+            )}
           </div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
-            <span>Оплачено: {stats.totalPaid} ₴</span>
-            <span style={{ color: stats.pendingPaymentsCount > 0 ? '#f59e0b' : '#22c55e' }}>{stats.pendingPaymentsCount} неопл. тов.</span>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontWeight: 600 }}>Оплачено: <span style={{ color: '#fff' }}>{stats.totalPaid} ₴</span></span>
+            <div style={{ 
+              display: 'flex', alignItems: 'center', gap: 6, 
+              background: stats.pendingPaymentsCount > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)', 
+              color: stats.pendingPaymentsCount > 0 ? '#f59e0b' : '#22c55e',
+              padding: '4px 10px', borderRadius: 8, fontWeight: 900, fontSize: 9,
+              border: stats.pendingPaymentsCount > 0 ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(34,197,94,0.2)',
+              textTransform: 'uppercase'
+            }}>
+              {stats.pendingPaymentsCount > 0 ? <AlertCircle size={10} /> : <CheckCircle2 size={10} />}
+              {stats.pendingPaymentsCount} неопл. тов.
+            </div>
           </div>
         </div>
       </div>
