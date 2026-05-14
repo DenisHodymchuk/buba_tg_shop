@@ -69,6 +69,7 @@ export default function AdminPanel() {
   const [importUrl, setImportUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [notification, setNotification] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminPass, setAdminPass] = useState('');
