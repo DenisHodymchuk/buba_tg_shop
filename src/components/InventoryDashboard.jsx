@@ -487,9 +487,9 @@ export default function InventoryDashboard({ showToast }) {
                                         y: rect.top + 40 
                                       });
                                     }}
-                                    style={{ border: 'none', background: 'rgba(124,58,237,0.1)', color: '#a78bfa', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s' }}
+                                    style={{ border: 'none', background: 'rgba(139,92,246,0.2)', color: '#c4b5fd', borderRadius: 8, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 0 15px rgba(139,92,246,0.1)' }}
                                   >
-                                    <MoveHorizontal size={12} /> РУХ
+                                    <MoveHorizontal size={12} /> ПЕРЕНЕСТИ
                                   </button>
                                 </div>
                                 <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}><Trash2 size={14}/></button>
