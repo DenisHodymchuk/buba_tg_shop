@@ -18,6 +18,7 @@ export default function InventoryDashboard({ showToast }) {
   const [editingItem, setEditingItem] = useState(null);
   const [newItem, setNewItem] = useState({ batch_id: null, name: '', maker: '', quantity: 1, price_unit: 50, sold_count: 0, paid_amount: 0 });
   const [moveMenu, setMoveMenu] = useState({ open: false, itemId: null, oldBatchId: null, x: 0, y: 0 });
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   useEffect(() => {
     fetchData();
@@ -134,15 +135,39 @@ export default function InventoryDashboard({ showToast }) {
   }
 
   async function handleDeleteItem(batchId, itemId) {
-    if (!confirm('Видалити цей товар?')) return;
-    try {
-      const { error } = await supabase.from('inventory_items').delete().eq('id', itemId);
-      if (error) throw error;
-      setBatches(batches.map(b => 
-        b.id === batchId ? { ...b, inventory_items: b.inventory_items.filter(i => i.id !== itemId) } : b
-      ));
-      showToast('Видалено');
-    } catch (err) { showToast('Помилка видалення', 'error'); }
+    setConfirmModal({
+      open: true,
+      title: 'Видалити товар?',
+      message: 'Цю дію неможливо буде скасувати.',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('inventory_items').delete().eq('id', itemId);
+          if (error) throw error;
+          setBatches(batches.map(b => 
+            b.id === batchId ? { ...b, inventory_items: b.inventory_items.filter(i => i.id !== itemId) } : b
+          ));
+          showToast('Видалено');
+          setConfirmModal({ ...confirmModal, open: false });
+        } catch (err) { showToast('Помилка видалення', 'error'); }
+      }
+    });
+  }
+
+  async function handleDeleteBatch(batchId) {
+    setConfirmModal({
+      open: true,
+      title: 'Видалити партію?',
+      message: 'Ви впевнені, що хочете видалити цю порожню партію?',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('inventory_batches').delete().eq('id', batchId);
+          if (error) throw error;
+          setBatches(batches.filter(b => b.id !== batchId));
+          showToast('Партію видалено');
+          setConfirmModal({ ...confirmModal, open: false });
+        } catch (err) { showToast('Помилка видалення', 'error'); }
+      }
+    });
   }
 
   async function handleUpdateBatchStatus(batchId, status) {
@@ -411,7 +436,17 @@ export default function InventoryDashboard({ showToast }) {
                   <div style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a' }}>СУМА</div>
                   <div style={{ fontSize: 14, fontWeight: 800 }}>{batch.inventory_items?.reduce((acc, i) => acc + (i.quantity * i.price_unit), 0)} ₴</div>
                 </div>
-                {expandedBatches[batch.id] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {batch.inventory_items?.length === 0 && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDeleteBatch(batch.id); }}
+                      style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                  {expandedBatches[batch.id] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                </div>
               </div>
             </div>
 
@@ -525,6 +560,26 @@ export default function InventoryDashboard({ showToast }) {
           </div>
         )})}
       </div>
+
+      {/* Custom Confirmation Modal */}
+      <AnimatePresence>
+        {confirmModal.open && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ background: '#0f172a', borderRadius: 32, padding: 32, width: '100%', maxWidth: 400, border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
+              <div style={{ width: 64, height: 64, background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                <Trash2 size={32} />
+              </div>
+              <h3 style={{ fontSize: 20, fontWeight: 900, marginBottom: 12 }}>{confirmModal.title}</h3>
+              <p style={{ color: '#6b6b8a', fontSize: 14, marginBottom: 32 }}>{confirmModal.message}</p>
+              
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={confirmModal.onConfirm} style={{ flex: 1, padding: 14, borderRadius: 14, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}>ТАК, ВИДАЛИТИ</button>
+                <button onClick={() => setConfirmModal({ ...confirmModal, open: false })} style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}>СКАСУВАТИ</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Custom Move Menu */}
       <AnimatePresence>
