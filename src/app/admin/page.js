@@ -75,6 +75,8 @@ export default function AdminPanel() {
   const [adminPass, setAdminPass] = useState('');
   const [authError, setAuthError] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setNotification({ message, type });
@@ -132,6 +134,13 @@ export default function AdminPanel() {
     const savedAuth = localStorage.getItem('admin_session');
     const savedAuthType = localStorage.getItem('admin_session_type');
 
+    // Mobile detection
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
     if (savedAuth && savedAuth === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       setIsAuthenticated(true);
     } else if (savedAuthType === 'telegram') {
@@ -146,6 +155,7 @@ export default function AdminPanel() {
     return () => {
       supabase.removeChannel(channel);
       clearInterval(intervalId);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -974,9 +984,36 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className={isDarkMode ? '' : 'light-theme'} style={{ display: 'flex', height: '100vh', background: 'var(--bg-main)', color: 'var(--text-main)', overflow: 'hidden', transition: 'all 0.3s' }}>
+    <div className={isDarkMode ? '' : 'light-theme'} style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', background: 'var(--bg-main)', color: 'var(--text-main)', overflow: 'hidden', transition: 'all 0.3s' }}>
       <style>{scrollbarHide}</style>
-      <aside style={{ width: 260, flexShrink: 0, background: 'var(--bg-card)', backdropFilter: 'blur(20px)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', zIndex: 50 }}>
+      
+      {/* Mobile Header */}
+      {isMobile && (
+        <header style={{ height: 60, flexShrink: 0, background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between', zIndex: 100 }}>
+          <button onClick={() => setIsSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
+            <Filter size={24} />
+          </button>
+          <span style={{ fontWeight: 900, fontSize: 16 }}>BUBA ADMIN</span>
+          <div style={{ width: 24 }} />
+        </header>
+      )}
+
+      {/* Sidebar Overlay */}
+      {isMobile && isSidebarOpen && (
+        <div 
+          onClick={() => setIsSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000 }}
+        />
+      )}
+
+      <aside style={{ 
+        width: 260, flexShrink: 0, background: 'var(--bg-card)', backdropFilter: 'blur(20px)', 
+        borderRight: isMobile ? 'none' : '1px solid var(--border)', 
+        display: 'flex', flexDirection: 'column', zIndex: 1001,
+        position: isMobile ? 'fixed' : 'relative',
+        top: 0, bottom: 0, left: isMobile ? (isSidebarOpen ? 0 : -260) : 0,
+        transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}>
         <div style={{ padding: '32px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(135deg, #3b82f6, #2dd4bf)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1020,17 +1057,19 @@ export default function AdminPanel() {
       </aside>
 
       <main style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <header style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'var(--bg-header)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)', zIndex: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 16px', width: 350 }}>
-            <Search size={16} style={{ color: 'var(--text-muted)' }} />
-            <input type="text" placeholder="Пошук..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} />
-          </div>
-          <button onClick={() => setShowForm(true)} style={{ background: '#fff', color: '#020b18', padding: '10px 24px', borderRadius: 12, fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>
-            <Plus size={18} /> ДОДАТИ ТОВАР
-          </button>
-        </header>
+        {!isMobile && (
+          <header style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'var(--bg-header)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)', zIndex: 40 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 16px', width: 350 }}>
+              <Search size={16} style={{ color: 'var(--text-muted)' }} />
+              <input type="text" placeholder="Пошук..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} />
+            </div>
+            <button onClick={() => setShowForm(true)} style={{ background: '#fff', color: '#020b18', padding: '10px 24px', borderRadius: 12, fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>
+              <Plus size={18} /> ДОДАТИ ТОВАР
+            </button>
+          </header>
+        )}
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: 40 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '20px' : '40px' }}>
           {!supabase && (
             <div style={{ marginBottom: 24, padding: 16, background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', borderRadius: 12, color: '#ef4444', fontSize: 13, fontWeight: 700 }}>
               ⚠️ З'єднання з Supabase не встановлено. Перевірте наявність та правильність файлу .env.local
@@ -1038,20 +1077,25 @@ export default function AdminPanel() {
           )}
           {activeTab === 'products' ? (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-                <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Товари ({filteredProducts.length})</h1>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {categories.slice(0, 6).map(cat => (
-                    <button key={cat} onClick={() => setActiveCategory(cat)} style={{ padding: '6px 14px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: activeCategory === cat ? 'rgba(59,130,246,0.1)' : 'transparent', border: '1px solid', borderColor: activeCategory === cat ? '#3b82f6' : 'rgba(255,255,255,0.05)', color: activeCategory === cat ? '#3b82f6' : '#6b6b8a', cursor: 'pointer' }}>{cat}</button>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: 16, marginBottom: 32 }}>
+                <h1 style={{ fontSize: isMobile ? 22 : 24, fontWeight: 900, color: '#fff', margin: 0 }}>Товари ({filteredProducts.length})</h1>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {categories.slice(0, isMobile ? 3 : 6).map(cat => (
+                    <button key={cat} onClick={() => setActiveCategory(cat)} style={{ padding: '6px 14px', borderRadius: 10, fontSize: 10, fontWeight: 700, background: activeCategory === cat ? 'rgba(59,130,246,0.1)' : 'transparent', border: '1px solid', borderColor: activeCategory === cat ? '#3b82f6' : 'rgba(255,255,255,0.05)', color: activeCategory === cat ? '#3b82f6' : '#6b6b8a', cursor: 'pointer' }}>{cat}</button>
                   ))}
                 </div>
               </div>
+              {isMobile && (
+                <button onClick={() => setShowForm(true)} style={{ width: '100%', marginBottom: 20, background: 'linear-gradient(135deg, #3b82f6, #2dd4bf)', color: '#fff', padding: '12px', borderRadius: 16, fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <Plus size={18} /> ДОДАТИ ТОВАР
+                </button>
+              )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {filteredProducts.map(p => {
                   const final = (p.price * (1 - (p.discount || 0) / 100)).toFixed(0);
                   return (
-                    <div key={p.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 16, display: 'flex', alignItems: 'center', gap: 20 }}>
+                    <div key={p.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 16, display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 12 : 20 }}>
                       <div style={{ width: 60, height: 60, background: '#f0eef5', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                          {p.model_3d ? <Box size={28} color="#3b82f6" /> : p.image_url ? <img src={p.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={28} color="#94a3b8" />}
                       </div>
@@ -1156,7 +1200,7 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, padding: '16px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 20, padding: '16px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <div>
                         <div style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>Клієнт</div>
                         <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{order.shipping_details?.firstName} {order.shipping_details?.lastName}</div>
@@ -1178,7 +1222,7 @@ export default function AdminPanel() {
                              🪙 -{order.shipping_details.bonus_used} бонусів
                           </div>
                         )}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
                           <div style={{ 
                             fontSize: 10, 
                             color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b', 
@@ -1261,43 +1305,47 @@ export default function AdminPanel() {
                 </button>
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Клієнт</th>
-                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Telegram ID</th>
-                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Телефон</th>
-                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Джерело</th>
-                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase' }}>Бонуси</th>
-                      <th style={{ padding: '16px 24px', fontSize: 11, fontWeight: 800, color: '#6b6b8a', textTransform: 'uppercase', textAlign: 'right' }}>Дії</th>
-                    </tr>
-                  </thead>
-                   <tbody>
-                    {users
-                      .filter(user => {
-                        if (!searchQuery) return true;
-                        const q = searchQuery.toLowerCase();
-                        return (
-                          (user.first_name || '').toLowerCase().includes(q) ||
-                          (user.last_name || '').toLowerCase().includes(q) ||
-                          (user.phone || '').includes(q) ||
-                          (user.tg_id || '').includes(q) ||
-                          (user.username || '').toLowerCase().includes(q)
-                        );
-                      })
-                      .map((user, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                        <td style={{ padding: '20px 24px' }}>
-                          <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{user.first_name} {user.last_name}</div>
-                        </td>
-                        <td style={{ padding: '20px 24px' }}>
-                          <div style={{ fontSize: 13, color: '#7c3aed', fontWeight: 900 }}>{user.tg_id || '---'}</div>
-                        </td>
-                        <td style={{ padding: '20px 24px' }}>
-                          <div style={{ fontSize: 13, color: '#6b6b8a', fontWeight: 700 }}>{user.phone || '---'}</div>
-                        </td>
-                        <td style={{ padding: '20px 24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {users
+                  .filter(user => {
+                    if (!searchQuery) return true;
+                    const q = searchQuery.toLowerCase();
+                    return (
+                      (user.first_name || '').toLowerCase().includes(q) ||
+                      (user.last_name || '').toLowerCase().includes(q) ||
+                      (user.phone || '').includes(q) ||
+                      (user.tg_id || '').includes(q) ||
+                      (user.username || '').toLowerCase().includes(q)
+                    );
+                  })
+                  .map((user, i) => (
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{user.first_name} {user.last_name}</div>
+                        <div style={{ fontSize: 12, color: '#6b6b8a' }}>{user.username ? `@${user.username}` : 'Без юзернейму'}</div>
+                      </div>
+                      <div style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800 }}>
+                        {user.bonuses || 0} ₴
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 12 }}>
+                      <div>
+                        <div style={{ color: '#4a4a6a', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', marginBottom: 4 }}>Telegram ID</div>
+                        <div style={{ color: '#fff', fontWeight: 700 }}>{user.tg_id || '---'}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#4a4a6a', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', marginBottom: 4 }}>Телефон</div>
+                        <div style={{ color: '#fff', fontWeight: 700 }}>{user.phone || '---'}</div>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 8 }}>
+                       <button onClick={() => openBonusModal(user)} style={{ flex: 1, padding: '8px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>БОНУСИ</button>
+                       <button onClick={() => setIndividualMessageModal({ open: true, user, message: '', imageUrl: '', isSending: false })} style={{ flex: 1, padding: '8px', borderRadius: 10, background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: 'none', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}>ПОВІДОМЛЕННЯ</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
                           <div style={{ 
                             fontSize: 10, 
                             fontWeight: 900, 
