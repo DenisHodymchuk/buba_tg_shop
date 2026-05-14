@@ -5,7 +5,7 @@ import {
   Zap, Clock, Package, RefreshCw, AlertCircle, 
   TrendingUp, DollarSign, Layers, CheckCircle2,
   ChevronDown, ChevronUp, Search, Filter, Copy, 
-  ShieldCheck, Sparkles, Loader2, Share2
+  ShieldCheck, Sparkles, Loader2, Share2, Upload, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -40,6 +40,7 @@ export default function Calculator() {
   const [newMaterial, setNewMaterial] = useState({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
   const [editingMaterialId, setEditingMaterialId] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [catalogs, setCatalogs] = useState({ manufacturers: [], types: [], colors: [] });
 
   const [formData, setFormData] = useState({
     name: 'Новий розрахунок',
@@ -61,7 +62,31 @@ export default function Calculator() {
   useEffect(() => {
     fetchCalculations();
     fetchMaterials();
+    fetchCatalogs();
   }, []);
+
+  async function fetchCatalogs() {
+    try {
+      const [m, t, c] = await Promise.all([
+        supabase.from('m_manufacturers').select('name').order('name'),
+        supabase.from('m_plastic_types').select('name').order('name'),
+        supabase.from('m_colors').select('name').order('name')
+      ]);
+      setCatalogs({
+        manufacturers: m.data?.map(i => i.name) || [],
+        types: t.data?.map(i => i.name) || [],
+        colors: c.data?.map(i => i.name) || []
+      });
+    } catch (err) { console.error('Error fetching catalogs:', err); }
+  }
+
+  async function addToCatalog(table, name) {
+    if (!name || catalogs[table.replace('m_', '')]?.includes(name)) return;
+    try {
+      await supabase.from(table).insert([{ name }]);
+      fetchCatalogs();
+    } catch (err) { console.error('Error adding to catalog:', err); }
+  }
 
   useEffect(() => {
     if (notification) {
@@ -188,7 +213,8 @@ export default function Calculator() {
       purge_g: 0.5,
       labor_cost_h: 50,
       profit_margin: 50,
-      discount: 0
+      discount: 0,
+      image_url: ''
     });
     setActivePreset(null);
   };
@@ -332,6 +358,51 @@ export default function Calculator() {
             </div>
           </div>
 
+          {/* Image Upload Section */}
+          <div style={{ marginBottom: 24, padding: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid var(--border)' }}>
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 12 }}>Фото виробу</label>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              {formData.image_url ? (
+                <div style={{ position: 'relative', width: 120, height: 120, borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                  <img src={formData.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button 
+                    onClick={() => setFormData({...formData, image_url: ''})}
+                    style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: '50%', background: 'rgba(239,68,68,0.8)', border: 'none', color: '#fff', cursor: 'pointer' }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <label style={{ 
+                  width: 120, height: 120, borderRadius: 16, border: '2px dashed var(--border)', 
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                  cursor: 'pointer', gap: 8, color: 'var(--text-muted)', transition: 'all 0.2s'
+                }}>
+                  <Upload size={24} />
+                  <span style={{ fontSize: 10, fontWeight: 800 }}>ДОДАТИ ФОТО</span>
+                  <input type="file" hidden accept="image/*" onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    try {
+                      const fileExt = file.name.split('.').pop();
+                      const fileName = `calc-${Math.random()}.${fileExt}`;
+                      const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
+                      if (uploadError) throw uploadError;
+                      const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+                      setFormData({...formData, image_url: publicUrl});
+                      showToast('Фото завантажено!');
+                    } catch (err) {
+                      showToast('Помилка завантаження: ' + err.message, 'error');
+                    }
+                  }} />
+                </label>
+              )}
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Це фото буде бачити клієнт на сторінці пропозиції та в замовленні. Використовуйте якісне фото готового виробу або 3D-моделі.</p>
+              </div>
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
             {/* Model Info */}
             <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -393,20 +464,67 @@ export default function Calculator() {
                   style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 16, border: '1px solid #7c3aed40', marginBottom: 16, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}
                 >
                   <div style={{ gridColumn: '1/-1' }}>
-                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Назва (напр. PLA Black)</label>
-                    <input value={newMaterial.name} onChange={e => setNewMaterial({...newMaterial, name: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Назва (автоматично)</label>
+                    <input disabled value={newMaterial.name} style={{ width: '100%', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-muted)', fontSize: 12 }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Тип</label>
-                    <input placeholder="напр. PLA" value={newMaterial.type} onChange={e => setNewMaterial({...newMaterial, type: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Тип пластику</label>
+                    <select 
+                      value={newMaterial.type} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === 'NEW') {
+                          const p = prompt('Введіть новий тип:');
+                          if (p) { addToCatalog('m_plastic_types', p); setNewMaterial({...newMaterial, type: p}); }
+                        } else {
+                          setNewMaterial({...newMaterial, type: val});
+                        }
+                      }}
+                      style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12, outline: 'none' }}
+                    >
+                      {catalogs.types.map(t => <option key={t} value={t}>{t}</option>)}
+                      <option value="NEW">+ ДОДАТИ НОВИЙ...</option>
+                    </select>
                   </div>
                   <div>
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Виробник</label>
-                    <input placeholder="напр. Sunlu" value={newMaterial.manufacturer} onChange={e => setNewMaterial({...newMaterial, manufacturer: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                    <select 
+                      value={newMaterial.manufacturer} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === 'NEW') {
+                          const p = prompt('Введіть назву виробника:');
+                          if (p) { addToCatalog('m_manufacturers', p); setNewMaterial({...newMaterial, manufacturer: p}); }
+                        } else {
+                          setNewMaterial({...newMaterial, manufacturer: val});
+                        }
+                      }}
+                      style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12, outline: 'none' }}
+                    >
+                      <option value="">— Виберіть —</option>
+                      {catalogs.manufacturers.map(m => <option key={m} value={m}>{m}</option>)}
+                      <option value="NEW">+ ДОДАТИ НОВИЙ...</option>
+                    </select>
                   </div>
                   <div>
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Колір</label>
-                    <input placeholder="напр. Чорний" value={newMaterial.color} onChange={e => setNewMaterial({...newMaterial, color: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                    <select 
+                      value={newMaterial.color} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === 'NEW') {
+                          const p = prompt('Введіть назву кольору:');
+                          if (p) { addToCatalog('m_colors', p); setNewMaterial({...newMaterial, color: p}); }
+                        } else {
+                          setNewMaterial({...newMaterial, color: val});
+                        }
+                      }}
+                      style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12, outline: 'none' }}
+                    >
+                      <option value="">— Виберіть —</option>
+                      {catalogs.colors.map(c => <option key={c} value={c}>{c}</option>)}
+                      <option value="NEW">+ ДОДАТИ НОВИЙ...</option>
+                    </select>
                   </div>
                   <div>
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна грн/кг</label>

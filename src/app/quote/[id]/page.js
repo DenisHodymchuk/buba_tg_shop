@@ -59,7 +59,7 @@ export default function QuotePage() {
     name: quote.model_name || quote.name,
     price: quote.suggested_price,
     quantity: 1,
-    image_url: 'https://cdn.makerworld.com/3d-models/placeholder.png', // Placeholder or add real one
+    image_url: quote.image_url || 'https://cdn.makerworld.com/3d-models/placeholder.png',
     isCustom: true
   }];
 
@@ -145,8 +145,12 @@ export default function QuotePage() {
                 <div style={{ fontSize: 11, color: '#7c3aed', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 8 }}>Модель</div>
                 <h2 style={{ fontSize: 32, fontWeight: 950, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>{quote.model_name || quote.name}</h2>
               </div>
-              <div style={{ width: 64, height: 64, borderRadius: 24, background: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(124,58,237,0.2)' }}>
-                <Package size={28} color="#7c3aed" />
+              <div style={{ width: 80, height: 80, borderRadius: 24, overflow: 'hidden', background: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(124,58,237,0.2)', flexShrink: 0 }}>
+                {quote.image_url ? (
+                  <img src={quote.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={quote.model_name} />
+                ) : (
+                  <Package size={32} color="#7c3aed" />
+                )}
               </div>
             </div>
 
