@@ -174,68 +174,68 @@ export default function InventoryDashboard({ showToast }) {
     const printWindow = window.open('', '_blank');
     const itemsHtml = batch.inventory_items?.map(i => `
       <tr>
-        <td style="padding: 10px; border: 1px solid #ddd;">${i.name}</td>
-        <td style="padding: 10px; border: 1px solid #ddd;">${i.maker || '-'}</td>
-        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${i.quantity}</td>
-        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${i.price_unit} ₴</td>
-        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${i.quantity * i.price_unit} ₴</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #eee;">${i.name}</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #eee; text-align: center;">${i.quantity} шт.</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #eee; text-align: center;">${i.price_unit} ₴</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #eee; text-align: right;">${i.quantity * i.price_unit} ₴</td>
       </tr>
     `).join('');
 
     const total = batch.inventory_items?.reduce((acc, i) => acc + (i.quantity * i.price_unit), 0);
+    const invoiceNum = `${new Date(batch.batch_date).getTime().toString().slice(-6)}${batch.id.slice(0,2).toUpperCase()}`;
 
     printWindow.document.write(`
       <html>
         <head>
-          <title>Накладна - ${batch.batch_date}</title>
+          <title>Накладна №${invoiceNum}</title>
           <style>
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: #333; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 24px; font-weight: bold; text-transform: uppercase; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #f5f5f5; padding: 10px; text-align: left; border: 1px solid #ddd; font-size: 12px; text-transform: uppercase; }
-            .footer { margin-top: 50px; display: flex; justify-content: space-between; font-weight: bold; }
-            .signature { border-top: 1px solid #000; width: 200px; margin-top: 40px; text-align: center; font-size: 10px; }
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { font-family: 'Inter', sans-serif; padding: 50px; color: #1a1a1a; line-height: 1.5; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 3px solid #1a1a1a; padding-bottom: 20px; }
+            .store-name { font-size: 28px; font-weight: 900; letter-spacing: -0.02em; }
+            .batch-info { color: #666; font-size: 14px; margin-top: 5px; }
+            .invoice-details { text-align: right; }
+            .invoice-label { font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; }
+            .invoice-number { font-size: 20px; font-weight: 900; }
+            table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+            th { text-align: left; padding: 15px 10px; border-bottom: 2px solid #1a1a1a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #666; }
+            td { font-size: 14px; }
+            .total-row { margin-top: 40px; text-align: right; padding-top: 20px; border-top: 2px solid #1a1a1a; }
+            .total-label { font-size: 14px; color: #666; font-weight: 700; text-transform: uppercase; }
+            .total-amount { font-size: 24px; font-weight: 900; margin-top: 5px; }
+            @media print { body { padding: 20px; } .header { border-bottom-width: 2px; } }
           </style>
         </head>
         <body>
           <div class="header">
             <div>
-              <div class="title">БУБА МАГАЗИН</div>
-              <div>ПАРТІЯ ВІД: ${new Date(batch.batch_date).toLocaleDateString('uk-UA')}</div>
-              <div>${batch.notes || ''}</div>
+              <div class="store-name">СІМЕЙНА ДРУКАРНЯ</div>
+              <div class="batch-info">Партія від: ${new Date(batch.batch_date).toLocaleDateString('uk-UA')}</div>
+              <div class="batch-info">${batch.notes || ''}</div>
             </div>
-            <div style="text-align: right">
-              <div>НАКЛАДНА №${batch.id.slice(0,8).toUpperCase()}</div>
-              <div>Дата друку: ${new Date().toLocaleDateString('uk-UA')}</div>
+            <div class="invoice-details">
+              <div class="invoice-label">Накладна</div>
+              <div class="invoice-number">№${invoiceNum}</div>
             </div>
           </div>
           <table>
             <thead>
               <tr>
-                <th>Товар</th>
-                <th>Виробник</th>
-                <th>К-сть</th>
-                <th>Ціна за од.</th>
-                <th>Сума</th>
+                <th style="width: 50%">Найменування товару</th>
+                <th style="text-align: center">Кількість</th>
+                <th style="text-align: center">Ціна за од.</th>
+                <th style="text-align: right">Сума</th>
               </tr>
             </thead>
             <tbody>
               ${itemsHtml}
             </tbody>
           </table>
-          <div style="text-align: right; margin-top: 20px; font-size: 18px; font-weight: bold;">
-            ЗАГАЛЬНА СУМА: ${total} ₴
+          <div class="total-row">
+            <div class="total-label">Разом до сплати</div>
+            <div class="total-amount">${total} ₴</div>
           </div>
-          <div class="footer">
-            <div>
-              <div class="signature">ПЕРЕДАВ (МАГАЗИН)</div>
-            </div>
-            <div>
-              <div class="signature">ПРИЙНЯВ (МЕНЕДЖЕР)</div>
-            </div>
-          </div>
-          <script>window.print();</script>
+          <script>window.print(); window.close();</script>
         </body>
       </html>
     `);
@@ -477,16 +477,18 @@ export default function InventoryDashboard({ showToast }) {
                                   <select 
                                     onChange={(e) => handleMoveItem(item.id, batch.id, e.target.value)}
                                     value=""
-                                    style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                                    style={{ 
+                                      position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10
+                                    }}
                                   >
                                     <option value="" disabled>Перенести в...</option>
                                     {batches.filter(b => b.id !== batch.id && b.status !== 'archived').map(b => (
-                                      <option key={b.id} value={b.id}>{new Date(b.batch_date).toLocaleDateString('uk-UA')} ({b.notes?.slice(0,10)})</option>
+                                      <option key={b.id} value={b.id}>{new Date(b.batch_date).toLocaleDateString('uk-UA')} ({b.notes?.slice(0,15)})</option>
                                     ))}
                                   </select>
-                                  <button style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', borderRadius: 8, padding: 6, cursor: 'pointer' }} title="Перенести в іншу партію">
-                                    <MoveHorizontal size={14} />
-                                  </button>
+                                  <div style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', borderRadius: 8, padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700 }}>
+                                    <MoveHorizontal size={12} /> РУХ
+                                  </div>
                                 </div>
                                 <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}><Trash2 size={14}/></button>
                               </div>
