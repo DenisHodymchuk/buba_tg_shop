@@ -370,24 +370,30 @@ export default function Calculator() {
 
               <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12, marginBottom: 16 }} className="hide-scrollbar">
                 {materialsLibrary.map(m => (
-                  <button 
+                  <div 
                     key={m.id} onClick={() => selectFromLibrary(m)}
                     style={{ 
-                      flexShrink: 0, padding: '12px 16px', borderRadius: 12, border: '1px solid',
+                      flexShrink: 0, padding: '12px 16px', borderRadius: 16, border: '1px solid',
                       borderColor: activePreset === m.id ? '#7c3aed' : 'var(--border)',
                       background: activePreset === m.id ? 'rgba(124,58,237,0.1)' : 'var(--bg-card)',
                       color: activePreset === m.id ? '#7c3aed' : 'var(--text-main)',
-                      fontSize: 11, fontWeight: 700, cursor: 'pointer', textAlign: 'left', minWidth: 150, position: 'relative'
+                      cursor: 'pointer', textAlign: 'left', minWidth: 200, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12
                     }}
                   >
-                    <div style={{ fontWeight: 900, marginBottom: 2 }}>{m.name}</div>
-                    <div style={{ fontSize: 9, opacity: 0.6 }}>{m.manufacturer || 'Невідомо'} • {m.cost_per_kg} ₴</div>
-                    
-                    <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 4 }}>
-                      <button onClick={(e) => startEditMaterial(m, e)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: 4, borderRadius: 6, color: 'var(--text-muted)' }}><CalcIcon size={10} /></button>
-                      <button onClick={(e) => handleDeleteMaterial(m.id, e)} style={{ background: 'rgba(239,68,68,0.1)', border: 'none', padding: 4, borderRadius: 6, color: '#ef4444' }}><Trash2 size={10} /></button>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 900, fontSize: 12, marginBottom: 4, lineHeight: 1.2 }}>{m.name}</div>
+                      <div style={{ fontSize: 10, opacity: 0.6, fontWeight: 600 }}>{m.manufacturer || '—'} • {m.cost_per_kg} ₴</div>
                     </div>
-                  </button>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                      <button onClick={(e) => startEditMaterial(m, e)} style={{ background: 'rgba(124,58,237,0.1)', border: 'none', padding: 6, borderRadius: 8, color: '#7c3aed', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CalcIcon size={12} />
+                      </button>
+                      <button onClick={(e) => handleDeleteMaterial(m.id, e)} style={{ background: 'rgba(239,68,68,0.1)', border: 'none', padding: 6, borderRadius: 8, color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
                 ))}
                 {materialsLibrary.length === 0 && PRESETS.materials.map(m => (
                    <button 
