@@ -35,6 +35,9 @@ export default function Calculator() {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activePreset, setActivePreset] = useState(null);
+  const [materialsLibrary, setMaterialsLibrary] = useState([]);
+  const [showMaterialForm, setShowMaterialForm] = useState(false);
+  const [newMaterial, setNewMaterial] = useState({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
 
   const [formData, setFormData] = useState({
     name: 'Новий розрахунок',
@@ -55,7 +58,17 @@ export default function Calculator() {
 
   useEffect(() => {
     fetchCalculations();
+    fetchMaterials();
   }, []);
+
+  async function fetchMaterials() {
+    try {
+      const { data, error } = await supabase.from('material_library').select('*').order('name');
+      if (data) setMaterialsLibrary(data);
+    } catch (e) {
+      console.error('Error fetching materials:', e);
+    }
+  }
 
   async function fetchCalculations() {
     setLoading(true);
@@ -160,6 +173,27 @@ export default function Calculator() {
     }));
   };
 
+  async function handleSaveToLibrary() {
+    try {
+      const { data, error } = await supabase.from('material_library').insert([newMaterial]).select();
+      if (error) throw error;
+      setMaterialsLibrary([...materialsLibrary, data[0]]);
+      setShowMaterialForm(false);
+      setNewMaterial({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
+    } catch (e) {
+      alert('Помилка збереження матеріалу: ' + e.message);
+    }
+  }
+
+  const selectFromLibrary = (m) => {
+    setFormData(prev => ({
+      ...prev,
+      plastic_type: m.type,
+      plastic_cost_roll: m.cost_per_kg,
+    }));
+    setActivePreset(m.id);
+  };
+
   const filteredCalculations = calculations.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     c.model_name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -192,7 +226,7 @@ export default function Calculator() {
               disabled={saving}
               style={{ 
                 padding: '12px 24px', borderRadius: 14, border: 'none',
-                background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff',
+                background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: 'var(--text-main)',
                 fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
                 boxShadow: '0 8px 16px rgba(124,58,237,0.2)', opacity: saving ? 0.7 : 1
               }}
@@ -217,7 +251,7 @@ export default function Calculator() {
                 <input 
                   type="text" value={formData.model_name} onChange={e => setFormData({...formData, model_name: e.target.value})}
                   placeholder="напр. Dragon_Articulated_v2"
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                  style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
                 />
               </div>
             </div>
@@ -228,7 +262,7 @@ export default function Calculator() {
               <div style={{ position: 'relative' }}>
                 <input 
                   type="number" value={formData.weight_g} onChange={e => setFormData({...formData, weight_g: e.target.value})}
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                  style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
                 />
                 <Package size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               </div>
@@ -239,42 +273,95 @@ export default function Calculator() {
               <div style={{ position: 'relative' }}>
                 <input 
                   type="number" value={formData.time_h} onChange={e => setFormData({...formData, time_h: e.target.value})}
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                  style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
                 />
-                <Clock size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              </div>
-            </div>
-
-            {/* Material Presets */}
+                           {/* Material Presets */}
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase' }}>Матеріал та вартість</label>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {PRESETS.materials.map(m => (
-                    <button 
-                      key={m.name} onClick={() => applyMaterialPreset(m)}
-                      style={{ 
-                        fontSize: 9, padding: '4px 8px', borderRadius: 6, background: formData.plastic_type === m.name ? '#7c3aed' : 'rgba(255,255,255,0.05)',
-                        color: '#fff', border: 'none', cursor: 'pointer'
-                      }}
-                    >
-                      {m.name}
-                    </button>
-                  ))}
+                <button 
+                  onClick={() => setShowMaterialForm(!showMaterialForm)}
+                  style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: 'none', padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  {showMaterialForm ? 'СХОВАТИ' : '+ БІБЛІОТЕКА'}
+                </button>
+              </div>
+
+              {showMaterialForm && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                  style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 16, border: '1px solid #7c3aed40', marginBottom: 16, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}
+                >
+                  <div style={{ gridColumn: '1/-1' }}>
+                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Назва (напр. PLA Black)</label>
+                    <input value={newMaterial.name} onChange={e => setNewMaterial({...newMaterial, name: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Виробник</label>
+                    <input value={newMaterial.manufacturer} onChange={e => setNewMaterial({...newMaterial, manufacturer: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Колір</label>
+                    <input value={newMaterial.color} onChange={e => setNewMaterial({...newMaterial, color: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна ₴/кг</label>
+                    <input type="number" value={newMaterial.cost_per_kg} onChange={e => setNewMaterial({...newMaterial, cost_per_kg: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
+                  </div>
+                  <button onClick={handleSaveToLibrary} style={{ gridColumn: '1/-1', background: '#7c3aed', color: 'var(--text-main)', border: 'none', padding: 12, borderRadius: 10, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>ЗБЕРЕГТИ В БІБЛІОТЕКУ</button>
+                </motion.div>
+              )}
+
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12, marginBottom: 16 }} className="hide-scrollbar">
+                {materialsLibrary.map(m => (
+                  <button 
+                    key={m.id} onClick={() => selectFromLibrary(m)}
+                    style={{ 
+                      flexShrink: 0, padding: '10px 16px', borderRadius: 12, border: '1px solid',
+                      borderColor: activePreset === m.id ? '#7c3aed' : 'var(--border)',
+                      background: activePreset === m.id ? 'rgba(124,58,237,0.1)' : 'var(--bg-card)',
+                      color: activePreset === m.id ? '#7c3aed' : 'var(--text-main)',
+                      fontSize: 11, fontWeight: 700, cursor: 'pointer', textAlign: 'left', minWidth: 120
+                    }}
+                  >
+                    <div style={{ fontWeight: 900, marginBottom: 2 }}>{m.name}</div>
+                    <div style={{ fontSize: 9, opacity: 0.6 }}>{m.manufacturer || 'Невідомо'} • {m.cost_per_kg} ₴</div>
+                  </button>
+                ))}
+                {materialsLibrary.length === 0 && PRESETS.materials.map(m => (
+                   <button 
+                    key={m.name} onClick={() => applyMaterialPreset(m)}
+                    style={{ 
+                      flexShrink: 0, padding: '10px 16px', borderRadius: 12, border: '1px solid var(--border)',
+                      background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 11, fontWeight: 700, cursor: 'pointer'
+                    }}
+                  >
+                    {m.name}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Тип пластику</label>
+                  <input 
+                    type="text" value={formData.plastic_type} onChange={e => setFormData({...formData, plastic_type: e.target.value})}
+                    placeholder="напр. PLA"
+                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ціна за кг</label>
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type="number" value={formData.plastic_cost_roll} onChange={e => setFormData({...formData, plastic_cost_roll: e.target.value})}
+                      style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
+                    />
+                    <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>₴/кг</span>
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <input 
-                  type="text" value={formData.plastic_type} onChange={e => setFormData({...formData, plastic_type: e.target.value})}
-                  placeholder="Тип пластику"
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
-                />
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    type="number" value={formData.plastic_cost_roll} onChange={e => setFormData({...formData, plastic_cost_roll: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
-                  />
-                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>₴/кг</span>
+pan style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>₴/кг</span>
                 </div>
               </div>
             </div>
@@ -378,7 +465,7 @@ export default function Calculator() {
                 <div style={{ position: 'relative', width: '100%', maxWidth: 200 }}>
                   <input 
                     type="number" value={formData.labor_cost_h} onChange={e => setFormData({...formData, labor_cost_h: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '10px 40px 10px 10px', color: '#fff', outline: 'none', fontSize: 13 }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 40px 10px 10px', color: 'var(--text-main)', outline: 'none', fontSize: 13 }}
                   />
                   <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 10, fontWeight: 800 }}>₴/год</span>
                 </div>
@@ -396,22 +483,22 @@ export default function Calculator() {
           boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
           position: 'sticky', top: 32, boxSizing: 'border-box', width: '100%'
         }}>
-          <h3 style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={20} style={{ color: '#f59e0b' }} /> Результат
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94a3b8', fontSize: 14 }}>Пластик {formData.ams_swaps > 0 && `(+AMS)`}</span>
-              <span style={{ color: '#fff', fontWeight: 700 }}>{results.plastic} ₴</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>{results.plastic} ₴</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94a3b8', fontSize: 14 }}>Електроенергія</span>
-              <span style={{ color: '#fff', fontWeight: 700 }}>{results.electricity} ₴</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>{results.electricity} ₴</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94a3b8', fontSize: 14 }}>Амортизація</span>
-              <span style={{ color: '#fff', fontWeight: 700 }}>{results.wear} ₴</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>{results.wear} ₴</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94a3b8', fontSize: 14 }}>Ризики (брак)</span>
@@ -423,7 +510,7 @@ export default function Calculator() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <ShieldCheck size={16} style={{ color: '#22c55e' }} />
-                <span style={{ color: '#fff', fontWeight: 900, fontSize: 14, letterSpacing: '0.05em' }}>СОБІВАРТІСТЬ</span>
+                <span style={{ color: 'var(--text-main)', fontWeight: 900, fontSize: 14, letterSpacing: '0.05em' }}>СОБІВАРТІСТЬ</span>
               </div>
               <span style={{ color: '#22c55e', fontSize: 24, fontWeight: 950 }}>{results.prime} ₴</span>
             </div>
@@ -436,7 +523,7 @@ export default function Calculator() {
             <div style={{ marginTop: 20, padding: 24, background: 'rgba(255,255,255,0.05)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
               <div style={{ fontSize: 10, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', marginBottom: 8 }}>Рекомендована ціна</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontSize: 42, fontWeight: 950, color: '#fff', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>{results.suggested}</span>
+                <span style={{ fontSize: 42, fontWeight: 950, color: 'var(--text-main)', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>{results.suggested}</span>
                 <span style={{ fontSize: 18, fontWeight: 900, color: '#7c3aed' }}>₴</span>
               </div>
               <p style={{ fontSize: 11, color: '#6b6b8a', margin: '12px 0 0 0', lineHeight: 1.5 }}>
@@ -452,7 +539,7 @@ export default function Calculator() {
               }}
               style={{ 
                 width: '100%', padding: 16, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
-                background: 'transparent', color: '#fff', fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                background: 'transparent', color: 'var(--text-main)', fontWeight: 800, fontSize: 12, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.2s'
               }}
             >
