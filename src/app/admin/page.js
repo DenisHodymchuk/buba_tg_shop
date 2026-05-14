@@ -1,5 +1,5 @@
 "use client";
-// Last UI Update: 2026-05-07 18:02 (Removed scrollbars from calculation)
+// Last UI Update: 2026-05-14 23:08 (Trigger Deploy)
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
