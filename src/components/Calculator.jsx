@@ -209,7 +209,7 @@ export default function Calculator() {
                 <label style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва розрахунку</label>
                 <input 
                   type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -217,7 +217,7 @@ export default function Calculator() {
                 <input 
                   type="text" value={formData.model_name} onChange={e => setFormData({...formData, model_name: e.target.value})}
                   placeholder="напр. Dragon_Articulated_v2"
-                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
                 />
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function Calculator() {
                 <input 
                   type="text" value={formData.plastic_type} onChange={e => setFormData({...formData, plastic_type: e.target.value})}
                   placeholder="Тип пластику"
-                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
                 />
                 <div style={{ position: 'relative' }}>
                   <input 
@@ -297,26 +297,26 @@ export default function Calculator() {
                   ))}
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 16 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: '#4a4a6a' }}>Потужність (Вт)</span>
                   <input 
                     type="number" value={formData.printer_wattage} onChange={e => setFormData({...formData, printer_wattage: e.target.value})}
-                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: '#4a4a6a' }}>Знос (₴/год)</span>
                   <input 
                     type="number" value={formData.wear_cost_h} onChange={e => setFormData({...formData, wear_cost_h: e.target.value})}
-                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: '#4a4a6a' }}>Тариф (₴/кВт)</span>
                   <input 
                     type="number" value={formData.electricity_cost_kwh} onChange={e => setFormData({...formData, electricity_cost_kwh: e.target.value})}
-                    style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -350,19 +350,19 @@ export default function Calculator() {
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: '#22c55e', textTransform: 'uppercase', marginBottom: 16 }}>
                 <TrendingUp size={14} /> Рентабельність
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: '#6b6b8a' }}>Брак (%)</span>
                   <input 
                     type="number" value={formData.failure_margin} onChange={e => setFormData({...formData, failure_margin: e.target.value})}
-                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: '#6b6b8a' }}>Прибуток (%)</span>
                   <input 
                     type="number" value={formData.profit_margin} onChange={e => setFormData({...formData, profit_margin: e.target.value})}
-                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -370,12 +370,12 @@ export default function Calculator() {
 
             {/* Labor Section */}
             <div style={{ gridColumn: '1 / -1', background: 'rgba(59,130,246,0.05)', borderRadius: 20, padding: 20, border: '1px solid rgba(59,130,246,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <DollarSign size={14} style={{ color: '#3b82f6' }} />
                   <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Вартість вашої праці</label>
                 </div>
-                <div style={{ position: 'relative', width: 200 }}>
+                <div style={{ position: 'relative', width: '100%', maxWidth: 200 }}>
                   <input 
                     type="number" value={formData.labor_cost_h} onChange={e => setFormData({...formData, labor_cost_h: e.target.value})}
                     style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '10px 40px 10px 10px', color: '#fff', outline: 'none', fontSize: 13 }}
