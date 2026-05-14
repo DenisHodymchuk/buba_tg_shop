@@ -39,6 +39,22 @@ const scrollbarHide = `
     --border: #e2e8f0;
     --sidebar-active: rgba(37,99,235,0.05);
   }
+
+  @media (max-width: 1024px) {
+    .admin-layout { flex-direction: column !important; }
+    .admin-aside { 
+      position: fixed !important; 
+      left: -260px !important; 
+      top: 0 !important; 
+      bottom: 0 !important; 
+      z-index: 1001 !important;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .admin-aside.open { left: 0 !important; }
+    .admin-main-header { display: none !important; }
+    .admin-mobile-header { display: flex !important; }
+    .admin-content { padding: 20px !important; }
+  }
 `;
 
 export default function AdminPanel() {
@@ -984,29 +1000,27 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className={isDarkMode ? '' : 'light-theme'} style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', background: 'var(--bg-main)', color: 'var(--text-main)', overflow: 'hidden', transition: 'all 0.3s' }}>
+    <div className={`admin-layout ${isDarkMode ? '' : 'light-theme'}`} style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', background: 'var(--bg-main)', color: 'var(--text-main)', overflow: 'hidden', transition: 'all 0.3s' }}>
       <style>{scrollbarHide}</style>
       
       {/* Mobile Header */}
-      {isMobile && (
-        <header style={{ height: 60, flexShrink: 0, background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between', zIndex: 100 }}>
-          <button onClick={() => setIsSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
-            <Filter size={24} />
-          </button>
-          <span style={{ fontWeight: 900, fontSize: 16 }}>BUBA ADMIN</span>
-          <div style={{ width: 24 }} />
-        </header>
-      )}
+      <header className="admin-mobile-header" style={{ height: 60, flexShrink: 0, background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', display: isMobile ? 'flex' : 'none', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between', zIndex: 100 }}>
+        <button onClick={() => setIsSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
+          <Filter size={24} />
+        </button>
+        <span style={{ fontWeight: 900, fontSize: 16 }}>BUBA ADMIN</span>
+        <div style={{ width: 24 }} />
+      </header>
 
       {/* Sidebar Overlay */}
-      {isMobile && isSidebarOpen && (
+      {isSidebarOpen && (
         <div 
           onClick={() => setIsSidebarOpen(false)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000 }}
         />
       )}
 
-      <aside style={{ 
+      <aside className={`admin-aside ${isSidebarOpen ? 'open' : ''}`} style={{ 
         width: 260, flexShrink: 0, background: 'var(--bg-card)', backdropFilter: 'blur(20px)', 
         borderRight: isMobile ? 'none' : '1px solid var(--border)', 
         display: 'flex', flexDirection: 'column', zIndex: 1001,
@@ -1057,8 +1071,7 @@ export default function AdminPanel() {
       </aside>
 
       <main style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {!isMobile && (
-          <header style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'var(--bg-header)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)', zIndex: 40 }}>
+        <header className="admin-main-header" style={{ height: 80, display: isMobile ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'var(--bg-header)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)', zIndex: 40 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 16px', width: 350 }}>
               <Search size={16} style={{ color: 'var(--text-muted)' }} />
               <input type="text" placeholder="Пошук..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} />
