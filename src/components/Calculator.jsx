@@ -275,7 +275,11 @@ export default function Calculator() {
                   type="number" value={formData.time_h} onChange={e => setFormData({...formData, time_h: e.target.value})}
                   style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
                 />
-                           {/* Material Presets */}
+                <Clock size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              </div>
+            </div>
+
+            {/* Material Presets */}
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase' }}>Матеріал та вартість</label>
