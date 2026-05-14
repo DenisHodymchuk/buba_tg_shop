@@ -69,8 +69,10 @@ export default function AdminPanel() {
   const [importUrl, setImportUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [notification, setNotification] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminPass, setAdminPass] = useState('');
+  const [authError, setAuthError] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setNotification({ message, type });
@@ -106,11 +108,35 @@ export default function AdminPanel() {
       fetchReviews();
     }, 30000);
 
+    const savedAuth = localStorage.getItem('admin_session');
+    if (savedAuth === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+    }
+
     return () => {
       supabase.removeChannel(channel);
       clearInterval(intervalId);
     };
   }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (adminPass === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+      localStorage.setItem('admin_session', adminPass);
+      setIsAuthenticated(true);
+      setAuthError(false);
+      showToast('Вхід успішний', 'success');
+    } else {
+      setAuthError(true);
+      setTimeout(() => setAuthError(false), 500);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_session');
+    setIsAuthenticated(false);
+    showToast('Ви вийшли', 'info');
+  };
 
   async function syncUser(tgUser) {
     if (!supabase) return;
@@ -257,7 +283,6 @@ export default function AdminPanel() {
       
       if (error) throw error;
 
-      // Надсилаємо сповіщення клієнту
       const customer = order?.customers;
       if (customer?.tg_id) {
         try {
@@ -276,7 +301,6 @@ export default function AdminPanel() {
         }
       }
 
-      // Нарахування кешбеку 5% при завершенні замовлення
       if (newStatus === 'completed' && order.status !== 'completed' && order.customer_id) {
         const cashback = Math.floor(order.total * 0.05);
         if (cashback > 0) {
@@ -293,7 +317,6 @@ export default function AdminPanel() {
               .update({ bonuses: newBalance })
               .eq('id', order.customer_id);
             
-            // Оновлюємо список користувачів, щоб бачити зміни
             fetchUsers();
           }
         }
@@ -350,7 +373,6 @@ export default function AdminPanel() {
         setIsProcessingQueue(true);
         setQueueStatus({ sent: 0, total: subscribers.length, nextBatchIn: 0, batches: [] });
         
-        // Start processing
         startQueueProcessing(subscribers, broadcastMessage, broadcastImageUrl);
       }
     });
@@ -358,7 +380,7 @@ export default function AdminPanel() {
 
   async function startQueueProcessing(allSubscribers, msg, img) {
     const BATCH_SIZE = 10;
-    const DELAY_MS = 2 * 60 * 1000; // 2 minutes
+    const DELAY_MS = 2 * 60 * 1000;
     
     let currentSent = 0;
     const total = allSubscribers.length;
@@ -398,8 +420,7 @@ export default function AdminPanel() {
         }));
 
         if (queue.length > 0) {
-          // countdown for next batch
-          let timeLeft = 120; // 2 minutes
+          let timeLeft = 120;
           while (timeLeft > 0) {
             setQueueStatus(prev => ({ ...prev, nextBatchIn: timeLeft }));
             await new Promise(r => setTimeout(r, 1000));
@@ -412,8 +433,7 @@ export default function AdminPanel() {
           ...prev,
           batches: [{ time: batchStartTime.toLocaleTimeString(), count: batch.length, status: 'error', error: e.message }, ...prev.batches]
         }));
-        // Optional: break or continue? Let's continue for now.
-        await new Promise(r => setTimeout(r, 5000)); // wait a bit before next attempt if error
+        await new Promise(r => setTimeout(r, 5000));
       }
     }
 
@@ -468,7 +488,7 @@ export default function AdminPanel() {
           const { error } = await supabase
             .from('customers')
             .update({ allow_notifications: true })
-            .neq('tg_id', '0'); // Фільтр для того, щоб оновити всіх (Supabase потребує WHERE)
+            .neq('tg_id', '0');
 
           if (error) throw error;
           
@@ -568,7 +588,6 @@ export default function AdminPanel() {
       
       if (error) throw error;
 
-      // Надсилаємо сповіщення в Telegram клієнту
       const customer = Array.isArray(review?.customers) ? review.customers[0] : review?.customers;
       console.log('Attempting to send notification to:', customer?.tg_id, 'for review:', reviewId);
 
@@ -856,6 +875,60 @@ export default function AdminPanel() {
     }
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#020b18', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <style>{scrollbarHide}</style>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ 
+            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', 
+            borderRadius: 32, padding: 40, width: '100%', maxWidth: 400, textAlign: 'center',
+            backdropFilter: 'blur(20px)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+          }}
+        >
+          <div style={{ width: 64, height: 64, background: 'rgba(124,58,237,0.1)', color: '#7c3aed', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+            <ShieldCheck size={32} />
+          </div>
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 8 }}>ADMIN PANEL</h1>
+          <p style={{ color: '#6b6b8a', fontSize: 14, marginBottom: 32 }}>Будь ласка, введіть пароль для доступу</p>
+          
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <motion.div animate={authError ? { x: [-10, 10, -10, 10, 0] } : {}}>
+              <input 
+                type="password" 
+                placeholder="Введіть пароль..."
+                value={adminPass}
+                onChange={(e) => setAdminPass(e.target.value)}
+                style={{ 
+                  width: '100%', padding: '16px 20px', borderRadius: 16, 
+                  background: 'rgba(0,0,0,0.2)', border: authError ? '1px solid #ef4444' : '1px solid rgba(255,255,255,0.1)',
+                  color: '#fff', outline: 'none', textAlign: 'center', fontSize: 16, letterSpacing: '0.2em'
+                }}
+              />
+            </motion.div>
+            <button 
+              type="submit"
+              style={{ 
+                padding: '16px', borderRadius: 16, background: '#7c3aed', 
+                color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                boxShadow: '0 10px 20px rgba(124,58,237,0.3)'
+              }}
+            >
+              УВІЙТИ <Sparkles size={18} />
+            </button>
+          </form>
+
+          <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: 11, color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            Powered by Antigravity AI
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className={isDarkMode ? '' : 'light-theme'} style={{ display: 'flex', height: '100vh', background: 'var(--bg-main)', color: 'var(--text-main)', overflow: 'hidden', transition: 'all 0.3s' }}>
       <style>{scrollbarHide}</style>
@@ -892,6 +965,12 @@ export default function AdminPanel() {
           >
             {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             {isDarkMode ? 'Світла тема' : 'Темна тема'}
+          </button>
+          <button 
+            onClick={handleLogout}
+            style={{ width: '100%', padding: '14px', borderRadius: 16, background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}
+          >
+            <LogOut size={20} /> Вийти
           </button>
         </div>
       </aside>
@@ -963,7 +1042,6 @@ export default function AdminPanel() {
                 </button>
               </div>
 
-              {/* Filters */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 32, padding: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус замовлення:</label>
