@@ -17,6 +17,7 @@ export default function InventoryDashboard({ showToast }) {
   const [newBatch, setNewBatch] = useState({ batch_date: new Date().toISOString().split('T')[0], notes: '' });
   const [editingItem, setEditingItem] = useState(null);
   const [newItem, setNewItem] = useState({ batch_id: null, name: '', maker: '', quantity: 1, price_unit: 50, sold_count: 0, paid_amount: 0 });
+  const [moveMenu, setMoveMenu] = useState({ open: false, itemId: null, oldBatchId: null, x: 0, y: 0 });
 
   useEffect(() => {
     fetchData();
@@ -166,6 +167,7 @@ export default function InventoryDashboard({ showToast }) {
         if (b.id === newBatchId) return { ...b, inventory_items: [...(b.inventory_items || []), itemToMove] };
         return b;
       }));
+      setMoveMenu({ open: false, itemId: null, oldBatchId: null, x: 0, y: 0 });
       showToast('Товар перенесено');
     } catch (err) { showToast('Помилка перенесення', 'error'); }
   }
@@ -474,21 +476,21 @@ export default function InventoryDashboard({ showToast }) {
                             <td style={{ padding: '14px 8px', textAlign: 'right' }}>
                               <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                                 <div style={{ position: 'relative' }}>
-                                  <select 
-                                    onChange={(e) => handleMoveItem(item.id, batch.id, e.target.value)}
-                                    value=""
-                                    style={{ 
-                                      position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10
+                                  <button 
+                                    onClick={(e) => {
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      setMoveMenu({ 
+                                        open: true, 
+                                        itemId: item.id, 
+                                        oldBatchId: batch.id,
+                                        x: rect.left - 200, 
+                                        y: rect.top + 40 
+                                      });
                                     }}
+                                    style={{ border: 'none', background: 'rgba(124,58,237,0.1)', color: '#a78bfa', borderRadius: 8, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s' }}
                                   >
-                                    <option value="" disabled>Перенести в...</option>
-                                    {batches.filter(b => b.id !== batch.id && b.status !== 'archived').map(b => (
-                                      <option key={b.id} value={b.id}>{new Date(b.batch_date).toLocaleDateString('uk-UA')} ({b.notes?.slice(0,15)})</option>
-                                    ))}
-                                  </select>
-                                  <div style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', borderRadius: 8, padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700 }}>
                                     <MoveHorizontal size={12} /> РУХ
-                                  </div>
+                                  </button>
                                 </div>
                                 <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}><Trash2 size={14}/></button>
                               </div>
@@ -522,6 +524,61 @@ export default function InventoryDashboard({ showToast }) {
             </AnimatePresence>
           </div>
         )})}
+      </div>
+
+      {/* Custom Move Menu */}
+      <AnimatePresence>
+        {moveMenu.open && (
+          <>
+            <div 
+              style={{ position: 'fixed', inset: 0, zIndex: 999 }} 
+              onClick={() => setMoveMenu({ ...moveMenu, open: false })}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              style={{ 
+                position: 'fixed', left: moveMenu.x, top: moveMenu.y, 
+                width: 250, background: '#1e293b', borderRadius: 16, 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)', zIndex: 1000,
+                padding: '8px', overflow: 'hidden', backdropFilter: 'blur(20px)'
+              }}
+            >
+              <div style={{ padding: '8px 12px', fontSize: 10, fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 8 }}>
+                Перенести в партію:
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxH: 300, overflowY: 'auto' }} className="hide-scrollbar">
+                {batches
+                  .filter(b => b.id !== moveMenu.oldBatchId && b.status !== 'archived')
+                  .map(b => (
+                    <button
+                      key={b.id}
+                      onClick={() => handleMoveItem(moveMenu.itemId, moveMenu.oldBatchId, b.id)}
+                      style={{ 
+                        width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', 
+                        background: 'transparent', color: '#e2e8f0', textAlign: 'left', 
+                        cursor: 'pointer', transition: 'all 0.2s', fontSize: 12, fontWeight: 700,
+                        display: 'flex', flexDirection: 'column'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span>{new Date(b.batch_date).toLocaleDateString('uk-UA')}</span>
+                      {b.notes && <span style={{ fontSize: 10, color: '#64748b', fontWeight: 500 }}>{b.notes.slice(0, 25)}</span>}
+                    </button>
+                  ))}
+                {batches.filter(b => b.id !== moveMenu.oldBatchId && b.status !== 'archived').length === 0 && (
+                  <div style={{ padding: 20, textAlign: 'center', fontSize: 11, color: '#64748b' }}>
+                    Немає інших активних партій
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       </div>
     </div>
   );
