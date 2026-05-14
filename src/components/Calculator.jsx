@@ -38,6 +38,7 @@ export default function Calculator() {
   const [materialsLibrary, setMaterialsLibrary] = useState([]);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [newMaterial, setNewMaterial] = useState({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
+  const [editingMaterialId, setEditingMaterialId] = useState(null);
 
   const [formData, setFormData] = useState({
     name: 'Новий розрахунок',
@@ -180,15 +181,41 @@ export default function Calculator() {
 
   async function handleSaveToLibrary() {
     try {
-      const { data, error } = await supabase.from('material_library').insert([newMaterial]).select();
-      if (error) throw error;
-      setMaterialsLibrary([...materialsLibrary, data[0]]);
+      if (editingMaterialId) {
+        const { data, error } = await supabase.from('material_library').update(newMaterial).eq('id', editingMaterialId).select();
+        if (error) throw error;
+        setMaterialsLibrary(materialsLibrary.map(m => m.id === editingMaterialId ? data[0] : m));
+        setEditingMaterialId(null);
+      } else {
+        const { data, error } = await supabase.from('material_library').insert([newMaterial]).select();
+        if (error) throw error;
+        setMaterialsLibrary([...materialsLibrary, data[0]]);
+      }
       setShowMaterialForm(false);
       setNewMaterial({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
     } catch (e) {
       alert('Помилка збереження матеріалу: ' + e.message);
     }
   }
+
+  async function handleDeleteMaterial(id, e) {
+    e.stopPropagation();
+    if (!confirm('Видалити цей матеріал?')) return;
+    try {
+      const { error } = await supabase.from('material_library').delete().eq('id', id);
+      if (error) throw error;
+      setMaterialsLibrary(materialsLibrary.filter(m => m.id !== id));
+    } catch (e) {
+      alert('Помилка видалення: ' + e.message);
+    }
+  }
+
+  const startEditMaterial = (m, e) => {
+    e.stopPropagation();
+    setNewMaterial(m);
+    setEditingMaterialId(m.id);
+    setShowMaterialForm(true);
+  };
 
   const selectFromLibrary = (m) => {
     setFormData(prev => ({
@@ -197,6 +224,15 @@ export default function Calculator() {
       plastic_cost_roll: m.cost_per_kg,
     }));
     setActivePreset(m.id);
+  };
+
+  const startEditCalculation = (calc) => {
+    setFormData({
+      ...calc,
+      // Ensure all fields are present or defaulted
+    });
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const filteredCalculations = calculations.filter(c => 
@@ -321,7 +357,14 @@ export default function Calculator() {
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна грн/кг</label>
                     <input type="number" value={newMaterial.cost_per_kg} onChange={e => setNewMaterial({...newMaterial, cost_per_kg: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
                   </div>
-                  <button onClick={handleSaveToLibrary} style={{ gridColumn: '1/-1', background: '#7c3aed', color: 'var(--text-main)', border: 'none', padding: 12, borderRadius: 10, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>ЗБЕРЕГТИ В БІБЛІОТЕКУ</button>
+                  <button onClick={handleSaveToLibrary} style={{ gridColumn: '1/-1', background: '#7c3aed', color: 'var(--text-main)', border: 'none', padding: 12, borderRadius: 10, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>
+                    {editingMaterialId ? 'ОНОВИТИ МАТЕРІАЛ' : 'ЗБЕРЕГТИ В БІБЛІОТЕКУ'}
+                  </button>
+                  {editingMaterialId && (
+                    <button onClick={() => { setEditingMaterialId(null); setShowMaterialForm(false); setNewMaterial({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 }); }} style={{ gridColumn: '1/-1', background: 'transparent', color: 'var(--text-muted)', border: 'none', padding: 8, fontSize: 11, cursor: 'pointer' }}>
+                      СКАСУВАТИ РЕДАГУВАННЯ
+                    </button>
+                  )}
                 </motion.div>
               )}
 
@@ -330,15 +373,20 @@ export default function Calculator() {
                   <button 
                     key={m.id} onClick={() => selectFromLibrary(m)}
                     style={{ 
-                      flexShrink: 0, padding: '10px 16px', borderRadius: 12, border: '1px solid',
+                      flexShrink: 0, padding: '12px 16px', borderRadius: 12, border: '1px solid',
                       borderColor: activePreset === m.id ? '#7c3aed' : 'var(--border)',
                       background: activePreset === m.id ? 'rgba(124,58,237,0.1)' : 'var(--bg-card)',
                       color: activePreset === m.id ? '#7c3aed' : 'var(--text-main)',
-                      fontSize: 11, fontWeight: 700, cursor: 'pointer', textAlign: 'left', minWidth: 120
+                      fontSize: 11, fontWeight: 700, cursor: 'pointer', textAlign: 'left', minWidth: 150, position: 'relative'
                     }}
                   >
                     <div style={{ fontWeight: 900, marginBottom: 2 }}>{m.name}</div>
                     <div style={{ fontSize: 9, opacity: 0.6 }}>{m.manufacturer || 'Невідомо'} • {m.cost_per_kg} ₴</div>
+                    
+                    <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 4 }}>
+                      <button onClick={(e) => startEditMaterial(m, e)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: 4, borderRadius: 6, color: 'var(--text-muted)' }}><CalcIcon size={10} /></button>
+                      <button onClick={(e) => handleDeleteMaterial(m.id, e)} style={{ background: 'rgba(239,68,68,0.1)', border: 'none', padding: 4, borderRadius: 6, color: '#ef4444' }}><Trash2 size={10} /></button>
+                    </div>
                   </button>
                 ))}
                 {materialsLibrary.length === 0 && PRESETS.materials.map(m => (
@@ -491,7 +539,7 @@ export default function Calculator() {
         <div style={{ 
           background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderRadius: 32, padding: 32,
           boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-          position: 'sticky', top: 32, boxSizing: 'border-box', width: '100%'
+          boxSizing: 'border-box', width: '100%'
         }}>
           <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={20} style={{ color: '#f59e0b' }} /> Результат
@@ -597,6 +645,12 @@ export default function Calculator() {
                       <div style={{ fontSize: 13, fontWeight: 950, color: '#22c55e' }}>{calc.suggested_price} ₴</div>
                       <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ціна</div>
                     </div>
+                    <button 
+                      onClick={() => startEditCalculation(calc)}
+                      style={{ background: 'rgba(59,130,246,0.1)', border: 'none', padding: 8, borderRadius: 10, color: '#3b82f6', cursor: 'pointer' }}
+                    >
+                      <CalcIcon size={14} />
+                    </button>
                     <button 
                       onClick={() => handleDelete(calc.id)}
                       style={{ background: 'rgba(239,68,68,0.1)', border: 'none', padding: 8, borderRadius: 10, color: '#ef4444', cursor: 'pointer' }}
