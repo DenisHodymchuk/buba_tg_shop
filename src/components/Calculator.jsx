@@ -81,11 +81,19 @@ export default function Calculator() {
   }
 
   async function addToCatalog(table, name) {
-    if (!name || catalogs[table.replace('m_', '')]?.includes(name)) return;
+    if (!name) return;
+    const key = table.replace('m_', '');
+    if (catalogs[key]?.includes(name)) return;
+    
     try {
-      await supabase.from(table).insert([{ name }]);
-      fetchCatalogs();
-    } catch (err) { console.error('Error adding to catalog:', err); }
+      const { error } = await supabase.from(table).insert([{ name }]);
+      if (error) throw error;
+      await fetchCatalogs();
+      showToast(`${name} додано до списку!`);
+    } catch (err) { 
+      console.error('Error adding to catalog:', err);
+      showToast('Помилка: Спершу виконайте SQL запит у Supabase!', 'error');
+    }
   }
 
   // CUSTOM MODERN SELECT COMPONENT
@@ -352,12 +360,17 @@ export default function Calculator() {
         const { data, error } = await supabase.from('material_library').update(newMaterial).eq('id', editingMaterialId).select();
         if (error) throw error;
         setMaterialsLibrary(materialsLibrary.map(m => m.id === editingMaterialId ? data[0] : m));
-        showToast(editingMaterialId ? 'Матеріал оновлено!' : 'Матеріал додано!');
+        setEditingMaterialId(null);
+      } else {
+        const { data, error } = await supabase.from('material_library').insert([newMaterial]).select();
+        if (error) throw error;
+        setMaterialsLibrary([data[0], ...materialsLibrary]);
       }
       setShowMaterialForm(false);
       setNewMaterial({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
     } catch (e) {
-      showToast('Помилка збереження матеріалу: ' + e.message, 'error');
+      console.error('Save error:', e);
+      throw e;
     }
   }
 
@@ -587,14 +600,34 @@ export default function Calculator() {
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна грн/кг</label>
                     <input type="number" value={newMaterial.cost_per_kg} onChange={e => setNewMaterial({...newMaterial, cost_per_kg: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
                   </div>
-                  <button onClick={handleSaveToLibrary} style={{ gridColumn: '1/-1', background: '#7c3aed', color: 'var(--text-main)', border: 'none', padding: 12, borderRadius: 10, fontWeight: 900, cursor: 'pointer', marginTop: 8 }}>
-                    {editingMaterialId ? 'ОНОВИТИ МАТЕРІАЛ' : 'ЗБЕРЕГТИ В БІБЛІОТЕКУ'}
-                  </button>
-                  {editingMaterialId && (
-                    <button onClick={() => { setEditingMaterialId(null); setShowMaterialForm(false); setNewMaterial({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 }); }} style={{ gridColumn: '1/-1', background: 'transparent', color: 'var(--text-muted)', border: 'none', padding: 8, fontSize: 11, cursor: 'pointer' }}>
-                      СКАСУВАТИ РЕДАГУВАННЯ
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await handleSaveToLibrary();
+                          showToast(editingMaterialId ? 'Матеріал оновлено!' : 'Матеріал збережено в бібліотеку!');
+                        } catch (err) {
+                          showToast('Помилка збереження!', 'error');
+                        }
+                      }} 
+                      style={{ 
+                        padding: '12px 24px', background: 'linear-gradient(135deg, #7c3aed, #ec4899)', 
+                        border: 'none', borderRadius: 100, color: '#fff', fontWeight: 900, fontSize: 12, 
+                        cursor: 'pointer', boxShadow: '0 10px 20px rgba(124,58,237,0.2)',
+                        textTransform: 'uppercase', letterSpacing: '0.05em'
+                      }}
+                    >
+                      {editingMaterialId ? 'Оновити в бібліотеці' : 'Зберегти в бібліотеку'}
                     </button>
-                  )}
+                    {editingMaterialId && (
+                      <button 
+                        onClick={() => { setEditingMaterialId(null); setShowMaterialForm(false); setNewMaterial({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 }); }} 
+                        style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', padding: 8, fontSize: 11, cursor: 'pointer', fontWeight: 700 }}
+                      >
+                        СКАСУВАТИ РЕДАГУВАННЯ
+                      </button>
+                    )}
+                  </div>
                 </motion.div>
               )}
 
