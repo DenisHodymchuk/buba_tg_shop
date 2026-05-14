@@ -154,10 +154,29 @@ export default function QuotePage() {
               background: 'rgba(255,255,255,0.02)', borderRadius: 32, padding: '32px', border: '1px solid rgba(255,255,255,0.05)',
               marginBottom: 40, position: 'relative'
             }}>
-               <div style={{ fontSize: 13, color: '#94a3b8', fontWeight: 700, marginBottom: 12 }}>Вартість виготовлення</div>
-               <div style={{ fontSize: 64, fontWeight: 950, color: '#fff', display: 'flex', alignItems: 'baseline', gap: 12, lineHeight: 1 }}>
-                 {quote.suggested_price.toFixed(0)} 
-                 <span style={{ fontSize: 24, fontWeight: 900, color: '#7c3aed' }}>₴</span>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
+                 <div style={{ fontSize: 13, color: '#94a3b8', fontWeight: 700 }}>Вартість виготовлення</div>
+                 {quote.discount > 0 && (
+                   <motion.div 
+                     initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
+                     style={{ background: '#ec4899', color: '#fff', padding: '4px 12px', borderRadius: 10, fontSize: 12, fontWeight: 900, boxShadow: '0 0 20px rgba(236,72,153,0.3)' }}
+                   >
+                     -{quote.discount}% OFF
+                   </motion.div>
+                 )}
+               </div>
+
+               <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
+                 <div style={{ fontSize: 48, fontWeight: 950, color: '#fff', display: 'flex', alignItems: 'baseline', gap: 8, lineHeight: 1 }}>
+                   {quote.suggested_price.toFixed(0)} 
+                   <span style={{ fontSize: 20, fontWeight: 900, color: '#7c3aed' }}>₴</span>
+                 </div>
+                 
+                 {quote.discount > 0 && (
+                   <div style={{ fontSize: 20, color: '#4a4a6a', fontWeight: 800, textDecoration: 'line-through', textDecorationColor: '#ec4899' }}>
+                     {(quote.suggested_price / (1 - quote.discount / 100)).toFixed(0)} ₴
+                   </div>
+                 )}
                </div>
                
                {/* Shine Effect */}

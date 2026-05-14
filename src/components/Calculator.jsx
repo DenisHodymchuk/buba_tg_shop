@@ -119,23 +119,25 @@ export default function Calculator() {
     const basePrimeCost = plasticCost + electricityCost + wearCost;
     
     // 5. Failure margin
-    const failureCost = basePrimeCost * (Number(formData.failure_margin) / 100);
+    const elec = kwh * Number(formData.electricity_cost_kwh);
+    const wear = Number(formData.time_h) * Number(formData.wear_cost_h);
+    const prime = plasticCost + elec + wear + ((plasticCost + elec + wear) * (Number(formData.failure_margin) / 100));
     
-    const totalPrimeCost = basePrimeCost + failureCost;
-    
-    // 6. Labor & Profit
-    const laborTotal = Number(formData.time_h) * Number(formData.labor_cost_h);
-    const suggestedPrice = (totalPrimeCost + laborTotal) * (1 + Number(formData.profit_margin) / 100);
-    
+    const labor = Number(formData.time_h) * Number(formData.labor_cost_h);
+    const suggested = (prime + labor) * (1 + Number(formData.profit_margin) / 100);
+    const discountAmount = suggested * (Number(formData.discount) / 100);
+    const final = suggested - discountAmount;
+
     return {
-      plastic: plasticCost.toFixed(2),
-      electricity: electricityCost.toFixed(2),
-      wear: wearCost.toFixed(2),
-      failure: failureCost.toFixed(2),
-      prime: totalPrimeCost.toFixed(2),
-      labor: laborTotal.toFixed(2),
-      suggested: Math.ceil(suggestedPrice),
-      totalWeight: totalWeight.toFixed(1)
+      plastic: plasticCost.toFixed(0),
+      electricity: elec.toFixed(0),
+      wear: wear.toFixed(0),
+      failure: (prime - (plasticCost + elec + wear)).toFixed(0),
+      prime: prime.toFixed(0),
+      labor: labor.toFixed(0),
+      suggested: suggested.toFixed(0),
+      final: final.toFixed(0),
+      totalWeight: totalWeight.toFixed(0)
     };
   }, [formData]);
 
@@ -146,7 +148,7 @@ export default function Calculator() {
       const dataToSave = {
         ...formData,
         total_prime_cost: parseFloat(results.prime),
-        suggested_price: parseFloat(results.suggested)
+        suggested_price: parseFloat(results.final)
       };
 
       const { data, error } = await supabase
@@ -185,7 +187,8 @@ export default function Calculator() {
       ams_swaps: 0,
       purge_g: 0.5,
       labor_cost_h: 50,
-      profit_margin: 50
+      profit_margin: 50,
+      discount: 0
     });
     setActivePreset(null);
   };
@@ -584,6 +587,17 @@ export default function Calculator() {
                     style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 40px 10px 10px', color: 'var(--text-main)', outline: 'none', fontSize: 13 }}
                   />
                   <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 10, fontWeight: 800 }}>₴/год</span>
+                </div>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type="number" 
+                        value={formData.discount} 
+                        onChange={e => setFormData({...formData, discount: parseFloat(e.target.value) || 0})}
+                        style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', color: 'var(--text-main)', fontSize: 13, outline: 'none' }}
+                      />
+                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#ec4899', fontSize: 10, fontWeight: 900 }}>% OFF</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
