@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Search, Filter, CheckCircle, 
   ChevronDown, ChevronRight, DollarSign, Package, 
-  TrendingUp, Users, Calendar, Edit3, Save, X, Loader2, RefreshCw, MoveHorizontal, Printer
+  TrendingUp, Users, Calendar, Edit3, Save, X, Loader2, RefreshCw, MoveHorizontal, Printer, CheckCircle2, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
