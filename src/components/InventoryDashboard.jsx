@@ -549,7 +549,7 @@ export default function InventoryDashboard({ showToast }) {
               <div style={{ padding: '8px 12px', fontSize: 10, fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 8 }}>
                 Перенести в партію:
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxH: 300, overflowY: 'auto' }} className="hide-scrollbar">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 300, overflowY: 'auto' }} className="hide-scrollbar">
                 {batches
                   .filter(b => b.id !== moveMenu.oldBatchId && b.status !== 'archived')
                   .map(b => (
@@ -579,7 +579,6 @@ export default function InventoryDashboard({ showToast }) {
           </>
         )}
       </AnimatePresence>
-      </div>
     </div>
   );
 }
