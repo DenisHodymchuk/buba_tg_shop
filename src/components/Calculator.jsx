@@ -153,6 +153,8 @@ export default function Calculator() {
     const profit = Number(formData.profit_margin || 0);
     const discount = Number(formData.discount || 0);
 
+    const wearH = Number(formData.wear_cost_h || 0);
+
     // 1. Plastic cost
     const totalWeight = weight + (swaps * purge);
     const plasticCost = (totalWeight / 1000) * pCost;
