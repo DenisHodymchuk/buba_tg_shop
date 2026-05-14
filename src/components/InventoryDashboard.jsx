@@ -11,6 +11,7 @@ export default function InventoryDashboard({ showToast }) {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'archived'
   const [expandedBatches, setExpandedBatches] = useState({});
   const [showBatchForm, setShowBatchForm] = useState(false);
   const [newBatch, setNewBatch] = useState({ batch_date: new Date().toISOString().split('T')[0], notes: '' });
@@ -52,6 +53,8 @@ export default function InventoryDashboard({ showToast }) {
     let totalSold = 0;
     let totalPaid = 0;
     let itemsCount = 0;
+    let pendingSalesCount = 0;
+    let pendingPaymentsCount = 0;
     let makerDebt = {};
 
     batches.forEach(b => {
@@ -65,6 +68,13 @@ export default function InventoryDashboard({ showToast }) {
         totalPaid += itemPaid;
         itemsCount += (i.quantity || 0);
 
+        if ((i.quantity || 0) > (i.sold_count || 0)) {
+          pendingSalesCount += (i.quantity - i.sold_count);
+        }
+        if (itemDebt > 0) {
+          pendingPaymentsCount += 1;
+        }
+
         if (i.maker) {
           if (!makerDebt[i.maker]) makerDebt[i.maker] = 0;
           makerDebt[i.maker] += itemDebt;
@@ -72,7 +82,7 @@ export default function InventoryDashboard({ showToast }) {
       });
     });
 
-    return { totalValue, totalSold, totalPaid, itemsCount, debt: totalSold - totalPaid, makerDebt };
+    return { totalValue, totalSold, totalPaid, itemsCount, debt: totalSold - totalPaid, makerDebt, pendingSalesCount, pendingPaymentsCount };
   }, [batches]);
 
   const toggleBatch = (id) => {
@@ -134,6 +144,17 @@ export default function InventoryDashboard({ showToast }) {
     } catch (err) { showToast('Помилка видалення', 'error'); }
   }
 
+  async function handleUpdateBatchStatus(batchId, status) {
+    try {
+      const { error } = await supabase.from('inventory_batches').update({ status }).eq('id', batchId);
+      if (error) throw error;
+      setBatches(batches.map(b => b.id === batchId ? { ...b, status } : b));
+      showToast(status === 'archived' ? 'Партію архівовано' : 'Партію відновлено');
+    } catch (err) { showToast('Помилка оновлення статусу', 'error'); }
+  }
+
+  const filteredBatches = batches.filter(b => b.status === activeTab || (!b.status && activeTab === 'active'));
+
   return (
     <div style={{ color: 'var(--text-main)' }}>
       {/* Header & Stats */}
@@ -171,7 +192,9 @@ export default function InventoryDashboard({ showToast }) {
         <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.1), rgba(20,184,166,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(34,197,94,0.2)' }}>
           <div style={{ color: '#4ade80', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Продано на суму</div>
           <div style={{ fontSize: 28, fontWeight: 950 }}>{stats.totalSold} <span style={{ fontSize: 16, color: '#4ade80' }}>₴</span></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Сума реалізованого товару</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+            Очікує продажу: <span style={{ color: '#fff', fontWeight: 800 }}>{stats.pendingSalesCount}</span> шт.
+          </div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(234,88,12,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(245,158,11,0.2)' }}>
           <div style={{ fontSize: 28, fontWeight: 950, color: '#fbbf24' }}>{stats.debt} <span style={{ fontSize: 16 }}>₴</span></div>
@@ -186,10 +209,27 @@ export default function InventoryDashboard({ showToast }) {
             ))}
             {stats.debt === 0 && <div style={{ fontSize: 12, color: '#22c55e' }}>Боргів немає ✅</div>}
           </div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 8 }}>
-            Оплачено всього: {stats.totalPaid} ₴
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+            <span>Оплачено: {stats.totalPaid} ₴</span>
+            <span style={{ color: stats.pendingPaymentsCount > 0 ? '#f59e0b' : '#22c55e' }}>{stats.pendingPaymentsCount} неопл. тов.</span>
           </div>
         </div>
+      </div>
+
+      {/* Tabs for Archive */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, padding: 4, background: 'rgba(255,255,255,0.02)', borderRadius: 12, width: 'fit-content', border: '1px solid var(--border)' }}>
+        <button 
+          onClick={() => setActiveTab('active')}
+          style={{ padding: '8px 20px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer', background: activeTab === 'active' ? '#7c3aed' : 'transparent', color: activeTab === 'active' ? '#fff' : 'var(--text-muted)', transition: 'all 0.2s' }}
+        >
+          АКТИВНІ
+        </button>
+        <button 
+          onClick={() => setActiveTab('archived')}
+          style={{ padding: '8px 20px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer', background: activeTab === 'archived' ? '#4a4a6a' : 'transparent', color: activeTab === 'archived' ? '#fff' : 'var(--text-muted)', transition: 'all 0.2s' }}
+        >
+          АРХІВ
+        </button>
       </div>
 
       {/* Batch Form Modal */}
@@ -219,25 +259,58 @@ export default function InventoryDashboard({ showToast }) {
 
       {/* Main List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {batches.map(batch => (
-          <div key={batch.id} style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
+        {filteredBatches.map(batch => {
+          const isFullyDone = batch.inventory_items?.every(i => (i.sold_count >= i.quantity) && (i.paid_amount >= (i.sold_count * i.price_unit)));
+          
+          return (
+          <div key={batch.id} style={{ background: 'var(--bg-card)', borderRadius: 24, border: batch.status === 'archived' ? '1px solid rgba(255,255,255,0.02)' : '1px solid var(--border)', overflow: 'hidden', opacity: batch.status === 'archived' ? 0.7 : 1 }}>
             {/* Batch Header */}
             <div 
               onClick={() => toggleBatch(batch.id)}
               style={{ padding: '20px 24px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: expandedBatches[batch.id] ? 'rgba(255,255,255,0.02)' : 'transparent' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(124,58,237,0.1)', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Calendar size={20} />
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: isFullyDone ? 'rgba(34,197,94,0.1)' : 'rgba(124,58,237,0.1)', color: isFullyDone ? '#22c55e' : '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {isFullyDone ? <CheckCircle size={20} /> : <Calendar size={20} />}
                 </div>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 900 }}>{new Date(batch.batch_date).toLocaleDateString('uk-UA')}</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {new Date(batch.batch_date).toLocaleDateString('uk-UA')}
+                    {isFullyDone && batch.status !== 'archived' && (
+                      <span style={{ fontSize: 9, background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '2px 8px', borderRadius: 6 }}>ЗАВЕРШЕНО</span>
+                    )}
+                  </div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{batch.notes || 'Без нотаток'} • {batch.inventory_items?.length || 0} позицій</div>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a' }}>СУМА ПАРТІЇ</div>
+                {batch.status === 'active' ? (
+                  isFullyDone ? (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleUpdateBatchStatus(batch.id, 'archived'); }}
+                      style={{ padding: '8px 16px', borderRadius: 10, background: '#22c55e', color: '#fff', border: 'none', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}
+                    >
+                      В АРХІВ
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleUpdateBatchStatus(batch.id, 'archived'); }}
+                      style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)', border: 'none', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}
+                    >
+                      АРХІВУВАТИ
+                    </button>
+                  )
+                ) : (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleUpdateBatchStatus(batch.id, 'active'); }}
+                    style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.2)', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}
+                  >
+                    ВІДНОВИТИ
+                  </button>
+                )}
+                
+                <div style={{ textAlign: 'right', minWidth: 80 }}>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a' }}>СУМА</div>
                   <div style={{ fontSize: 14, fontWeight: 800 }}>{batch.inventory_items?.reduce((acc, i) => acc + (i.quantity * i.price_unit), 0)} ₴</div>
                 </div>
                 {expandedBatches[batch.id] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
