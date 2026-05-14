@@ -406,7 +406,7 @@ export default function InventoryDashboard({ showToast }) {
               )}
             </AnimatePresence>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );
