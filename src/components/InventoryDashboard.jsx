@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Search, Filter, CheckCircle, 
   ChevronDown, ChevronRight, DollarSign, Package, 
-  TrendingUp, Users, Calendar, Edit3, Save, X, Loader2, RefreshCw
+  TrendingUp, Users, Calendar, Edit3, Save, X, Loader2, RefreshCw, MoveHorizontal, Printer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -153,6 +153,95 @@ export default function InventoryDashboard({ showToast }) {
     } catch (err) { showToast('Помилка оновлення статусу', 'error'); }
   }
 
+  async function handleMoveItem(itemId, oldBatchId, newBatchId) {
+    if (!newBatchId) return;
+    try {
+      const { error } = await supabase.from('inventory_items').update({ batch_id: newBatchId }).eq('id', itemId);
+      if (error) throw error;
+      
+      const itemToMove = batches.find(b => b.id === oldBatchId)?.inventory_items?.find(i => i.id === itemId);
+      
+      setBatches(batches.map(b => {
+        if (b.id === oldBatchId) return { ...b, inventory_items: b.inventory_items.filter(i => i.id !== itemId) };
+        if (b.id === newBatchId) return { ...b, inventory_items: [...(b.inventory_items || []), itemToMove] };
+        return b;
+      }));
+      showToast('Товар перенесено');
+    } catch (err) { showToast('Помилка перенесення', 'error'); }
+  }
+
+  const printBatch = (batch) => {
+    const printWindow = window.open('', '_blank');
+    const itemsHtml = batch.inventory_items?.map(i => `
+      <tr>
+        <td style="padding: 10px; border: 1px solid #ddd;">${i.name}</td>
+        <td style="padding: 10px; border: 1px solid #ddd;">${i.maker || '-'}</td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${i.quantity}</td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${i.price_unit} ₴</td>
+        <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${i.quantity * i.price_unit} ₴</td>
+      </tr>
+    `).join('');
+
+    const total = batch.inventory_items?.reduce((acc, i) => acc + (i.quantity * i.price_unit), 0);
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Накладна - ${batch.batch_date}</title>
+          <style>
+            body { font-family: 'Inter', sans-serif; padding: 40px; color: #333; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { font-size: 24px; font-weight: bold; text-transform: uppercase; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background: #f5f5f5; padding: 10px; text-align: left; border: 1px solid #ddd; font-size: 12px; text-transform: uppercase; }
+            .footer { margin-top: 50px; display: flex; justify-content: space-between; font-weight: bold; }
+            .signature { border-top: 1px solid #000; width: 200px; margin-top: 40px; text-align: center; font-size: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="title">БУБА МАГАЗИН</div>
+              <div>ПАРТІЯ ВІД: ${new Date(batch.batch_date).toLocaleDateString('uk-UA')}</div>
+              <div>${batch.notes || ''}</div>
+            </div>
+            <div style="text-align: right">
+              <div>НАКЛАДНА №${batch.id.slice(0,8).toUpperCase()}</div>
+              <div>Дата друку: ${new Date().toLocaleDateString('uk-UA')}</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Товар</th>
+                <th>Виробник</th>
+                <th>К-сть</th>
+                <th>Ціна за од.</th>
+                <th>Сума</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+          <div style="text-align: right; margin-top: 20px; font-size: 18px; font-weight: bold;">
+            ЗАГАЛЬНА СУМА: ${total} ₴
+          </div>
+          <div class="footer">
+            <div>
+              <div class="signature">ПЕРЕДАВ (МАГАЗИН)</div>
+            </div>
+            <div>
+              <div class="signature">ПРИЙНЯВ (МЕНЕДЖЕР)</div>
+            </div>
+          </div>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const filteredBatches = batches.filter(b => b.status === activeTab || (!b.status && activeTab === 'active'));
 
   return (
@@ -277,29 +366,36 @@ export default function InventoryDashboard({ showToast }) {
                   <div style={{ fontSize: 18, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 10 }}>
                     {new Date(batch.batch_date).toLocaleDateString('uk-UA')}
                     {isFullyDone && batch.status !== 'archived' && (
-                      <span style={{ fontSize: 9, background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '2px 8px', borderRadius: 6 }}>ЗАВЕРШЕНО</span>
+                      <span style={{ fontSize: 9, background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '2px 8px', borderRadius: 6, fontWeight: 900 }}>ГОТОВО ДО АРХІВУ ✅</span>
                     )}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{batch.notes || 'Без нотаток'} • {batch.inventory_items?.length || 0} позицій</div>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                <button 
+                   onClick={(e) => { e.stopPropagation(); printBatch(batch); }}
+                   style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                   title="Друкувати накладну"
+                >
+                  <Printer size={18} />
+                </button>
+
                 {batch.status === 'active' ? (
-                  isFullyDone ? (
-                    <button 
+                   <button 
+                      disabled={!isFullyDone}
                       onClick={(e) => { e.stopPropagation(); handleUpdateBatchStatus(batch.id, 'archived'); }}
-                      style={{ padding: '8px 16px', borderRadius: 10, background: '#22c55e', color: '#fff', border: 'none', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}
+                      style={{ 
+                        padding: '8px 16px', borderRadius: 10, 
+                        background: isFullyDone ? '#22c55e' : 'rgba(255,255,255,0.05)', 
+                        color: isFullyDone ? '#fff' : 'rgba(255,255,255,0.2)', 
+                        border: 'none', fontSize: 10, fontWeight: 900, 
+                        cursor: isFullyDone ? 'pointer' : 'not-allowed',
+                        transition: 'all 0.3s'
+                      }}
                     >
-                      В АРХІВ
+                      {isFullyDone ? 'В АРХІВ' : 'АРХІВУВАТИ'}
                     </button>
-                  ) : (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleUpdateBatchStatus(batch.id, 'archived'); }}
-                      style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)', border: 'none', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}
-                    >
-                      АРХІВУВАТИ
-                    </button>
-                  )
                 ) : (
                   <button 
                     onClick={(e) => { e.stopPropagation(); handleUpdateBatchStatus(batch.id, 'active'); }}
@@ -376,7 +472,24 @@ export default function InventoryDashboard({ showToast }) {
                               </div>
                             </td>
                             <td style={{ padding: '14px 8px', textAlign: 'right' }}>
-                              <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}><Trash2 size={16}/></button>
+                              <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                                <div style={{ position: 'relative' }}>
+                                  <select 
+                                    onChange={(e) => handleMoveItem(item.id, batch.id, e.target.value)}
+                                    value=""
+                                    style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                                  >
+                                    <option value="" disabled>Перенести в...</option>
+                                    {batches.filter(b => b.id !== batch.id && b.status !== 'archived').map(b => (
+                                      <option key={b.id} value={b.id}>{new Date(b.batch_date).toLocaleDateString('uk-UA')} ({b.notes?.slice(0,10)})</option>
+                                    ))}
+                                  </select>
+                                  <button style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', borderRadius: 8, padding: 6, cursor: 'pointer' }} title="Перенести в іншу партію">
+                                    <MoveHorizontal size={14} />
+                                  </button>
+                                </div>
+                                <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}><Trash2 size={14}/></button>
+                              </div>
                             </td>
                           </tr>
                         ))}
