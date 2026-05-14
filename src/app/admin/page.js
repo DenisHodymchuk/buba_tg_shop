@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
+import InventoryDashboard from '@/components/InventoryDashboard';
 
 
 const scrollbarHide = `
@@ -868,6 +869,7 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} icon={<MessageSquare size={18} />} label="Відгуки" />
           <SidebarBtn active={activeTab === 'broadcast'} onClick={() => setActiveTab('broadcast')} icon={<Send size={18} />} label="Розсилка" />
           <SidebarBtn active={activeTab === 'calculator'} onClick={() => setActiveTab('calculator')} icon={<Calculator size={18} />} label="Калькулятор" />
+          <SidebarBtn active={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} icon={<Box size={18} />} label="Склад (Облік)" />
 
           <SidebarBtn active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={18} />} label="Налаштування" />
         </nav>
@@ -1214,6 +1216,8 @@ export default function AdminPanel() {
                 </table>
               </div>
             </>
+          ) : activeTab === 'inventory' ? (
+            <InventoryDashboard showToast={showToast} />
           ) : activeTab === 'reviews' ? (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
