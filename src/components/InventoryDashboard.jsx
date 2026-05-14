@@ -237,7 +237,7 @@ export default function InventoryDashboard({ showToast }) {
             <div class="total-label">Разом до сплати</div>
             <div class="total-amount">${total} ₴</div>
           </div>
-          <script>window.print(); window.close();</script>
+          <script>window.print();</script>
         </body>
       </html>
     `);
