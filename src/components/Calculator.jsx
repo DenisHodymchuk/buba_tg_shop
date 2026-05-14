@@ -327,19 +327,19 @@ export default function Calculator() {
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: '#ec4899', textTransform: 'uppercase', marginBottom: 16 }}>
                 <Layers size={14} /> AMS / Multi-color
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: '#6b6b8a' }}>Замін кольору</span>
                   <input 
                     type="number" value={formData.ams_swaps} onChange={e => setFormData({...formData, ams_swaps: e.target.value})}
-                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: '#6b6b8a' }}>Purge (г/заміна)</span>
                   <input 
                     type="number" step="0.1" value={formData.purge_g} onChange={e => setFormData({...formData, purge_g: e.target.value})}
-                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -472,13 +472,13 @@ export default function Calculator() {
               >
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               </button>
-              <div style={{ position: 'relative' }}>
-                 <input 
-                   type="text" placeholder="Пошук..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                   style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 12px 8px 32px', color: '#fff', fontSize: 11, outline: 'none' }}
-                 />
-                 <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
-              </div>
+               <div style={{ position: 'relative', width: '100%' }}>
+                  <input 
+                    type="text" placeholder="Пошук..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 12px 8px 32px', color: '#fff', fontSize: 11, outline: 'none' }}
+                  />
+                  <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
+               </div>
             </div>
           </div>
 
