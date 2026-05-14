@@ -1384,7 +1384,7 @@ export default function AdminPanel() {
                )}
             </div>
           ) : activeTab === 'calculator' ? (
-            <div style={{ maxWidth: 1200 }}>
+            <div style={{ width: '100%', maxWidth: 1200 }}>
               <div style={{ marginBottom: 32 }}>
                 <h1 style={{ fontSize: 28, fontWeight: 950, color: '#fff', margin: 0 }}>🖩 Калькулятор собівартості</h1>
                 <p style={{ fontSize: 14, color: '#6b6b8a', marginTop: 4 }}>Розрахуйте витрати на 3D друк з урахуванням амортизації та електрики</p>
