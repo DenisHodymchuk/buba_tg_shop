@@ -55,8 +55,10 @@ export default function Calculator() {
     failure_margin: 10,
     ams_swaps: 0,
     purge_g: 0.5,
-    labor_cost_h: 50,
-    profit_margin: 50
+    labor_cost: 50,
+    additional_costs: 0,
+    profit_margin: 50,
+    discount: 0
   });
 
   useEffect(() => {
@@ -145,9 +147,9 @@ export default function Calculator() {
     const pCost = Number(formData.plastic_cost_roll || 0);
     const wattage = Number(formData.printer_wattage || 0);
     const elecTariff = Number(formData.electricity_cost_kwh || 0);
-    const wearH = Number(formData.wear_cost_h || 0);
     const failMargin = Number(formData.failure_margin || 0);
-    const laborH = Number(formData.labor_cost_h || 0);
+    const laborTotal = Number(formData.labor_cost || 0);
+    const extraCosts = Number(formData.additional_costs || 0);
     const profit = Number(formData.profit_margin || 0);
     const discount = Number(formData.discount || 0);
 
@@ -162,15 +164,12 @@ export default function Calculator() {
     // 3. Wear cost
     const wearCost = time * wearH;
     
-    // 4. Labor cost
-    const laborTotal = time * laborH;
-    
     // 5. Failure/Risk cost (based on plastic+elec+wear)
     const baseHardwareCost = plasticCost + electricityCost + wearCost;
     const failureCost = baseHardwareCost * (failMargin / 100);
     
-    // 6. Total Prime Cost (including labor now)
-    const prime = baseHardwareCost + failureCost + laborTotal;
+    // 6. Total Prime Cost (Hardware + Risks + Labor + Extras)
+    const prime = baseHardwareCost + failureCost + laborTotal + extraCosts;
     
     // 7. Pricing
     const suggested = prime * (1 + profit / 100);
@@ -184,6 +183,7 @@ export default function Calculator() {
       failure: failureCost.toFixed(0),
       prime: prime.toFixed(0),
       labor: laborTotal.toFixed(0),
+      extras: extraCosts.toFixed(0),
       suggested: suggested.toFixed(0),
       final: finalPrice.toFixed(0),
       totalWeight: totalWeight.toFixed(0)
@@ -235,7 +235,8 @@ export default function Calculator() {
       failure_margin: 10,
       ams_swaps: 0,
       purge_g: 0.5,
-      labor_cost_h: 50,
+      labor_cost: 50,
+      additional_costs: 0,
       profit_margin: 50,
       discount: 0,
       image_url: ''
@@ -703,29 +704,43 @@ export default function Calculator() {
               </div>
             </div>
 
-            {/* Labor & Discount Section */}
-            <div style={{ gridColumn: '1 / -1', background: 'rgba(59,130,246,0.05)', borderRadius: 20, padding: 20, border: '1px solid rgba(59,130,246,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <DollarSign size={14} style={{ color: '#3b82f6' }} />
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Праця та Знижка</label>
-                </div>
-                
-                <div style={{ display: 'flex', gap: 12, flex: 1, justifyContent: 'flex-end', minWidth: 280 }}>
-                  <div style={{ position: 'relative', flex: 1, maxWidth: 150 }}>
+            {/* Labor, Extras & Discount Section */}
+            <div style={{ gridColumn: '1 / -1', background: 'rgba(59,130,246,0.05)', borderRadius: 24, padding: 24, border: '1px solid rgba(59,130,246,0.1)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 20 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Вартість роботи (грн)</label>
+                  <div style={{ position: 'relative' }}>
                     <input 
-                      type="number" value={formData.labor_cost_h} onChange={e => setFormData({...formData, labor_cost_h: e.target.value})}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 35px 10px 10px', color: 'var(--text-main)', outline: 'none', fontSize: 13 }}
+                      type="number" value={formData.labor_cost} onChange={e => setFormData({...formData, labor_cost: e.target.value})}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 14px', color: 'var(--text-main)', outline: 'none', fontSize: 13, fontWeight: 800 }}
                     />
-                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 9, fontWeight: 800 }}>₴/год</span>
+                    <DollarSign size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(59,130,246,0.5)' }} />
                   </div>
+                </div>
 
-                  <div style={{ position: 'relative', flex: 1, maxWidth: 120 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Дод. витрати (пакет, брілок)</label>
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type="number" value={formData.additional_costs} onChange={e => setFormData({...formData, additional_costs: e.target.value})}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 14px', color: 'var(--text-main)', outline: 'none', fontSize: 13, fontWeight: 800 }}
+                    />
+                    <Plus size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(59,130,246,0.5)' }} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#ec4899', textTransform: 'uppercase' }}>Знижка (%)</label>
+                  <div style={{ position: 'relative' }}>
                     <input 
                       type="number" value={formData.discount} onChange={e => setFormData({...formData, discount: parseFloat(e.target.value) || 0})}
-                      style={{ width: '100%', background: 'rgba(236,72,153,0.05)', border: '1px solid rgba(236,72,153,0.2)', borderRadius: 10, padding: '10px 35px 10px 10px', color: 'var(--text-main)', outline: 'none', fontSize: 13 }}
+                      style={{ 
+                        width: '100%', background: 'rgba(236,72,153,0.1)', border: '1px solid rgba(236,72,153,0.3)', 
+                        borderRadius: 12, padding: '12px 14px', color: '#ec4899', outline: 'none', 
+                        fontSize: 13, fontWeight: 900, textAlign: 'center'
+                      }}
                     />
-                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#ec4899', fontSize: 9, fontWeight: 900 }}>% ЗНИЖКИ</span>
+                    <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, fontWeight: 950 }}>%</span>
                   </div>
                 </div>
               </div>
@@ -762,6 +777,10 @@ export default function Calculator() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94a3b8', fontSize: 14 }}>Ризики (брак)</span>
               <span style={{ color: '#ef4444', fontWeight: 700 }}>+ {results.failure} ₴</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#94a3b8', fontSize: 14 }}>Дод. витрати</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>+ {results.extras} ₴</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94a3b8', fontSize: 14 }}>Робота</span>
