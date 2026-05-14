@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
-  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2
+  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
@@ -14,6 +14,30 @@ import CalculatorComp from '@/components/Calculator';
 const scrollbarHide = `
   .hide-scrollbar::-webkit-scrollbar { display: none; }
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  
+  :root {
+    --bg-main: #020b18;
+    --bg-card: rgba(255,255,255,0.03);
+    --bg-header: rgba(2,11,24,0.6);
+    --text-main: #ffffff;
+    --text-muted: #6b6b8a;
+    --text-accent: #3b82f6;
+    --border: rgba(255,255,255,0.05);
+    --sidebar-active: rgba(59,130,246,0.1);
+    --bg-input: rgba(0,0,0,0.2);
+  }
+
+  .light-theme {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-header: rgba(255,255,255,0.8);
+    --bg-input: rgba(0,0,0,0.05);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-accent: #2563eb;
+    --border: #e2e8f0;
+    --sidebar-active: rgba(37,99,235,0.05);
+  }
 `;
 
 export default function AdminPanel() {
@@ -44,6 +68,8 @@ export default function AdminPanel() {
   const [importUrl, setImportUrl] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', discount: 0, status: 'in_stock', 
@@ -824,15 +850,15 @@ export default function AdminPanel() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#020b18', color: '#e2e8f0', overflow: 'hidden' }}>
+    <div className={isDarkMode ? '' : 'light-theme'} style={{ display: 'flex', height: '100vh', background: 'var(--bg-main)', color: 'var(--text-main)', overflow: 'hidden', transition: 'all 0.3s' }}>
       <style>{scrollbarHide}</style>
-      <aside style={{ width: 260, flexShrink: 0, background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', zIndex: 50 }}>
+      <aside style={{ width: 260, flexShrink: 0, background: 'var(--bg-card)', backdropFilter: 'blur(20px)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', zIndex: 50 }}>
         <div style={{ padding: '32px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(135deg, #3b82f6, #2dd4bf)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Box className="text-white" size={20} />
             </div>
-            <span style={{ fontWeight: 900, fontSize: 18, color: '#fff', letterSpacing: '-0.02em' }}>BUBA ADMIN</span>
+            <span style={{ fontWeight: 900, fontSize: 18, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>BUBA ADMIN</span>
           </div>
         </div>
         <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -845,13 +871,28 @@ export default function AdminPanel() {
 
           <SidebarBtn active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={18} />} label="Налаштування" />
         </nav>
+
+        <div style={{ padding: 24, borderTop: '1px solid var(--border)' }}>
+          <button 
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            style={{ 
+              width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', 
+              borderRadius: 12, background: 'var(--bg-main)', border: '1px solid var(--border)',
+              color: 'var(--text-main)', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+              transition: 'all 0.2s'
+            }}
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            {isDarkMode ? 'Світла тема' : 'Темна тема'}
+          </button>
+        </div>
       </aside>
 
       <main style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <header style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'rgba(2,11,24,0.6)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)', zIndex: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '8px 16px', width: 350 }}>
-            <Search size={16} style={{ color: '#4a4a6a' }} />
-            <input type="text" placeholder="Пошук..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 13, outline: 'none', width: '100%' }} />
+        <header style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'var(--bg-header)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)', zIndex: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 16px', width: 350 }}>
+            <Search size={16} style={{ color: 'var(--text-muted)' }} />
+            <input type="text" placeholder="Пошук..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} />
           </div>
           <button onClick={() => setShowForm(true)} style={{ background: '#fff', color: '#020b18', padding: '10px 24px', borderRadius: 12, fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>
             <Plus size={18} /> ДОДАТИ ТОВАР
@@ -1918,7 +1959,7 @@ export default function AdminPanel() {
 
 function SidebarBtn({ active, icon, label, onClick }) {
   return (
-    <button onClick={onClick} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: 'none', background: active ? 'rgba(59,130,246,0.1)' : 'transparent', color: active ? '#3b82f6' : '#6b6b8a', fontWeight: 700, fontSize: 13, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+    <button onClick={onClick} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: 'none', background: active ? 'var(--sidebar-active)' : 'transparent', color: active ? 'var(--text-accent)' : 'var(--text-muted)', fontWeight: 700, fontSize: 13, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
       {icon} {label}
     </button>
   );
@@ -1930,9 +1971,9 @@ function StatusBtn({ label, active, color, onClick }) {
       onClick={onClick}
       style={{ 
         padding: '8px 16px', borderRadius: 10, fontSize: 11, fontWeight: 800, 
-        background: active ? color : 'rgba(255,255,255,0.02)',
-        color: active ? '#fff' : '#6b6b8a',
-        border: active ? 'none' : '1px solid rgba(255,255,255,0.05)',
+        background: active ? color : 'var(--bg-card)',
+        color: active ? '#fff' : 'var(--text-muted)',
+        border: active ? 'none' : '1px solid var(--border)',
         cursor: 'pointer', transition: 'all 0.2s',
         boxShadow: active ? `0 4px 12px ${color}40` : 'none'
       }}

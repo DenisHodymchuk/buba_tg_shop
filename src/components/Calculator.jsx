@@ -170,7 +170,7 @@ export default function Calculator() {
       {/* LEFT: CALCULATION FORM */}
       <div style={{ flex: '1 1 600px', minWidth: 0 }}>
         <div style={{ 
-          background: 'rgba(255,255,255,0.02)', borderRadius: 32, border: '1px solid rgba(255,255,255,0.05)',
+          background: 'var(--bg-card)', borderRadius: 32, border: '1px solid var(--border)',
           padding: 32, backdropFilter: 'blur(10px)', boxSizing: 'border-box', width: '100%'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
@@ -182,8 +182,8 @@ export default function Calculator() {
                 <CalcIcon size={24} />
               </div>
               <div>
-                <h2 style={{ fontSize: 24, fontWeight: 950, color: '#fff', margin: 0 }}>Smart Calc 3.0</h2>
-                <p style={{ fontSize: 12, color: '#6b6b8a', margin: 0 }}>Точний розрахунок собівартості</p>
+                <h2 style={{ fontSize: 24, fontWeight: 950, color: 'var(--text-main)', margin: 0 }}>Smart Calc 3.0</h2>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Точний розрахунок собівартості</p>
               </div>
             </div>
             
@@ -206,14 +206,14 @@ export default function Calculator() {
             {/* Model Info */}
             <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва розрахунку</label>
+                <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Назва розрахунку</label>
                 <input 
                   type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
+                  style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Назва моделі</label>
+                <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Назва моделі</label>
                 <input 
                   type="text" value={formData.model_name} onChange={e => setFormData({...formData, model_name: e.target.value})}
                   placeholder="напр. Dragon_Articulated_v2"
@@ -224,24 +224,24 @@ export default function Calculator() {
 
             {/* Core Stats */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Вага моделі (г)</label>
+              <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Вага моделі (г)</label>
               <div style={{ position: 'relative' }}>
                 <input 
                   type="number" value={formData.weight_g} onChange={e => setFormData({...formData, weight_g: e.target.value})}
                   style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
                 />
-                <Package size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
+                <Package size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 10, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Час друку (год)</label>
+              <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Час друку (год)</label>
               <div style={{ position: 'relative' }}>
                 <input 
                   type="number" value={formData.time_h} onChange={e => setFormData({...formData, time_h: e.target.value})}
                   style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
                 />
-                <Clock size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
+                <Clock size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               </div>
             </div>
 
@@ -274,7 +274,7 @@ export default function Calculator() {
                     type="number" value={formData.plastic_cost_roll} onChange={e => setFormData({...formData, plastic_cost_roll: e.target.value})}
                     style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }}
                   />
-                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a', fontSize: 12, fontWeight: 800 }}>₴/кг</span>
+                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>₴/кг</span>
                 </div>
               </div>
             </div>
@@ -299,24 +299,24 @@ export default function Calculator() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 16 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: '#4a4a6a' }}>Потужність (Вт)</span>
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Потужність (Вт)</span>
                   <input 
                     type="number" value={formData.printer_wattage} onChange={e => setFormData({...formData, printer_wattage: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: 'var(--text-main)', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: '#4a4a6a' }}>Знос (₴/год)</span>
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Знос (₴/год)</span>
                   <input 
                     type="number" value={formData.wear_cost_h} onChange={e => setFormData({...formData, wear_cost_h: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: 'var(--text-main)', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: '#4a4a6a' }}>Тариф (₴/кВт)</span>
+                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Тариф (₴/кВт)</span>
                   <input 
                     type="number" value={formData.electricity_cost_kwh} onChange={e => setFormData({...formData, electricity_cost_kwh: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: 'var(--text-main)', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -332,14 +332,14 @@ export default function Calculator() {
                   <span style={{ fontSize: 9, color: '#6b6b8a' }}>Замін кольору</span>
                   <input 
                     type="number" value={formData.ams_swaps} onChange={e => setFormData({...formData, ams_swaps: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: '#6b6b8a' }}>Purge (г/заміна)</span>
                   <input 
                     type="number" step="0.1" value={formData.purge_g} onChange={e => setFormData({...formData, purge_g: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -355,14 +355,14 @@ export default function Calculator() {
                   <span style={{ fontSize: 9, color: '#6b6b8a' }}>Брак (%)</span>
                   <input 
                     type="number" value={formData.failure_margin} onChange={e => setFormData({...formData, failure_margin: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: '#6b6b8a' }}>Прибуток (%)</span>
                   <input 
                     type="number" value={formData.profit_margin} onChange={e => setFormData({...formData, profit_margin: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 10, color: '#fff', outline: 'none' }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -380,7 +380,7 @@ export default function Calculator() {
                     type="number" value={formData.labor_cost_h} onChange={e => setFormData({...formData, labor_cost_h: e.target.value})}
                     style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '10px 40px 10px 10px', color: '#fff', outline: 'none', fontSize: 13 }}
                   />
-                  <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a', fontSize: 10, fontWeight: 800 }}>₴/год</span>
+                  <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 10, fontWeight: 800 }}>₴/год</span>
                 </div>
               </div>
             </div>
@@ -429,8 +429,8 @@ export default function Calculator() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>Робота</span>
-              <span style={{ color: '#fff', fontWeight: 700 }}>+ {results.labor} ₴</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>Робота</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>+ {results.labor} ₴</span>
             </div>
 
             <div style={{ marginTop: 20, padding: 24, background: 'rgba(255,255,255,0.05)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -475,9 +475,9 @@ export default function Calculator() {
                <div style={{ position: 'relative', width: '100%' }}>
                   <input 
                     type="text" placeholder="Пошук..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 12px 8px 32px', color: '#fff', fontSize: 11, outline: 'none' }}
+                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px 8px 32px', color: 'var(--text-main)', fontSize: 11, outline: 'none' }}
                   />
-                  <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
+                  <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                </div>
             </div>
           </div>
@@ -499,7 +499,7 @@ export default function Calculator() {
                   <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 950, color: '#22c55e' }}>{calc.suggested_price} ₴</div>
-                      <div style={{ fontSize: 9, color: '#4a4a6a', textTransform: 'uppercase' }}>Ціна</div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ціна</div>
                     </div>
                     <button 
                       onClick={() => handleDelete(calc.id)}
@@ -512,7 +512,7 @@ export default function Calculator() {
               ))}
             </AnimatePresence>
             {filteredCalculations.length === 0 && !loading && (
-              <div style={{ textAlign: 'center', padding: 40, color: '#4a4a6a', fontSize: 12 }}>
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 12 }}>
                 Нічого не знайдено
               </div>
             )}
