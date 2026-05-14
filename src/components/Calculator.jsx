@@ -574,29 +574,29 @@ export default function Calculator() {
               </div>
             </div>
 
-            {/* Labor Section */}
+            {/* Labor & Discount Section */}
             <div style={{ gridColumn: '1 / -1', background: 'rgba(59,130,246,0.05)', borderRadius: 20, padding: 20, border: '1px solid rgba(59,130,246,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <DollarSign size={14} style={{ color: '#3b82f6' }} />
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Вартість вашої праці</label>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Праця та Знижка</label>
                 </div>
-                <div style={{ position: 'relative', width: '100%', maxWidth: 200 }}>
-                  <input 
-                    type="number" value={formData.labor_cost_h} onChange={e => setFormData({...formData, labor_cost_h: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 40px 10px 10px', color: 'var(--text-main)', outline: 'none', fontSize: 13 }}
-                  />
-                  <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 10, fontWeight: 800 }}>₴/год</span>
-                </div>
-                    <div style={{ position: 'relative' }}>
-                      <input 
-                        type="number" 
-                        value={formData.discount} 
-                        onChange={e => setFormData({...formData, discount: parseFloat(e.target.value) || 0})}
-                        style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', color: 'var(--text-main)', fontSize: 13, outline: 'none' }}
-                      />
-                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#ec4899', fontSize: 10, fontWeight: 900 }}>% OFF</span>
-                    </div>
+                
+                <div style={{ display: 'flex', gap: 12, flex: 1, justifyContent: 'flex-end', minWidth: 280 }}>
+                  <div style={{ position: 'relative', flex: 1, maxWidth: 150 }}>
+                    <input 
+                      type="number" value={formData.labor_cost_h} onChange={e => setFormData({...formData, labor_cost_h: e.target.value})}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 35px 10px 10px', color: 'var(--text-main)', outline: 'none', fontSize: 13 }}
+                    />
+                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 9, fontWeight: 800 }}>₴/год</span>
+                  </div>
+
+                  <div style={{ position: 'relative', flex: 1, maxWidth: 120 }}>
+                    <input 
+                      type="number" value={formData.discount} onChange={e => setFormData({...formData, discount: parseFloat(e.target.value) || 0})}
+                      style={{ width: '100%', background: 'rgba(236,72,153,0.05)', border: '1px solid rgba(236,72,153,0.2)', borderRadius: 10, padding: '10px 35px 10px 10px', color: 'var(--text-main)', outline: 'none', fontSize: 13 }}
+                    />
+                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#ec4899', fontSize: 9, fontWeight: 900 }}>% OFF</span>
                   </div>
                 </div>
               </div>
