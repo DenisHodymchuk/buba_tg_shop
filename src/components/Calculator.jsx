@@ -130,6 +130,7 @@ export default function Calculator() {
   async function handleSave() {
     setSaving(true);
     try {
+      const isEdit = !!formData.id;
       const dataToSave = {
         ...formData,
         total_prime_cost: parseFloat(results.prime),
@@ -138,20 +139,44 @@ export default function Calculator() {
 
       const { data, error } = await supabase
         .from('calculations')
-        .insert([dataToSave])
+        .upsert(dataToSave)
         .select();
 
       if (error) throw error;
-      setCalculations([data[0], ...calculations]);
       
-      // Reset after save
-      // setFormData({ ...formData, name: 'Новий розрахунок', model_name: '' });
+      if (isEdit) {
+        setCalculations(calculations.map(c => c.id === formData.id ? data[0] : c));
+      } else {
+        setCalculations([data[0], ...calculations]);
+      }
+      
+      alert(isEdit ? 'Розрахунок оновлено!' : 'Розрахунок збережено!');
     } catch (e) {
       alert('Помилка збереження: ' + e.message);
     } finally {
       setSaving(false);
     }
   }
+
+  const resetForm = () => {
+    setFormData({
+      name: 'Новий розрахунок',
+      model_name: '',
+      weight_g: 100,
+      time_h: 5,
+      plastic_cost_roll: 750,
+      plastic_type: 'PLA',
+      electricity_cost_kwh: 4.32,
+      printer_wattage: 350,
+      wear_cost_h: 5,
+      failure_margin: 10,
+      ams_swaps: 0,
+      purge_g: 0.5,
+      labor_cost_h: 50,
+      profit_margin: 50
+    });
+    setActivePreset(null);
+  };
 
   async function handleDelete(id) {
     try {
@@ -262,19 +287,31 @@ export default function Calculator() {
               </div>
             </div>
             
-            <button 
-              onClick={handleSave}
-              disabled={saving}
-              style={{ 
-                padding: '12px 24px', borderRadius: 14, border: 'none',
-                background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: 'var(--text-main)',
-                fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                boxShadow: '0 8px 16px rgba(124,58,237,0.2)', opacity: saving ? 0.7 : 1
-              }}
-            >
-              {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              ЗБЕРЕГТИ
-            </button>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button 
+                onClick={resetForm}
+                style={{ 
+                  padding: '12px 20px', borderRadius: 14, border: '1px solid var(--border)',
+                  background: 'transparent', color: 'var(--text-muted)',
+                  fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
+                }}
+              >
+                <Plus size={18} /> НОВИЙ
+              </button>
+              <button 
+                onClick={handleSave}
+                disabled={saving}
+                style={{ 
+                  padding: '12px 24px', borderRadius: 14, border: 'none',
+                  background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: 'var(--text-main)',
+                  fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                  boxShadow: '0 8px 16px rgba(124,58,237,0.2)', opacity: saving ? 0.7 : 1
+                }}
+              >
+                {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                {formData.id ? 'ОНОВИТИ' : 'ЗБЕРЕГТИ'}
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
