@@ -325,13 +325,20 @@ export default function InventoryDashboard({ showToast }) {
           </div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(234,88,12,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(245,158,11,0.2)' }}>
-          <div style={{ fontSize: 28, fontWeight: 950, color: '#fbbf24' }}>{stats.debt} <span style={{ fontSize: 16 }}>₴</span></div>
+          <div style={{ color: '#fbbf24', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+            {stats.debt > 0 ? 'Заборгованість' : (stats.debt < 0 ? 'Переплата' : 'Виплати')}
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 950, color: stats.debt <= 0 ? '#4ade80' : '#fbbf24' }}>
+            {Math.abs(stats.debt)} <span style={{ fontSize: 16 }}>₴</span>
+          </div>
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
             {Object.entries(stats.makerDebt).map(([maker, debt]) => (
-              debt > 0 && (
+              debt !== 0 && (
                 <div key={maker} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                   <span style={{ color: 'var(--text-muted)' }}>{maker}:</span>
-                  <span style={{ fontWeight: 800, color: '#fbbf24' }}>{debt} ₴</span>
+                  <span style={{ fontWeight: 800, color: debt > 0 ? '#fbbf24' : '#4ade80' }}>
+                    {debt > 0 ? `${debt} ₴` : `+${Math.abs(debt)} ₴`}
+                  </span>
                 </div>
               )
             ))}
@@ -522,16 +529,39 @@ export default function InventoryDashboard({ showToast }) {
                             <td style={{ padding: '14px 8px', textAlign: 'center' }}>
                               <div 
                                 onClick={() => {
-                                  const newVal = item.paid_amount >= (item.sold_count * item.price_unit) ? 0 : (item.sold_count * item.price_unit);
+                                  const soldAmount = item.sold_count * item.price_unit;
+                                  const totalAmount = item.quantity * item.price_unit;
+                                  let newVal = 0;
+                                  
+                                  if (item.paid_amount === 0) {
+                                    newVal = soldAmount > 0 ? soldAmount : totalAmount;
+                                  } else if (item.paid_amount === soldAmount && soldAmount < totalAmount) {
+                                    newVal = totalAmount;
+                                  } else {
+                                    newVal = 0;
+                                  }
+                                  
                                   handleUpdateItem({ ...item, paid_amount: newVal });
                                 }}
                                 style={{ 
                                   fontSize: 10, fontWeight: 900, padding: '6px 10px', borderRadius: 8, cursor: 'pointer', display: 'inline-block',
-                                  background: item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)',
-                                  color: item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 ? '#22c55e' : '#f59e0b'
+                                  transition: 'all 0.2s',
+                                  background: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
+                                    ? 'rgba(34,197,94,0.15)' 
+                                    : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
+                                      ? 'rgba(34,197,94,0.08)' 
+                                      : 'rgba(245,158,11,0.08)'),
+                                  color: item.paid_amount >= (item.sold_count * item.price_unit) && (item.sold_count > 0 || item.paid_amount > 0) ? '#4ade80' : '#fbbf24',
+                                  border: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0 
+                                    ? '1px solid rgba(74,222,128,0.3)' 
+                                    : '1px solid transparent'
                                 }}
                               >
-                                {item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 ? 'ОПЛАЧЕНО' : `${item.paid_amount} ₴`}
+                                {item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
+                                  ? 'ВСЕ ОПЛАЧЕНО' 
+                                  : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
+                                    ? 'ПРОДАНЕ ОПЛ.' 
+                                    : `${item.paid_amount} ₴`)}
                               </div>
                             </td>
                             <td style={{ padding: '14px 8px', textAlign: 'right' }}>
