@@ -96,7 +96,22 @@ export default function InventoryDashboard({ showToast }) {
       });
     });
 
-    return { totalValue, totalSold, totalPaid, itemsCount, debt: totalSold - totalPaid, makerDebt, pendingSalesCount, pendingPaymentsCount };
+    let totalDebtToMakers = 0;
+    let totalOverpaidToMakers = 0;
+    Object.values(makerDebt).forEach(d => {
+      if (d > 0) totalDebtToMakers += d;
+      else totalOverpaidToMakers += Math.abs(d);
+    });
+
+    return { 
+      totalValue, totalSold, totalPaid, itemsCount, 
+      debt: totalSold - totalPaid, 
+      totalDebtToMakers,
+      totalOverpaidToMakers,
+      makerDebt, 
+      pendingSalesCount, 
+      pendingPaymentsCount 
+    };
   }, [batches]);
 
   const toggleBatch = (id) => {
@@ -324,27 +339,49 @@ export default function InventoryDashboard({ showToast }) {
             Очікує продажу: <span style={{ color: '#fff', fontWeight: 800 }}>{stats.pendingSalesCount}</span> шт.
           </div>
         </div>
-        <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(234,88,12,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(245,158,11,0.2)' }}>
-          <div style={{ color: '#fbbf24', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
-            {stats.debt > 0 ? 'Заборгованість' : (stats.debt < 0 ? 'Переплата' : 'Виплати')}
+        <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.05), rgba(34,197,94,0.05))', padding: 24, borderRadius: 24, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+            {(stats.totalDebtToMakers > 0 || (stats.totalDebtToMakers === 0 && stats.totalOverpaidToMakers === 0)) && (
+              <div>
+                <div style={{ color: '#fbbf24', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fbbf24' }}></div> Ми винні
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 950, color: '#fbbf24' }}>
+                  {stats.totalDebtToMakers} <span style={{ fontSize: 16 }}>₴</span>
+                </div>
+              </div>
+            )}
+            {stats.totalOverpaidToMakers > 0 && (
+              <div>
+                <div style={{ color: '#4ade80', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80' }}></div> Наш аванс
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 950, color: '#4ade80' }}>
+                  {stats.totalOverpaidToMakers} <span style={{ fontSize: 16 }}>₴</span>
+                </div>
+              </div>
+            )}
           </div>
-          <div style={{ fontSize: 28, fontWeight: 950, color: stats.debt <= 0 ? '#4ade80' : '#fbbf24' }}>
-            {Math.abs(stats.debt)} <span style={{ fontSize: 16 }}>₴</span>
-          </div>
-          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
             {Object.entries(stats.makerDebt).map(([maker, debt]) => (
               debt !== 0 && (
-                <div key={maker} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                  <span style={{ color: 'var(--text-muted)' }}>{maker}:</span>
-                  <span style={{ fontWeight: 800, color: debt > 0 ? '#fbbf24' : '#4ade80' }}>
-                    {debt > 0 ? `${debt} ₴` : `+${Math.abs(debt)} ₴`}
-                  </span>
+                <div key={maker} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{maker}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: debt > 0 ? 'rgba(251,191,36,0.5)' : 'rgba(74,222,128,0.5)', textTransform: 'uppercase' }}>
+                      {debt > 0 ? 'борг' : 'аванс'}
+                    </span>
+                    <span style={{ fontWeight: 900, color: debt > 0 ? '#fbbf24' : '#4ade80' }}>
+                      {debt > 0 ? `${debt} ₴` : `+${Math.abs(debt)} ₴`}
+                    </span>
+                  </div>
                 </div>
               )
             ))}
-            {stats.debt === 0 && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '6px 12px', borderRadius: 100, fontSize: 10, fontWeight: 900, border: '1px solid rgba(34,197,94,0.2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                <CheckCircle2 size={12} /> Боргів немає
+            {stats.totalDebtToMakers === 0 && stats.totalOverpaidToMakers === 0 && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#4ade80', fontSize: 12, fontWeight: 800 }}>
+                <CheckCircle2 size={16} /> Розрахунки завершені
               </div>
             )}
           </div>
