@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Search, Filter, CheckCircle, 
-  DollarSign, Package, TrendingUp, Calendar, Edit3, X, Loader2, RefreshCw, AlertCircle, Megaphone, MessageSquare
+  DollarSign, Package, TrendingUp, Calendar, Edit3, X, Loader2, RefreshCw, AlertCircle, Megaphone, MessageSquare, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,6 +16,10 @@ export default function AdvertisingDashboard({ showToast }) {
   const [editingAd, setEditingAd] = useState(null);
   const [quickRevenueModal, setQuickRevenueModal] = useState({ open: false, adId: null, currentRevenue: 0, addAmount: '' });
   
+  // Custom dropdown states
+  const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
+  const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     platform: 'Instagram',
     custom_platform: '',
@@ -26,7 +30,7 @@ export default function AdvertisingDashboard({ showToast }) {
     notes: ''
   });
 
-  const platformsList = ['Instagram', 'Facebook', 'Telegram', 'TikTok', 'Google', 'YouTube', 'Other'];
+  const platformsList = ['Instagram', 'Facebook', 'Telegram', 'TikTok', 'Google', 'YouTube', 'OLX', 'Other'];
 
   useEffect(() => {
     fetchData();
@@ -42,7 +46,6 @@ export default function AdvertisingDashboard({ showToast }) {
         .order('ad_date', { ascending: false });
 
       if (adsError) {
-        // Table might not exist yet
         throw adsError;
       }
 
@@ -175,6 +178,8 @@ export default function AdvertisingDashboard({ showToast }) {
       ad_date: new Date().toISOString().split('T')[0],
       notes: ''
     });
+    setIsPlatformDropdownOpen(false);
+    setIsProductDropdownOpen(false);
   }
 
   // Open edit form
@@ -191,6 +196,8 @@ export default function AdvertisingDashboard({ showToast }) {
       ad_date: ad.ad_date,
       notes: ad.notes || ''
     });
+    setIsPlatformDropdownOpen(false);
+    setIsProductDropdownOpen(false);
     setShowAddForm(true);
   }
 
@@ -399,7 +406,8 @@ export default function AdvertisingDashboard({ showToast }) {
                           color: ad.platform.toLowerCase() === 'instagram' ? '#f43f5e' : 
                                  ad.platform.toLowerCase() === 'facebook' ? '#3b82f6' :
                                  ad.platform.toLowerCase() === 'telegram' ? '#0ea5e9' :
-                                 ad.platform.toLowerCase() === 'tiktok' ? '#00f2fe' : '#fff',
+                                 ad.platform.toLowerCase() === 'tiktok' ? '#00f2fe' : 
+                                 ad.platform.toLowerCase() === 'olx' ? '#23e5db' : '#fff',
                           background: 'rgba(255,255,255,0.05)',
                           padding: '4px 8px',
                           borderRadius: 8
@@ -486,11 +494,18 @@ export default function AdvertisingDashboard({ showToast }) {
       {/* Add / Edit Form Modal */}
       <AnimatePresence>
         {showAddForm && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div 
+            onClick={() => {
+              setIsPlatformDropdownOpen(false);
+              setIsProductDropdownOpen(false);
+            }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          >
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }} 
               animate={{ opacity: 1, scale: 1 }} 
-              style={{ background: '#0a192f', borderRadius: 32, padding: 32, width: '100%', maxWidth: 480, border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ background: '#0a192f', borderRadius: 32, padding: 32, width: '100%', maxWidth: 480, border: '1px solid rgba(255,255,255,0.1)', color: '#fff', overflow: 'visible' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h2 style={{ fontSize: 22, fontWeight: 900 }}>{editingAd ? 'Редагувати рекламу' : 'Нова реклама'}</h2>
@@ -504,17 +519,86 @@ export default function AdvertisingDashboard({ showToast }) {
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {/* Platform */}
-                <div>
+                <div style={{ position: 'relative' }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Платформа / Сервіс</label>
-                  <select 
-                    value={formData.platform} 
-                    onChange={e => setFormData({...formData, platform: e.target.value})} 
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                  
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPlatformDropdownOpen(!isPlatformDropdownOpen);
+                      setIsProductDropdownOpen(false);
+                    }}
+                    style={{ 
+                      width: '100%', 
+                      background: 'rgba(0,0,0,0.3)', 
+                      border: '1px solid var(--border)', 
+                      borderRadius: 12, 
+                      padding: 12, 
+                      color: '#fff', 
+                      fontSize: 14, 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
                   >
-                    {platformsList.map(p => (
-                      <option key={p} value={p} style={{ background: '#0a192f' }}>{p}</option>
-                    ))}
-                  </select>
+                    <span>{formData.platform}</span>
+                    <ChevronDown size={16} style={{ color: 'var(--text-muted)', transform: isPlatformDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                  </div>
+
+                  <AnimatePresence>
+                    {isPlatformDropdownOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        style={{ 
+                          position: 'absolute', 
+                          top: 'calc(100% + 6px)', 
+                          left: 0, 
+                          right: 0, 
+                          background: '#0f172a', 
+                          border: '1px solid rgba(255,255,255,0.1)', 
+                          borderRadius: 12, 
+                          zIndex: 1100, 
+                          maxHeight: 250, 
+                          overflowY: 'auto', 
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                          padding: 6
+                        }}
+                      >
+                        {platformsList.map(p => (
+                          <div 
+                            key={p}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFormData({...formData, platform: p});
+                              setIsPlatformDropdownOpen(false);
+                            }}
+                            style={{ 
+                              padding: '10px 14px', 
+                              fontSize: 13, 
+                              color: formData.platform === p ? '#ec4899' : '#fff', 
+                              fontWeight: formData.platform === p ? 800 : 500, 
+                              borderRadius: 8, 
+                              cursor: 'pointer',
+                              background: formData.platform === p ? 'rgba(236,72,153,0.1)' : 'transparent',
+                              transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={e => {
+                              if (formData.platform !== p) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                            }}
+                            onMouseLeave={e => {
+                              if (formData.platform !== p) e.currentTarget.style.background = 'transparent';
+                            }}
+                          >
+                            {p}
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Custom Platform */}
@@ -533,18 +617,119 @@ export default function AdvertisingDashboard({ showToast }) {
                 )}
 
                 {/* Target Product */}
-                <div>
+                <div style={{ position: 'relative' }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Товар для реклами</label>
-                  <select 
-                    value={formData.product_id} 
-                    onChange={e => setFormData({...formData, product_id: e.target.value})} 
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                  
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsProductDropdownOpen(!isProductDropdownOpen);
+                      setIsPlatformDropdownOpen(false);
+                    }}
+                    style={{ 
+                      width: '100%', 
+                      background: 'rgba(0,0,0,0.3)', 
+                      border: '1px solid var(--border)', 
+                      borderRadius: 12, 
+                      padding: 12, 
+                      color: '#fff', 
+                      fontSize: 14, 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
                   >
-                    <option value="" style={{ background: '#0a192f' }}>Загальна реклама магазину</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id} style={{ background: '#0a192f' }}>{p.name} ({p.price} ₴)</option>
-                    ))}
-                  </select>
+                    <span>
+                      {formData.product_id 
+                        ? products.find(p => p.id === formData.product_id)?.name || 'Обраний товар' 
+                        : 'Загальна реклама магазину'}
+                    </span>
+                    <ChevronDown size={16} style={{ color: 'var(--text-muted)', transform: isProductDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                  </div>
+
+                  <AnimatePresence>
+                    {isProductDropdownOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        style={{ 
+                          position: 'absolute', 
+                          top: 'calc(100% + 6px)', 
+                          left: 0, 
+                          right: 0, 
+                          background: '#0f172a', 
+                          border: '1px solid rgba(255,255,255,0.1)', 
+                          borderRadius: 12, 
+                          zIndex: 1100, 
+                          maxHeight: 220, 
+                          overflowY: 'auto', 
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                          padding: 6
+                        }}
+                      >
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormData({...formData, product_id: ''});
+                            setIsProductDropdownOpen(false);
+                          }}
+                          style={{ 
+                            padding: '10px 14px', 
+                            fontSize: 13, 
+                            color: !formData.product_id ? '#ec4899' : '#fff', 
+                            fontWeight: !formData.product_id ? 800 : 500, 
+                            borderRadius: 8, 
+                            cursor: 'pointer',
+                            background: !formData.product_id ? 'rgba(236,72,153,0.1)' : 'transparent',
+                            transition: 'background 0.2s'
+                          }}
+                          onMouseEnter={e => {
+                            if (formData.product_id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                          }}
+                          onMouseLeave={e => {
+                            if (formData.product_id) e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          Загальна реклама магазину
+                        </div>
+                        {products.map(p => (
+                          <div 
+                            key={p.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFormData({...formData, product_id: p.id});
+                              setIsProductDropdownOpen(false);
+                            }}
+                            style={{ 
+                              padding: '10px 14px', 
+                              fontSize: 13, 
+                              color: formData.product_id === p.id ? '#ec4899' : '#fff', 
+                              fontWeight: formData.product_id === p.id ? 800 : 500, 
+                              borderRadius: 8, 
+                              cursor: 'pointer',
+                              background: formData.product_id === p.id ? 'rgba(236,72,153,0.1)' : 'transparent',
+                              transition: 'background 0.2s',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                            onMouseEnter={e => {
+                              if (formData.product_id !== p.id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                            }}
+                            onMouseLeave={e => {
+                              if (formData.product_id !== p.id) e.currentTarget.style.background = 'transparent';
+                            }}
+                          >
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{p.name}</span>
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8, flexShrink: 0 }}>{p.price} ₴</span>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Cost & Revenue */}
