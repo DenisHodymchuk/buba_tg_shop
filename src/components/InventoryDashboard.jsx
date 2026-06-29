@@ -21,6 +21,14 @@ export default function InventoryDashboard({ showToast }) {
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [showMakerSuggestions, setShowMakerSuggestions] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const uniqueNames = useMemo(() => {
     const names = batches.flatMap(b => b.inventory_items?.map(i => i.name) || []);
@@ -524,86 +532,82 @@ export default function InventoryDashboard({ showToast }) {
             <AnimatePresence>
               {expandedBatches[batch.id] && (
                 <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} style={{ overflow: 'hidden' }}>
-                  <div style={{ padding: '0 24px 24px 24px', borderTop: '1px solid var(--border)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 16 }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                          <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ТОВАР</th>
-                          <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ВИРОБНИК</th>
-                          <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>К-СТЬ</th>
-                          <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ЦІНА</th>
-                          <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРОДАНО</th>
-                          <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ЗАЛИШОК</th>
-                          <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ОПЛАЧЕНО</th>
-                          <th style={{ textAlign: 'right', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДІЇ</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {batch.inventory_items?.map(item => (
-                          <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                            <td style={{ padding: '14px 8px' }}>
-                              <div style={{ fontSize: 13, fontWeight: 800 }}>{item.name}</div>
-                            </td>
-                            <td style={{ padding: '14px 8px' }}>
-                              <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', background: 'rgba(124,58,237,0.1)', padding: '4px 8px', borderRadius: 6, display: 'inline-block' }}>{item.maker}</div>
-                            </td>
-                            <td style={{ padding: '14px 8px', textAlign: 'center', fontSize: 13, fontWeight: 700 }}>{item.quantity}</td>
-                            <td style={{ padding: '14px 8px', textAlign: 'center', fontSize: 13, fontWeight: 700 }}>{item.price_unit} ₴</td>
-                            <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                                <span style={{ fontSize: 14, fontWeight: 900, color: '#4ade80' }}>{item.sold_count}</span>
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.min(item.quantity, item.sold_count + 1) })} style={{ border: 'none', background: 'none', color: '#6b6b8a', cursor: 'pointer', padding: 0 }}><ChevronDown size={12} style={{ transform: 'rotate(180deg)' }} /></button>
-                                  <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.max(0, item.sold_count - 1) })} style={{ border: 'none', background: 'none', color: '#6b6b8a', cursor: 'pointer', padding: 0 }}><ChevronDown size={12} /></button>
+                  <div style={{ padding: isMobile ? '16px 12px' : '0 24px 24px 24px', borderTop: '1px solid var(--border)' }}>
+                    {isMobile ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 12 }}>
+                        {batch.inventory_items?.map(item => {
+                          const soldAmount = item.sold_count * item.price_unit;
+                          const totalAmount = item.quantity * item.price_unit;
+                          
+                          return (
+                            <div key={item.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                              {/* Title & Maker */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{item.name}</div>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: '#7c3aed', background: 'rgba(124,58,237,0.1)', padding: '4px 8px', borderRadius: 6, flexShrink: 0 }}>{item.maker}</div>
+                              </div>
+
+                              {/* Info Grid */}
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, background: 'rgba(0,0,0,0.15)', padding: 10, borderRadius: 12 }}>
+                                <div>
+                                  <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>ЦІНА</div>
+                                  <div style={{ fontSize: 12, fontWeight: 800 }}>{item.price_unit} ₴</div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>КІЛЬКІСТЬ</div>
+                                  <div style={{ fontSize: 12, fontWeight: 800 }}>{item.quantity} шт</div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>ЗАЛИШОК</div>
+                                  <div style={{ fontSize: 12, fontWeight: 800, color: (item.quantity - item.sold_count) === 0 ? '#ef4444' : '#fff' }}>{item.quantity - item.sold_count} шт</div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>ПРОДАНО</div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ fontSize: 12, fontWeight: 900, color: '#4ade80' }}>{item.sold_count}</span>
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                      <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.max(0, item.sold_count - 1) })} style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 4, width: 20, height: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>-</button>
+                                      <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.min(item.quantity, item.sold_count + 1) })} style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 4, width: 20, height: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>+</button>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            </td>
-                            <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: (item.quantity - item.sold_count) === 0 ? '#ef4444' : '#fff' }}>
-                                {item.quantity - item.sold_count}
-                              </span>
-                            </td>
-                            <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                              <div 
-                                onClick={() => {
-                                  const soldAmount = item.sold_count * item.price_unit;
-                                  const totalAmount = item.quantity * item.price_unit;
-                                  let newVal = 0;
-                                  
-                                  if (item.paid_amount === 0) {
-                                    newVal = soldAmount > 0 ? soldAmount : totalAmount;
-                                  } else if (item.paid_amount === soldAmount && soldAmount < totalAmount) {
-                                    newVal = totalAmount;
-                                  } else {
-                                    newVal = 0;
-                                  }
-                                  
-                                  handleUpdateItem({ ...item, paid_amount: newVal });
-                                }}
-                                style={{ 
-                                  fontSize: 10, fontWeight: 900, padding: '6px 10px', borderRadius: 8, cursor: 'pointer', display: 'inline-block',
-                                  transition: 'all 0.2s',
-                                  background: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
-                                    ? 'rgba(34,197,94,0.15)' 
+
+                              {/* Pay status and Actions */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 10 }}>
+                                <div 
+                                  onClick={() => {
+                                    let newVal = 0;
+                                    if (item.paid_amount === 0) {
+                                      newVal = soldAmount > 0 ? soldAmount : totalAmount;
+                                    } else if (item.paid_amount === soldAmount && soldAmount < totalAmount) {
+                                      newVal = totalAmount;
+                                    } else {
+                                      newVal = 0;
+                                    }
+                                    handleUpdateItem({ ...item, paid_amount: newVal });
+                                  }}
+                                  style={{ 
+                                    fontSize: 9, fontWeight: 900, padding: '6px 10px', borderRadius: 8, cursor: 'pointer',
+                                    background: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
+                                      ? 'rgba(34,197,94,0.15)' 
+                                      : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
+                                        ? 'rgba(34,197,94,0.08)' 
+                                        : 'rgba(245,158,11,0.08)'),
+                                    color: item.paid_amount >= (item.sold_count * item.price_unit) && (item.sold_count > 0 || item.paid_amount > 0) ? '#4ade80' : '#fbbf24',
+                                    border: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0 
+                                      ? '1px solid rgba(74,222,128,0.3)' 
+                                      : '1px solid transparent'
+                                  }}
+                                >
+                                  {item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
+                                    ? 'ВСЕ ОПЛАЧЕНО' 
                                     : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
-                                      ? 'rgba(34,197,94,0.08)' 
-                                      : 'rgba(245,158,11,0.08)'),
-                                  color: item.paid_amount >= (item.sold_count * item.price_unit) && (item.sold_count > 0 || item.paid_amount > 0) ? '#4ade80' : '#fbbf24',
-                                  border: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0 
-                                    ? '1px solid rgba(74,222,128,0.3)' 
-                                    : '1px solid transparent'
-                                }}
-                              >
-                                {item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
-                                  ? 'ВСЕ ОПЛАЧЕНО' 
-                                  : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
-                                    ? 'ПРОДАНЕ ОПЛ.' 
-                                    : `${item.paid_amount} ₴`)}
-                              </div>
-                            </td>
-                            <td style={{ padding: '14px 8px', textAlign: 'right' }}>
-                              <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                                <div style={{ position: 'relative' }}>
+                                      ? 'ПРОДАНЕ ОПЛ.' 
+                                      : `${item.paid_amount} ₴`)}
+                                </div>
+
+                                <div style={{ display: 'flex', gap: 6 }}>
                                   <button 
                                     onClick={(e) => {
                                       const rect = e.currentTarget.getBoundingClientRect();
@@ -612,22 +616,24 @@ export default function InventoryDashboard({ showToast }) {
                                         itemId: item.id, 
                                         oldBatchId: batch.id,
                                         x: rect.left - 200, 
-                                        y: rect.top + 40 
+                                        y: rect.top + window.scrollY + 30 
                                       });
                                     }}
-                                    style={{ border: 'none', background: 'rgba(139,92,246,0.2)', color: '#c4b5fd', borderRadius: 8, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 0 15px rgba(139,92,246,0.1)' }}
+                                    style={{ border: 'none', background: 'rgba(139,92,246,0.15)', color: '#c4b5fd', borderRadius: 8, padding: '6px 10px', fontSize: 9, fontWeight: 900, cursor: 'pointer' }}
                                   >
-                                    <MoveHorizontal size={12} /> ПЕРЕНЕСТИ
+                                    ПЕРЕНЕСТИ
                                   </button>
+                                  <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}><Trash2 size={12}/></button>
                                 </div>
-                                <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}><Trash2 size={14}/></button>
                               </div>
-                            </td>
-                          </tr>
-                        ))}
-                        {/* Add Item Row */}
-                        <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
-                          <td style={{ padding: '14px 8px', position: 'relative' }}>
+                            </div>
+                          );
+                        })}
+
+                        {/* Add Item form on mobile */}
+                        <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Новий товар у партію</div>
+                          <div style={{ position: 'relative' }}>
                             <input 
                               placeholder="Назва товару..." 
                               value={newItem.name} 
@@ -638,15 +644,16 @@ export default function InventoryDashboard({ showToast }) {
                             />
                             <AnimatePresence>
                               {showNameSuggestions && uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).length > 0 && (
-                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 8, right: 8, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 0, right: 0, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 150, overflowY: 'auto' }}>
                                   {uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).map(n => (
-                                    <div key={n} onClick={() => setNewItem({ ...newItem, name: n })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{n}</div>
+                                    <div key={n} onClick={() => setNewItem({ ...newItem, name: n })} style={{ padding: '8px 12px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{n}</div>
                                   ))}
                                 </motion.div>
                               )}
                             </AnimatePresence>
-                          </td>
-                          <td style={{ padding: '14px 8px', position: 'relative' }}>
+                          </div>
+                          
+                          <div style={{ position: 'relative' }}>
                             <input 
                               placeholder="Хто зробив..." 
                               value={newItem.maker} 
@@ -657,27 +664,186 @@ export default function InventoryDashboard({ showToast }) {
                             />
                             <AnimatePresence>
                               {showMakerSuggestions && uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).length > 0 && (
-                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 8, right: 8, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 0, right: 0, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 150, overflowY: 'auto' }}>
                                   {uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).map(m => (
-                                    <div key={m} onClick={() => setNewItem({ ...newItem, maker: m })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{m}</div>
+                                    <div key={m} onClick={() => setNewItem({ ...newItem, maker: m })} style={{ padding: '8px 12px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{m}</div>
                                   ))}
                                 </motion.div>
                               )}
                             </AnimatePresence>
-                          </td>
-                          <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                            <input type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value) || 0})} style={{ width: 50, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12, textAlign: 'center' }} />
-                          </td>
-                          <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                            <input type="number" value={newItem.price_unit} onChange={e => setNewItem({...newItem, price_unit: parseInt(e.target.value) || 0})} style={{ width: 60, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12, textAlign: 'center' }} />
-                          </td>
-                          <td colSpan={3}></td>
-                          <td style={{ padding: '14px 8px', textAlign: 'right' }}>
-                            <button onClick={() => handleAddItem(batch.id)} style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>ДОДАТИ</button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                            <div>
+                              <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Кількість</label>
+                              <input type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value) || 0})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} />
+                            </div>
+                            <div>
+                              <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна (₴)</label>
+                              <input type="number" value={newItem.price_unit} onChange={e => setNewItem({...newItem, price_unit: parseInt(e.target.value) || 0})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} />
+                            </div>
+                          </div>
+
+                          <button onClick={() => handleAddItem(batch.id)} style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 12, fontWeight: 900, cursor: 'pointer', marginTop: 4 }}>
+                            ДОДАТИ ТОВАР
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 16 }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                            <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ТОВАР</th>
+                            <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ВИРОБНИК</th>
+                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>К-СТЬ</th>
+                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ЦІНА</th>
+                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРОДАНО</th>
+                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ЗАЛИШОК</th>
+                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ОПЛАЧЕНО</th>
+                            <th style={{ textAlign: 'right', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДІЇ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {batch.inventory_items?.map(item => (
+                            <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                              <td style={{ padding: '14px 8px' }}>
+                                <div style={{ fontSize: 13, fontWeight: 800 }}>{item.name}</div>
+                              </td>
+                              <td style={{ padding: '14px 8px' }}>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', background: 'rgba(124,58,237,0.1)', padding: '4px 8px', borderRadius: 6, display: 'inline-block' }}>{item.maker}</div>
+                              </td>
+                              <td style={{ padding: '14px 8px', textAlign: 'center', fontSize: 13, fontWeight: 700 }}>{item.quantity}</td>
+                              <td style={{ padding: '14px 8px', textAlign: 'center', fontSize: 13, fontWeight: 700 }}>{item.price_unit} ₴</td>
+                              <td style={{ padding: '14px 8px', textAlign: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                                  <span style={{ fontSize: 14, fontWeight: 900, color: '#4ade80' }}>{item.sold_count}</span>
+                                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.min(item.quantity, item.sold_count + 1) })} style={{ border: 'none', background: 'none', color: '#6b6b8a', cursor: 'pointer', padding: 0 }}><ChevronDown size={12} style={{ transform: 'rotate(180deg)' }} /></button>
+                                    <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.max(0, item.sold_count - 1) })} style={{ border: 'none', background: 'none', color: '#6b6b8a', cursor: 'pointer', padding: 0 }}><ChevronDown size={12} /></button>
+                                  </div>
+                                </div>
+                              </td>
+                              <td style={{ padding: '14px 8px', textAlign: 'center' }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: (item.quantity - item.sold_count) === 0 ? '#ef4444' : '#fff' }}>
+                                  {item.quantity - item.sold_count}
+                                </span>
+                              </td>
+                              <td style={{ padding: '14px 8px', textAlign: 'center' }}>
+                                <div 
+                                  onClick={() => {
+                                    const soldAmount = item.sold_count * item.price_unit;
+                                    const totalAmount = item.quantity * item.price_unit;
+                                    let newVal = 0;
+                                    
+                                    if (item.paid_amount === 0) {
+                                      newVal = soldAmount > 0 ? soldAmount : totalAmount;
+                                    } else if (item.paid_amount === soldAmount && soldAmount < totalAmount) {
+                                      newVal = totalAmount;
+                                    } else {
+                                      newVal = 0;
+                                    }
+                                    
+                                    handleUpdateItem({ ...item, paid_amount: newVal });
+                                  }}
+                                  style={{ 
+                                    fontSize: 10, fontWeight: 900, padding: '6px 10px', borderRadius: 8, cursor: 'pointer', display: 'inline-block',
+                                    transition: 'all 0.2s',
+                                    background: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
+                                      ? 'rgba(34,197,94,0.15)' 
+                                      : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
+                                        ? 'rgba(34,197,94,0.08)' 
+                                        : 'rgba(245,158,11,0.08)'),
+                                    color: item.paid_amount >= (item.sold_count * item.price_unit) && (item.sold_count > 0 || item.paid_amount > 0) ? '#4ade80' : '#fbbf24',
+                                    border: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0 
+                                      ? '1px solid rgba(74,222,128,0.3)' 
+                                      : '1px solid transparent'
+                                  }}
+                                >
+                                  {item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
+                                    ? 'ВСЕ ОПЛАЧЕНО' 
+                                    : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
+                                      ? 'ПРОДАНЕ ОПЛ.' 
+                                      : `${item.paid_amount} ₴`)}
+                                </div>
+                              </td>
+                              <td style={{ padding: '14px 8px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                                  <div style={{ position: 'relative' }}>
+                                    <button 
+                                      onClick={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        setMoveMenu({ 
+                                          open: true, 
+                                          itemId: item.id, 
+                                          oldBatchId: batch.id,
+                                          x: rect.left - 200, 
+                                          y: rect.top + 40 
+                                        });
+                                      }}
+                                      style={{ border: 'none', background: 'rgba(139,92,246,0.2)', color: '#c4b5fd', borderRadius: 8, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 0 15px rgba(139,92,246,0.1)' }}
+                                    >
+                                      <MoveHorizontal size={12} /> ПЕРЕНЕСТИ
+                                    </button>
+                                  </div>
+                                  <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}><Trash2 size={14}/></button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {/* Add Item Row */}
+                          <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
+                            <td style={{ padding: '14px 8px', position: 'relative' }}>
+                              <input 
+                                placeholder="Назва товару..." 
+                                value={newItem.name} 
+                                onChange={e => setNewItem({...newItem, name: e.target.value})} 
+                                onFocus={() => setShowNameSuggestions(true)}
+                                onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
+                                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} 
+                              />
+                              <AnimatePresence>
+                                {showNameSuggestions && uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).length > 0 && (
+                                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 8, right: 8, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                                    {uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).map(n => (
+                                      <div key={n} onClick={() => setNewItem({ ...newItem, name: n })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{n}</div>
+                                    ))}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </td>
+                            <td style={{ padding: '14px 8px', position: 'relative' }}>
+                              <input 
+                                placeholder="Хто зробив..." 
+                                value={newItem.maker} 
+                                onChange={e => setNewItem({...newItem, maker: e.target.value})} 
+                                onFocus={() => setShowMakerSuggestions(true)}
+                                onBlur={() => setTimeout(() => setShowMakerSuggestions(false), 200)}
+                                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} 
+                              />
+                              <AnimatePresence>
+                                {showMakerSuggestions && uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).length > 0 && (
+                                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 8, right: 8, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                                    {uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).map(m => (
+                                      <div key={m} onClick={() => setNewItem({ ...newItem, maker: m })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{m}</div>
+                                    ))}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </td>
+                            <td style={{ padding: '14px 8px', textAlign: 'center' }}>
+                              <input type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value) || 0})} style={{ width: 50, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12, textAlign: 'center' }} />
+                            </td>
+                            <td style={{ padding: '14px 8px', textAlign: 'center' }}>
+                              <input type="number" value={newItem.price_unit} onChange={e => setNewItem({...newItem, price_unit: parseInt(e.target.value) || 0})} style={{ width: 60, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12, textAlign: 'center' }} />
+                            </td>
+                            <td colSpan={3}></td>
+                            <td style={{ padding: '14px 8px', textAlign: 'right' }}>
+                              <button onClick={() => handleAddItem(batch.id)} style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>ДОДАТИ</button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </motion.div>
               )}
