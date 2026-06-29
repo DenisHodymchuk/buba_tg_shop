@@ -5,11 +5,12 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
-  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle
+  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
 import InventoryDashboard from '@/components/InventoryDashboard';
+import AdvertisingDashboard from '@/components/AdvertisingDashboard';
 
 
 const scrollbarHide = `
@@ -1044,6 +1045,7 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'broadcast'} onClick={() => setActiveTab('broadcast')} icon={<Send size={18} />} label="Розсилка" />
           <SidebarBtn active={activeTab === 'calculator'} onClick={() => setActiveTab('calculator')} icon={<Calculator size={18} />} label="Калькулятор" />
           <SidebarBtn active={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} icon={<Box size={18} />} label="Склад (Облік)" />
+          <SidebarBtn active={activeTab === 'marketing'} onClick={() => setActiveTab('marketing')} icon={<Megaphone size={18} />} label="Кабінет Реклами" />
 
           <SidebarBtn active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={18} />} label="Налаштування" />
         </nav>
@@ -1578,6 +1580,10 @@ export default function AdminPanel() {
                 <p style={{ fontSize: 14, color: '#6b6b8a', marginTop: 4 }}>Розрахуйте витрати на 3D друк з урахуванням амортизації та електрики</p>
               </div>
               <CalculatorComp />
+            </div>
+          ) : activeTab === 'marketing' ? (
+            <div style={{ width: '100%', maxWidth: 1200 }}>
+              <AdvertisingDashboard showToast={showToast} />
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#4a4a6a' }}>
