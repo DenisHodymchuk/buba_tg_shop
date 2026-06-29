@@ -78,6 +78,7 @@ export default function SalesDashboard({ showToast }) {
   const [paymentFilter, setPaymentFilter] = useState('Всі');
   const [statusFilter, setStatusFilter] = useState('Всі');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [periodType, setPeriodType] = useState('month'); // 'week' | 'month' | 'quarter'
   
   // Form state
   const [editingSale, setEditingSale] = useState(null);
@@ -179,6 +180,50 @@ export default function SalesDashboard({ showToast }) {
       sums
     };
   }, [sales]);
+
+  const periodData = useMemo(() => {
+    const groups = {};
+    
+    sales.forEach(sale => {
+      const date = new Date(sale.created_at);
+      const amt = parseFloat(sale.total || 0);
+      const isPaid = sale.payment_status === 'paid';
+      
+      let key = '';
+      let label = '';
+      
+      if (periodType === 'week') {
+        const tempDate = new Date(date);
+        const day = tempDate.getDay();
+        const diff = tempDate.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(tempDate.setDate(diff));
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        
+        key = monday.toISOString().slice(0, 10);
+        label = `${monday.toLocaleDateString('uk-UA', { day: 'numeric', month: 'numeric' })} – ${sunday.toLocaleDateString('uk-UA', { day: 'numeric', month: 'numeric', year: 'numeric' })}`;
+      } else if (periodType === 'month') {
+        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        label = date.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
+        label = label.charAt(0).toUpperCase() + label.slice(1);
+      } else if (periodType === 'quarter') {
+        const q = Math.floor(date.getMonth() / 3) + 1;
+        key = `${date.getFullYear()}-Q${q}`;
+        label = `${q}-й квартал ${date.getFullYear()}`;
+      }
+      
+      if (!groups[key]) {
+        groups[key] = { label, total: 0, paid: 0, count: 0, key };
+      }
+      groups[key].total += amt;
+      if (isPaid) {
+        groups[key].paid += amt;
+      }
+      groups[key].count++;
+    });
+    
+    return Object.values(groups).sort((a, b) => b.key.localeCompare(a.key));
+  }, [sales, periodType]);
 
   const filteredSales = useMemo(() => {
     return sales.filter(s => {
@@ -435,6 +480,73 @@ export default function SalesDashboard({ showToast }) {
               );
             })}
           </div>
+        </div>
+      </div>
+
+      {/* Period Analytics */}
+      <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Calendar size={22} style={{ color: '#8b5cf6' }} />
+            <h2 style={{ fontSize: 16, fontWeight: 900, color: '#fff', margin: 0 }}>Аналітика за періодами</h2>
+          </div>
+          
+          {/* Period selector tabs */}
+          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: 4, borderRadius: 12, border: '1px solid var(--border)', alignSelf: isMobile ? 'flex-start' : 'auto' }}>
+            {[
+              { type: 'week', label: 'По тижнях' },
+              { type: 'month', label: 'По місяцях' },
+              { type: 'quarter', label: 'По кварталах' }
+            ].map(tab => (
+              <button
+                key={tab.type}
+                onClick={() => setPeriodType(tab.type)}
+                style={{
+                  padding: '6px 14px', borderRadius: 8, border: 'none', fontSize: 11, fontWeight: 800, cursor: 'pointer',
+                  background: periodType === tab.type ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'transparent',
+                  color: periodType === tab.type ? '#fff' : 'var(--text-muted)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* List of periods */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+          {periodData.length === 0 ? (
+            <div style={{ color: 'var(--text-muted)', fontSize: 12, padding: '20px 0' }}>Немає даних для відображення статистики.</div>
+          ) : (
+            periodData.slice(0, 6).map(item => {
+              const paidPercent = item.total > 0 ? (item.paid / item.total) * 100 : 0;
+              return (
+                <div key={item.key} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: '#fff' }}>{item.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, fontWeight: 700 }}>
+                        {item.count} {item.count === 1 ? 'продаж' : item.count < 5 ? 'продажі' : 'продажів'}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>{item.total.toLocaleString('uk-UA')} ₴</div>
+                      <div style={{ fontSize: 10, color: '#22c55e', marginTop: 2, fontWeight: 800 }}>Оплачено: {item.paid.toLocaleString('uk-UA')} ₴</div>
+                    </div>
+                  </div>
+
+                  {/* Progress bar container */}
+                  <div style={{ position: 'relative', width: '100%', height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                    {/* Unpaid base overlay (violet) */}
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '100%', background: 'rgba(139,92,246,0.25)', borderRadius: 3 }} />
+                    {/* Paid overlay (teal) */}
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${paidPercent}%`, background: '#2dd4bf', borderRadius: 3, transition: 'width 0.3s' }} />
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
