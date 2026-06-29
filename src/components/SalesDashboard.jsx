@@ -991,25 +991,53 @@ export default function SalesDashboard({ showToast }) {
 
                 {/* Items selection */}
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 20, padding: 16, overflow: 'visible' }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#2dd4bf', display: 'block', marginBottom: 12, textTransform: 'uppercase' }}>Товари у замовленні</label>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 12, textTransform: 'uppercase' }}>Склад кошика замовлення</label>
                   
                   {/* Existing items list */}
-                  {formData.items.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                  {formData.items.length > 0 ? (
+                    <div style={{ 
+                      display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20,
+                      background: 'rgba(45, 212, 191, 0.03)', border: '1px solid rgba(45, 212, 191, 0.15)',
+                      padding: 12, borderRadius: 14
+                    }}>
+                      <div style={{ fontSize: 9, fontWeight: 900, color: '#2dd4bf', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <ShoppingBag size={12} /> УСПІШНО ДОДАНО ({formData.items.length})
+                      </div>
                       {formData.items.map((item, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '8px 12px', borderRadius: 10, fontSize: 12 }}>
-                          <span>{item.name} <strong style={{ color: '#8b5cf6' }}>x{item.quantity}</strong></span>
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.15)', padding: '10px 12px', borderRadius: 10, fontSize: 12, border: '1px solid rgba(255,255,255,0.02)' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', color: '#fff', fontWeight: 650 }}>
+                            <CheckCircle2 size={12} style={{ color: '#2dd4bf', marginRight: 8, flexShrink: 0 }} />
+                            {item.name} 
+                            <span style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', padding: '2px 6px', borderRadius: 6, fontSize: 10, fontWeight: 900, marginLeft: 8 }}>
+                              x{item.quantity}
+                            </span>
+                          </span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <span>{item.price * item.quantity} ₴</span>
-                            <button type="button" onClick={() => handleRemoveItem(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14}/></button>
+                            <span style={{ fontWeight: 800, color: '#2dd4bf' }}>{item.price * item.quantity} ₴</span>
+                            <button type="button" onClick={() => handleRemoveItem(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14}/></button>
                           </div>
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    <div style={{ 
+                      textAlign: 'center', padding: '20px 12px', borderRadius: 14, 
+                      background: 'rgba(0,0,0,0.1)', border: '1px dashed var(--border)',
+                      color: 'var(--text-muted)', fontSize: 12, marginBottom: 20
+                    }}>
+                      Кошик порожній. Додайте товари нижче.
+                    </div>
                   )}
 
+                  {/* Horizontal Divider */}
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '20px 0' }} />
+
                   {/* Add item to form fields */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, overflow: 'visible' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflow: 'visible' }}>
+                    <div style={{ fontSize: 9, fontWeight: 900, color: '#8b5cf6', textTransform: 'uppercase', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Plus size={12} /> ДОДАТИ НОВИЙ ТОВАР У КОШИК
+                    </div>
+
                     <ThemeSelect 
                       value={selectedProductId}
                       onChange={handleProductSelect}
@@ -1047,9 +1075,14 @@ export default function SalesDashboard({ showToast }) {
                     <button 
                       type="button" 
                       onClick={handleAddManualItem}
-                      style={{ background: 'rgba(45,212,191,0.1)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.2)', padding: 10, borderRadius: 10, fontSize: 11, fontWeight: 900, cursor: 'pointer' }}
+                      style={{ 
+                        background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(45,212,191,0.15))', 
+                        color: '#fff', border: '1px solid rgba(45,212,191,0.2)', padding: 12, borderRadius: 12, 
+                        fontSize: 12, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        transition: 'all 0.2s'
+                      }}
                     >
-                      ДОДАТИ ТОВАР ДО СПИСКУ
+                      <Plus size={14} style={{ color: '#2dd4bf' }} /> ДОДАТИ ДО СПИСКУ
                     </button>
                   </div>
                 </div>
