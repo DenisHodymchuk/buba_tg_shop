@@ -8,6 +8,63 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Reusable custom themed dropdown component
+function ThemeSelect({ label, value, options, onChange, displayValue, placeholder = "Виберіть..." }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      {label && <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>{label}</label>}
+      <div 
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+        style={{ 
+          width: '100%', background: 'rgba(0,0,0,0.3)', border: isOpen ? '1px solid #7c3aed' : '1px solid var(--border)', borderRadius: 12, padding: 12, 
+          color: '#fff', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
+          userSelect: 'none', transition: 'border-color 0.2s'
+        }}
+      >
+        <span style={{ fontWeight: 650, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayValue || value || placeholder}</span>
+        <ChevronDown size={14} style={{ color: 'var(--text-muted)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => setIsOpen(false)} />
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.95 }} 
+              animate={{ opacity: 1, y: 0, scale: 1 }} 
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              style={{ 
+                position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, 
+                background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, 
+                zIndex: 1000, padding: 6, maxHeight: 220, overflowY: 'auto', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+              }}
+            >
+              {options.map(opt => (
+                <div 
+                  key={opt.value}
+                  onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); }}
+                  style={{ 
+                    padding: '10px 14px', fontSize: 13, color: '#fff', borderRadius: 8, cursor: 'pointer', 
+                    fontWeight: value === opt.value ? 800 : 500, 
+                    background: value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={(e) => e.target.style.background = value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent'}
+                >
+                  {opt.label}
+                </div>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function SalesDashboard({ showToast }) {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -21,7 +78,6 @@ export default function SalesDashboard({ showToast }) {
   
   // Form state
   const [editingSale, setEditingSale] = useState(null);
-  const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
   const [formData, setFormData] = useState({
     source: 'olx',
     firstName: '',
@@ -304,6 +360,13 @@ export default function SalesDashboard({ showToast }) {
     return 'Інше';
   };
 
+  const productOptions = useMemo(() => {
+    return [
+      { value: '', label: '-- Виберіть наявний товар --' },
+      ...products.map(p => ({ value: p.id, label: `${p.name} (${p.price} ₴)` }))
+    ];
+  }, [products]);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
       
@@ -373,7 +436,7 @@ export default function SalesDashboard({ showToast }) {
       </div>
 
       {/* Filter and search bar */}
-      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16, alignItems: isMobile ? 'stretch' : 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 24, padding: 20 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16, alignItems: isMobile ? 'stretch' : 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 24, padding: 20, overflow: 'visible' }}>
         
         {/* Search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 16px', flex: 1 }}>
@@ -388,48 +451,45 @@ export default function SalesDashboard({ showToast }) {
         </div>
 
         {/* Filters Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 150px)', gap: 12 }}>
-          <div>
-            <select 
-              value={sourceFilter}
-              onChange={e => setSourceFilter(e.target.value)}
-              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 12, outline: 'none', cursor: 'pointer' }}
-            >
-              <option value="Всі">Всі канали</option>
-              <option value="website">Сайт</option>
-              <option value="olx">OLX</option>
-              <option value="instagram">Instagram</option>
-              <option value="facebook">Facebook</option>
-              <option value="telegram">Telegram</option>
-              <option value="offline">Офлайн</option>
-              <option value="other">Інше</option>
-            </select>
-          </div>
-          <div>
-            <select 
-              value={paymentFilter}
-              onChange={e => setPaymentFilter(e.target.value)}
-              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 12, outline: 'none', cursor: 'pointer' }}
-            >
-              <option value="Всі">Всі оплати</option>
-              <option value="paid">Оплачено</option>
-              <option value="pending">Очікує</option>
-              <option value="verifying">Перевірка</option>
-            </select>
-          </div>
-          <div>
-            <select 
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 12, outline: 'none', cursor: 'pointer' }}
-            >
-              <option value="Всі">Всі статуси</option>
-              <option value="new">Нові</option>
-              <option value="completed">Виконані</option>
-              <option value="preparing">Підготовка</option>
-              <option value="cancelled">Скасовані</option>
-            </select>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 160px)', gap: 12, flexShrink: 0, overflow: 'visible' }}>
+          <ThemeSelect 
+            value={sourceFilter}
+            onChange={setSourceFilter}
+            displayValue={sourceFilter === 'Всі' ? 'Всі канали' : getPlatformBadgeName(sourceFilter)}
+            options={[
+              { value: 'Всі', label: 'Всі канали' },
+              { value: 'website', label: 'Сайт' },
+              { value: 'olx', label: 'OLX' },
+              { value: 'instagram', label: 'Instagram' },
+              { value: 'facebook', label: 'Facebook' },
+              { value: 'telegram', label: 'Telegram' },
+              { value: 'offline', label: 'Офлайн' },
+              { value: 'other', label: 'Інше' }
+            ]}
+          />
+          <ThemeSelect 
+            value={paymentFilter}
+            onChange={setPaymentFilter}
+            displayValue={paymentFilter === 'Всі' ? 'Всі оплати' : paymentFilter === 'paid' ? 'Оплачено' : paymentFilter === 'pending' ? 'Очікує' : 'Перевірка'}
+            options={[
+              { value: 'Всі', label: 'Всі оплати' },
+              { value: 'paid', label: 'Оплачено' },
+              { value: 'pending', label: 'Очікує' },
+              { value: 'verifying', label: 'Перевірка' }
+            ]}
+          />
+          <ThemeSelect 
+            value={statusFilter}
+            onChange={setStatusFilter}
+            displayValue={statusFilter === 'Всі' ? 'Всі статуси' : statusFilter === 'new' ? 'Нові' : statusFilter === 'completed' ? 'Виконані' : statusFilter === 'preparing' ? 'Підготовка' : 'Скасовані'}
+            options={[
+              { value: 'Всі', label: 'Всі статуси' },
+              { value: 'new', label: 'Нові' },
+              { value: 'completed', label: 'Виконані' },
+              { value: 'preparing', label: 'Підготовка' },
+              { value: 'cancelled', label: 'Скасовані' }
+            ]}
+          />
         </div>
       </div>
 
@@ -637,7 +697,7 @@ export default function SalesDashboard({ showToast }) {
         {showAddForm && (
           <div 
             onClick={() => {
-              setIsPlatformDropdownOpen(false);
+              // Any general outer click defaults
             }}
             style={{ 
               position: 'fixed', 
@@ -680,37 +740,21 @@ export default function SalesDashboard({ showToast }) {
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 
-                {/* Platform select */}
-                <div style={{ position: 'relative' }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Канал продажу</label>
-                  <div 
-                    onClick={(e) => { e.stopPropagation(); setIsPlatformDropdownOpen(!isPlatformDropdownOpen); }}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-                  >
-                    <span>{getPlatformBadgeName(formData.source)}</span>
-                    <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} />
-                  </div>
-                  <AnimatePresence>
-                    {isPlatformDropdownOpen && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        exit={{ opacity: 0, y: 10 }}
-                        style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, zIndex: 1100, padding: 6 }}
-                      >
-                        {['olx', 'instagram', 'facebook', 'telegram', 'offline', 'other'].map(src => (
-                          <div 
-                            key={src}
-                            onClick={() => { setFormData({ ...formData, source: src }); setIsPlatformDropdownOpen(false); }}
-                            style={{ padding: '10px 14px', fontSize: 13, color: '#fff', borderRadius: 8, cursor: 'pointer', fontWeight: formData.source === src ? 800 : 500, background: formData.source === src ? 'rgba(45,212,191,0.1)' : 'transparent' }}
-                          >
-                            {getPlatformBadgeName(src)}
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                {/* Platform select using ThemeSelect */}
+                <ThemeSelect 
+                  label="Канал продажу"
+                  value={formData.source}
+                  onChange={(val) => setFormData({ ...formData, source: val })}
+                  displayValue={getPlatformBadgeName(formData.source)}
+                  options={[
+                    { value: 'olx', label: 'OLX' },
+                    { value: 'instagram', label: 'Instagram' },
+                    { value: 'facebook', label: 'Facebook' },
+                    { value: 'telegram', label: 'Telegram' },
+                    { value: 'offline', label: 'Магазин (офлайн)' },
+                    { value: 'other', label: 'Інше' }
+                  ]}
+                />
 
                 {/* Client Info */}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
@@ -752,7 +796,7 @@ export default function SalesDashboard({ showToast }) {
                 </div>
 
                 {/* Items selection */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 20, padding: 16 }}>
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 20, padding: 16, overflow: 'visible' }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: '#2dd4bf', display: 'block', marginBottom: 12, textTransform: 'uppercase' }}>Товари у замовленні</label>
                   
                   {/* Existing items list */}
@@ -771,19 +815,14 @@ export default function SalesDashboard({ showToast }) {
                   )}
 
                   {/* Add item to form fields */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div>
-                      <select 
-                        value={selectedProductId}
-                        onChange={e => handleProductSelect(e.target.value)}
-                        style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 12, outline: 'none' }}
-                      >
-                        <option value="">-- Виберіть наявний товар --</option>
-                        {products.map(p => (
-                          <option key={p.id} value={p.id}>{p.name} ({p.price} ₴)</option>
-                        ))}
-                      </select>
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, overflow: 'visible' }}>
+                    <ThemeSelect 
+                      value={selectedProductId}
+                      onChange={handleProductSelect}
+                      displayValue={products.find(p => p.id === selectedProductId)?.name || ''}
+                      placeholder="-- Виберіть наявний товар --"
+                      options={productOptions}
+                    />
 
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8 }}>
                       <input 
@@ -813,7 +852,7 @@ export default function SalesDashboard({ showToast }) {
                 </div>
 
                 {/* Financial overview */}
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, overflow: 'visible' }}>
                   <div>
                     <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Сума (₴) (залишіть пустим для авто-розрахунку)</label>
                     <input 
@@ -822,33 +861,32 @@ export default function SalesDashboard({ showToast }) {
                       style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
                     />
                   </div>
-                  <div>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Оплата</label>
-                    <select 
-                      value={formData.payment_status}
-                      onChange={e => setFormData({ ...formData, payment_status: e.target.value })}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none', cursor: 'pointer' }}
-                    >
-                      <option value="paid">Оплачено</option>
-                      <option value="pending">Очікує</option>
-                      <option value="verifying">Перевірка</option>
-                    </select>
-                  </div>
+                  
+                  <ThemeSelect 
+                    label="Оплата"
+                    value={formData.payment_status}
+                    onChange={(val) => setFormData({ ...formData, payment_status: val })}
+                    displayValue={formData.payment_status === 'paid' ? 'Оплачено' : formData.payment_status === 'pending' ? 'Очікує' : 'Перевірка'}
+                    options={[
+                      { value: 'paid', label: 'Оплачено' },
+                      { value: 'pending', label: 'Очікує' },
+                      { value: 'verifying', label: 'Перевірка' }
+                    ]}
+                  />
                 </div>
 
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Статус замовлення</label>
-                  <select 
-                    value={formData.status}
-                    onChange={e => setFormData({ ...formData, status: e.target.value })}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none', cursor: 'pointer' }}
-                  >
-                    <option value="completed">Виконано</option>
-                    <option value="new">Нове</option>
-                    <option value="preparing">Підготовка</option>
-                    <option value="cancelled">Скасовано</option>
-                  </select>
-                </div>
+                <ThemeSelect 
+                  label="Статус замовлення"
+                  value={formData.status}
+                  onChange={(val) => setFormData({ ...formData, status: val })}
+                  displayValue={formData.status === 'completed' ? 'Виконано' : formData.status === 'new' ? 'Нове' : formData.status === 'preparing' ? 'Підготовка' : 'Скасовано'}
+                  options={[
+                    { value: 'completed', label: 'Виконано' },
+                    { value: 'new', label: 'Нове' },
+                    { value: 'preparing', label: 'Підготовка' },
+                    { value: 'cancelled', label: 'Скасовано' }
+                  ]}
+                />
 
                 {/* Submit buttons */}
                 <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
