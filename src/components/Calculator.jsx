@@ -503,7 +503,7 @@ export default function Calculator() {
               {showMaterialForm && (
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                  style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 16, border: '1px solid #7c3aed40', marginBottom: 16, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}
+                  style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 16, border: '1px solid #7c3aed40', marginBottom: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12 }}
                 >
                   <div style={{ gridColumn: '1/-1' }}>
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Назва (автоматично)</label>
