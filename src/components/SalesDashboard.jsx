@@ -824,21 +824,29 @@ export default function SalesDashboard({ showToast }) {
                       options={productOptions}
                     />
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <input 
+                          type="text" placeholder="Або введіть назву..." value={newItem.name}
+                          onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none' }}
+                        />
+                      </div>
                       <input 
-                        type="text" placeholder="Або введіть назву..." value={newItem.name}
-                        onChange={e => setNewItem({ ...newItem, name: e.target.value })}
-                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 12, outline: 'none' }}
+                        type="text" inputMode="numeric" placeholder="Кількість" value={newItem.quantity}
+                        onChange={e => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          setNewItem({ ...newItem, quantity: val });
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
                       />
                       <input 
-                        type="number" placeholder="Кіл." value={newItem.quantity}
-                        onChange={e => setNewItem({ ...newItem, quantity: e.target.value })}
-                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 12, outline: 'none', textAlign: 'center' }}
-                      />
-                      <input 
-                        type="number" placeholder="Ціна (₴)" value={newItem.price}
-                        onChange={e => setNewItem({ ...newItem, price: e.target.value })}
-                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 12, outline: 'none', textAlign: 'center' }}
+                        type="text" inputMode="decimal" placeholder="Ціна (₴)" value={newItem.price}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '');
+                          setNewItem({ ...newItem, price: val });
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
                       />
                     </div>
                     <button 
@@ -852,12 +860,15 @@ export default function SalesDashboard({ showToast }) {
                 </div>
 
                 {/* Financial overview */}
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, overflow: 'visible' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, overflow: 'visible' }}>
                   <div>
                     <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Сума (₴) (залишіть пустим для авто-розрахунку)</label>
                     <input 
-                      type="number" placeholder="Наприклад: 1200" value={formData.total} 
-                      onChange={e => setFormData({ ...formData, total: e.target.value })}
+                      type="text" inputMode="decimal" placeholder="Наприклад: 1200" value={formData.total} 
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^0-9.]/g, '');
+                        setFormData({ ...formData, total: val });
+                      }}
                       style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
                     />
                   </div>
