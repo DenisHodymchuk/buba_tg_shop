@@ -4,19 +4,34 @@ import { supabase } from '@/lib/supabase';
 import { 
   Coins, Search, Plus, Trash2, Calendar, ShoppingBag, 
   ArrowUpRight, AlertCircle, Edit3, X, ChevronDown, 
-  CheckCircle2, Info, Loader2, Filter, Receipt, ExternalLink
+  CheckCircle2, Info, Loader2, Filter, Receipt, ExternalLink,
+  Clock, ClipboardList, Printer, Truck, Send, XCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Reusable custom themed dropdown component
 function ThemeSelect({ label, value, options, onChange, displayValue, placeholder = "Виберіть...", inline = false }) {
   const [isOpen, setIsOpen] = useState(false);
+  const containerRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
   
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
       {label && <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>{label}</label>}
       <div 
-        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+        onClick={() => setIsOpen(!isOpen)}
         style={{ 
           width: '100%', background: 'rgba(0,0,0,0.3)', border: isOpen ? '1px solid #7c3aed' : '1px solid var(--border)', borderRadius: 12, padding: 12, 
           color: '#fff', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
@@ -29,44 +44,52 @@ function ThemeSelect({ label, value, options, onChange, displayValue, placeholde
 
       <AnimatePresence>
         {isOpen && (
-          <>
-            {!inline && <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => setIsOpen(false)} />}
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }} 
-              animate={{ opacity: 1, height: 'auto' }} 
-              exit={{ opacity: 0, height: 0 }}
-              style={{ 
-                position: inline ? 'relative' : 'absolute', 
-                top: inline ? 'auto' : 'calc(100% + 6px)', 
-                left: 0, right: 0, 
-                marginTop: 6,
-                background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, 
-                zIndex: inline ? 1 : 1000, padding: 6, maxHeight: 200, overflowY: 'auto', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-              }}
-            >
-              {options.map(opt => (
-                <div 
-                  key={opt.value}
-                  onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); }}
-                  style={{ 
-                    padding: '10px 14px', fontSize: 13, color: '#fff', borderRadius: 8, cursor: 'pointer', 
-                    fontWeight: value === opt.value ? 800 : 500, 
-                    background: value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={(e) => e.target.style.background = value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent'}
-                >
-                  {opt.label}
-                </div>
-              ))}
-            </motion.div>
-          </>
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            style={{ 
+              position: inline ? 'relative' : 'absolute', 
+              top: inline ? 'auto' : 'calc(100% + 6px)', 
+              left: 0, right: 0, 
+              marginTop: 6,
+              background: '#1e293b', border: '1px solid rgba(124, 58, 237, 0.4)', borderRadius: 12, 
+              zIndex: inline ? 1 : 1000, padding: 6, maxHeight: 200, overflowY: 'auto', 
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.5)'
+            }}
+          >
+            {options.map(opt => (
+              <div 
+                key={opt.value}
+                onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); }}
+                style={{ 
+                  padding: '10px 14px', fontSize: 13, color: '#fff', borderRadius: 8, cursor: 'pointer', 
+                  fontWeight: value === opt.value ? 800 : 500, 
+                  background: value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={(e) => e.target.style.background = value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent'}
+              >
+                {opt.label}
+              </div>
+            ))}
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
 }
+
+const STATUS_META = {
+  new: { label: 'Нове', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
+  preparing: { label: 'Підготовка', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
+  printing: { label: 'Друкується', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
+  shipping: { label: 'Доставка', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+  shipped: { label: 'Відправлено поштою', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send },
+  completed: { label: 'Виконано', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', icon: CheckCircle2 },
+  cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
+};
 
 export default function SalesDashboard({ showToast }) {
   const [sales, setSales] = useState([]);
@@ -409,11 +432,14 @@ export default function SalesDashboard({ showToast }) {
   };
 
   const productOptions = useMemo(() => {
+    const addedNames = new Set(formData.items.map(item => item.name));
     return [
       { value: '', label: '-- Виберіть наявний товар --' },
-      ...products.map(p => ({ value: p.id, label: `${p.name} (${p.price} ₴)` }))
+      ...products
+        .filter(p => !addedNames.has(p.name))
+        .map(p => ({ value: p.id, label: `${p.name} (${p.price} ₴)` }))
     ];
-  }, [products]);
+  }, [products, formData.items]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
@@ -596,13 +622,10 @@ export default function SalesDashboard({ showToast }) {
           <ThemeSelect 
             value={statusFilter}
             onChange={setStatusFilter}
-            displayValue={statusFilter === 'Всі' ? 'Всі статуси' : statusFilter === 'new' ? 'Нові' : statusFilter === 'completed' ? 'Виконані' : statusFilter === 'preparing' ? 'Підготовка' : 'Скасовані'}
+            displayValue={statusFilter === 'Всі' ? 'Всі статуси' : STATUS_META[statusFilter]?.label || statusFilter}
             options={[
               { value: 'Всі', label: 'Всі статуси' },
-              { value: 'new', label: 'Нові' },
-              { value: 'completed', label: 'Виконані' },
-              { value: 'preparing', label: 'Підготовка' },
-              { value: 'cancelled', label: 'Скасовані' }
+              ...Object.keys(STATUS_META).map(key => ({ value: key, label: STATUS_META[key].label }))
             ]}
           />
         </div>
@@ -671,20 +694,38 @@ export default function SalesDashboard({ showToast }) {
                   )}
 
                   {/* Financial block */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'rgba(0,0,0,0.15)', padding: 14, borderRadius: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, background: 'rgba(0,0,0,0.15)', padding: 12, borderRadius: 16 }}>
                     <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Сума</div>
-                      <div style={{ fontSize: 16, fontWeight: 950, color: '#2dd4bf' }}>{sale.total} ₴</div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Сума</div>
+                      <div style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>{sale.total} ₴</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Оплата</div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Оплата</div>
                       <div style={{ 
-                        fontSize: 10, fontWeight: 900, display: 'inline-block', padding: '4px 8px', borderRadius: 6,
+                        fontSize: 9, fontWeight: 900, display: 'inline-block', padding: '4px 6px', borderRadius: 6,
                         background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
-                        color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24'
+                        color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24',
+                        textAlign: 'center', width: '100%', boxSizing: 'border-box', whiteSpace: 'nowrap'
                       }}>
-                        {sale.payment_status === 'paid' ? 'ОПЛАЧЕНО' : sale.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
+                        {sale.payment_status === 'paid' ? 'ОПЛ.' : sale.payment_status === 'verifying' ? 'ПЕРЕВ.' : 'ОЧІК.'}
                       </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Статус</div>
+                      {(() => {
+                        const meta = STATUS_META[sale.status] || STATUS_META.new;
+                        const Icon = meta.icon;
+                        return (
+                          <div style={{ 
+                            fontSize: 9, fontWeight: 900, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '4px 6px', borderRadius: 6,
+                            background: meta.bg, color: meta.color, textAlign: 'center', width: '100%', boxSizing: 'border-box', whiteSpace: 'nowrap',
+                            textTransform: 'uppercase'
+                          }}>
+                            <Icon size={10} />
+                            <span>{meta.label === 'Відправлено поштою' ? 'ВІДПР.' : meta.label.toUpperCase()}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -778,8 +819,21 @@ export default function SalesDashboard({ showToast }) {
                             {sale.payment_status === 'paid' ? 'ОПЛАЧЕНО' : sale.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
                           </span>
                         </td>
-                        <td style={{ padding: '16px 20px', textAlign: 'center', textTransform: 'uppercase', fontSize: 11, fontWeight: 900 }}>
-                          {sale.status === 'completed' ? 'Виконано' : sale.status === 'cancelled' ? 'Скасовано' : 'В процесі'}
+                        <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                          {(() => {
+                            const meta = STATUS_META[sale.status] || STATUS_META.new;
+                            const Icon = meta.icon;
+                            return (
+                              <span style={{ 
+                                fontSize: 10, fontWeight: 900, padding: '4px 8px', borderRadius: 6,
+                                background: meta.bg, color: meta.color, display: 'inline-flex', alignItems: 'center', gap: 4,
+                                textTransform: 'uppercase'
+                              }}>
+                                <Icon size={12} />
+                                {meta.label}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td style={{ padding: '16px 20px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
@@ -1006,13 +1060,8 @@ export default function SalesDashboard({ showToast }) {
                   label="Статус замовлення"
                   value={formData.status}
                   onChange={(val) => setFormData({ ...formData, status: val })}
-                  displayValue={formData.status === 'completed' ? 'Виконано' : formData.status === 'new' ? 'Нове' : formData.status === 'preparing' ? 'Підготовка' : 'Скасовано'}
-                  options={[
-                    { value: 'completed', label: 'Виконано' },
-                    { value: 'new', label: 'Нове' },
-                    { value: 'preparing', label: 'Підготовка' },
-                    { value: 'cancelled', label: 'Скасовано' }
-                  ]}
+                  displayValue={STATUS_META[formData.status]?.label || STATUS_META.new.label}
+                  options={Object.keys(STATUS_META).map(key => ({ value: key, label: STATUS_META[key].label }))}
                 />
 
                 {/* Submit buttons */}

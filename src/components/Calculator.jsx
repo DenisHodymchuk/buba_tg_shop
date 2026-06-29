@@ -945,9 +945,24 @@ const ModernSelect = ({ label, value, options, onChange, onAdd, placeholder = "�
   const [isOpen, setIsOpen] = useState(false);
   const [isAddMode, setIsAddMode] = useState(false);
   const [newValue, setNewValue] = useState('');
+  const containerRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setIsAddMode(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
+    <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
       <label style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 900, textTransform: 'uppercase' }}>{label}</label>
       <div 
         onClick={() => setIsOpen(!isOpen)}
@@ -964,76 +979,73 @@ const ModernSelect = ({ label, value, options, onChange, onAdd, placeholder = "�
 
       <AnimatePresence>
         {isOpen && (
-          <>
-            <div style={{ position: 'fixed', inset: 0, zIndex: 100 }} onClick={() => { setIsOpen(false); setIsAddMode(false); }} />
-            <motion.div 
-              initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              style={{ 
-                position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 8, 
-                background: '#161b22', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, 
-                boxShadow: '0 20px 40px rgba(0,0,0,0.4)', zIndex: 101, overflow: 'hidden', padding: 6
-              }}
-            >
-              {!isAddMode ? (
-                <>
-                  <div style={{ maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
-                    {options.map(opt => (
-                      <div 
-                        key={opt}
-                        onClick={(e) => { e.stopPropagation(); onChange(opt); setIsOpen(false); }}
-                        style={{ 
-                          padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontSize: 13, color: '#e6edf3',
-                          background: value === opt ? 'rgba(124,58,237,0.2)' : 'transparent',
-                          fontWeight: value === opt ? 800 : 500, transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                        onMouseLeave={(e) => e.target.style.background = value === opt ? 'rgba(124,58,237,0.2)' : 'transparent'}
-                      >
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                  <div 
-                    onClick={(e) => { e.stopPropagation(); setIsAddMode(true); }}
-                    style={{ 
-                      padding: '12px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)',
-                      color: '#7c3aed', fontSize: 12, fontWeight: 900, cursor: 'pointer', textAlign: 'center'
-                    }}
-                  >
-                    + ДОДАТИ НОВИЙ
-                  </div>
-                </>
-              ) : (
-                <div style={{ padding: 12 }} onClick={(e) => e.stopPropagation()}>
-                  <input 
-                    autoFocus
-                    placeholder={`Назва ${label.toLowerCase()}...`}
-                    value={newValue}
-                    onChange={e => setNewValue(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid #7c3aed40', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, outline: 'none', marginBottom: 12 }}
-                  />
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <button 
-                      onClick={() => { if(newValue) { onAdd(newValue); onChange(newValue); } setIsAddMode(false); setNewValue(''); setIsOpen(false); }}
-                      style={{ flex: 1, height: 40, borderRadius: 10, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 900, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}
-                      onMouseEnter={(e) => e.target.style.background = '#6d28d9'}
-                      onMouseLeave={(e) => e.target.style.background = '#7c3aed'}
+          <motion.div 
+            initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            style={{ 
+              position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 8, 
+              background: '#1e293b', border: '1px solid rgba(124, 58, 237, 0.4)', borderRadius: 16, 
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)', zIndex: 101, overflow: 'hidden', padding: 6
+            }}
+          >
+            {!isAddMode ? (
+              <>
+                <div style={{ maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
+                  {options.map(opt => (
+                    <div 
+                      key={opt}
+                      onClick={(e) => { e.stopPropagation(); onChange(opt); setIsOpen(false); }}
+                      style={{ 
+                        padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontSize: 13, color: '#e6edf3',
+                        background: value === opt ? 'rgba(124,58,237,0.2)' : 'transparent',
+                        fontWeight: value === opt ? 800 : 500, transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={(e) => e.target.style.background = value === opt ? 'rgba(124,58,237,0.2)' : 'transparent'}
                     >
-                      Зберегти
-                    </button>
-                    <button 
-                      onClick={() => { setIsAddMode(false); setNewValue(''); }}
-                      style={{ flex: 1, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 800, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}
-                      onMouseEnter={(e) => { e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.color = '#fff'; }}
-                      onMouseLeave={(e) => { e.target.style.background = 'rgba(255,255,255,0.05)'; e.target.style.color = '#94a3b8'; }}
-                    >
-                      Скасувати
-                    </button>
-                  </div>
+                      {opt}
+                    </div>
+                  ))}
                 </div>
-              )}
-            </motion.div>
-          </>
+                <div 
+                  onClick={(e) => { e.stopPropagation(); setIsAddMode(true); }}
+                  style={{ 
+                    padding: '12px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)',
+                    color: '#7c3aed', fontSize: 12, fontWeight: 900, cursor: 'pointer', textAlign: 'center'
+                  }}
+                >
+                  + ДОДАТИ НОВИЙ
+                </div>
+              </>
+            ) : (
+              <div style={{ padding: 12 }} onClick={(e) => e.stopPropagation()}>
+                <input 
+                  autoFocus
+                  placeholder={`Назва ${label.toLowerCase()}...`}
+                  value={newValue}
+                  onChange={e => setNewValue(e.target.value)}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid #7c3aed40', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, outline: 'none', marginBottom: 12 }}
+                />
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button 
+                    onClick={() => { if(newValue) { onAdd(newValue); onChange(newValue); } setIsAddMode(false); setNewValue(''); setIsOpen(false); }}
+                    style={{ flex: 1, height: 40, borderRadius: 10, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 900, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}
+                    onMouseEnter={(e) => e.target.style.background = '#6d28d9'}
+                    onMouseLeave={(e) => e.target.style.background = '#7c3aed'}
+                  >
+                    Зберегти
+                  </button>
+                  <button 
+                    onClick={() => { setIsAddMode(false); setNewValue(''); }}
+                    style={{ flex: 1, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 800, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}
+                    onMouseEnter={(e) => { e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.color = '#fff'; }}
+                    onMouseLeave={(e) => { e.target.style.background = 'rgba(255,255,255,0.05)'; e.target.style.color = '#94a3b8'; }}
+                  >
+                    Скасувати
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

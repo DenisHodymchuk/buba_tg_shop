@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
-  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone, Menu
+  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone, Menu,
+  Clock, ClipboardList, Printer, Truck, XCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
@@ -1156,11 +1157,36 @@ export default function AdminPanel() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус замовлення:</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {['Всі', 'new', 'preparing', 'printing', 'shipping', 'completed', 'cancelled'].map(s => (
-                      <button key={s} onClick={() => setStatusFilter(s)} style={{ padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, background: statusFilter === s ? '#3b82f6' : 'rgba(255,255,255,0.03)', color: statusFilter === s ? '#fff' : '#6b6b8a', border: 'none', cursor: 'pointer' }}>
-                        {s === 'Всі' ? 'ВСІ' : s === 'new' ? 'НОВІ' : s === 'preparing' ? 'ПІДГОТОВКА' : s === 'printing' ? 'ДРУК' : s === 'shipping' ? 'ДОСТАВКА' : s === 'completed' ? 'ВИКОНАНО' : 'СКАСОВАНО'}
-                      </button>
-                    ))}
+                    {[
+                      { val: 'Всі', label: 'ВСІ', color: '#6b6b8a', bg: 'rgba(255,255,255,0.03)', icon: null },
+                      { val: 'new', label: 'НОВІ', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
+                      { val: 'preparing', label: 'ПІДГОТОВКА', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
+                      { val: 'printing', label: 'ДРУК', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
+                      { val: 'shipping', label: 'ДОСТАВКА', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+                      { val: 'shipped', label: 'ВІДПРАВЛЕНО ПОШТОЮ', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send },
+                      { val: 'completed', label: 'ВИКОНАНО', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', icon: CheckCircle2 },
+                      { val: 'cancelled', label: 'СКАСОВАНО', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
+                    ].map(item => {
+                      const Icon = item.icon;
+                      const active = statusFilter === item.val;
+                      return (
+                        <button 
+                          key={item.val} 
+                          onClick={() => setStatusFilter(item.val)} 
+                          style={{ 
+                            padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                            background: active ? item.color : 'rgba(255,255,255,0.03)', 
+                            color: active ? '#fff' : '#6b6b8a', 
+                            border: 'none', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {Icon && <Icon size={12} />}
+                          {item.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
                 <div style={{ width: isMobile ? '100%' : 1, height: isMobile ? 1 : 'auto', background: 'rgba(255,255,255,0.05)', margin: isMobile ? '10px 0' : '0 10px' }} />
@@ -1195,30 +1221,29 @@ export default function AdminPanel() {
                           {new Date(order.created_at).toLocaleString('uk-UA')}
                         </div>
                       </div>
-                      <div style={{ 
-                        padding: '6px 14px', borderRadius: 10, fontSize: 11, fontWeight: 900, 
-                        background: 
-                          order.status === 'new' ? 'rgba(59,130,246,0.1)' : 
-                          order.status === 'preparing' ? 'rgba(245,158,11,0.1)' :
-                          order.status === 'printing' ? 'rgba(124,58,237,0.1)' :
-                          order.status === 'shipping' ? 'rgba(236,72,153,0.1)' :
-                          order.status === 'completed' ? 'rgba(34,197,94,0.1)' : 'rgba(107,114,128,0.1)',
-                        color: 
-                          order.status === 'new' ? '#3b82f6' : 
-                          order.status === 'preparing' ? '#f59e0b' :
-                          order.status === 'printing' ? '#7c3aed' :
-                          order.status === 'shipping' ? '#ec4899' :
-                          order.status === 'completed' ? '#22c55e' : '#6b7280',
-                        textTransform: 'uppercase'
-                      }}>
-                        {
-                          order.status === 'new' ? 'Нове' : 
-                          order.status === 'preparing' ? 'Підготовка' :
-                          order.status === 'printing' ? 'Друкується' :
-                          order.status === 'shipping' ? 'Відправка' :
-                          order.status === 'completed' ? 'Виконано' : 'Скасовано'
-                        }
-                      </div>
+                      {(() => {
+                        const statusMeta = {
+                          new: { label: 'Нове', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
+                          preparing: { label: 'Підготовка', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
+                          printing: { label: 'Друкується', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
+                          shipping: { label: 'Відправка', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+                          shipped: { label: 'Відправлено поштою', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send },
+                          completed: { label: 'Виконано', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', icon: CheckCircle2 },
+                          cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
+                        };
+                        const meta = statusMeta[order.status] || statusMeta.new;
+                        const Icon = meta.icon;
+                        return (
+                          <div style={{ 
+                            padding: '6px 14px', borderRadius: 10, fontSize: 11, fontWeight: 900, 
+                            background: meta.bg, color: meta.color,
+                            textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6
+                          }}>
+                            <Icon size={12} />
+                            {meta.label}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 20, padding: '16px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -1286,12 +1311,13 @@ export default function AdminPanel() {
                     )}
 
                     <div style={{ marginTop: 24, display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                      <StatusBtn label="Підготовка" active={order.status === 'preparing'} color="#f59e0b" onClick={() => updateOrderStatus(order.id, 'preparing')} />
-                      <StatusBtn label="Друкується" active={order.status === 'printing'} color="#7c3aed" onClick={() => updateOrderStatus(order.id, 'printing')} />
-                      <StatusBtn label="Відправка" active={order.status === 'shipping'} color="#ec4899" onClick={() => updateOrderStatus(order.id, 'shipping')} />
-                      <StatusBtn label="Виконано" active={order.status === 'completed'} color="#22c55e" onClick={() => updateOrderStatus(order.id, 'completed')} />
+                      <StatusBtn label="Підготовка" active={order.status === 'preparing'} color="#f59e0b" icon={<ClipboardList size={12} />} onClick={() => updateOrderStatus(order.id, 'preparing')} />
+                      <StatusBtn label="Друкується" active={order.status === 'printing'} color="#7c3aed" icon={<Printer size={12} />} onClick={() => updateOrderStatus(order.id, 'printing')} />
+                      <StatusBtn label="Відправка" active={order.status === 'shipping'} color="#ec4899" icon={<Truck size={12} />} onClick={() => updateOrderStatus(order.id, 'shipping')} />
+                      <StatusBtn label="Відправлено поштою" active={order.status === 'shipped'} color="#10b981" icon={<Send size={12} />} onClick={() => updateOrderStatus(order.id, 'shipped')} />
+                      <StatusBtn label="Виконано" active={order.status === 'completed'} color="#22c55e" icon={<CheckCircle2 size={12} />} onClick={() => updateOrderStatus(order.id, 'completed')} />
                       <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                         <StatusBtn label="Скасувати" active={order.status === 'cancelled'} color="#ef4444" onClick={() => updateOrderStatus(order.id, 'cancelled')} />
+                         <StatusBtn label="Скасувати" active={order.status === 'cancelled'} color="#ef4444" icon={<XCircle size={12} />} onClick={() => updateOrderStatus(order.id, 'cancelled')} />
                          <button 
                             onClick={() => setModal({ 
                               open: true, 
@@ -2150,7 +2176,7 @@ function SidebarBtn({ active, icon, label, onClick }) {
   );
 }
 
-function StatusBtn({ label, active, color, onClick }) {
+function StatusBtn({ label, active, color, onClick, icon }) {
   return (
     <button 
       onClick={onClick}
@@ -2160,9 +2186,13 @@ function StatusBtn({ label, active, color, onClick }) {
         color: active ? '#fff' : 'var(--text-muted)',
         border: active ? 'none' : '1px solid var(--border)',
         cursor: 'pointer', transition: 'all 0.2s',
-        boxShadow: active ? `0 4px 12px ${color}40` : 'none'
+        boxShadow: active ? `0 4px 12px ${color}40` : 'none',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6
       }}
     >
+      {icon}
       {label}
     </button>
   );
