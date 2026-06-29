@@ -316,11 +316,11 @@ export default function AdvertisingDashboard({ showToast }) {
           borderRadius: 24, 
           border: stats.romi >= 0 ? '1px solid rgba(168,85,247,0.2)' : '1px solid rgba(249,115,22,0.2)' 
         }}>
-          <div style={{ color: stats.romi >= 0 ? '#c084fc' : '#f97316', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Рентабельність (ROMI)</div>
+          <div style={{ color: stats.romi >= 0 ? '#c084fc' : '#f97316', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Окупність реклами</div>
           <div style={{ fontSize: 28, fontWeight: 950, color: stats.romi >= 0 ? '#4ade80' : '#f97316' }}>
             {stats.romi >= 0 ? `+${stats.romi.toFixed(1)}%` : `${stats.romi.toFixed(1)}%`}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Окупність маркетингових витрат</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Відсоток прибутку від витрат (ROMI)</div>
         </div>
       </div>
 
@@ -373,7 +373,7 @@ export default function AdvertisingDashboard({ showToast }) {
                 <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ВИТРАТИ</th>
                 <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРОДАЖІ (ДОХІД)</th>
                 <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРИБУТОК</th>
-                <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ROMI</th>
+                <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ОКУПНІСТЬ (ROMI)</th>
                 <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>НОТАТКИ</th>
                 <th style={{ textAlign: 'right', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДІЇ</th>
               </tr>
