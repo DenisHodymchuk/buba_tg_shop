@@ -9,7 +9,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Reusable custom themed dropdown component
-function ThemeSelect({ label, value, options, onChange, displayValue, placeholder = "Виберіть..." }) {
+function ThemeSelect({ label, value, options, onChange, displayValue, placeholder = "Виберіть...", inline = false }) {
   const [isOpen, setIsOpen] = useState(false);
   
   return (
@@ -30,15 +30,18 @@ function ThemeSelect({ label, value, options, onChange, displayValue, placeholde
       <AnimatePresence>
         {isOpen && (
           <>
-            <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => setIsOpen(false)} />
+            {!inline && <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => setIsOpen(false)} />}
             <motion.div 
-              initial={{ opacity: 0, y: 10, scale: 0.95 }} 
-              animate={{ opacity: 1, y: 0, scale: 1 }} 
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              initial={{ opacity: 0, height: 0 }} 
+              animate={{ opacity: 1, height: 'auto' }} 
+              exit={{ opacity: 0, height: 0 }}
               style={{ 
-                position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, 
+                position: inline ? 'relative' : 'absolute', 
+                top: inline ? 'auto' : 'calc(100% + 6px)', 
+                left: 0, right: 0, 
+                marginTop: 6,
                 background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, 
-                zIndex: 1000, padding: 6, maxHeight: 220, overflowY: 'auto', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                zIndex: inline ? 1 : 1000, padding: 6, maxHeight: 200, overflowY: 'auto', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
               }}
             >
               {options.map(opt => (
@@ -822,6 +825,7 @@ export default function SalesDashboard({ showToast }) {
                       displayValue={products.find(p => p.id === selectedProductId)?.name || ''}
                       placeholder="-- Виберіть наявний товар --"
                       options={productOptions}
+                      inline={true}
                     />
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
