@@ -1043,16 +1043,16 @@ export default function AdminPanel() {
           )}
         </div>
         <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <SidebarBtn active={activeTab === 'products'} onClick={() => setActiveTab('products')} icon={<Package size={18} />} label="Товари" />
-          <SidebarBtn active={activeTab === 'sales'} onClick={() => setActiveTab('sales')} icon={<ShoppingBag size={18} />} label="Замовлення" />
-          <SidebarBtn active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<User size={18} />} label="Клієнти" />
-          <SidebarBtn active={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} icon={<MessageSquare size={18} />} label="Відгуки" />
-          <SidebarBtn active={activeTab === 'broadcast'} onClick={() => setActiveTab('broadcast')} icon={<Send size={18} />} label="Розсилка" />
-          <SidebarBtn active={activeTab === 'calculator'} onClick={() => setActiveTab('calculator')} icon={<Calculator size={18} />} label="Калькулятор" />
-          <SidebarBtn active={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} icon={<Box size={18} />} label="Склад (Облік)" />
-          <SidebarBtn active={activeTab === 'marketing'} onClick={() => setActiveTab('marketing')} icon={<Megaphone size={18} />} label="Кабінет Реклами" />
+          <SidebarBtn active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Package size={18} />} label="Товари" />
+          <SidebarBtn active={activeTab === 'sales'} onClick={() => { setActiveTab('sales'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={18} />} label="Замовлення" />
+          <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
+          <SidebarBtn active={activeTab === 'reviews'} onClick={() => { setActiveTab('reviews'); setIsSidebarOpen(false); }} icon={<MessageSquare size={18} />} label="Відгуки" />
+          <SidebarBtn active={activeTab === 'broadcast'} onClick={() => { setActiveTab('broadcast'); setIsSidebarOpen(false); }} icon={<Send size={18} />} label="Розсилка" />
+          <SidebarBtn active={activeTab === 'calculator'} onClick={() => { setActiveTab('calculator'); setIsSidebarOpen(false); }} icon={<Calculator size={18} />} label="Калькулятор" />
+          <SidebarBtn active={activeTab === 'inventory'} onClick={() => { setActiveTab('inventory'); setIsSidebarOpen(false); }} icon={<Box size={18} />} label="Склад (Облік)" />
+          <SidebarBtn active={activeTab === 'marketing'} onClick={() => { setActiveTab('marketing'); setIsSidebarOpen(false); }} icon={<Megaphone size={18} />} label="Кабінет Реклами" />
 
-          <SidebarBtn active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={18} />} label="Налаштування" />
+          <SidebarBtn active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }} icon={<Settings size={18} />} label="Налаштування" />
         </nav>
 
         <div style={{ padding: 24, borderTop: '1px solid var(--border)' }}>
@@ -1161,7 +1161,7 @@ export default function AdminPanel() {
                     ))}
                   </div>
                 </div>
-                <div style={{ width: 1, background: 'rgba(255,255,255,0.05)', margin: '0 10px' }} />
+                <div style={{ width: isMobile ? '100%' : 1, height: isMobile ? 1 : 'auto', background: 'rgba(255,255,255,0.05)', margin: isMobile ? '10px 0' : '0 10px' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус оплати:</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
