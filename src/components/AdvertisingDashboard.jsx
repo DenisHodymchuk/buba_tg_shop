@@ -525,13 +525,34 @@ export default function AdvertisingDashboard({ showToast }) {
               setIsProductDropdownOpen(false);
               setIsSourceDropdownOpen(false);
             }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+            style={{ 
+              position: 'fixed', 
+              inset: 0, 
+              background: 'rgba(0,0,0,0.85)', 
+              backdropFilter: 'blur(10px)', 
+              zIndex: 1000, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              padding: '40px 20px',
+              overflowY: 'auto'
+            }}
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }} 
               animate={{ opacity: 1, scale: 1 }} 
               onClick={(e) => e.stopPropagation()}
-              style={{ background: '#0a192f', borderRadius: 32, padding: 32, width: '100%', maxWidth: 480, border: '1px solid rgba(255,255,255,0.1)', color: '#fff', overflow: 'visible' }}
+              style={{ 
+                background: '#0a192f', 
+                borderRadius: 32, 
+                padding: 32, 
+                width: '100%', 
+                maxWidth: 480, 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                color: '#fff', 
+                overflow: 'visible',
+                margin: 'auto 0'
+              }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h2 style={{ fontSize: 22, fontWeight: 900 }}>{editingAd ? 'Редагувати рекламу' : 'Нова реклама'}</h2>
@@ -917,11 +938,11 @@ export default function AdvertisingDashboard({ showToast }) {
       {/* Quick Add Revenue Modal */}
       <AnimatePresence>
         {quickRevenueModal.open && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, overflowY: 'auto' }}>
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }} 
               animate={{ opacity: 1, scale: 1 }} 
-              style={{ background: '#0a192f', borderRadius: 32, padding: 32, width: '100%', maxWidth: 400, border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+              style={{ background: '#0a192f', borderRadius: 32, padding: 32, width: '100%', maxWidth: 400, border: '1px solid rgba(255,255,255,0.1)', color: '#fff', margin: 'auto 0' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <h3 style={{ fontSize: 18, fontWeight: 900 }}>Додати суму продажу</h3>

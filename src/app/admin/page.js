@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
-  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone
+  Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone, Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
@@ -1007,7 +1007,7 @@ export default function AdminPanel() {
       {/* Mobile Header */}
       <header className="admin-mobile-header" style={{ height: 60, flexShrink: 0, background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', display: isMobile ? 'flex' : 'none', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between', zIndex: 100 }}>
         <button onClick={() => setIsSidebarOpen(true)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
-          <Filter size={24} />
+          <Menu size={24} />
         </button>
         <span style={{ fontWeight: 900, fontSize: 16 }}>BUBA ADMIN</span>
         <div style={{ width: 24 }} />
@@ -1029,13 +1029,18 @@ export default function AdminPanel() {
         top: 0, bottom: 0, left: isMobile ? (isSidebarOpen ? 0 : -260) : 0,
         transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
       }}>
-        <div style={{ padding: '32px 24px' }}>
+        <div style={{ padding: '32px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(135deg, #3b82f6, #2dd4bf)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Box className="text-white" size={20} />
             </div>
             <span style={{ fontWeight: 900, fontSize: 18, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>BUBA ADMIN</span>
           </div>
+          {isMobile && (
+            <button onClick={() => setIsSidebarOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer' }}>
+              <X size={20} />
+            </button>
+          )}
         </div>
         <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <SidebarBtn active={activeTab === 'products'} onClick={() => setActiveTab('products')} icon={<Package size={18} />} label="Товари" />
