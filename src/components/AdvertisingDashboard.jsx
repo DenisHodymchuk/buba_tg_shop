@@ -19,6 +19,7 @@ export default function AdvertisingDashboard({ showToast }) {
   // Custom dropdown states
   const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
   const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
+  const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     platform: 'Instagram',
@@ -26,6 +27,7 @@ export default function AdvertisingDashboard({ showToast }) {
     product_id: '',
     cost: '',
     revenue: '',
+    budget_source: 'Особисті кошти',
     ad_date: new Date().toISOString().split('T')[0],
     notes: ''
   });
@@ -72,10 +74,19 @@ export default function AdvertisingDashboard({ showToast }) {
   const stats = useMemo(() => {
     let totalCost = 0;
     let totalRevenue = 0;
+    let personalCost = 0;
+    let shopCost = 0;
     
     ads.forEach(ad => {
-      totalCost += parseFloat(ad.cost || 0);
+      const cost = parseFloat(ad.cost || 0);
+      totalCost += cost;
       totalRevenue += parseFloat(ad.revenue || 0);
+      
+      if (ad.budget_source === 'Кошти друкарні') {
+        shopCost += cost;
+      } else {
+        personalCost += cost;
+      }
     });
 
     const totalProfit = totalRevenue - totalCost;
@@ -85,7 +96,9 @@ export default function AdvertisingDashboard({ showToast }) {
       totalCost,
       totalRevenue,
       totalProfit,
-      romi
+      romi,
+      personalCost,
+      shopCost
     };
   }, [ads]);
 
@@ -134,6 +147,7 @@ export default function AdvertisingDashboard({ showToast }) {
       product_name: selectedProductName,
       cost: parseFloat(formData.cost) || 0,
       revenue: parseFloat(formData.revenue) || 0,
+      budget_source: formData.budget_source || 'Особисті кошти',
       ad_date: formData.ad_date,
       notes: formData.notes
     };
@@ -175,11 +189,13 @@ export default function AdvertisingDashboard({ showToast }) {
       product_id: '',
       cost: '',
       revenue: '',
+      budget_source: 'Особисті кошти',
       ad_date: new Date().toISOString().split('T')[0],
       notes: ''
     });
     setIsPlatformDropdownOpen(false);
     setIsProductDropdownOpen(false);
+    setIsSourceDropdownOpen(false);
   }
 
   // Open edit form
@@ -193,11 +209,13 @@ export default function AdvertisingDashboard({ showToast }) {
       product_id: ad.product_id || '',
       cost: ad.cost.toString(),
       revenue: ad.revenue.toString(),
+      budget_source: ad.budget_source || 'Особисті кошти',
       ad_date: ad.ad_date,
       notes: ad.notes || ''
     });
     setIsPlatformDropdownOpen(false);
     setIsProductDropdownOpen(false);
+    setIsSourceDropdownOpen(false);
     setShowAddForm(true);
   }
 
@@ -281,7 +299,9 @@ export default function AdvertisingDashboard({ showToast }) {
         <div style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(249,115,22,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(239,68,68,0.2)' }}>
           <div style={{ color: '#ef4444', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Витрачено на рекламу</div>
           <div style={{ fontSize: 28, fontWeight: 950 }}>{stats.totalCost.toFixed(0)} <span style={{ fontSize: 16, color: '#ef4444' }}>₴</span></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Загальний бюджет реклами</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+            Особисті: <span style={{ color: '#fff', fontWeight: 700 }}>{stats.personalCost.toFixed(0)} ₴</span> • Друк: <span style={{ color: '#fff', fontWeight: 700 }}>{stats.shopCost.toFixed(0)} ₴</span>
+          </div>
         </div>
 
         {/* Revenue */}
@@ -420,8 +440,13 @@ export default function AdvertisingDashboard({ showToast }) {
                         {ad.product_name}
                       </td>
                       {/* Cost */}
-                      <td style={{ padding: '16px 20px', textAlign: 'center', fontSize: 13, fontWeight: 800, color: '#ef4444' }}>
-                        {adCost.toFixed(0)} ₴
+                      <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: '#ef4444' }}>
+                          {adCost.toFixed(0)} ₴
+                        </div>
+                        <div style={{ fontSize: 10, color: ad.budget_source === 'Кошти друкарні' ? '#a855f7' : '#6b6b8a', marginTop: 4, fontWeight: 700 }}>
+                          {ad.budget_source === 'Кошти друкарні' ? 'друкарня' : 'особисті'}
+                        </div>
                       </td>
                       {/* Revenue */}
                       <td style={{ padding: '16px 20px', textAlign: 'center' }}>
@@ -498,6 +523,7 @@ export default function AdvertisingDashboard({ showToast }) {
             onClick={() => {
               setIsPlatformDropdownOpen(false);
               setIsProductDropdownOpen(false);
+              setIsSourceDropdownOpen(false);
             }}
             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           >
@@ -527,6 +553,7 @@ export default function AdvertisingDashboard({ showToast }) {
                       e.stopPropagation();
                       setIsPlatformDropdownOpen(!isPlatformDropdownOpen);
                       setIsProductDropdownOpen(false);
+                      setIsSourceDropdownOpen(false);
                     }}
                     style={{ 
                       width: '100%', 
@@ -625,6 +652,7 @@ export default function AdvertisingDashboard({ showToast }) {
                       e.stopPropagation();
                       setIsProductDropdownOpen(!isProductDropdownOpen);
                       setIsPlatformDropdownOpen(false);
+                      setIsSourceDropdownOpen(false);
                     }}
                     style={{ 
                       width: '100%', 
@@ -725,6 +753,88 @@ export default function AdvertisingDashboard({ showToast }) {
                           >
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{p.name}</span>
                             <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8, flexShrink: 0 }}>{p.price} ₴</span>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Budget Source Dropdown */}
+                <div style={{ position: 'relative' }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Джерело коштів</label>
+                  
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsSourceDropdownOpen(!isSourceDropdownOpen);
+                      setIsPlatformDropdownOpen(false);
+                      setIsProductDropdownOpen(false);
+                    }}
+                    style={{ 
+                      width: '100%', 
+                      background: 'rgba(0,0,0,0.3)', 
+                      border: '1px solid var(--border)', 
+                      borderRadius: 12, 
+                      padding: 12, 
+                      color: '#fff', 
+                      fontSize: 14, 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      cursor: 'pointer',
+                      userSelect: 'none'
+                    }}
+                  >
+                    <span>{formData.budget_source}</span>
+                    <ChevronDown size={16} style={{ color: 'var(--text-muted)', transform: isSourceDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                  </div>
+
+                  <AnimatePresence>
+                    {isSourceDropdownOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        style={{ 
+                          position: 'absolute', 
+                          top: 'calc(100% + 6px)', 
+                          left: 0, 
+                          right: 0, 
+                          background: '#0f172a', 
+                          border: '1px solid rgba(255,255,255,0.1)', 
+                          borderRadius: 12, 
+                          zIndex: 1100, 
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                          padding: 6
+                        }}
+                      >
+                        {['Особисті кошти', 'Кошти друкарні'].map(src => (
+                          <div 
+                            key={src}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFormData({...formData, budget_source: src});
+                              setIsSourceDropdownOpen(false);
+                            }}
+                            style={{ 
+                              padding: '10px 14px', 
+                              fontSize: 13, 
+                              color: formData.budget_source === src ? '#ec4899' : '#fff', 
+                              fontWeight: formData.budget_source === src ? 800 : 500, 
+                              borderRadius: 8, 
+                              cursor: 'pointer',
+                              background: formData.budget_source === src ? 'rgba(236,72,153,0.1)' : 'transparent',
+                              transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={e => {
+                              if (formData.budget_source !== src) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                            }}
+                            onMouseLeave={e => {
+                              if (formData.budget_source !== src) e.currentTarget.style.background = 'transparent';
+                            }}
+                          >
+                            {src}
                           </div>
                         ))}
                       </motion.div>
