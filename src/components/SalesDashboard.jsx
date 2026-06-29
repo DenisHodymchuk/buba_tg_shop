@@ -5,7 +5,7 @@ import {
   Coins, Search, Plus, Trash2, Calendar, ShoppingBag, 
   ArrowUpRight, AlertCircle, Edit3, X, ChevronDown, 
   CheckCircle2, Info, Loader2, Filter, Receipt, ExternalLink,
-  Clock, ClipboardList, Printer, Truck, Send, XCircle
+  Clock, ClipboardList, Printer, Truck, Send, XCircle, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -407,6 +407,16 @@ export default function SalesDashboard({ showToast }) {
     setNewItem({ name: '', quantity: 1, price: '' });
     setSelectedProductId('');
     setEditingSale(null);
+  };
+
+  const handleQuickFill = () => {
+    setFormData({
+      ...formData,
+      firstName: 'Гість',
+      lastName: getPlatformBadgeName(formData.source),
+      phone: '+380000000000',
+      city: 'Самовивіз'
+    });
   };
 
   const getPlatformBadgeColor = (plat) => {
@@ -924,6 +934,21 @@ export default function SalesDashboard({ showToast }) {
                     { value: 'other', label: 'Інше' }
                   ]}
                 />
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -4 }}>
+                  <button 
+                    type="button"
+                    onClick={handleQuickFill}
+                    style={{ 
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      background: 'rgba(45,212,191,0.08)', border: '1px dashed rgba(45,212,191,0.3)',
+                      color: '#2dd4bf', padding: '8px 16px', borderRadius: 10, fontSize: 11, fontWeight: 800,
+                      cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                  >
+                    <Sparkles size={12} /> Заповнити як Гість
+                  </button>
+                </div>
 
                 {/* Client Info */}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
