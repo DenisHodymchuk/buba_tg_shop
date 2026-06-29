@@ -41,6 +41,14 @@ export default function Calculator() {
   const [editingMaterialId, setEditingMaterialId] = useState(null);
   const [notification, setNotification] = useState(null);
   const [catalogs, setCatalogs] = useState({ manufacturers: [], types: [], colors: [] });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [formData, setFormData] = useState({
     name: 'Новий розрахунок',
@@ -349,7 +357,7 @@ export default function Calculator() {
           background: 'var(--bg-card)', borderRadius: 32, border: '1px solid var(--border)',
           padding: 32, backdropFilter: 'blur(10px)', boxSizing: 'border-box', width: '100%'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 16, marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ 
                 width: 48, height: 48, borderRadius: 16, background: 'rgba(124,58,237,0.1)',
@@ -363,13 +371,14 @@ export default function Calculator() {
               </div>
             </div>
             
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 12, width: isMobile ? '100%' : 'auto' }}>
               <button 
                 onClick={resetForm}
                 style={{ 
+                  flex: isMobile ? 1 : 'none',
                   padding: '12px 20px', borderRadius: 14, border: '1px solid var(--border)',
                   background: 'transparent', color: 'var(--text-muted)',
-                  fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
+                  fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
                 }}
               >
                 <Plus size={18} /> НОВИЙ
@@ -378,9 +387,10 @@ export default function Calculator() {
                 onClick={handleSave}
                 disabled={saving}
                 style={{ 
+                  flex: isMobile ? 1 : 'none',
                   padding: '12px 24px', borderRadius: 14, border: 'none',
                   background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: 'var(--text-main)',
-                  fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                  fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   boxShadow: '0 8px 16px rgba(124,58,237,0.2)', opacity: saving ? 0.7 : 1
                 }}
               >
@@ -619,9 +629,9 @@ export default function Calculator() {
 
             {/* Printer Presets */}
             <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: 12, gap: 10 }}>
                 <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Обладнання та енергія</label>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {PRESETS.printers.map(p => (
                     <button 
                       key={p.name} onClick={() => applyPrinterPreset(p)}

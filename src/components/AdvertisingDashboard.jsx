@@ -21,6 +21,14 @@ export default function AdvertisingDashboard({ showToast }) {
   const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
   const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [formData, setFormData] = useState({
     platform: 'Instagram',
     custom_platform: '',
@@ -382,139 +390,243 @@ export default function AdvertisingDashboard({ showToast }) {
       </div>
 
       {/* Ads List */}
-      <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
-                <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДАТА</th>
-                <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПЛАТФОРМА</th>
-                <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ТОВАР</th>
-                <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ВИТРАТИ</th>
-                <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРОДАЖІ (ДОХІД)</th>
-                <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРИБУТОК</th>
-                <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ОКУПНІСТЬ (ROMI)</th>
-                <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>НОТАТКИ</th>
-                <th style={{ textAlign: 'right', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДІЇ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAds.length === 0 ? (
-                <tr>
-                  <td colSpan={9} style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 14 }}>
-                    Рекламних кампаній не знайдено. Натисніть "Додати рекламу", щоб створити перший запис.
-                  </td>
-                </tr>
-              ) : (
-                filteredAds.map(ad => {
-                  const adCost = parseFloat(ad.cost || 0);
-                  const adRev = parseFloat(ad.revenue || 0);
-                  const adProfit = adRev - adCost;
-                  const adRomi = adCost > 0 ? (adProfit / adCost) * 100 : 0;
+      {isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {filteredAds.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 14, background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)' }}>
+              Рекламних кампаній не знайдено. Натисніть "Додати рекламу", щоб створити перший запис.
+            </div>
+          ) : (
+            filteredAds.map(ad => {
+              const adCost = parseFloat(ad.cost || 0);
+              const adRev = parseFloat(ad.revenue || 0);
+              const adProfit = adRev - adCost;
+              const adRomi = adCost > 0 ? (adProfit / adCost) * 100 : 0;
 
-                  return (
-                    <tr key={ad.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', transition: 'background 0.2s' }}>
-                      {/* Date */}
-                      <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 700 }}>
-                        {new Date(ad.ad_date).toLocaleDateString('uk-UA')}
-                      </td>
-                      {/* Platform */}
-                      <td style={{ padding: '16px 20px' }}>
-                        <span style={{ 
-                          fontSize: 11, 
-                          fontWeight: 900, 
-                          color: ad.platform.toLowerCase() === 'instagram' ? '#f43f5e' : 
-                                 ad.platform.toLowerCase() === 'facebook' ? '#3b82f6' :
-                                 ad.platform.toLowerCase() === 'telegram' ? '#0ea5e9' :
-                                 ad.platform.toLowerCase() === 'tiktok' ? '#00f2fe' : 
-                                 ad.platform.toLowerCase() === 'olx' ? '#23e5db' : '#fff',
-                          background: 'rgba(255,255,255,0.05)',
-                          padding: '4px 8px',
-                          borderRadius: 8
-                        }}>
-                          {ad.platform}
-                        </span>
-                      </td>
-                      {/* Product */}
-                      <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 800, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {ad.product_name}
-                      </td>
-                      {/* Cost */}
-                      <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: '#ef4444' }}>
-                          {adCost.toFixed(0)} ₴
-                        </div>
-                        <div style={{ fontSize: 10, color: ad.budget_source === 'Кошти друкарні' ? '#a855f7' : '#6b6b8a', marginTop: 4, fontWeight: 700 }}>
-                          {ad.budget_source === 'Кошти друкарні' ? 'друкарня' : 'особисті'}
-                        </div>
-                      </td>
-                      {/* Revenue */}
-                      <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: '#4ade80' }}>
-                            {adRev.toFixed(0)} ₴
-                          </span>
-                          <button 
-                            onClick={() => setQuickRevenueModal({ open: true, adId: ad.id, currentRevenue: adRev, addAmount: '' })}
-                            style={{ 
-                              border: 'none', background: 'rgba(34,197,94,0.1)', color: '#4ade80', 
-                              borderRadius: 6, width: 22, height: 22, cursor: 'pointer', 
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14 
-                            }}
-                            title="Швидко додати суму продажу"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </td>
-                      {/* Profit */}
-                      <td style={{ 
-                        padding: '16px 20px', textAlign: 'center', fontSize: 13, fontWeight: 800,
-                        color: adProfit >= 0 ? '#4ade80' : '#ef4444'
-                      }}>
+              return (
+                <div key={ad.id} style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* Top: Date and Platform */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>
+                      {new Date(ad.ad_date).toLocaleDateString('uk-UA')}
+                    </span>
+                    <span style={{ 
+                      fontSize: 10, 
+                      fontWeight: 900, 
+                      color: ad.platform.toLowerCase() === 'instagram' ? '#f43f5e' : 
+                             ad.platform.toLowerCase() === 'facebook' ? '#3b82f6' :
+                             ad.platform.toLowerCase() === 'telegram' ? '#0ea5e9' :
+                             ad.platform.toLowerCase() === 'tiktok' ? '#00f2fe' : 
+                             ad.platform.toLowerCase() === 'olx' ? '#23e5db' : '#fff',
+                      background: 'rgba(255,255,255,0.05)',
+                      padding: '4px 8px',
+                      borderRadius: 8
+                    }}>
+                      {ad.platform}
+                    </span>
+                  </div>
+
+                  {/* Product */}
+                  <div style={{ fontSize: 15, fontWeight: 900, color: '#fff' }}>
+                    {ad.product_name}
+                  </div>
+
+                  {/* 2x2 Grid of Stats */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'rgba(0,0,0,0.15)', padding: 14, borderRadius: 16 }}>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Витрати</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: '#ef4444' }}>
+                        {adCost.toFixed(0)} ₴ <span style={{ fontSize: 9, color: ad.budget_source === 'Кошти друкарні' ? '#c084fc' : 'var(--text-muted)' }}>({ad.budget_source === 'Кошти друкарні' ? 'друк' : 'особ'})</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Продажі</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#4ade80' }}>{adRev.toFixed(0)} ₴</span>
+                        <button 
+                          onClick={() => setQuickRevenueModal({ open: true, adId: ad.id, currentRevenue: adRev, addAmount: '' })}
+                          style={{ border: 'none', background: 'rgba(34,197,94,0.15)', color: '#4ade80', borderRadius: 4, width: 18, height: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 12 }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Прибуток</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: adProfit >= 0 ? '#4ade80' : '#ef4444' }}>
                         {adProfit >= 0 ? `+${adProfit.toFixed(0)}` : adProfit.toFixed(0)} ₴
-                      </td>
-                      {/* ROMI */}
-                      <td style={{ 
-                        padding: '16px 20px', textAlign: 'center', fontSize: 12, fontWeight: 900,
-                        color: adRomi >= 0 ? '#4ade80' : '#f97316'
-                      }}>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Окупність</div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: adRomi >= 0 ? '#4ade80' : '#f97316' }}>
                         {adRomi >= 0 ? `+${adRomi.toFixed(0)}%` : `${adRomi.toFixed(0)}%`}
-                      </td>
-                      {/* Notes */}
-                      <td style={{ 
-                        padding: '16px 20px', fontSize: 12, color: 'var(--text-muted)', 
-                        maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' 
-                      }} title={ad.notes}>
-                        {ad.notes || '---'}
-                      </td>
-                      {/* Actions */}
-                      <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                          <button 
-                            onClick={() => handleEdit(ad)}
-                            style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 8, padding: 6, cursor: 'pointer' }}
-                            title="Редагувати"
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(ad.id)}
-                            style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}
-                            title="Видалити"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  {ad.notes && (
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 8 }}>
+                      <strong>Нотатки:</strong> {ad.notes}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
+                    <button 
+                      onClick={() => handleEdit(ad)}
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 10, padding: '10px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      <Edit3 size={14} /> Редагувати
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(ad.id)}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, padding: '10px 16px', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
-      </div>
+      ) : (
+        <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДАТА</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПЛАТФОРМА</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ТОВАР</th>
+                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ВИТРАТИ</th>
+                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРОДАЖІ (ДОХІД)</th>
+                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРИБУТОК</th>
+                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ОКУПНІСТЬ (ROMI)</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>НОТАТКИ</th>
+                  <th style={{ textAlign: 'right', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДІЇ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAds.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 14 }}>
+                      Рекламних кампаній не знайдено. Натисніть "Додати рекламу", щоб створити перший запис.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAds.map(ad => {
+                    const adCost = parseFloat(ad.cost || 0);
+                    const adRev = parseFloat(ad.revenue || 0);
+                    const adProfit = adRev - adCost;
+                    const adRomi = adCost > 0 ? (adProfit / adCost) * 100 : 0;
+
+                    return (
+                      <tr key={ad.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', transition: 'background 0.2s' }}>
+                        {/* Date */}
+                        <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 700 }}>
+                          {new Date(ad.ad_date).toLocaleDateString('uk-UA')}
+                        </td>
+                        {/* Platform */}
+                        <td style={{ padding: '16px 20px' }}>
+                          <span style={{ 
+                            fontSize: 11, 
+                            fontWeight: 900, 
+                            color: ad.platform.toLowerCase() === 'instagram' ? '#f43f5e' : 
+                                   ad.platform.toLowerCase() === 'facebook' ? '#3b82f6' :
+                                   ad.platform.toLowerCase() === 'telegram' ? '#0ea5e9' :
+                                   ad.platform.toLowerCase() === 'tiktok' ? '#00f2fe' : 
+                                   ad.platform.toLowerCase() === 'olx' ? '#23e5db' : '#fff',
+                            background: 'rgba(255,255,255,0.05)',
+                            padding: '4px 8px',
+                            borderRadius: 8
+                          }}>
+                            {ad.platform}
+                          </span>
+                        </td>
+                        {/* Product */}
+                        <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 800, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {ad.product_name}
+                        </td>
+                        {/* Cost */}
+                        <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#ef4444' }}>
+                            {adCost.toFixed(0)} ₴
+                          </div>
+                          <div style={{ fontSize: 10, color: ad.budget_source === 'Кошти друкарні' ? '#a855f7' : '#6b6b8a', marginTop: 4, fontWeight: 700 }}>
+                            {ad.budget_source === 'Кошти друкарні' ? 'друкарня' : 'особисті'}
+                          </div>
+                        </td>
+                        {/* Revenue */}
+                        <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: '#4ade80' }}>
+                              {adRev.toFixed(0)} ₴
+                            </span>
+                            <button 
+                              onClick={() => setQuickRevenueModal({ open: true, adId: ad.id, currentRevenue: adRev, addAmount: '' })}
+                              style={{ 
+                                border: 'none', background: 'rgba(34,197,94,0.1)', color: '#4ade80', 
+                                borderRadius: 6, width: 22, height: 22, cursor: 'pointer', 
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14 
+                              }}
+                              title="Швидко додати суму продажу"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </td>
+                        {/* Profit */}
+                        <td style={{ 
+                          padding: '16px 20px', textAlign: 'center', fontSize: 13, fontWeight: 800,
+                          color: adProfit >= 0 ? '#4ade80' : '#ef4444'
+                        }}>
+                          {adProfit >= 0 ? `+${adProfit.toFixed(0)}` : adProfit.toFixed(0)} ₴
+                        </td>
+                        {/* ROMI */}
+                        <td style={{ 
+                          padding: '16px 20px', textAlign: 'center', fontSize: 12, fontWeight: 900,
+                          color: adRomi >= 0 ? '#4ade80' : '#f97316'
+                        }}>
+                          {adRomi >= 0 ? `+${adRomi.toFixed(0)}%` : `${adRomi.toFixed(0)}%`}
+                        </td>
+                        {/* Notes */}
+                        <td style={{ 
+                          padding: '16px 20px', fontSize: 12, color: 'var(--text-muted)', 
+                          maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' 
+                        }} title={ad.notes}>
+                          {ad.notes || '---'}
+                        </td>
+                        {/* Actions */}
+                        <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                            <button 
+                              onClick={() => handleEdit(ad)}
+                              style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 8, padding: 6, cursor: 'pointer' }}
+                              title="Редагувати"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(ad.id)}
+                              style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}
+                              title="Видалити"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit Form Modal */}
       <AnimatePresence>
