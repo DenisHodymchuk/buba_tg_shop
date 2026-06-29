@@ -205,10 +205,30 @@ export default function Calculator() {
     try {
       const isEdit = !!formData.id;
       const dataToSave = {
-        ...formData,
+        name: formData.name,
+        model_name: formData.model_name,
+        weight_g: Number(formData.weight_g) || 0,
+        time_h: Number(formData.time_h) || 0,
+        plastic_cost_roll: Number(formData.plastic_cost_roll) || 0,
+        plastic_type: formData.plastic_type,
+        electricity_cost_kwh: Number(formData.electricity_cost_kwh) || 0,
+        printer_wattage: Number(formData.printer_wattage) || 0,
+        wear_cost_h: Number(formData.wear_cost_h) || 0,
+        failure_margin: Number(formData.failure_margin) || 0,
+        ams_swaps: parseInt(formData.ams_swaps) || 0,
+        purge_g: Number(formData.purge_g) || 0,
+        labor_cost_h: Number(formData.labor_cost) || 0,
+        profit_margin: Number(formData.profit_margin) || 0,
+        additional_costs: Number(formData.additional_costs) || 0,
+        discount: Number(formData.discount) || 0,
+        image_url: formData.image_url || '',
         total_prime_cost: parseInt(results.prime) || 0,
         suggested_price: parseInt(results.final) || 0
       };
+
+      if (formData.id) {
+        dataToSave.id = formData.id;
+      }
 
       const { data, error } = await supabase
         .from('calculations')
@@ -338,7 +358,10 @@ export default function Calculator() {
   const startEditCalculation = (calc) => {
     setFormData({
       ...calc,
-      // Ensure all fields are present or defaulted
+      labor_cost: calc.labor_cost_h || 0,
+      additional_costs: calc.additional_costs || 0,
+      discount: calc.discount || 0,
+      image_url: calc.image_url || ''
     });
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });

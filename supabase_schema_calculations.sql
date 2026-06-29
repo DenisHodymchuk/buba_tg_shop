@@ -37,3 +37,8 @@ CREATE POLICY "Enable all for authenticated users" ON calculations
     FOR ALL
     USING (auth.role() = 'authenticated')
     WITH CHECK (auth.role() = 'authenticated');
+
+-- Alter table to support new fields from the UI
+ALTER TABLE calculations ADD COLUMN IF NOT EXISTS additional_costs NUMERIC DEFAULT 0;
+ALTER TABLE calculations ADD COLUMN IF NOT EXISTS discount NUMERIC DEFAULT 0;
+ALTER TABLE calculations ADD COLUMN IF NOT EXISTS image_url TEXT;
