@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
 import InventoryDashboard from '@/components/InventoryDashboard';
 import AdvertisingDashboard from '@/components/AdvertisingDashboard';
+import SalesDashboard from '@/components/SalesDashboard';
 
 
 const scrollbarHide = `
@@ -1045,6 +1046,7 @@ export default function AdminPanel() {
         <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <SidebarBtn active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Package size={18} />} label="Товари" />
           <SidebarBtn active={activeTab === 'sales'} onClick={() => { setActiveTab('sales'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={18} />} label="Замовлення" />
+          <SidebarBtn active={activeTab === 'sales_cabinet'} onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }} icon={<Coins size={18} />} label="Продажі" />
           <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
           <SidebarBtn active={activeTab === 'reviews'} onClick={() => { setActiveTab('reviews'); setIsSidebarOpen(false); }} icon={<MessageSquare size={18} />} label="Відгуки" />
           <SidebarBtn active={activeTab === 'broadcast'} onClick={() => { setActiveTab('broadcast'); setIsSidebarOpen(false); }} icon={<Send size={18} />} label="Розсилка" />
@@ -1366,6 +1368,8 @@ export default function AdminPanel() {
                 ))}
               </div>
             </>
+          ) : activeTab === 'sales_cabinet' ? (
+            <SalesDashboard showToast={showToast} />
           ) : activeTab === 'inventory' ? (
             <InventoryDashboard showToast={showToast} />
           ) : activeTab === 'reviews' ? (

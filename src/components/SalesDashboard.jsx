@@ -1,0 +1,878 @@
+"use client";
+import React, { useState, useEffect, useMemo } from 'react';
+import { supabase } from '@/lib/supabase';
+import { 
+  Coins, Search, Plus, Trash2, Calendar, ShoppingBag, 
+  ArrowUpRight, AlertCircle, Edit3, X, ChevronDown, 
+  CheckCircle2, Info, Loader2, Filter, Receipt, ExternalLink
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export default function SalesDashboard({ showToast }) {
+  const [sales, setSales] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('Всі');
+  const [paymentFilter, setPaymentFilter] = useState('Всі');
+  const [statusFilter, setStatusFilter] = useState('Всі');
+  const [showAddForm, setShowAddForm] = useState(false);
+  
+  // Form state
+  const [editingSale, setEditingSale] = useState(null);
+  const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    source: 'olx',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    city: '',
+    warehouse: '',
+    total: '',
+    payment_status: 'paid',
+    status: 'completed',
+    items: [] // array of { name, quantity, price }
+  });
+  
+  // Custom manual item inputs
+  const [newItem, setNewItem] = useState({ name: '', quantity: 1, price: '' });
+  const [selectedProductId, setSelectedProductId] = useState('');
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    fetchSales();
+    fetchProducts();
+  }, []);
+
+  async function fetchSales() {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          customers (
+            first_name,
+            last_name,
+            phone
+          )
+        `)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setSales(data || []);
+    } catch (err) {
+      console.error('Error fetching sales:', err);
+      showToast('Помилка завантаження продажів', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchProducts() {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, price')
+        .order('name');
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+    }
+  }
+
+  // Statistics calculation
+  const stats = useMemo(() => {
+    let totalRevenue = 0;
+    let paidRevenue = 0;
+    let counts = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, offline: 0, other: 0 };
+    let sums = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, offline: 0, other: 0 };
+    
+    sales.forEach(sale => {
+      const amt = parseFloat(sale.total || 0);
+      totalRevenue += amt;
+      if (sale.payment_status === 'paid') {
+        paidRevenue += amt;
+      }
+      
+      const src = sale.source || 'website';
+      if (counts[src] !== undefined) {
+        counts[src]++;
+        sums[src] += amt;
+      } else {
+        counts.other++;
+        sums.other += amt;
+      }
+    });
+
+    return {
+      totalRevenue,
+      paidRevenue,
+      counts,
+      sums
+    };
+  }, [sales]);
+
+  const filteredSales = useMemo(() => {
+    return sales.filter(s => {
+      const src = s.source || 'website';
+      const matchesSource = sourceFilter === 'Всі' || src === sourceFilter;
+      const matchesPayment = paymentFilter === 'Всі' || s.payment_status === paymentFilter;
+      const matchesStatus = statusFilter === 'Всі' || s.status === statusFilter;
+      
+      const name = `${s.shipping_details?.firstName || ''} ${s.shipping_details?.lastName || ''} ${s.customers?.first_name || ''} ${s.customers?.last_name || ''}`.toLowerCase();
+      const phone = `${s.shipping_details?.phone || ''} ${s.customers?.phone || ''}`;
+      const num = s.order_number || '';
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = !searchQuery || name.includes(query) || phone.includes(query) || num.toLowerCase().includes(query);
+
+      return matchesSource && matchesPayment && matchesStatus && matchesSearch;
+    });
+  }, [sales, sourceFilter, paymentFilter, statusFilter, searchQuery]);
+
+  const handleAddManualItem = () => {
+    if (!newItem.name || !newItem.price) {
+      showToast('Введіть назву та ціну товару', 'error');
+      return;
+    }
+    setFormData({
+      ...formData,
+      items: [...formData.items, {
+        name: newItem.name,
+        quantity: parseInt(newItem.quantity) || 1,
+        price: parseFloat(newItem.price) || 0
+      }]
+    });
+    setNewItem({ name: '', quantity: 1, price: '' });
+    setSelectedProductId('');
+  };
+
+  const handleProductSelect = (prodId) => {
+    if (!prodId) return;
+    const prod = products.find(p => p.id === prodId);
+    if (prod) {
+      setNewItem({
+        name: prod.name,
+        quantity: 1,
+        price: prod.price
+      });
+      setSelectedProductId(prodId);
+    }
+  };
+
+  const handleRemoveItem = (index) => {
+    setFormData({
+      ...formData,
+      items: formData.items.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (formData.items.length === 0 && !formData.total) {
+      showToast('Додайте хоча б один товар або введіть загальну суму', 'error');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Calculate total if not manually entered
+      const itemsTotal = formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const finalTotal = parseFloat(formData.total) || itemsTotal;
+
+      const orderNumber = editingSale?.order_number || `MAN-${formData.source.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+      const saleData = {
+        total: finalTotal,
+        status: formData.status,
+        payment_status: formData.payment_status,
+        shipping_method: formData.city ? 'nova_poshta' : 'pickup',
+        source: formData.source,
+        order_number: orderNumber,
+        shipping_details: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          city: formData.city,
+          warehouse: formData.warehouse,
+          items: formData.items
+        }
+      };
+
+      if (editingSale) {
+        const { error } = await supabase
+          .from('orders')
+          .update(saleData)
+          .eq('id', editingSale.id);
+        if (error) throw error;
+        showToast('Продаж оновлено успішно!');
+      } else {
+        const { error } = await supabase
+          .from('orders')
+          .insert([saleData]);
+        if (error) throw error;
+        showToast('Продаж додано успішно!');
+      }
+
+      setShowAddForm(false);
+      setEditingSale(null);
+      resetForm();
+      fetchSales();
+    } catch (err) {
+      console.error('Error saving sale:', err);
+      showToast('Помилка при збереженні запису', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEdit = (sale) => {
+    setEditingSale(sale);
+    setFormData({
+      source: sale.source || 'olx',
+      firstName: sale.shipping_details?.firstName || '',
+      lastName: sale.shipping_details?.lastName || '',
+      phone: sale.shipping_details?.phone || '',
+      city: sale.shipping_details?.city || '',
+      warehouse: sale.shipping_details?.warehouse || '',
+      total: sale.total || '',
+      payment_status: sale.payment_status || 'paid',
+      status: sale.status || 'completed',
+      items: sale.shipping_details?.items || []
+    });
+    setShowAddForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Ви впевнені, що хочете видалити цей запис про продаж?')) return;
+    try {
+      const { error } = await supabase.from('orders').delete().eq('id', id);
+      if (error) throw error;
+      showToast('Запис видалено');
+      fetchSales();
+    } catch (err) {
+      console.error(err);
+      showToast('Помилка видалення', 'error');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      source: 'olx',
+      firstName: '',
+      lastName: '',
+      phone: '',
+      city: '',
+      warehouse: '',
+      total: '',
+      payment_status: 'paid',
+      status: 'completed',
+      items: []
+    });
+    setNewItem({ name: '', quantity: 1, price: '' });
+    setSelectedProductId('');
+    setEditingSale(null);
+  };
+
+  const getPlatformBadgeColor = (plat) => {
+    const p = plat?.toLowerCase();
+    if (p === 'website') return '#3b82f6';
+    if (p === 'olx') return '#23e5db';
+    if (p === 'instagram') return '#f43f5e';
+    if (p === 'facebook') return '#1877f2';
+    if (p === 'telegram') return '#0ea5e9';
+    if (p === 'offline') return '#22c55e';
+    return '#a855f7';
+  };
+
+  const getPlatformBadgeName = (plat) => {
+    const p = plat?.toLowerCase();
+    if (p === 'website') return 'Сайт';
+    if (p === 'olx') return 'OLX';
+    if (p === 'instagram') return 'Instagram';
+    if (p === 'facebook') return 'Facebook';
+    if (p === 'telegram') return 'Telegram';
+    if (p === 'offline') return 'Магазин (офлайн)';
+    return 'Інше';
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
+      
+      {/* Top Header */}
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 16 }}>
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 950, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Coins size={28} style={{ color: '#2dd4bf' }} /> Кабінет Продажів
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Облік всіх продажів (сайт, соцмережі, маркетплейси, офлайн)</p>
+        </div>
+        <button 
+          onClick={() => { resetForm(); setShowAddForm(true); }}
+          style={{ 
+            padding: '12px 24px', borderRadius: 14, border: 'none',
+            background: 'linear-gradient(135deg, #2dd4bf, #3b82f6)', color: '#fff',
+            fontWeight: 850, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            boxShadow: '0 8px 20px rgba(45,212,191,0.2)'
+          }}
+        >
+          <Plus size={18} /> ДОДАТИ ПРОДАЖ
+        </button>
+      </div>
+
+      {/* Stats Section */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
+        
+        {/* Total Revenue Card */}
+        <div style={{ background: 'linear-gradient(135deg, #0e1e38, #0a192f)', borderRadius: 24, border: '1px solid var(--border)', padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Загальна каса (Всі канали)</span>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(45,212,191,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2dd4bf' }}>
+              <ArrowUpRight size={18} />
+            </div>
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 950, color: '#fff' }}>{stats.totalRevenue.toLocaleString('uk-UA')} ₴</div>
+          <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 8, fontWeight: 700 }}>Всього замовлень та продажів: {sales.length}</div>
+        </div>
+
+        {/* Paid Revenue Card */}
+        <div style={{ background: 'linear-gradient(135deg, #062319, #0a192f)', borderRadius: 24, border: '1px solid var(--border)', padding: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Оплачено (Отримано)</span>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e' }}>
+              <CheckCircle2 size={18} />
+            </div>
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 950, color: '#4ade80' }}>{stats.paidRevenue.toLocaleString('uk-UA')} ₴</div>
+          <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 8, fontWeight: 700 }}>Очікує оплати: {(stats.totalRevenue - stats.paidRevenue).toLocaleString('uk-UA')} ₴</div>
+        </div>
+
+        {/* Platform breakdown Card */}
+        <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', padding: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Продажі за джерелами</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {Object.keys(stats.sums).map(key => {
+              if (stats.sums[key] === 0) return null;
+              return (
+                <div key={key} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: 10, fontSize: 11, fontWeight: 750 }}>
+                  <span style={{ color: getPlatformBadgeColor(key), marginRight: 6 }}>●</span>
+                  {getPlatformBadgeName(key)}: <strong style={{ color: '#fff' }}>{stats.sums[key]} ₴</strong>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and search bar */}
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16, alignItems: isMobile ? 'stretch' : 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 24, padding: 20 }}>
+        
+        {/* Search */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 16px', flex: 1 }}>
+          <Search size={16} style={{ color: 'var(--text-muted)' }} />
+          <input 
+            type="text" 
+            placeholder="Пошук клієнта, телефону чи номера..." 
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)} 
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} 
+          />
+        </div>
+
+        {/* Filters Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 150px)', gap: 12 }}>
+          <div>
+            <select 
+              value={sourceFilter}
+              onChange={e => setSourceFilter(e.target.value)}
+              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 12, outline: 'none', cursor: 'pointer' }}
+            >
+              <option value="Всі">Всі канали</option>
+              <option value="website">Сайт</option>
+              <option value="olx">OLX</option>
+              <option value="instagram">Instagram</option>
+              <option value="facebook">Facebook</option>
+              <option value="telegram">Telegram</option>
+              <option value="offline">Офлайн</option>
+              <option value="other">Інше</option>
+            </select>
+          </div>
+          <div>
+            <select 
+              value={paymentFilter}
+              onChange={e => setPaymentFilter(e.target.value)}
+              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 12, outline: 'none', cursor: 'pointer' }}
+            >
+              <option value="Всі">Всі оплати</option>
+              <option value="paid">Оплачено</option>
+              <option value="pending">Очікує</option>
+              <option value="verifying">Перевірка</option>
+            </select>
+          </div>
+          <div>
+            <select 
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 12, outline: 'none', cursor: 'pointer' }}
+            >
+              <option value="Всі">Всі статуси</option>
+              <option value="new">Нові</option>
+              <option value="completed">Виконані</option>
+              <option value="preparing">Підготовка</option>
+              <option value="cancelled">Скасовані</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Sales List Container */}
+      {isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {filteredSales.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 14, background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)' }}>
+              Продажів не знайдено.
+            </div>
+          ) : (
+            filteredSales.map(sale => {
+              const clientName = `${sale.shipping_details?.firstName || ''} ${sale.shipping_details?.lastName || ''} ${sale.customers?.first_name || ''} ${sale.customers?.last_name || ''}`.trim() || 'Гість';
+              const clientPhone = sale.shipping_details?.phone || sale.customers?.phone || 'Не вказано';
+              
+              return (
+                <div key={sale.id} style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  
+                  {/* Header: Date and Platform */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>
+                      {new Date(sale.created_at).toLocaleDateString('uk-UA')}
+                    </span>
+                    <span style={{ 
+                      fontSize: 10, 
+                      fontWeight: 900, 
+                      color: getPlatformBadgeColor(sale.source),
+                      background: 'rgba(255,255,255,0.05)',
+                      padding: '4px 8px',
+                      borderRadius: 8
+                    }}>
+                      {getPlatformBadgeName(sale.source)}
+                    </span>
+                  </div>
+
+                  {/* Order Number & Client */}
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 900, marginBottom: 2 }}>НОМЕР ЗАМОВЛЕННЯ</div>
+                    <div style={{ fontSize: 14, fontWeight: 900, color: '#fff' }}>{sale.order_number || `#${sale.id.slice(0, 8)}`}</div>
+                  </div>
+
+                  {/* Client Info */}
+                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: 12, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{clientName}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Тел: {clientPhone}</div>
+                    {sale.shipping_details?.city && (
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Доставка: {sale.shipping_details.city} {sale.shipping_details.warehouse ? `(${sale.shipping_details.warehouse})` : ''}</div>
+                    )}
+                  </div>
+
+                  {/* Items list */}
+                  {sale.shipping_details?.items && sale.shipping_details.items.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 900, marginBottom: 6, textTransform: 'uppercase' }}>Товари ({sale.shipping_details.items.length})</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {sale.shipping_details.items.map((item, idx) => (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderBottom: '1px solid rgba(255,255,255,0.02)', paddingBottom: 4 }}>
+                            <span style={{ color: '#fff', fontWeight: 600 }}>{item.name} <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>x{item.quantity}</span></span>
+                            <span style={{ fontWeight: 800 }}>{item.price * item.quantity} ₴</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Financial block */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'rgba(0,0,0,0.15)', padding: 14, borderRadius: 16 }}>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Сума</div>
+                      <div style={{ fontSize: 16, fontWeight: 950, color: '#2dd4bf' }}>{sale.total} ₴</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Оплата</div>
+                      <div style={{ 
+                        fontSize: 10, fontWeight: 900, display: 'inline-block', padding: '4px 8px', borderRadius: 6,
+                        background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
+                        color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24'
+                      }}>
+                        {sale.payment_status === 'paid' ? 'ОПЛАЧЕНО' : sale.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
+                    <button 
+                      onClick={() => handleEdit(sale)}
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 10, padding: '10px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      <Edit3 size={14} /> Редагувати
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(sale.id)}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, padding: '10px 16px', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : (
+        <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДАТА</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДЖЕРЕЛО</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>НОМЕР</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>КЛІЄНТ</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ТОВАРИ</th>
+                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>СУМА</th>
+                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ОПЛАТА</th>
+                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>СТАТУС</th>
+                  <th style={{ textAlign: 'right', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДІЇ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSales.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 14 }}>
+                      Продажів не знайдено.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSales.map(sale => {
+                    const clientName = `${sale.shipping_details?.firstName || ''} ${sale.shipping_details?.lastName || ''} ${sale.customers?.first_name || ''} ${sale.customers?.last_name || ''}`.trim() || 'Гість';
+                    const clientPhone = sale.shipping_details?.phone || sale.customers?.phone || '—';
+
+                    return (
+                      <tr key={sale.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', transition: 'background 0.2s' }}>
+                        <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 700 }}>
+                          {new Date(sale.created_at).toLocaleDateString('uk-UA')}
+                        </td>
+                        <td style={{ padding: '16px 20px' }}>
+                          <span style={{ 
+                            fontSize: 11, fontWeight: 900, 
+                            color: getPlatformBadgeColor(sale.source),
+                            background: 'rgba(255,255,255,0.05)',
+                            padding: '4px 8px', borderRadius: 8
+                          }}>
+                            {getPlatformBadgeName(sale.source)}
+                          </span>
+                        </td>
+                        <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 900 }}>
+                          {sale.order_number || `#${sale.id.slice(0, 8)}`}
+                        </td>
+                        <td style={{ padding: '16px 20px' }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{clientName}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{clientPhone}</div>
+                        </td>
+                        <td style={{ padding: '16px 20px', fontSize: 12, maxWidth: 220 }}>
+                          {sale.shipping_details?.items?.map((item, idx) => (
+                            <div key={idx} style={{ color: '#fff', fontSize: 12 }}>
+                              • {item.name} <strong style={{ color: '#8b5cf6' }}>x{item.quantity}</strong>
+                            </div>
+                          )) || '—'}
+                        </td>
+                        <td style={{ padding: '16px 20px', textAlign: 'center', fontSize: 14, fontWeight: 900, color: '#2dd4bf' }}>
+                          {sale.total} ₴
+                        </td>
+                        <td style={{ padding: '16px 20px', textAlign: 'center' }}>
+                          <span style={{ 
+                            fontSize: 10, fontWeight: 900, padding: '4px 8px', borderRadius: 6,
+                            background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
+                            color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24'
+                          }}>
+                            {sale.payment_status === 'paid' ? 'ОПЛАЧЕНО' : sale.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '16px 20px', textAlign: 'center', textTransform: 'uppercase', fontSize: 11, fontWeight: 900 }}>
+                          {sale.status === 'completed' ? 'Виконано' : sale.status === 'cancelled' ? 'Скасовано' : 'В процесі'}
+                        </td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                            <button 
+                              onClick={() => handleEdit(sale)}
+                              style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 8, padding: 6, cursor: 'pointer' }}
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(sale.id)}
+                              style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Form Modal */}
+      <AnimatePresence>
+        {showAddForm && (
+          <div 
+            onClick={() => {
+              setIsPlatformDropdownOpen(false);
+            }}
+            style={{ 
+              position: 'fixed', 
+              inset: 0, 
+              background: 'rgba(0,0,0,0.85)', 
+              backdropFilter: 'blur(10px)', 
+              zIndex: 1000, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              padding: '40px 20px',
+              overflowY: 'auto'
+            }}
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              onClick={(e) => e.stopPropagation()}
+              style={{ 
+                background: '#0a192f', 
+                borderRadius: 32, 
+                padding: 32, 
+                width: '100%', 
+                maxWidth: 540, 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                color: '#fff', 
+                overflow: 'visible',
+                margin: 'auto 0'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <h2 style={{ fontSize: 22, fontWeight: 900 }}>{editingSale ? 'Редагувати запис' : 'Новий запис про продаж'}</h2>
+                <button 
+                  onClick={() => setShowAddForm(false)} 
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                
+                {/* Platform select */}
+                <div style={{ position: 'relative' }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Канал продажу</label>
+                  <div 
+                    onClick={(e) => { e.stopPropagation(); setIsPlatformDropdownOpen(!isPlatformDropdownOpen); }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                  >
+                    <span>{getPlatformBadgeName(formData.source)}</span>
+                    <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} />
+                  </div>
+                  <AnimatePresence>
+                    {isPlatformDropdownOpen && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        exit={{ opacity: 0, y: 10 }}
+                        style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, zIndex: 1100, padding: 6 }}
+                      >
+                        {['olx', 'instagram', 'facebook', 'telegram', 'offline', 'other'].map(src => (
+                          <div 
+                            key={src}
+                            onClick={() => { setFormData({ ...formData, source: src }); setIsPlatformDropdownOpen(false); }}
+                            style={{ padding: '10px 14px', fontSize: 13, color: '#fff', borderRadius: 8, cursor: 'pointer', fontWeight: formData.source === src ? 800 : 500, background: formData.source === src ? 'rgba(45,212,191,0.1)' : 'transparent' }}
+                          >
+                            {getPlatformBadgeName(src)}
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Client Info */}
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Ім'я</label>
+                    <input 
+                      type="text" placeholder="Дмитро" value={formData.firstName} 
+                      onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Прізвище</label>
+                    <input 
+                      type="text" placeholder="Коваленко" value={formData.lastName} 
+                      onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Телефон</label>
+                    <input 
+                      type="text" placeholder="+380" value={formData.phone} 
+                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Місто доставки</label>
+                    <input 
+                      type="text" placeholder="Хмельницький" value={formData.city} 
+                      onChange={e => setFormData({ ...formData, city: e.target.value })}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Items selection */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 20, padding: 16 }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#2dd4bf', display: 'block', marginBottom: 12, textTransform: 'uppercase' }}>Товари у замовленні</label>
+                  
+                  {/* Existing items list */}
+                  {formData.items.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                      {formData.items.map((item, idx) => (
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '8px 12px', borderRadius: 10, fontSize: 12 }}>
+                          <span>{item.name} <strong style={{ color: '#8b5cf6' }}>x{item.quantity}</strong></span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <span>{item.price * item.quantity} ₴</span>
+                            <button type="button" onClick={() => handleRemoveItem(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={14}/></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add item to form fields */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div>
+                      <select 
+                        value={selectedProductId}
+                        onChange={e => handleProductSelect(e.target.value)}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 12, outline: 'none' }}
+                      >
+                        <option value="">-- Виберіть наявний товар --</option>
+                        {products.map(p => (
+                          <option key={p.id} value={p.id}>{p.name} ({p.price} ₴)</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8 }}>
+                      <input 
+                        type="text" placeholder="Або введіть назву..." value={newItem.name}
+                        onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 12, outline: 'none' }}
+                      />
+                      <input 
+                        type="number" placeholder="Кіл." value={newItem.quantity}
+                        onChange={e => setNewItem({ ...newItem, quantity: e.target.value })}
+                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 12, outline: 'none', textAlign: 'center' }}
+                      />
+                      <input 
+                        type="number" placeholder="Ціна (₴)" value={newItem.price}
+                        onChange={e => setNewItem({ ...newItem, price: e.target.value })}
+                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 12, outline: 'none', textAlign: 'center' }}
+                      />
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={handleAddManualItem}
+                      style={{ background: 'rgba(45,212,191,0.1)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.2)', padding: 10, borderRadius: 10, fontSize: 11, fontWeight: 900, cursor: 'pointer' }}
+                    >
+                      ДОДАТИ ТОВАР ДО СПИСКУ
+                    </button>
+                  </div>
+                </div>
+
+                {/* Financial overview */}
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Сума (₴) (залишіть пустим для авто-розрахунку)</label>
+                    <input 
+                      type="number" placeholder="Наприклад: 1200" value={formData.total} 
+                      onChange={e => setFormData({ ...formData, total: e.target.value })}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Оплата</label>
+                    <select 
+                      value={formData.payment_status}
+                      onChange={e => setFormData({ ...formData, payment_status: e.target.value })}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="paid">Оплачено</option>
+                      <option value="pending">Очікує</option>
+                      <option value="verifying">Перевірка</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Статус замовлення</label>
+                  <select 
+                    value={formData.status}
+                    onChange={e => setFormData({ ...formData, status: e.target.value })}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="completed">Виконано</option>
+                    <option value="new">Нове</option>
+                    <option value="preparing">Підготовка</option>
+                    <option value="cancelled">Скасовано</option>
+                  </select>
+                </div>
+
+                {/* Submit buttons */}
+                <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                  <button 
+                    type="submit" 
+                    disabled={saving}
+                    style={{ flex: 1, padding: 14, borderRadius: 14, background: 'linear-gradient(135deg, #2dd4bf, #3b82f6)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}
+                  >
+                    {saving ? 'ЗБЕРЕЖЕННЯ...' : 'ЗБЕРЕГТИ'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAddForm(false)} 
+                    style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}
+                  >
+                    СКАСУВАТИ
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+    </div>
+  );
+}
