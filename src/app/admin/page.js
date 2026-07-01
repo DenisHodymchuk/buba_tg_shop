@@ -86,19 +86,52 @@ export default function AdminPanel() {
   const [expandedOrderIds, setExpandedOrderIds] = useState([]);
   const [printers, setPrinters] = useState([]);
   const [showFarmMonitor, setShowFarmMonitor] = useState(true);
+  const [showAddPrinterForm, setShowAddPrinterForm] = useState(false);
 
   useEffect(() => {
-    if (activeTab === 'sales' && typeof window !== 'undefined') {
+    if ((activeTab === 'sales' || activeTab === 'farm') && typeof window !== 'undefined') {
       const saved = localStorage.getItem('buba_printers');
       const defaultPrinters = [
-        { id: '1', name: 'Bambu Lab X1C', wattage: 350, wear: 10 },
-        { id: '2', name: 'Bambu Lab P1S/P1P', wattage: 350, wear: 8 },
-        { id: '3', name: 'Bambu Lab A1', wattage: 200, wear: 6 },
-        { id: '4', name: 'Bambu Lab A1 Mini', wattage: 150, wear: 5 }
+        { id: '1', name: 'Bambu Lab X1C', wattage: 350, wear: 10, is_repair: false },
+        { id: '2', name: 'Bambu Lab P1S/P1P', wattage: 350, wear: 8, is_repair: false },
+        { id: '3', name: 'Bambu Lab A1', wattage: 200, wear: 6, is_repair: false },
+        { id: '4', name: 'Bambu Lab A1 Mini', wattage: 150, wear: 5, is_repair: false }
       ];
       setPrinters(saved ? JSON.parse(saved) : defaultPrinters);
     }
   }, [activeTab]);
+
+  const savePrinters = (newPrinters) => {
+    setPrinters(newPrinters);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('buba_printers', JSON.stringify(newPrinters));
+    }
+  };
+
+  const togglePrinterRepair = (printerId) => {
+    const updated = printers.map(p => 
+      p.id === printerId ? { ...p, is_repair: !p.is_repair } : p
+    );
+    savePrinters(updated);
+    showToast('Статус принтера оновлено');
+  };
+
+  const handleAddPrinter = (name, wattage, wear) => {
+    const newPrinter = {
+      id: Date.now().toString(),
+      name,
+      wattage: parseFloat(wattage) || 300,
+      wear: parseFloat(wear) || 5,
+      is_repair: false
+    };
+    const updated = [...printers, newPrinter];
+    savePrinters(updated);
+  };
+
+  const handleDeletePrinter = (printerId) => {
+    const updated = printers.filter(p => p.id !== printerId);
+    savePrinters(updated);
+  };
 
   const toggleStatusFilter = (status) => {
     if (status === 'Всі') {
@@ -926,7 +959,7 @@ export default function AdminPanel() {
   const printerLoads = useMemo(() => {
     const loads = {};
     printers.forEach(p => {
-      loads[p.name] = { printer: p, order: null, remainingMinutes: 0, percentElapsed: 0 };
+      loads[p.name] = { printer: p, order: null, remainingMinutes: 0, percentElapsed: 0, status: p.is_repair ? 'repair' : 'free' };
     });
 
     orders.forEach(order => {
@@ -948,6 +981,9 @@ export default function AdminPanel() {
           loads[pName].order = order;
           loads[pName].remainingMinutes = remainingMinutes;
           loads[pName].percentElapsed = percentElapsed;
+          if (loads[pName].status !== 'repair') {
+            loads[pName].status = 'printing';
+          }
         }
       }
     });
@@ -1185,6 +1221,7 @@ export default function AdminPanel() {
         <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <SidebarBtn active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Package size={18} />} label="Товари" />
           <SidebarBtn active={activeTab === 'sales'} onClick={() => { setActiveTab('sales'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={18} />} label="Замовлення" />
+          <SidebarBtn active={activeTab === 'farm'} onClick={() => { setActiveTab('farm'); setIsSidebarOpen(false); }} icon={<Printer size={18} />} label="3D Ферма" />
           <SidebarBtn active={activeTab === 'sales_cabinet'} onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }} icon={<Coins size={18} />} label="Продажі" />
           <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
           <SidebarBtn active={activeTab === 'reviews'} onClick={() => { setActiveTab('reviews'); setIsSidebarOpen(false); }} icon={<MessageSquare size={18} />} label="Відгуки" />
@@ -1310,160 +1347,7 @@ export default function AdminPanel() {
                     {refreshing ? 'Оновлено ✅' : 'Оновити'}
                   </button>
                 </div>
-              </div>
-
-              {/* Farm Monitor */}
-              <div style={{ marginBottom: 24, background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 24, padding: 20 }}>
-                <div 
-                  onClick={() => setShowFarmMonitor(!showFarmMonitor)} 
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
-                >
-                  <h3 style={{ fontSize: 14, fontWeight: 900, color: '#fff', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
-                    <Printer size={18} style={{ color: '#7c3aed' }} /> МОНІТОРИНГ ФЕРМИ ({printerLoads.filter(l => l.order).length}/{printers.length} ЗАЙНЯТО)
-                  </h3>
-                  <span style={{ fontSize: 11, fontWeight: 850, color: '#6b6b8a' }}>
-                    {showFarmMonitor ? 'Приховати' : 'Показати'}
-                  </span>
-                </div>
-
-                {showFarmMonitor && (
-                  <div style={{ marginTop: 16 }}>
-                    {printers.length === 0 ? (
-                      <div style={{ fontSize: 12, color: '#6b6b8a', textAlign: 'center', padding: '12px 0' }}>
-                        Немає доданих принтерів. Ви можете додати ваші Bambu Lab принтери у вкладці <strong>«Калькулятор»</strong>.
-                      </div>
-                    ) : (
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(230px, 1fr))', 
-                        gap: 16 
-                      }}>
-                        {printerLoads.map(load => {
-                          const hasOrder = !!load.order;
-                          return (
-                            <div 
-                              key={load.printer.id} 
-                              style={{ 
-                                background: hasOrder ? 'rgba(124,58,237,0.03)' : 'rgba(255,255,255,0.02)', 
-                                border: '1px solid',
-                                borderColor: hasOrder ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.05)',
-                                borderRadius: 16, 
-                                padding: 16, 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                gap: 12,
-                                transition: 'all 0.3s'
-                              }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  <Printer size={14} style={{ color: hasOrder ? '#7c3aed' : '#6b6b8a' }} />
-                                  <span style={{ fontSize: 12, fontWeight: 800, color: '#fff' }}>{load.printer.name}</span>
-                                </div>
-                                <span style={{ 
-                                  fontSize: 9, 
-                                  fontWeight: 900, 
-                                  padding: '3px 8px', 
-                                  borderRadius: 8, 
-                                  background: hasOrder ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.05)', 
-                                  color: hasOrder ? '#a78bfa' : '#6b6b8a' 
-                                }}>
-                                  {hasOrder ? 'ДРУК' : 'ВІЛЬНИЙ'}
-                                </span>
-                              </div>
-
-                              {hasOrder ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                                  <div>
-                                    <div style={{ fontSize: 11, fontWeight: 800, color: '#fff' }}>
-                                      Замовлення {load.order.order_number || `#${load.order.id.slice(0, 8)}`}
-                                    </div>
-                                    <div style={{ fontSize: 10, color: '#6b6b8a', marginTop: 2 }}>
-                                      Клієнт: {load.order.shipping_details?.firstName} {load.order.shipping_details?.lastName}
-                                    </div>
-                                  </div>
-
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                    <div style={{ position: 'relative', width: '100%', height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
-                                      <div style={{ width: `${load.percentElapsed}%`, height: '100%', background: '#7c3aed', borderRadius: 3 }} />
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#6b6b8a', fontWeight: 800 }}>
-                                      <span>{load.percentElapsed}% виконано</span>
-                                      <span>
-                                        {load.remainingMinutes > 60 
-                                          ? `Залишилось: ${(load.remainingMinutes / 60).toFixed(1)} год` 
-                                          : `Залишилось: ${load.remainingMinutes} хв`}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <button
-                                    onClick={() => {
-                                      updateOrderStatus(load.order.id, 'shipping');
-                                      assignPrinter(load.order.id, null);
-                                    }}
-                                    style={{
-                                      padding: '6px 12px',
-                                      borderRadius: 10,
-                                      border: 'none',
-                                      background: 'rgba(34,197,94,0.1)',
-                                      color: '#22c55e',
-                                      fontSize: 10,
-                                      fontWeight: 800,
-                                      cursor: 'pointer',
-                                      textAlign: 'center',
-                                      transition: 'all 0.2s'
-                                    }}
-                                  >
-                                    Завершити друк ✅
-                                  </button>
-                                </div>
-                              ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center', height: '100%' }}>
-                                  <div style={{ fontSize: 10, color: '#4a4a6a', textAlign: 'center' }}>Немає активних завдань</div>
-                                  
-                                  {orders.filter(o => o.status === 'preparing').length > 0 && (
-                                    <select
-                                      onChange={(e) => {
-                                        if (e.target.value) {
-                                          assignPrinter(e.target.value, load.printer.name);
-                                          updateOrderStatus(e.target.value, 'printing');
-                                        }
-                                      }}
-                                      defaultValue=""
-                                      style={{
-                                        padding: '6px 10px',
-                                        borderRadius: 8,
-                                        background: 'rgba(0,0,0,0.2)',
-                                        border: '1px solid rgba(255,255,255,0.05)',
-                                        color: '#fff',
-                                        fontSize: 10,
-                                        fontWeight: 800,
-                                        outline: 'none',
-                                        cursor: 'pointer',
-                                        width: '100%'
-                                      }}
-                                    >
-                                      <option value="">Призначити друк...</option>
-                                      {orders.filter(o => o.status === 'preparing').map(o => (
-                                        <option key={o.id} value={o.id}>
-                                          {o.order_number || `#${o.id.slice(0, 8)}`} ({o.shipping_details?.firstName})
-                                        </option>
-                                      ))}
-                                    </select>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Filters */}
+              </div>              {/* Filters */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 32, padding: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус замовлення (можна обрати декілька):</label>
@@ -1627,14 +1511,19 @@ export default function AdminPanel() {
                                 cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
                               };
                               const meta = statusMeta[order.status] || statusMeta.new;
-                              return (
-                                <span style={{ 
-                                  padding: '4px 8px', borderRadius: 8, fontSize: 10, fontWeight: 900, 
-                                  background: meta.bg, color: meta.color,
-                                  display: 'inline-flex', alignItems: 'center', gap: 4
-                                }}>
-                                  {meta.label}
-                                </span>
+                                return (
+                                  <span style={{ 
+                                    padding: '4px 8px', borderRadius: 8, fontSize: 10, fontWeight: 900, 
+                                    background: meta.bg, color: meta.color,
+                                    display: 'inline-flex', alignItems: 'center', gap: 4
+                                  }}>
+                                    {meta.label}
+                                    {order.status === 'printing' && order.shipping_details?.assigned_printer && (
+                                      <span style={{ opacity: 0.8, fontWeight: 800, borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 6, marginLeft: 2 }}>
+                                        {order.shipping_details.assigned_printer}
+                                      </span>
+                                    )}
+                                  </span>
                               );
                             })()}
                             
@@ -1867,6 +1756,256 @@ export default function AdminPanel() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </>
+          ) : activeTab === 'farm' ? (
+            <>
+              {/* Farm Page Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+                <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Printer size={28} style={{ color: '#a78bfa' }} /> 3D Друкарська Ферма ({printers.length})
+                </h1>
+                <button 
+                  onClick={() => setShowAddPrinterForm(!showAddPrinterForm)}
+                  style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(124,58,237,0.1)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.2)', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Plus size={16} /> Додати принтер
+                </button>
+              </div>
+
+              {/* Add Printer Form */}
+              {showAddPrinterForm && (
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 20, marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 12 }}>Нове обладнання</h3>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 150 }}>
+                      <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Назва принтера</label>
+                      <input 
+                        type="text" 
+                        id="new-printer-name" 
+                        placeholder="Напр. Bambu Lab X1C" 
+                        style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 100 }}>
+                      <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Потужність (Вт)</label>
+                      <input 
+                        type="number" 
+                        id="new-printer-wattage" 
+                        placeholder="350" 
+                        style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 120 }}>
+                      <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Знос (₴/год)</label>
+                      <input 
+                        type="number" 
+                        id="new-printer-wear" 
+                        placeholder="10" 
+                        style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button 
+                        onClick={() => {
+                          const name = document.getElementById('new-printer-name').value;
+                          const wattage = document.getElementById('new-printer-wattage').value;
+                          const wear = document.getElementById('new-printer-wear').value;
+                          if (!name) {
+                            showToast('Введіть назву принтера', 'error');
+                            return;
+                          }
+                          handleAddPrinter(name, wattage, wear);
+                          setShowAddPrinterForm(false);
+                        }}
+                        style={{ padding: '9px 16px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        Зберегти
+                      </button>
+                      <button 
+                        onClick={() => setShowAddPrinterForm(false)}
+                        style={{ padding: '9px 16px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', color: '#6b6b8a', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        Скасувати
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Printers Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+                {printerLoads.map(load => {
+                  const status = load.status; // 'free' | 'printing' | 'repair'
+                  return (
+                    <div 
+                      key={load.printer.id} 
+                      style={{ 
+                        background: 'var(--bg-card)', 
+                        border: '1px solid var(--border)',
+                        borderRadius: 24, 
+                        padding: 20, 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: 16,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                        opacity: status === 'repair' ? 0.7 : 1,
+                        transition: 'all 0.3s'
+                      }}
+                    >
+                      {/* Printer Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Printer size={18} style={{ color: status === 'printing' ? '#7c3aed' : status === 'repair' ? '#ef4444' : '#22c55e' }} />
+                            <span style={{ fontSize: 14, fontWeight: 900, color: '#fff' }}>{load.printer.name}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 4, fontWeight: 700 }}>
+                            {load.printer.wattage} Вт • {load.printer.wear} ₴/год
+                          </div>
+                        </div>
+
+                        <span style={{ 
+                          fontSize: 9, 
+                          fontWeight: 900, 
+                          padding: '4px 8px', 
+                          borderRadius: 8, 
+                          background: status === 'printing' ? 'rgba(124,58,237,0.15)' : status === 'repair' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)', 
+                          color: status === 'printing' ? '#a78bfa' : status === 'repair' ? '#ef4444' : '#22c55e'
+                        }}>
+                          {status === 'printing' ? 'ДРУК' : status === 'repair' ? 'РЕМОНТ' : 'ВІЛЬНИЙ'}
+                        </span>
+                      </div>
+
+                      {/* Printer Task / Assignments */}
+                      {status === 'printing' && load.order ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(0,0,0,0.15)', padding: 12, borderRadius: 16 }}>
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: '#fff' }}>
+                              Замовлення {load.order.order_number || `#${load.order.id.slice(0, 8)}`}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 2 }}>
+                              Клієнт: {load.order.shipping_details?.firstName} {load.order.shipping_details?.lastName}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div style={{ position: 'relative', width: '100%', height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                              <div style={{ width: `${load.percentElapsed}%`, height: '100%', background: '#7c3aed', borderRadius: 3 }} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#6b6b8a', fontWeight: 800 }}>
+                              <span>{load.percentElapsed}% виконано</span>
+                              <span>
+                                {load.remainingMinutes > 60 
+                                  ? `Залишилось: ${(load.remainingMinutes / 60).toFixed(1)} год` 
+                                  : `Залишилось: ${load.remainingMinutes} хв`}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              updateOrderStatus(load.order.id, 'shipping');
+                              assignPrinter(load.order.id, null);
+                            }}
+                            style={{
+                              padding: '8px',
+                              borderRadius: 10,
+                              border: 'none',
+                              background: 'rgba(34,197,94,0.1)',
+                              color: '#22c55e',
+                              fontSize: 11,
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              textAlign: 'center',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            Завершити друк ✅
+                          </button>
+                        </div>
+                      ) : status === 'repair' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center', alignItems: 'center', height: 70, background: 'rgba(239,68,68,0.02)', border: '1px dashed rgba(239,68,68,0.15)', borderRadius: 16 }}>
+                          <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            🔧 Обладнання обслуговується
+                          </span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center', height: 70 }}>
+                          <div style={{ fontSize: 11, color: '#4a4a6a', textAlign: 'center' }}>Немає активних завдань</div>
+                          
+                          {orders.filter(o => o.status === 'preparing').length > 0 && (
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  assignPrinter(e.target.value, load.printer.name);
+                                  updateOrderStatus(e.target.value, 'printing');
+                                }
+                              }}
+                              defaultValue=""
+                              style={{
+                                padding: '8px 10px',
+                                borderRadius: 10,
+                                background: 'rgba(0,0,0,0.2)',
+                                border: '1px solid rgba(255,255,255,0.05)',
+                                color: '#fff',
+                                fontSize: 11,
+                                fontWeight: 800,
+                                outline: 'none',
+                                cursor: 'pointer',
+                                width: '100%'
+                              }}
+                            >
+                              <option value="">Призначити друк...</option>
+                              {orders.filter(o => o.status === 'preparing').map(o => (
+                                <option key={o.id} value={o.id}>
+                                  {o.order_number || `#${o.id.slice(0, 8)}`} ({o.shipping_details?.firstName})
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Printer Actions / Controls */}
+                      <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 8 }}>
+                        <button 
+                          onClick={() => togglePrinterRepair(load.printer.id)}
+                          style={{ 
+                            flex: 1, 
+                            padding: '8px', 
+                            borderRadius: 10, 
+                            background: status === 'repair' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', 
+                            color: status === 'repair' ? '#22c55e' : '#ef4444', 
+                            border: 'none', 
+                            fontSize: 11, 
+                            fontWeight: 800, 
+                            cursor: 'pointer' 
+                          }}
+                        >
+                          {status === 'repair' ? 'В роботу' : 'На ремонт'}
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (confirm(`Видалити принтер ${load.printer.name}?`)) {
+                              handleDeletePrinter(load.printer.id);
+                            }
+                          }}
+                          style={{ 
+                            padding: '8px 12px', 
+                            borderRadius: 10, 
+                            background: 'rgba(255,255,255,0.05)', 
+                            color: '#6b6b8a', 
+                            border: 'none', 
+                            cursor: 'pointer' 
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </>
           ) : activeTab === 'sales_cabinet' ? (
