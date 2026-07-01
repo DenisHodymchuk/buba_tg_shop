@@ -131,6 +131,8 @@ export default function Calculator() {
   const [materialSearchQuery, setMaterialSearchQuery] = useState('');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState('All');
   const [selectedColorFilter, setSelectedColorFilter] = useState('All');
+  const [selectedManufacturerFilter, setSelectedManufacturerFilter] = useState('All');
+  const [showAllColors, setShowAllColors] = useState(false);
   
   const [materialsLibrary, setMaterialsLibrary] = useState([]);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
@@ -151,9 +153,26 @@ export default function Calculator() {
     return ['All', ...new Set(colors)];
   }, [materialsLibrary]);
 
+  const availableManufacturers = useMemo(() => {
+    const manufacturers = materialsLibrary.map(m => m.manufacturer).filter(Boolean);
+    return ['All', ...new Set(manufacturers)];
+  }, [materialsLibrary]);
+
+  const visibleColors = useMemo(() => {
+    if (showAllColors || availableColors.length <= 7) {
+      return availableColors;
+    }
+    return availableColors.slice(0, 7);
+  }, [availableColors, showAllColors]);
+
   const getTypeCount = (type) => {
     if (type === 'All') return materialsLibrary.length;
     return materialsLibrary.filter(m => m.type === type).length;
+  };
+
+  const getManufacturerCount = (man) => {
+    if (man === 'All') return materialsLibrary.length;
+    return materialsLibrary.filter(m => m.manufacturer === man).length;
   };
 
   const filteredMaterials = useMemo(() => {
@@ -167,10 +186,11 @@ export default function Calculator() {
       
       const matchesType = selectedTypeFilter === 'All' || m.type === selectedTypeFilter;
       const matchesColor = selectedColorFilter === 'All' || m.color === selectedColorFilter;
+      const matchesManufacturer = selectedManufacturerFilter === 'All' || m.manufacturer === selectedManufacturerFilter;
       
-      return matchesSearch && matchesType && matchesColor;
+      return matchesSearch && matchesType && matchesColor && matchesManufacturer;
     });
-  }, [materialsLibrary, materialSearchQuery, selectedTypeFilter, selectedColorFilter]);
+  }, [materialsLibrary, materialSearchQuery, selectedTypeFilter, selectedColorFilter, selectedManufacturerFilter]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -822,11 +842,54 @@ export default function Calculator() {
                   </div>
                 </div>
 
+                {/* Manufacturer Filters */}
+                {availableManufacturers.length > 1 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Виробник</span>
+                    <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }} className="hide-scrollbar">
+                      {availableManufacturers.map(man => {
+                        const count = getManufacturerCount(man);
+                        const isSelected = selectedManufacturerFilter === man;
+                        return (
+                          <button
+                            key={man}
+                            onClick={() => setSelectedManufacturerFilter(man)}
+                            style={{
+                              whiteSpace: 'nowrap',
+                              padding: '6px 12px',
+                              borderRadius: 10,
+                              fontSize: 11,
+                              fontWeight: 800,
+                              border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
+                              background: isSelected ? 'rgba(124,58,237,0.15)' : 'rgba(0,0,0,0.1)',
+                              color: isSelected ? '#a78bfa' : 'var(--text-muted)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {man === 'All' ? 'Всі виробники' : man} <span style={{ opacity: 0.5, fontSize: 9, marginLeft: 2 }}>({count})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Color Filters */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Колір пластику</span>
-                  <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, alignItems: 'center' }} className="hide-scrollbar">
-                    {availableColors.map(color => {
+                  <div 
+                    style={{ 
+                      display: 'flex', 
+                      gap: 8, 
+                      flexWrap: showAllColors ? 'wrap' : 'nowrap', 
+                      overflowX: showAllColors ? 'visible' : 'auto', 
+                      padding: '8px 4px', 
+                      alignItems: 'center' 
+                    }} 
+                    className="hide-scrollbar"
+                  >
+                    {visibleColors.map(color => {
                       const isSelected = selectedColorFilter === color;
                       const isAll = color === 'All';
                       const colorStyle = getColorStyle(isAll ? '' : color);
@@ -867,6 +930,29 @@ export default function Calculator() {
                         </button>
                       );
                     })}
+                    {availableColors.length > 7 && (
+                      <button
+                        onClick={() => setShowAllColors(!showAllColors)}
+                        style={{
+                          flexShrink: 0,
+                          padding: '4px 10px',
+                          borderRadius: 10,
+                          fontSize: 10,
+                          fontWeight: 900,
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#a78bfa',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          height: 28,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {showAllColors ? 'Сховати' : `+ ще ${availableColors.length - 7}`}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
