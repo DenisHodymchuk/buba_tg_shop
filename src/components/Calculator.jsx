@@ -973,7 +973,8 @@ export default function Calculator() {
                               borderRadius: '50%', 
                               ...colorStyle,
                               border: colorStyle.border || '1px solid rgba(255,255,255,0.15)',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                              visibility: selectedColorFilter === 'All' ? 'visible' : 'hidden'
                             }}
                             title={`Колір: ${m.color || 'Не вказано'}`}
                           />
