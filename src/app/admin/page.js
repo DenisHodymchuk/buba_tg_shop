@@ -6,7 +6,7 @@ import {
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
   Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone, Menu,
-  Clock, ClipboardList, Printer, Truck, XCircle
+  Clock, ClipboardList, Printer, Truck, XCircle, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
@@ -66,8 +66,43 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
-  const [statusFilter, setStatusFilter] = useState('Всі');
-  const [paymentFilter, setPaymentFilter] = useState('Всі');
+  const [selectedStatuses, setSelectedStatuses] = useState([]);
+  const [selectedPayments, setSelectedPayments] = useState([]);
+  const [expandedOrderIds, setExpandedOrderIds] = useState([]);
+
+  const toggleStatusFilter = (status) => {
+    if (status === 'Всі') {
+      setSelectedStatuses([]);
+    } else {
+      setSelectedStatuses(prev => {
+        if (prev.includes(status)) {
+          return prev.filter(s => s !== status);
+        } else {
+          return [...prev, status];
+        }
+      });
+    }
+  };
+
+  const togglePaymentFilter = (payment) => {
+    if (payment === 'Всі') {
+      setSelectedPayments([]);
+    } else {
+      setSelectedPayments(prev => {
+        if (prev.includes(payment)) {
+          return prev.filter(p => p !== payment);
+        } else {
+          return [...prev, payment];
+        }
+      });
+    }
+  };
+
+  const toggleOrderExpand = (id) => {
+    setExpandedOrderIds(prev => 
+      prev.includes(id) ? prev.filter(oid => oid !== id) : [...prev, id]
+    );
+  };
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -1141,21 +1176,48 @@ export default function AdminPanel() {
             </>
           ) : activeTab === 'sales' ? (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>Замовлення ({orders.length})</h1>
-                <button 
-                  onClick={handleManualRefresh} 
-                  disabled={refreshing}
-                  style={{ padding: '8px 16px', borderRadius: 10, background: refreshing ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', color: refreshing ? '#22c55e' : '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer', transition: 'all 0.3s' }}
-                >
-                  {refreshing ? 'Оновлено ✅' : 'Оновити'}
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+                <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: 0 }}>Замовлення ({orders.length})</h1>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button 
+                    onClick={() => {
+                      const filtered = orders.filter(o => {
+                        const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(o.status);
+                        const matchesPayment = selectedPayments.length === 0 || selectedPayments.includes(o.payment_status);
+                        const matchesSearch = !searchQuery || (o.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) || o.shipping_details?.phone?.includes(searchQuery));
+                        return matchesStatus && matchesPayment && matchesSearch;
+                      });
+                      const allIds = filtered.map(o => o.id);
+                      const areAllExpanded = allIds.every(id => expandedOrderIds.includes(id));
+                      if (areAllExpanded) {
+                        setExpandedOrderIds(prev => prev.filter(id => !allIds.includes(id)));
+                      } else {
+                        setExpandedOrderIds(prev => [...new Set([...prev, ...allIds])]);
+                      }
+                    }}
+                    style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer', transition: 'all 0.3s' }}
+                  >
+                    {orders.filter(o => {
+                      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(o.status);
+                      const matchesPayment = selectedPayments.length === 0 || selectedPayments.includes(o.payment_status);
+                      const matchesSearch = !searchQuery || (o.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) || o.shipping_details?.phone?.includes(searchQuery));
+                      return matchesStatus && matchesPayment && matchesSearch;
+                    }).map(o => o.id).every(id => expandedOrderIds.includes(id)) ? 'Згорнути всі' : 'Розгорнути всі'}
+                  </button>
+                  <button 
+                    onClick={handleManualRefresh} 
+                    disabled={refreshing}
+                    style={{ padding: '8px 16px', borderRadius: 10, background: refreshing ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)', color: refreshing ? '#22c55e' : '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer', transition: 'all 0.3s' }}
+                  >
+                    {refreshing ? 'Оновлено ✅' : 'Оновити'}
+                  </button>
+                </div>
               </div>
 
               {/* Filters */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 32, padding: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус замовлення:</label>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус замовлення (можна обрати декілька):</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {[
                       { val: 'Всі', label: 'ВСІ', color: '#6b6b8a', bg: 'rgba(255,255,255,0.03)', icon: null },
@@ -1168,11 +1230,13 @@ export default function AdminPanel() {
                       { val: 'cancelled', label: 'СКАСОВАНО', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
                     ].map(item => {
                       const Icon = item.icon;
-                      const active = statusFilter === item.val;
+                      const active = item.val === 'Всі' 
+                        ? selectedStatuses.length === 0 
+                        : selectedStatuses.includes(item.val);
                       return (
                         <button 
                           key={item.val} 
-                          onClick={() => setStatusFilter(item.val)} 
+                          onClick={() => toggleStatusFilter(item.val)} 
                           style={{ 
                             padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
                             background: active ? item.color : 'rgba(255,255,255,0.03)', 
@@ -1191,152 +1255,234 @@ export default function AdminPanel() {
                 </div>
                 <div style={{ width: isMobile ? '100%' : 1, height: isMobile ? 1 : 'auto', background: 'rgba(255,255,255,0.05)', margin: isMobile ? '10px 0' : '0 10px' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус оплати:</label>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус оплати (можна обрати декілька):</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {['Всі', 'pending', 'verifying', 'paid'].map(p => (
-                      <button key={p} onClick={() => setPaymentFilter(p)} style={{ padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, background: paymentFilter === p ? '#f97316' : 'rgba(255,255,255,0.03)', color: paymentFilter === p ? '#fff' : '#6b6b8a', border: 'none', cursor: 'pointer' }}>
-                        {p === 'Всі' ? 'ВСІ' : p === 'pending' ? 'ОЧІКУЄ' : p === 'verifying' ? 'ПЕРЕВІРКА' : 'ОПЛАЧЕНО'}
-                      </button>
-                    ))}
+                    {[
+                      { val: 'Всі', label: 'ВСІ' },
+                      { val: 'pending', label: 'ОЧІКУЄ' },
+                      { val: 'verifying', label: 'ПЕРЕВІРКА' },
+                      { val: 'paid', label: 'ОПЛАЧЕНО' }
+                    ].map(item => {
+                      const active = item.val === 'Всі' 
+                        ? selectedPayments.length === 0 
+                        : selectedPayments.includes(item.val);
+                      return (
+                        <button 
+                          key={item.val} 
+                          onClick={() => togglePaymentFilter(item.val)} 
+                          style={{ 
+                            padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                            background: active ? '#f97316' : 'rgba(255,255,255,0.03)', 
+                            color: active ? '#fff' : '#6b6b8a', 
+                            border: 'none', cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Orders List Accordion */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {orders
                   .filter(o => {
-                    const matchesStatus = statusFilter === 'Всі' || o.status === statusFilter;
-                    const matchesPayment = paymentFilter === 'Всі' || o.payment_status === paymentFilter;
+                    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(o.status);
+                    const matchesPayment = selectedPayments.length === 0 || selectedPayments.includes(o.payment_status);
                     const matchesSearch = !searchQuery || (o.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) || o.shipping_details?.phone?.includes(searchQuery));
                     return matchesStatus && matchesPayment && matchesSearch;
                   })
-                  .map(order => (
-                  <div key={order.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 20 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                          <span style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{order.order_number || `#${order.id.slice(0, 8)}`}</span>
-                        </div>
-                        <div style={{ fontSize: 11, color: '#6b6b8a', fontWeight: 700 }}>
-                          {new Date(order.created_at).toLocaleString('uk-UA')}
-                        </div>
-                      </div>
-                      {(() => {
-                        const statusMeta = {
-                          new: { label: 'Нове', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
-                          preparing: { label: 'Підготовка', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
-                          printing: { label: 'Друкується', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
-                          shipping: { label: 'Відправка', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
-                          shipped: { label: 'Відправлено поштою', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send },
-                          completed: { label: 'Виконано', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', icon: CheckCircle2 },
-                          cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
-                        };
-                        const meta = statusMeta[order.status] || statusMeta.new;
-                        const Icon = meta.icon;
-                        return (
-                          <div style={{ 
-                            padding: '6px 14px', borderRadius: 10, fontSize: 11, fontWeight: 900, 
-                            background: meta.bg, color: meta.color,
-                            textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6
-                          }}>
-                            <Icon size={12} />
-                            {meta.label}
+                  .map(order => {
+                    const isExpanded = expandedOrderIds.includes(order.id);
+                    
+                    return (
+                      <div key={order.id} style={{ display: 'flex', flexDirection: 'column' }}>
+                        {/* Header Bar */}
+                        <div 
+                          onClick={() => toggleOrderExpand(order.id)}
+                          style={{ 
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            justifyContent: 'space-between',
+                            alignItems: isMobile ? 'stretch' : 'center',
+                            padding: '14px 20px',
+                            background: isExpanded ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.01)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            borderRadius: isExpanded ? '20px 20px 0 0' : '20px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            gap: 12
+                          }}
+                        >
+                          {/* Order ID & Date */}
+                          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 150 }}>
+                            <span style={{ fontSize: 13, fontWeight: 900, color: '#fff' }}>
+                              {order.order_number || `#${order.id.slice(0, 8)}`}
+                            </span>
+                            <span style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 700 }}>
+                              {new Date(order.created_at).toLocaleString('uk-UA', { dateStyle: 'short', timeStyle: 'short' })}
+                            </span>
                           </div>
-                        );
-                      })()}
-                    </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 20, padding: '16px 0', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div>
-                        <div style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>Клієнт</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{order.shipping_details?.firstName} {order.shipping_details?.lastName}</div>
-                        <div style={{ fontSize: 12, color: '#6b6b8a' }}>{order.shipping_details?.phone}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>Доставка</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{order.shipping_method === 'nova_poshta' ? 'Нова Пошта' : 'Самовивіз'}</div>
-                        <div style={{ fontSize: 12, color: '#6b6b8a' }}>
-                          {order.shipping_details?.city}
-                          {order.shipping_details?.warehouse && <div style={{ fontSize: 11, marginTop: 4, color: '#94a3b8' }}>{order.shipping_details.warehouse}</div>}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>Сума</div>
-                        <div style={{ fontSize: 20, fontWeight: 950, color: '#2dd4bf' }}>{order.total} ₴</div>
-                        {order.shipping_details?.bonus_used > 0 && (
-                          <div style={{ fontSize: 10, color: '#fbbf24', fontWeight: 800, marginTop: 4 }}>
-                             🪙 -{order.shipping_details.bonus_used} бонусів
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
-                          <div style={{ 
-                            fontSize: 10, 
-                            color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b', 
-                            fontWeight: 900, 
-                            background: order.payment_status === 'verifying' ? 'rgba(249,115,22,0.1)' : 'transparent',
-                            padding: order.payment_status === 'verifying' ? '4px 8px' : 0,
-                            borderRadius: 8,
-                            display: 'inline-block'
-                          }}>
-                            {order.payment_status === 'paid' ? '✅ ОПЛАЧЕНО' : 
-                             order.payment_status === 'verifying' ? '🔍 ПЕРЕВІРИТИ' : 
-                             '⏳ ОЧІКУЄ ОПЛАТИ'}
-                          </div>
-                          {order.payment_status === 'verifying' && (
-                            <button 
-                              onClick={() => updatePaymentStatus(order.id, 'paid')}
-                              style={{ 
-                                padding: '4px 8px', borderRadius: 6, background: 'rgba(34,197,94,0.1)', color: '#22c55e', 
-                                border: '1px solid rgba(34,197,94,0.2)', fontSize: 9, fontWeight: 900, cursor: 'pointer'
-                              }}
-                            >
-                              ПІДТВЕРДИТИ
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {order.shipping_details?.items && (
-                      <div style={{ marginTop: 16 }}>
-                        <div style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>Товари</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                          {order.shipping_details.items.map((item, i) => (
-                            <div key={i} style={{ background: 'rgba(255,255,255,0.02)', padding: '6px 12px', borderRadius: 10, fontSize: 12, color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.05)' }}>
-                              {item.name} x{item.quantity || 1}
+                          {/* Customer Info */}
+                          <div style={{ flex: 1, minWidth: 180 }}>
+                            <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
+                              {order.shipping_details?.firstName} {order.shipping_details?.lastName}
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                            <div style={{ fontSize: 11, color: '#6b6b8a' }}>
+                              {order.shipping_details?.phone}
+                            </div>
+                          </div>
 
-                    <div style={{ marginTop: 24, display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                      <StatusBtn label="Підготовка" active={order.status === 'preparing'} color="#f59e0b" icon={<ClipboardList size={12} />} onClick={() => updateOrderStatus(order.id, 'preparing')} />
-                      <StatusBtn label="Друкується" active={order.status === 'printing'} color="#7c3aed" icon={<Printer size={12} />} onClick={() => updateOrderStatus(order.id, 'printing')} />
-                      <StatusBtn label="Відправка" active={order.status === 'shipping'} color="#ec4899" icon={<Truck size={12} />} onClick={() => updateOrderStatus(order.id, 'shipping')} />
-                      <StatusBtn label="Відправлено поштою" active={order.status === 'shipped'} color="#10b981" icon={<Send size={12} />} onClick={() => updateOrderStatus(order.id, 'shipped')} />
-                      <StatusBtn label="Виконано" active={order.status === 'completed'} color="#22c55e" icon={<CheckCircle2 size={12} />} onClick={() => updateOrderStatus(order.id, 'completed')} />
-                      <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                         <StatusBtn label="Скасувати" active={order.status === 'cancelled'} color="#ef4444" icon={<XCircle size={12} />} onClick={() => updateOrderStatus(order.id, 'cancelled')} />
-                         <button 
-                            onClick={() => setModal({ 
-                              open: true, 
-                              title: 'Видалити замовлення?', 
-                              message: `Ви впевнені, що хочете видалити замовлення ${order.order_number}? Цю дію неможливо скасувати.`, 
-                              type: 'danger',
-                              onConfirm: () => deleteOrder(order.id)
-                            })}
+                          {/* Delivery */}
+                          <div style={{ flex: 1, minWidth: 180 }}>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: '#94a3b8' }}>
+                              {order.shipping_method === 'nova_poshta' ? 'Нова Пошта' : 'Самовивіз'}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#6b6b8a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={order.shipping_details?.city}>
+                              {order.shipping_details?.city}
+                            </div>
+                          </div>
+
+                          {/* Sum & Payment Status */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end', minWidth: 160 }}>
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>{order.total} ₴</span>
+                              <div style={{ fontSize: 9, color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b', fontWeight: 900 }}>
+                                {order.payment_status === 'paid' ? 'ОПЛАЧЕНО' : order.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
+                              </div>
+                            </div>
+                            
+                            {order.payment_status === 'verifying' && (
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updatePaymentStatus(order.id, 'paid');
+                                }}
+                                style={{ 
+                                  padding: '4px 8px', borderRadius: 6, background: 'rgba(34,197,94,0.1)', color: '#22c55e', 
+                                  border: '1px solid rgba(34,197,94,0.2)', fontSize: 9, fontWeight: 900, cursor: 'pointer'
+                                }}
+                              >
+                                OK
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Status Badge & Chevron */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end', minWidth: 160 }}>
+                            {(() => {
+                              const statusMeta = {
+                                new: { label: 'Нове', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
+                                preparing: { label: 'Підготовка', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
+                                printing: { label: 'Друк', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
+                                shipping: { label: 'Відправка', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+                                shipped: { label: 'Пошта', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send },
+                                completed: { label: 'Виконано', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', icon: CheckCircle2 },
+                                cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
+                              };
+                              const meta = statusMeta[order.status] || statusMeta.new;
+                              return (
+                                <span style={{ 
+                                  padding: '4px 8px', borderRadius: 8, fontSize: 10, fontWeight: 900, 
+                                  background: meta.bg, color: meta.color,
+                                  display: 'inline-flex', alignItems: 'center', gap: 4
+                                }}>
+                                  {meta.label}
+                                </span>
+                              );
+                            })()}
+                            
+                            <div>
+                              {isExpanded ? <ChevronUp size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} />}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Details Panel */}
+                        {isExpanded && (
+                          <div 
                             style={{ 
-                              padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.2)', 
-                              background: 'rgba(239,68,68,0.05)', color: '#ef4444', fontSize: 10, fontWeight: 900, cursor: 'pointer'
+                              background: 'rgba(255,255,255,0.02)', 
+                              borderLeft: '1px solid rgba(255,255,255,0.05)',
+                              borderRight: '1px solid rgba(255,255,255,0.05)',
+                              borderBottom: '1px solid rgba(255,255,255,0.05)',
+                              padding: 20, 
+                              borderRadius: '0 0 20px 20px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 16
                             }}
                           >
-                            ВИДАЛИТИ
-                         </button>
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 20 }}>
+                              {order.shipping_method === 'nova_poshta' && order.shipping_details?.warehouse && (
+                                <div>
+                                  <div style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 4 }}>Відділення пошти</div>
+                                  <div style={{ fontSize: 12, color: '#e2e8f0', lineHeight: 1.4 }}>
+                                    {order.shipping_details.warehouse}
+                                  </div>
+                                </div>
+                              )}
+
+                              {order.shipping_details?.bonus_used > 0 && (
+                                <div>
+                                  <div style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 4 }}>Використані бонуси</div>
+                                  <div style={{ fontSize: 12, color: '#fbbf24', fontWeight: 800 }}>
+                                    🪙 {order.shipping_details.bonus_used} бонусів
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {order.shipping_details?.items && (
+                              <div>
+                                <div style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>Склад замовлення</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                  {order.shipping_details.items.map((item, i) => (
+                                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.01)', padding: '8px 12px', borderRadius: 10, fontSize: 12, color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.03)' }}>
+                                      <span>{item.name}</span>
+                                      <span style={{ fontWeight: 800, color: '#a78bfa' }}>x{item.quantity || 1}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Actions and Status Transitions */}
+                            <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                              <StatusBtn label="Підготовка" active={order.status === 'preparing'} color="#f59e0b" icon={<ClipboardList size={12} />} onClick={() => updateOrderStatus(order.id, 'preparing')} />
+                              <StatusBtn label="Друкується" active={order.status === 'printing'} color="#7c3aed" icon={<Printer size={12} />} onClick={() => updateOrderStatus(order.id, 'printing')} />
+                              <StatusBtn label="Відправка" active={order.status === 'shipping'} color="#ec4899" icon={<Truck size={12} />} onClick={() => updateOrderStatus(order.id, 'shipping')} />
+                              <StatusBtn label="Відправлено поштою" active={order.status === 'shipped'} color="#10b981" icon={<Send size={12} />} onClick={() => updateOrderStatus(order.id, 'shipped')} />
+                              <StatusBtn label="Виконано" active={order.status === 'completed'} color="#22c55e" icon={<CheckCircle2 size={12} />} onClick={() => updateOrderStatus(order.id, 'completed')} />
+                              
+                              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                                <StatusBtn label="Скасувати" active={order.status === 'cancelled'} color="#ef4444" icon={<XCircle size={12} />} onClick={() => updateOrderStatus(order.id, 'cancelled')} />
+                                <button 
+                                  onClick={() => setModal({ 
+                                    open: true, 
+                                    title: 'Видалити замовлення?', 
+                                    message: `Ви впевнені, що хочете видалити замовлення ${order.order_number}? Цю дію неможливо скасувати.`, 
+                                    type: 'danger',
+                                    onConfirm: () => deleteOrder(order.id)
+                                  })}
+                                  style={{ 
+                                    padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.2)', 
+                                    background: 'rgba(239,68,68,0.05)', color: '#ef4444', fontSize: 10, fontWeight: 900, cursor: 'pointer'
+                                  }}
+                                >
+                                  ВИДАЛИТИ
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
             </>
           ) : activeTab === 'users' ? (
