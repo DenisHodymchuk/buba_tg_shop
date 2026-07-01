@@ -755,6 +755,7 @@ export default function AdminPanel() {
         .eq('id', orderId);
       if (error) throw error;
       setOrders(orders.map(o => o.id === orderId ? { ...o, payment_status: newStatus } : o));
+      showToast('Статус оплати оновлено');
     } catch (e) {
       alert('Помилка при оновленні статусу оплати: ' + e.message);
     }
@@ -1435,6 +1436,38 @@ export default function AdminPanel() {
                                   </div>
                                 </div>
                               )}
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4, marginBottom: 12 }}>
+                              <div style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase' }}>Статус оплати</div>
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                {[
+                                  { val: 'pending', label: 'Очікує оплати', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+                                  { val: 'verifying', label: 'Перевірка', color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
+                                  { val: 'paid', label: 'Оплачено', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' }
+                                ].map(p => {
+                                  const isSelected = order.payment_status === p.val;
+                                  return (
+                                    <button
+                                      key={p.val}
+                                      onClick={() => updatePaymentStatus(order.id, p.val)}
+                                      style={{
+                                        padding: '6px 14px',
+                                        borderRadius: 10,
+                                        fontSize: 10,
+                                        fontWeight: 800,
+                                        border: isSelected ? `1px solid ${p.color}` : '1px solid rgba(255,255,255,0.05)',
+                                        background: isSelected ? p.bg : 'rgba(255,255,255,0.02)',
+                                        color: isSelected ? p.color : '#6b6b8a',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                      }}
+                                    >
+                                      {p.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
 
                             {order.shipping_details?.items && (
