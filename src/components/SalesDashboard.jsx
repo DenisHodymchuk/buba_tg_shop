@@ -670,75 +670,75 @@ export default function SalesDashboard({ showToast }) {
 
           <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
 
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 20 }}>
-            {/* Payment Filter */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус оплати (можна обрати декілька):</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {[
-                  { val: 'Всі', label: 'ВСІ' },
-                  { val: 'pending', label: 'ОЧІКУЄ' },
-                  { val: 'verifying', label: 'ПЕРЕВІРКА' },
-                  { val: 'paid', label: 'ОПЛАЧЕНО' }
-                ].map(item => {
-                  const active = item.val === 'Всі' 
-                    ? selectedPayments.length === 0 
-                    : selectedPayments.includes(item.val);
-                  return (
-                    <button 
-                      key={item.val} 
-                      onClick={() => togglePaymentFilter(item.val)} 
-                      style={{ 
-                        padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
-                        background: active ? '#f97316' : 'rgba(255,255,255,0.03)', 
-                        color: active ? '#fff' : 'var(--text-muted)', 
-                        border: 'none', cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Payment Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус оплати (можна обрати декілька):</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {[
+                { val: 'Всі', label: 'ВСІ' },
+                { val: 'pending', label: 'ОЧІКУЄ' },
+                { val: 'verifying', label: 'ПЕРЕВІРКА' },
+                { val: 'paid', label: 'ОПЛАЧЕНО' }
+              ].map(item => {
+                const active = item.val === 'Всі' 
+                  ? selectedPayments.length === 0 
+                  : selectedPayments.includes(item.val);
+                return (
+                  <button 
+                    key={item.val} 
+                    onClick={() => togglePaymentFilter(item.val)} 
+                    style={{ 
+                      padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                      background: active ? '#f97316' : 'rgba(255,255,255,0.03)', 
+                      color: active ? '#fff' : 'var(--text-muted)', 
+                      border: 'none', cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            {/* Status Filter */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус замовлення (можна обрати декілька):</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {[
-                  { val: 'Всі', label: 'ВСІ', color: '#6b6b8a', icon: null },
-                  ...Object.keys(STATUS_META).map(key => ({
-                    val: key,
-                    label: STATUS_META[key].label.toUpperCase(),
-                    color: STATUS_META[key].color,
-                    icon: STATUS_META[key].icon
-                  }))
-                ].map(item => {
-                  const Icon = item.icon;
-                  const active = item.val === 'Всі' 
-                    ? selectedStatuses.length === 0 
-                    : selectedStatuses.includes(item.val);
-                  return (
-                    <button 
-                      key={item.val} 
-                      onClick={() => toggleStatusFilter(item.val)} 
-                      style={{ 
-                        padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
-                        background: active ? item.color : 'rgba(255,255,255,0.03)', 
-                        color: active ? '#fff' : 'var(--text-muted)', 
-                        border: 'none', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {Icon && <Icon size={12} />}
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+
+          {/* Status Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус замовлення (можна обрати декілька):</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {[
+                { val: 'Всі', label: 'ВСІ', color: '#6b6b8a', icon: null },
+                ...Object.keys(STATUS_META).map(key => ({
+                  val: key,
+                  label: STATUS_META[key].label.toUpperCase(),
+                  color: STATUS_META[key].color,
+                  icon: STATUS_META[key].icon
+                }))
+              ].map(item => {
+                const Icon = item.icon;
+                const active = item.val === 'Всі' 
+                  ? selectedStatuses.length === 0 
+                  : selectedStatuses.includes(item.val);
+                return (
+                  <button 
+                    key={item.val} 
+                    onClick={() => toggleStatusFilter(item.val)} 
+                    style={{ 
+                      padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                      background: active ? item.color : 'rgba(255,255,255,0.03)', 
+                      color: active ? '#fff' : 'var(--text-muted)', 
+                      border: 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {Icon && <Icon size={12} />}
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
