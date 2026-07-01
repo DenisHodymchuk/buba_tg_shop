@@ -421,7 +421,7 @@ export default function AdminPanel() {
       }
       
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      setModal({ open: true, title: 'Успіх!', message: 'Статус змінено та клієнт отримав сповіщення ✅', type: 'success' });
+      showToast('Статус змінено, клієнт отримав сповіщення');
     } catch (e) {
       alert('Помилка оновлення статусу: ' + e.message);
     }
