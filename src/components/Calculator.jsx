@@ -20,12 +20,10 @@ const PRESETS = {
     { name: 'ASA', cost: 1100, density: 1.07 },
   ],
   printers: [
-    { name: 'Bambu Lab X1C', wattage: 150, wear: 6 },
-    { name: 'Bambu Lab P1S/P1P', wattage: 150, wear: 5 },
-    { name: 'Bambu Lab A1', wattage: 90, wear: 4 },
-    { name: 'Bambu Lab A1 Mini', wattage: 70, wear: 3 },
-    { name: 'Voron 2.4 (350)', wattage: 250, wear: 4 },
-    { name: 'Creality K1 Max', wattage: 200, wear: 5 },
+    { id: 'bambu-x1c', name: 'Bambu Lab X1C', wattage: 150, wear: 6 },
+    { id: 'bambu-p1s', name: 'Bambu Lab P1S/P1P', wattage: 150, wear: 5 },
+    { id: 'bambu-a1', name: 'Bambu Lab A1', wattage: 90, wear: 4 },
+    { id: 'bambu-a1mini', name: 'Bambu Lab A1 Mini', wattage: 70, wear: 3 },
   ]
 };
 
@@ -143,6 +141,9 @@ export default function Calculator() {
   const [catalogs, setCatalogs] = useState({ manufacturers: [], types: [], colors: [] });
   const [isMobile, setIsMobile] = useState(false);
   const [deleteConfirmMaterial, setDeleteConfirmMaterial] = useState(null);
+  const [printersList, setPrintersList] = useState([]);
+  const [showAddPrinterForm, setShowAddPrinterForm] = useState(false);
+  const [newPrinterData, setNewPrinterData] = useState({ name: '', wattage: '', wear: '' });
 
   // Dynamic filter helpers derived from materials library
   const availableTypes = useMemo(() => {
@@ -211,6 +212,50 @@ export default function Calculator() {
   useEffect(() => {
     setShowAllMaterials(false);
   }, [selectedTypeFilter, selectedColorFilter, selectedManufacturerFilter, materialSearchQuery]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('buba_printers');
+    if (stored) {
+      try {
+        setPrintersList(JSON.parse(stored));
+      } catch (e) {
+        setPrintersList(PRESETS.printers);
+      }
+    } else {
+      setPrintersList(PRESETS.printers);
+      localStorage.setItem('buba_printers', JSON.stringify(PRESETS.printers));
+    }
+  }, []);
+
+  const handleAddPrinter = () => {
+    if (!newPrinterData.name.trim()) {
+      showToast('Введіть назву принтера', 'error');
+      return;
+    }
+    const printer = {
+      id: Date.now().toString(),
+      name: newPrinterData.name.trim(),
+      wattage: Number(newPrinterData.wattage) || 0,
+      wear: Number(newPrinterData.wear) || 0
+    };
+    const updated = [...printersList, printer];
+    setPrintersList(updated);
+    localStorage.setItem('buba_printers', JSON.stringify(updated));
+    setShowAddPrinterForm(false);
+    setNewPrinterData({ name: '', wattage: '', wear: '' });
+    showToast(`Принтер "${printer.name}" додано`);
+  };
+
+  const deletePrinter = (id, e) => {
+    e.stopPropagation();
+    const printerToDelete = printersList.find(p => p.id === id || p.name === id);
+    const printerName = printerToDelete ? printerToDelete.name : 'Принтер';
+    
+    const updated = printersList.filter(p => p.id !== id && p.name !== id);
+    setPrintersList(updated);
+    localStorage.setItem('buba_printers', JSON.stringify(updated));
+    showToast(`Принтер "${printerName}" видалено`);
+  };
 
   const [formData, setFormData] = useState({
     name: 'Новий розрахунок',
@@ -1293,20 +1338,160 @@ export default function Calculator() {
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: 12, gap: 10 }}>
                 <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Обладнання та енергія</label>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {PRESETS.printers.map(p => (
-                    <button 
-                      key={p.name} onClick={() => applyPrinterPreset(p)}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {printersList.map(p => (
+                    <div 
+                      key={p.id || p.name} 
                       style={{ 
-                        fontSize: 9, padding: '4px 8px', borderRadius: 6, background: 'rgba(59,130,246,0.1)',
-                        color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', cursor: 'pointer'
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: 6,
+                        fontSize: 9, 
+                        padding: '4px 8px', 
+                        borderRadius: 6, 
+                        background: 'rgba(59,130,246,0.1)',
+                        color: '#3b82f6', 
+                        border: '1px solid rgba(59,130,246,0.2)', 
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        userSelect: 'none'
+                      }}
+                      onClick={() => applyPrinterPreset(p)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(59,130,246,0.18)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(59,130,246,0.1)';
                       }}
                     >
-                      {p.name}
-                    </button>
+                      <span>{p.name}</span>
+                      <button
+                        onClick={(e) => deletePrinter(p.id || p.name, e)}
+                        title="Видалити принтер"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 2,
+                          margin: 0,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ef4444',
+                          opacity: 0.6,
+                          borderRadius: 3,
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+                      >
+                        <X size={8} />
+                      </button>
+                    </div>
                   ))}
+                  
+                  {/* Add Printer Trigger */}
+                  <button
+                    onClick={() => setShowAddPrinterForm(!showAddPrinterForm)}
+                    title="Додати новий принтер"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 9, 
+                      padding: '4px 8px', 
+                      borderRadius: 6, 
+                      background: 'rgba(74,222,128,0.1)',
+                      color: '#4ade80', 
+                      border: '1px solid rgba(74,222,128,0.2)', 
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      fontWeight: 800
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(74,222,128,0.2)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(74,222,128,0.1)'}
+                  >
+                    <Plus size={8} style={{ marginRight: 2 }} /> ДОДАТИ
+                  </button>
                 </div>
               </div>
+
+              {/* Add Printer Form */}
+              {showAddPrinterForm && (
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px dashed rgba(59, 130, 246, 0.3)',
+                  padding: 14,
+                  borderRadius: 16,
+                  marginTop: 4,
+                  marginBottom: 12,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10
+                }}>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', textTransform: 'uppercase' }}>Нове обладнання</span>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr', gap: 10 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Назва принтера</span>
+                      <input 
+                        type="text" 
+                        placeholder="Наприклад, Bambu Lab A1" 
+                        value={newPrinterData.name} 
+                        onChange={e => setNewPrinterData({...newPrinterData, name: e.target.value})}
+                        style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 8, color: 'var(--text-main)', fontSize: 11, outline: 'none' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Потужність (Вт)</span>
+                      <input 
+                        type="number" 
+                        placeholder="150" 
+                        value={newPrinterData.wattage} 
+                        onChange={e => setNewPrinterData({...newPrinterData, wattage: e.target.value})}
+                        style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 8, color: 'var(--text-main)', fontSize: 11, outline: 'none' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Знос (₴/год)</span>
+                      <input 
+                        type="number" 
+                        placeholder="5" 
+                        value={newPrinterData.wear} 
+                        onChange={e => setNewPrinterData({...newPrinterData, wear: e.target.value})}
+                        style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 8, color: 'var(--text-main)', fontSize: 11, outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+                    <button
+                      onClick={() => setShowAddPrinterForm(false)}
+                      style={{
+                        padding: '6px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)', color: 'var(--text-muted)',
+                        fontSize: 10, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
+                    >
+                      СКАСУВАТИ
+                    </button>
+                    <button
+                      onClick={handleAddPrinter}
+                      style={{
+                        padding: '6px 14px', borderRadius: 8, background: 'rgba(59, 130, 246, 0.2)',
+                        border: '1px solid rgba(59, 130, 246, 0.4)', color: '#60a5fa',
+                        fontSize: 10, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; }}
+                    >
+                      ЗБЕРЕГТИ
+                    </button>
+                  </div>
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 16 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Потужність (Вт)</span>
