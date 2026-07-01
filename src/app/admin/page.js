@@ -66,6 +66,21 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTab = localStorage.getItem('admin_active_tab');
+      if (savedTab) {
+        setActiveTab(savedTab);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin_active_tab', activeTab);
+    }
+  }, [activeTab]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [selectedPayments, setSelectedPayments] = useState([]);
   const [expandedOrderIds, setExpandedOrderIds] = useState([]);
