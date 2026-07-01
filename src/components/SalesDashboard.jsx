@@ -97,9 +97,39 @@ export default function SalesDashboard({ showToast }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sourceFilter, setSourceFilter] = useState('Всі');
-  const [paymentFilter, setPaymentFilter] = useState('Всі');
-  const [statusFilter, setStatusFilter] = useState('Всі');
+  const [selectedSources, setSelectedSources] = useState([]);
+  const [selectedPayments, setSelectedPayments] = useState([]);
+  const [selectedStatuses, setSelectedStatuses] = useState([]);
+
+  const toggleSourceFilter = (source) => {
+    if (source === 'Всі') {
+      setSelectedSources([]);
+    } else {
+      setSelectedSources(prev => 
+        prev.includes(source) ? prev.filter(s => s !== source) : [...prev, source]
+      );
+    }
+  };
+
+  const togglePaymentFilter = (payment) => {
+    if (payment === 'Всі') {
+      setSelectedPayments([]);
+    } else {
+      setSelectedPayments(prev => 
+        prev.includes(payment) ? prev.filter(p => p !== payment) : [...prev, payment]
+      );
+    }
+  };
+
+  const toggleStatusFilter = (status) => {
+    if (status === 'Всі') {
+      setSelectedStatuses([]);
+    } else {
+      setSelectedStatuses(prev => 
+        prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+      );
+    }
+  };
   const [showAddForm, setShowAddForm] = useState(false);
   const [periodType, setPeriodType] = useState('month'); // 'week' | 'month' | 'quarter'
   
@@ -251,9 +281,9 @@ export default function SalesDashboard({ showToast }) {
   const filteredSales = useMemo(() => {
     return sales.filter(s => {
       const src = s.source || 'website';
-      const matchesSource = sourceFilter === 'Всі' || src === sourceFilter;
-      const matchesPayment = paymentFilter === 'Всі' || s.payment_status === paymentFilter;
-      const matchesStatus = statusFilter === 'Всі' || s.status === statusFilter;
+      const matchesSource = selectedSources.length === 0 || selectedSources.includes(src);
+      const matchesPayment = selectedPayments.length === 0 || selectedPayments.includes(s.payment_status);
+      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(s.status);
       
       const name = `${s.shipping_details?.firstName || ''} ${s.shipping_details?.lastName || ''} ${s.customers?.first_name || ''} ${s.customers?.last_name || ''}`.toLowerCase();
       const phone = `${s.shipping_details?.phone || ''} ${s.customers?.phone || ''}`;
@@ -263,7 +293,7 @@ export default function SalesDashboard({ showToast }) {
 
       return matchesSource && matchesPayment && matchesStatus && matchesSearch;
     });
-  }, [sales, sourceFilter, paymentFilter, statusFilter, searchQuery]);
+  }, [sales, selectedSources, selectedPayments, selectedStatuses, searchQuery]);
 
   const handleAddManualItem = () => {
     if (!newItem.name || !newItem.price) {
@@ -586,58 +616,131 @@ export default function SalesDashboard({ showToast }) {
         </div>
       </div>
 
-      {/* Filter and search bar */}
-      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16, alignItems: isMobile ? 'stretch' : 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 24, padding: 20, overflow: 'visible' }}>
-        
+      {/* Search and Filters */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 24, padding: 24 }}>
         {/* Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 16px', flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 18px' }}>
           <Search size={16} style={{ color: 'var(--text-muted)' }} />
           <input 
             type="text" 
-            placeholder="Пошук клієнта, телефону чи номера..." 
+            placeholder="Пошук клієнта, телефону чи номера замовлення..." 
             value={searchQuery} 
             onChange={(e) => setSearchQuery(e.target.value)} 
             style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} 
           />
         </div>
 
-        {/* Filters Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 160px)', gap: 12, flexShrink: 0, overflow: 'visible' }}>
-          <ThemeSelect 
-            value={sourceFilter}
-            onChange={setSourceFilter}
-            displayValue={sourceFilter === 'Всі' ? 'Всі канали' : getPlatformBadgeName(sourceFilter)}
-            options={[
-              { value: 'Всі', label: 'Всі канали' },
-              { value: 'website', label: 'Сайт' },
-              { value: 'olx', label: 'OLX' },
-              { value: 'instagram', label: 'Instagram' },
-              { value: 'facebook', label: 'Facebook' },
-              { value: 'telegram', label: 'Telegram' },
-              { value: 'offline', label: 'Офлайн' },
-              { value: 'other', label: 'Інше' }
-            ]}
-          />
-          <ThemeSelect 
-            value={paymentFilter}
-            onChange={setPaymentFilter}
-            displayValue={paymentFilter === 'Всі' ? 'Всі оплати' : paymentFilter === 'paid' ? 'Оплачено' : paymentFilter === 'pending' ? 'Очікує' : 'Перевірка'}
-            options={[
-              { value: 'Всі', label: 'Всі оплати' },
-              { value: 'paid', label: 'Оплачено' },
-              { value: 'pending', label: 'Очікує' },
-              { value: 'verifying', label: 'Перевірка' }
-            ]}
-          />
-          <ThemeSelect 
-            value={statusFilter}
-            onChange={setStatusFilter}
-            displayValue={statusFilter === 'Всі' ? 'Всі статуси' : STATUS_META[statusFilter]?.label || statusFilter}
-            options={[
-              { value: 'Всі', label: 'Всі статуси' },
-              ...Object.keys(STATUS_META).map(key => ({ value: key, label: STATUS_META[key].label }))
-            ]}
-          />
+        {/* Multi-Select Pills */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Source/Channel Filter */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Джерело замовлення (можна обрати декілька):</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {[
+                { val: 'Всі', label: 'ВСІ', color: '#6b6b8a' },
+                { val: 'website', label: 'САЙТ', color: '#3b82f6' },
+                { val: 'olx', label: 'OLX', color: '#23e5db' },
+                { val: 'instagram', label: 'INSTAGRAM', color: '#f43f5e' },
+                { val: 'facebook', label: 'FACEBOOK', color: '#1877f2' },
+                { val: 'telegram', label: 'TELEGRAM', color: '#0ea5e9' },
+                { val: 'offline', label: 'ОФЛАЙН', color: '#22c55e' },
+                { val: 'other', label: 'ІНШЕ', color: '#a855f7' }
+              ].map(item => {
+                const active = item.val === 'Всі' 
+                  ? selectedSources.length === 0 
+                  : selectedSources.includes(item.val);
+                return (
+                  <button 
+                    key={item.val} 
+                    onClick={() => toggleSourceFilter(item.val)} 
+                    style={{ 
+                      padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                      background: active ? item.color : 'rgba(255,255,255,0.03)', 
+                      color: active ? '#fff' : 'var(--text-muted)', 
+                      border: 'none', cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 20 }}>
+            {/* Payment Filter */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус оплати (можна обрати декілька):</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {[
+                  { val: 'Всі', label: 'ВСІ' },
+                  { val: 'pending', label: 'ОЧІКУЄ' },
+                  { val: 'verifying', label: 'ПЕРЕВІРКА' },
+                  { val: 'paid', label: 'ОПЛАЧЕНО' }
+                ].map(item => {
+                  const active = item.val === 'Всі' 
+                    ? selectedPayments.length === 0 
+                    : selectedPayments.includes(item.val);
+                  return (
+                    <button 
+                      key={item.val} 
+                      onClick={() => togglePaymentFilter(item.val)} 
+                      style={{ 
+                        padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                        background: active ? '#f97316' : 'rgba(255,255,255,0.03)', 
+                        color: active ? '#fff' : 'var(--text-muted)', 
+                        border: 'none', cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус замовлення (можна обрати декілька):</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {[
+                  { val: 'Всі', label: 'ВСІ', color: '#6b6b8a', icon: null },
+                  ...Object.keys(STATUS_META).map(key => ({
+                    val: key,
+                    label: STATUS_META[key].label.toUpperCase(),
+                    color: STATUS_META[key].color,
+                    icon: STATUS_META[key].icon
+                  }))
+                ].map(item => {
+                  const Icon = item.icon;
+                  const active = item.val === 'Всі' 
+                    ? selectedStatuses.length === 0 
+                    : selectedStatuses.includes(item.val);
+                  return (
+                    <button 
+                      key={item.val} 
+                      onClick={() => toggleStatusFilter(item.val)} 
+                      style={{ 
+                        padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                        background: active ? item.color : 'rgba(255,255,255,0.03)', 
+                        color: active ? '#fff' : 'var(--text-muted)', 
+                        border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {Icon && <Icon size={12} />}
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
