@@ -159,12 +159,12 @@ export default function AdminPanel() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, () => fetchReviews())
       .subscribe();
 
-    // 2. Фонове оновлення кожні 30 секунд як запасний варіант
+    // 2. Фонове оновлення кожні 5 секунд як запасний варіант
     const intervalId = setInterval(() => {
       fetchOrders();
       fetchUsers();
       fetchReviews();
-    }, 30000);
+    }, 5000);
 
     // 3. Telegram Mini App Initialization & Auto-Auth
     const initTMA = () => {
@@ -853,6 +853,20 @@ export default function AdminPanel() {
     return (p * (1 - d / 100)).toFixed(0);
   }, [formData.price, formData.discount]);
 
+  const filteredOrders = useMemo(() => {
+    return orders.filter(o => {
+      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(o.status);
+      const matchesPayment = selectedPayments.length === 0 || selectedPayments.includes(o.payment_status);
+      const matchesSearch = !searchQuery || (
+        (o.order_number || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+        (o.shipping_details?.phone || '').includes(searchQuery) ||
+        (o.shipping_details?.firstName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (o.shipping_details?.lastName || '').toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      return matchesStatus && matchesPayment && matchesSearch;
+    });
+  }, [orders, selectedStatuses, selectedPayments, searchQuery]);
+
   async function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -1178,17 +1192,13 @@ export default function AdminPanel() {
           ) : activeTab === 'sales' ? (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-                <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: 0 }}>Замовлення ({orders.length})</h1>
+                <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: 0 }}>
+                  Замовлення ({selectedStatuses.length > 0 || selectedPayments.length > 0 || searchQuery ? filteredOrders.length : orders.length})
+                </h1>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button 
                     onClick={() => {
-                      const filtered = orders.filter(o => {
-                        const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(o.status);
-                        const matchesPayment = selectedPayments.length === 0 || selectedPayments.includes(o.payment_status);
-                        const matchesSearch = !searchQuery || (o.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) || o.shipping_details?.phone?.includes(searchQuery));
-                        return matchesStatus && matchesPayment && matchesSearch;
-                      });
-                      const allIds = filtered.map(o => o.id);
+                      const allIds = filteredOrders.map(o => o.id);
                       const areAllExpanded = allIds.every(id => expandedOrderIds.includes(id));
                       if (areAllExpanded) {
                         setExpandedOrderIds(prev => prev.filter(id => !allIds.includes(id)));
@@ -1198,12 +1208,7 @@ export default function AdminPanel() {
                     }}
                     style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer', transition: 'all 0.3s' }}
                   >
-                    {orders.filter(o => {
-                      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(o.status);
-                      const matchesPayment = selectedPayments.length === 0 || selectedPayments.includes(o.payment_status);
-                      const matchesSearch = !searchQuery || (o.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) || o.shipping_details?.phone?.includes(searchQuery));
-                      return matchesStatus && matchesPayment && matchesSearch;
-                    }).map(o => o.id).every(id => expandedOrderIds.includes(id)) ? 'Згорнути всі' : 'Розгорнути всі'}
+                    {filteredOrders.length > 0 && filteredOrders.map(o => o.id).every(id => expandedOrderIds.includes(id)) ? 'Згорнути всі' : 'Розгорнути всі'}
                   </button>
                   <button 
                     onClick={handleManualRefresh} 
@@ -1289,14 +1294,7 @@ export default function AdminPanel() {
 
               {/* Orders List Accordion */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {orders
-                  .filter(o => {
-                    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(o.status);
-                    const matchesPayment = selectedPayments.length === 0 || selectedPayments.includes(o.payment_status);
-                    const matchesSearch = !searchQuery || (o.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) || o.shipping_details?.phone?.includes(searchQuery));
-                    return matchesStatus && matchesPayment && matchesSearch;
-                  })
-                  .map(order => {
+                {filteredOrders.map(order => {
                     const isExpanded = expandedOrderIds.includes(order.id);
                     
                     return (
