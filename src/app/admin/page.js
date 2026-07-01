@@ -1146,15 +1146,19 @@ export default function AdminPanel() {
       </aside>
 
       <main style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <header className="admin-main-header" style={{ height: 80, display: isMobile ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'var(--bg-header)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)', zIndex: 40 }}>
+        {['products', 'sales', 'users'].includes(activeTab) && (
+          <header className="admin-main-header" style={{ height: 80, display: isMobile ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'var(--bg-header)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)', zIndex: 40 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 16px', width: 350 }}>
               <Search size={16} style={{ color: 'var(--text-muted)' }} />
               <input type="text" placeholder="Пошук..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} />
             </div>
-            <button onClick={() => setShowForm(true)} style={{ background: '#fff', color: '#020b18', padding: '10px 24px', borderRadius: 12, fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>
-              <Plus size={18} /> ДОДАТИ ТОВАР
-            </button>
+            {activeTab === 'products' && (
+              <button onClick={() => setShowForm(true)} style={{ background: '#fff', color: '#020b18', padding: '10px 24px', borderRadius: 12, fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 20px rgba(0,0,0,0.2)' }}>
+                <Plus size={18} /> ДОДАТИ ТОВАР
+              </button>
+            )}
           </header>
+        )}
 
         <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '12px' : '40px' }}>
           {!supabase && (
