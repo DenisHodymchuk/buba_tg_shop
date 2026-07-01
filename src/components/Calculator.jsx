@@ -133,6 +133,7 @@ export default function Calculator() {
   const [selectedColorFilter, setSelectedColorFilter] = useState('All');
   const [selectedManufacturerFilter, setSelectedManufacturerFilter] = useState('All');
   const [showAllColors, setShowAllColors] = useState(false);
+  const [showAllMaterials, setShowAllMaterials] = useState(false);
   
   const [materialsLibrary, setMaterialsLibrary] = useState([]);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
@@ -192,12 +193,23 @@ export default function Calculator() {
     });
   }, [materialsLibrary, materialSearchQuery, selectedTypeFilter, selectedColorFilter, selectedManufacturerFilter]);
 
+  const visibleMaterials = useMemo(() => {
+    if (showAllMaterials || filteredMaterials.length <= 6) {
+      return filteredMaterials;
+    }
+    return filteredMaterials.slice(0, 6);
+  }, [filteredMaterials, showAllMaterials]);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    setShowAllMaterials(false);
+  }, [selectedTypeFilter, selectedColorFilter, selectedManufacturerFilter, materialSearchQuery]);
 
   const [formData, setFormData] = useState({
     name: 'Новий розрахунок',
@@ -814,7 +826,7 @@ export default function Calculator() {
                 {/* Type Filters */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Тип пластику</span>
-                  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }} className="hide-scrollbar">
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {availableTypes.map(type => {
                       const count = getTypeCount(type);
                       const isSelected = selectedTypeFilter === type;
@@ -846,7 +858,7 @@ export default function Calculator() {
                 {availableManufacturers.length > 1 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Виробник</span>
-                    <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }} className="hide-scrollbar">
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {availableManufacturers.map(man => {
                         const count = getManufacturerCount(man);
                         const isSelected = selectedManufacturerFilter === man;
@@ -1019,177 +1031,205 @@ export default function Calculator() {
 
               {/* Grid of Materials */}
               {materialsLibrary.length > 0 ? (
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(170px, 1fr))', 
-                  gap: 12, 
-                  marginBottom: 16 
-                }}>
-                  {filteredMaterials.map(m => {
-                    const isSelected = selectedMaterialIds.includes(m.id);
-                    const colorStyle = getColorStyle(m.color);
-                    
-                    return (
-                      <div 
-                        key={m.id} 
-                        onClick={() => selectFromLibrary(m)}
-                        style={{ 
-                          position: 'relative',
-                          padding: '16px 14px', 
-                          borderRadius: 20, 
-                          border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
-                          background: isSelected ? 'rgba(124,58,237,0.04)' : 'rgba(255,255,255,0.02)',
-                          boxShadow: isSelected ? '0 0 15px rgba(124,58,237,0.15)' : 'none',
-                          cursor: 'pointer', 
-                          textAlign: 'left', 
-                          transition: 'all 0.2s ease-in-out',
-                          display: 'flex', 
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          gap: 12,
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {/* Color swatch & Selection indicator */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div 
-                            style={{ 
-                              width: 22, 
-                              height: 22, 
-                              borderRadius: '50%', 
-                              ...colorStyle,
-                              border: colorStyle.border || '1px solid rgba(255,255,255,0.15)',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                              visibility: selectedColorFilter === 'All' ? 'visible' : 'hidden'
-                            }}
-                            title={`Колір: ${m.color || 'Не вказано'}`}
-                          />
-                          <div 
-                            style={{ 
-                              width: 18, 
-                              height: 18, 
-                              borderRadius: 6, 
-                              border: isSelected ? 'none' : '2px solid var(--border)',
-                              background: isSelected ? '#7c3aed' : 'transparent',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            {isSelected && <CheckCircle2 size={12} style={{ color: '#fff' }} />}
+                <>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(170px, 1fr))', 
+                    gap: 12, 
+                    marginBottom: 16 
+                  }}>
+                    {visibleMaterials.map(m => {
+                      const isSelected = selectedMaterialIds.includes(m.id);
+                      const colorStyle = getColorStyle(m.color);
+                      
+                      return (
+                        <div 
+                          key={m.id} 
+                          onClick={() => selectFromLibrary(m)}
+                          style={{ 
+                            position: 'relative',
+                            padding: '16px 14px', 
+                            borderRadius: 20, 
+                            border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
+                            background: isSelected ? 'rgba(124,58,237,0.04)' : 'rgba(255,255,255,0.02)',
+                            boxShadow: isSelected ? '0 0 15px rgba(124,58,237,0.15)' : 'none',
+                            cursor: 'pointer', 
+                            textAlign: 'left', 
+                            transition: 'all 0.2s ease-in-out',
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            gap: 12,
+                            overflow: 'hidden'
+                          }}
+                        >
+                          {/* Color swatch & Selection indicator */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div 
+                              style={{ 
+                                width: 22, 
+                                height: 22, 
+                                borderRadius: '50%', 
+                                ...colorStyle,
+                                border: colorStyle.border || '1px solid rgba(255,255,255,0.15)',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                                visibility: selectedColorFilter === 'All' ? 'visible' : 'hidden'
+                              }}
+                              title={`Колір: ${m.color || 'Не вказано'}`}
+                            />
+                            <div 
+                              style={{ 
+                                width: 18, 
+                                height: 18, 
+                                borderRadius: 6, 
+                                border: isSelected ? 'none' : '2px solid var(--border)',
+                                background: isSelected ? '#7c3aed' : 'transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              {isSelected && <CheckCircle2 size={12} style={{ color: '#fff' }} />}
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Core Metadata */}
-                        <div>
-                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
-                            <span style={{ 
-                              fontSize: 9, 
-                              fontWeight: 900, 
-                              background: 'rgba(124,58,237,0.15)', 
-                              color: '#c084fc', 
-                              padding: '2px 6px', 
-                              borderRadius: 6,
-                              textTransform: 'uppercase'
-                            }}>
-                              {m.type || 'PLA'}
-                            </span>
-                            {m.manufacturer && (
+                          {/* Core Metadata */}
+                          <div>
+                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
                               <span style={{ 
                                 fontSize: 9, 
-                                fontWeight: 800, 
-                                background: 'rgba(255,255,255,0.05)', 
-                                color: 'var(--text-muted)', 
+                                fontWeight: 900, 
+                                background: 'rgba(124,58,237,0.15)', 
+                                color: '#c084fc', 
                                 padding: '2px 6px', 
-                                borderRadius: 6 
+                                borderRadius: 6,
+                                textTransform: 'uppercase'
                               }}>
-                                {m.manufacturer}
+                                {m.type || 'PLA'}
                               </span>
-                            )}
+                              {m.manufacturer && (
+                                <span style={{ 
+                                  fontSize: 9, 
+                                  fontWeight: 800, 
+                                  background: 'rgba(255,255,255,0.05)', 
+                                  color: 'var(--text-muted)', 
+                                  padding: '2px 6px', 
+                                  borderRadius: 6 
+                                }}>
+                                  {m.manufacturer}
+                                </span>
+                              )}
+                            </div>
+
+                            <div style={{ 
+                              fontWeight: 800, 
+                              fontSize: 12, 
+                              color: '#fff', 
+                              lineHeight: 1.3,
+                              marginBottom: 4,
+                              wordBreak: 'break-word'
+                            }}>
+                              {m.name}
+                            </div>
                           </div>
 
+                          {/* Price & Actions */}
                           <div style={{ 
-                            fontWeight: 800, 
-                            fontSize: 12, 
-                            color: '#fff', 
-                            lineHeight: 1.3,
-                            marginBottom: 4,
-                            wordBreak: 'break-word'
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            marginTop: 4,
+                            borderTop: '1px solid rgba(255,255,255,0.03)',
+                            paddingTop: 8
                           }}>
-                            {m.name}
+                            <span style={{ fontWeight: 900, fontSize: 13, color: '#4ade80' }}>
+                              {m.cost_per_kg} ₴<span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)' }}>/кг</span>
+                            </span>
+                            
+                            <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
+                              <button 
+                                onClick={(e) => startEditMaterial(m, e)} 
+                                title="Редагувати матеріал"
+                                style={{ 
+                                  background: 'rgba(255,255,255,0.05)', 
+                                  border: 'none', 
+                                  padding: 6, 
+                                  borderRadius: 8, 
+                                  color: 'var(--text-muted)', 
+                                  cursor: 'pointer', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center'
+                                }}
+                              >
+                                <Pencil size={12} />
+                              </button>
+                              <button 
+                                onClick={(e) => handleDeleteMaterial(m.id, e)} 
+                                title="Видалити матеріал"
+                                style={{ 
+                                  background: 'rgba(239,68,68,0.05)', 
+                                  border: 'none', 
+                                  padding: 6, 
+                                  borderRadius: 8, 
+                                  color: 'rgba(239,68,68,0.7)', 
+                                  cursor: 'pointer', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center'
+                                }}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
                           </div>
                         </div>
+                      );
+                    })}
 
-                        {/* Price & Actions */}
-                        <div style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
-                          alignItems: 'center',
-                          marginTop: 4,
-                          borderTop: '1px solid rgba(255,255,255,0.03)',
-                          paddingTop: 8
-                        }}>
-                          <span style={{ fontWeight: 900, fontSize: 13, color: '#4ade80' }}>
-                            {m.cost_per_kg} ₴<span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)' }}>/кг</span>
-                          </span>
-                          
-                          <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
-                            <button 
-                              onClick={(e) => startEditMaterial(m, e)} 
-                              title="Редагувати матеріал"
-                              style={{ 
-                                background: 'rgba(255,255,255,0.05)', 
-                                border: 'none', 
-                                padding: 6, 
-                                borderRadius: 8, 
-                                color: 'var(--text-muted)', 
-                                cursor: 'pointer', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <Pencil size={12} />
-                            </button>
-                            <button 
-                              onClick={(e) => handleDeleteMaterial(m.id, e)} 
-                              title="Видалити матеріал"
-                              style={{ 
-                                background: 'rgba(239,68,68,0.05)', 
-                                border: 'none', 
-                                padding: 6, 
-                                borderRadius: 8, 
-                                color: 'rgba(239,68,68,0.7)', 
-                                cursor: 'pointer', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        </div>
+                    {filteredMaterials.length === 0 && (
+                      <div style={{ 
+                        gridColumn: '1 / -1', 
+                        textAlign: 'center', 
+                        padding: '40px 20px', 
+                        color: 'var(--text-muted)', 
+                        fontSize: 12,
+                        background: 'rgba(255,255,255,0.01)',
+                        border: '1px dashed var(--border)',
+                        borderRadius: 20
+                      }}>
+                        Матеріалів не знайдено за поточними фільтрами
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
 
-                  {filteredMaterials.length === 0 && (
-                    <div style={{ 
-                      gridColumn: '1 / -1', 
-                      textAlign: 'center', 
-                      padding: '40px 20px', 
-                      color: 'var(--text-muted)', 
-                      fontSize: 12,
-                      background: 'rgba(255,255,255,0.01)',
-                      border: '1px dashed var(--border)',
-                      borderRadius: 20
-                    }}>
-                      Матеріалів не знайдено за поточними фільтрами
+                  {filteredMaterials.length > 6 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8, marginBottom: 16 }}>
+                      <button
+                        onClick={() => setShowAllMaterials(!showAllMaterials)}
+                        style={{
+                          background: 'rgba(124,58,237,0.1)',
+                          color: '#a78bfa',
+                          border: '1px solid rgba(124,58,237,0.2)',
+                          padding: '8px 20px',
+                          borderRadius: 12,
+                          fontSize: 12,
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(124,58,237,0.2)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(124,58,237,0.1)'}
+                      >
+                        {showAllMaterials ? 'Сховати список' : `Показати ще ${filteredMaterials.length - 6}`}
+                      </button>
                     </div>
                   )}
-                </div>
+                </>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 20, background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--border)', borderRadius: 20, textAlign: 'center', marginBottom: 16 }}>
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ваша бібліотека порожня. Використовуйте стандартні пресети:</span>
