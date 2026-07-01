@@ -142,6 +142,7 @@ export default function Calculator() {
   const [notification, setNotification] = useState(null);
   const [catalogs, setCatalogs] = useState({ manufacturers: [], types: [], colors: [] });
   const [isMobile, setIsMobile] = useState(false);
+  const [deleteConfirmMaterial, setDeleteConfirmMaterial] = useState(null);
 
   // Dynamic filter helpers derived from materials library
   const availableTypes = useMemo(() => {
@@ -487,16 +488,24 @@ export default function Calculator() {
     }
   }
 
-  async function handleDeleteMaterial(id, e) {
+  const requestDeleteMaterial = (m, e) => {
     e.stopPropagation();
-    if (!confirm('Видалити цей матеріал?')) return;
+    setDeleteConfirmMaterial(m);
+  };
+
+  async function executeDeleteMaterial() {
+    if (!deleteConfirmMaterial) return;
+    const { id, name } = deleteConfirmMaterial;
     try {
       const { error } = await supabase.from('material_library').delete().eq('id', id);
       if (error) throw error;
       setMaterialsLibrary(materialsLibrary.filter(m => m.id !== id));
-      showToast('Матеріал видалено');
+      setSelectedMaterialIds(prev => prev.filter(mid => mid !== id));
+      showToast(`Матеріал "${name}" видалено`);
     } catch (e) {
       showToast('Помилка видалення: ' + e.message, 'error');
+    } finally {
+      setDeleteConfirmMaterial(null);
     }
   }
 
@@ -795,77 +804,46 @@ export default function Calculator() {
               )}
 
               {/* Search and Filters Panel */}
-              <div style={{ 
-                background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', 
-                padding: 16, borderRadius: 20, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 14 
-              }}>
-                {/* Text Search */}
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <input 
-                    type="text" 
-                    placeholder="Шукати матеріал за назвою, виробником, типом..." 
-                    value={materialSearchQuery} 
-                    onChange={e => setMaterialSearchQuery(e.target.value)}
-                    style={{ 
-                      width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', 
-                      borderRadius: 12, padding: '10px 14px 10px 38px', color: 'var(--text-main)', 
-                      fontSize: 12, outline: 'none', boxSizing: 'border-box' 
-                    }}
-                  />
-                  <Search size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  {materialSearchQuery && (
-                    <button 
-                      onClick={() => setMaterialSearchQuery('')}
-                      style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2 }}
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
-                </div>
-
-                {/* Type Filters */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Тип пластику</span>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {availableTypes.map(type => {
-                      const count = getTypeCount(type);
-                      const isSelected = selectedTypeFilter === type;
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => setSelectedTypeFilter(type)}
-                          style={{
-                            whiteSpace: 'nowrap',
-                            padding: '6px 12px',
-                            borderRadius: 10,
-                            fontSize: 11,
-                            fontWeight: 800,
-                            border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
-                            background: isSelected ? 'rgba(124,58,237,0.15)' : 'rgba(0,0,0,0.1)',
-                            color: isSelected ? '#a78bfa' : 'var(--text-muted)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          {type === 'All' ? 'Всі типи' : type} <span style={{ opacity: 0.5, fontSize: 9, marginLeft: 2 }}>({count})</span>
-                        </button>
-                      );
-                    })}
+              {materialsLibrary.length > 0 && (
+                <div style={{ 
+                  background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', 
+                  padding: 16, borderRadius: 20, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 14 
+                }}>
+                  {/* Text Search */}
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Шукати матеріал за назвою, виробником, типом..." 
+                      value={materialSearchQuery} 
+                      onChange={e => setMaterialSearchQuery(e.target.value)}
+                      style={{ 
+                        width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', 
+                        borderRadius: 12, padding: '10px 14px 10px 38px', color: 'var(--text-main)', 
+                        fontSize: 12, outline: 'none', boxSizing: 'border-box' 
+                      }}
+                    />
+                    <Search size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    {materialSearchQuery && (
+                      <button 
+                        onClick={() => setMaterialSearchQuery('')}
+                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2 }}
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
                   </div>
-                </div>
 
-                {/* Manufacturer Filters */}
-                {availableManufacturers.length > 1 && (
+                  {/* Type Filters */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Виробник</span>
+                    <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Тип пластику</span>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {availableManufacturers.map(man => {
-                        const count = getManufacturerCount(man);
-                        const isSelected = selectedManufacturerFilter === man;
+                      {availableTypes.map(type => {
+                        const count = getTypeCount(type);
+                        const isSelected = selectedTypeFilter === type;
                         return (
                           <button
-                            key={man}
-                            onClick={() => setSelectedManufacturerFilter(man)}
+                            key={type}
+                            onClick={() => setSelectedTypeFilter(type)}
                             style={{
                               whiteSpace: 'nowrap',
                               padding: '6px 12px',
@@ -879,95 +857,128 @@ export default function Calculator() {
                               transition: 'all 0.2s'
                             }}
                           >
-                            {man === 'All' ? 'Всі виробники' : man} <span style={{ opacity: 0.5, fontSize: 9, marginLeft: 2 }}>({count})</span>
+                            {type === 'All' ? 'Всі типи' : type} <span style={{ opacity: 0.5, fontSize: 9, marginLeft: 2 }}>({count})</span>
                           </button>
                         );
                       })}
                     </div>
                   </div>
-                )}
 
-                {/* Color Filters */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Колір пластику</span>
-                  <div 
-                    style={{ 
-                      display: 'flex', 
-                      gap: 8, 
-                      flexWrap: showAllColors ? 'wrap' : 'nowrap', 
-                      overflowX: showAllColors ? 'visible' : 'auto', 
-                      padding: '8px 4px', 
-                      alignItems: 'center' 
-                    }} 
-                    className="hide-scrollbar"
-                  >
-                    {visibleColors.map(color => {
-                      const isSelected = selectedColorFilter === color;
-                      const isAll = color === 'All';
-                      const colorStyle = getColorStyle(isAll ? '' : color);
-                      
-                      return (
+                  {/* Manufacturer Filters */}
+                  {availableManufacturers.length > 1 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Виробник</span>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {availableManufacturers.map(man => {
+                          const count = getManufacturerCount(man);
+                          const isSelected = selectedManufacturerFilter === man;
+                          return (
+                            <button
+                              key={man}
+                              onClick={() => setSelectedManufacturerFilter(man)}
+                              style={{
+                                whiteSpace: 'nowrap',
+                                padding: '6px 12px',
+                                borderRadius: 10,
+                                fontSize: 11,
+                                fontWeight: 800,
+                                border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
+                                background: isSelected ? 'rgba(124,58,237,0.15)' : 'rgba(0,0,0,0.1)',
+                                color: isSelected ? '#a78bfa' : 'var(--text-muted)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              {man === 'All' ? 'Всі виробники' : man} <span style={{ opacity: 0.5, fontSize: 9, marginLeft: 2 }}>({count})</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Color Filters */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Колір пластику</span>
+                    <div 
+                      style={{ 
+                        display: 'flex', 
+                        gap: 8, 
+                        flexWrap: showAllColors ? 'wrap' : 'nowrap', 
+                        overflowX: showAllColors ? 'visible' : 'auto', 
+                        padding: '8px 4px', 
+                        alignItems: 'center' 
+                      }} 
+                      className="hide-scrollbar"
+                    >
+                      {visibleColors.map(color => {
+                        const isSelected = selectedColorFilter === color;
+                        const isAll = color === 'All';
+                        const colorStyle = getColorStyle(isAll ? '' : color);
+                        
+                        return (
+                          <button
+                            key={color}
+                            onClick={() => setSelectedColorFilter(color)}
+                            title={isAll ? 'Всі кольори' : color}
+                            style={{
+                              position: 'relative',
+                              flexShrink: 0,
+                              width: 28,
+                              height: 28,
+                              borderRadius: '50%',
+                              cursor: 'pointer',
+                              padding: 0,
+                              transition: 'all 0.2s',
+                              ...colorStyle,
+                              border: isSelected 
+                                ? '2px solid #8b5cf6' 
+                                : (colorStyle.border || '1px solid rgba(255,255,255,0.1)'),
+                              transform: isSelected ? 'scale(1.15)' : 'none',
+                              boxShadow: isSelected 
+                                ? '0 0 10px rgba(124,58,237,0.5)' 
+                                : 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            {isAll && (
+                              <span style={{ fontSize: 8, fontWeight: 900, color: '#fff', textTransform: 'uppercase' }}>Всі</span>
+                            )}
+                            {isSelected && !isAll && (
+                              <CheckCircle2 size={12} style={{ color: colorStyle.color || '#fff', filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.5))' }} />
+                            )}
+                          </button>
+                        );
+                      })}
+                      {availableColors.length > 7 && (
                         <button
-                          key={color}
-                          onClick={() => setSelectedColorFilter(color)}
-                          title={isAll ? 'Всі кольори' : color}
+                          onClick={() => setShowAllColors(!showAllColors)}
                           style={{
-                            position: 'relative',
                             flexShrink: 0,
-                            width: 28,
-                            height: 28,
-                            borderRadius: '50%',
+                            padding: '4px 10px',
+                            borderRadius: 10,
+                            fontSize: 10,
+                            fontWeight: 900,
+                            background: 'rgba(255,255,255,0.05)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            color: '#a78bfa',
                             cursor: 'pointer',
-                            padding: 0,
                             transition: 'all 0.2s',
-                            ...colorStyle,
-                            border: isSelected 
-                              ? '2px solid #8b5cf6' 
-                              : (colorStyle.border || '1px solid rgba(255,255,255,0.1)'),
-                            transform: isSelected ? 'scale(1.15)' : 'none',
-                            boxShadow: isSelected 
-                              ? '0 0 10px rgba(124,58,237,0.5)' 
-                              : 'none',
+                            height: 28,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
                           }}
                         >
-                          {isAll && (
-                            <span style={{ fontSize: 8, fontWeight: 900, color: '#fff', textTransform: 'uppercase' }}>Всі</span>
-                          )}
-                          {isSelected && !isAll && (
-                            <CheckCircle2 size={12} style={{ color: colorStyle.color || '#fff', filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.5))' }} />
-                          )}
+                          {showAllColors ? 'Сховати' : `+ ще ${availableColors.length - 7}`}
                         </button>
-                      );
-                    })}
-                    {availableColors.length > 7 && (
-                      <button
-                        onClick={() => setShowAllColors(!showAllColors)}
-                        style={{
-                          flexShrink: 0,
-                          padding: '4px 10px',
-                          borderRadius: 10,
-                          fontSize: 10,
-                          fontWeight: 900,
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          color: '#a78bfa',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          height: 28,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {showAllColors ? 'Сховати' : `+ ще ${availableColors.length - 7}`}
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Multi-select Summary Banner */}
               {selectedMaterialIds.length > 0 && (
@@ -1166,7 +1177,7 @@ export default function Calculator() {
                                 <Pencil size={12} />
                               </button>
                               <button 
-                                onClick={(e) => handleDeleteMaterial(m.id, e)} 
+                                onClick={(e) => requestDeleteMaterial(m, e)} 
                                 title="Видалити матеріал"
                                 style={{ 
                                   background: 'rgba(239,68,68,0.05)', 
@@ -1585,6 +1596,78 @@ export default function Calculator() {
             {notification.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
             {notification.message}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {deleteConfirmMaterial && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10000, padding: 16
+          }} onClick={() => setDeleteConfirmMaterial(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              style={{
+                background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.08)',
+                padding: 28, borderRadius: 28, maxWidth: 400, width: '100%',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                display: 'flex', flexDirection: 'column', gap: 20
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ 
+                  width: 42, height: 42, borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444'
+                }}>
+                  <AlertCircle size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 18, fontWeight: 900, color: '#fff', margin: 0 }}>Видалити матеріал?</h3>
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, textTransform: 'uppercase', fontWeight: 800 }}>Підтвердження дії</p>
+                </div>
+              </div>
+
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+                Ви впевнені, що хочете видалити матеріал <strong style={{ color: '#fff' }}>{deleteConfirmMaterial.name}</strong>? Це видалить його з вашої бібліотеки назавжди.
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+                <button
+                  onClick={() => setDeleteConfirmMaterial(null)}
+                  style={{
+                    flex: 1, padding: '12px 18px', borderRadius: 14,
+                    background: 'rgba(255, 255, 255, 0.03)', color: 'var(--text-muted)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)', fontWeight: 800, fontSize: 13,
+                    cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; e.currentTarget.style.color = '#fff'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                >
+                  СКАСУВАТИ
+                </button>
+                <button
+                  onClick={executeDeleteMaterial}
+                  style={{
+                    flex: 1, padding: '12px 18px', borderRadius: 14,
+                    background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff',
+                    border: 'none', fontWeight: 800, fontSize: 13,
+                    cursor: 'pointer', transition: 'all 0.2s',
+                    boxShadow: '0 8px 16px rgba(239, 68, 68, 0.2)'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.1)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+                >
+                  ВИДАЛИТИ
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
