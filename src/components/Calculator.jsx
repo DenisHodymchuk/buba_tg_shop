@@ -5,7 +5,7 @@ import {
   Zap, Clock, Package, RefreshCw, AlertCircle, 
   TrendingUp, DollarSign, Layers, CheckCircle2,
   ChevronDown, ChevronUp, Search, Filter, Copy, 
-  ShieldCheck, Sparkles, Loader2, Share2, Upload, X
+  ShieldCheck, Sparkles, Loader2, Share2, Upload, X, Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -29,12 +29,109 @@ const PRESETS = {
   ]
 };
 
+const getColorStyle = (colorName) => {
+  if (!colorName) return { background: 'var(--border)' };
+  
+  const name = colorName.trim().toLowerCase();
+  
+  const colorMap = {
+    'чорний': { background: '#111827', border: '1px solid rgba(255,255,255,0.15)' },
+    'black': { background: '#111827', border: '1px solid rgba(255,255,255,0.15)' },
+    'темно-сірий': { background: '#374151' },
+    'dark grey': { background: '#374151' },
+    'dark gray': { background: '#374151' },
+    'білий': { background: '#ffffff', border: '1px solid rgba(255,255,255,0.3)', color: '#000000' },
+    'white': { background: '#ffffff', border: '1px solid rgba(255,255,255,0.3)', color: '#000000' },
+    'сірий': { background: '#64748b' },
+    'grey': { background: '#64748b' },
+    'gray': { background: '#64748b' },
+    'світло-сірий': { background: '#cbd5e1' },
+    'light grey': { background: '#cbd5e1' },
+    'light gray': { background: '#cbd5e1' },
+    'червоний': { background: '#ef4444' },
+    'red': { background: '#ef4444' },
+    'рожевий': { background: '#ec4899' },
+    'pink': { background: '#ec4899' },
+    'фіолетовий': { background: '#8b5cf6' },
+    'purple': { background: '#8b5cf6' },
+    'violet': { background: '#8b5cf6' },
+    'бузковий': { background: '#a78bfa' },
+    'синій': { background: '#2563eb' },
+    'blue': { background: '#2563eb' },
+    'блакитний': { background: '#06b6d4' },
+    'cyan': { background: '#06b6d4' },
+    'sky blue': { background: '#38bdf8' },
+    'зелений': { background: '#16a34a' },
+    'green': { background: '#16a34a' },
+    'салатовий': { background: '#84cc16' },
+    'lime': { background: '#84cc16' },
+    'м\'ятний': { background: '#2dd4bf' },
+    'mint': { background: '#2dd4bf' },
+    'жовтий': { background: '#eab308' },
+    'yellow': { background: '#eab308' },
+    'помаранчевий': { background: '#f97316' },
+    'orange': { background: '#f97316' },
+    'коричневий': { background: '#78350f' },
+    'brown': { background: '#78350f' },
+    'бежевий': { background: '#f59e0b', opacity: 0.7 },
+    'beige': { background: '#f59e0b', opacity: 0.7 },
+    'золотий': { background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', boxShadow: '0 0 8px rgba(217,119,6,0.3)' },
+    'gold': { background: 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)', boxShadow: '0 0 8px rgba(217,119,6,0.3)' },
+    'срібний': { background: 'linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%)' },
+    'silver': { background: 'linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%)' },
+    'бронзовий': { background: 'linear-gradient(135deg, #ca8a04 0%, #78350f 100%)' },
+    'bronze': { background: 'linear-gradient(135deg, #ca8a04 0%, #78350f 100%)' },
+    'прозорий': { 
+      background: 'linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.15) 75%), linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.15) 75%)',
+      backgroundPosition: '0 0, 4px 4px',
+      backgroundSize: '8px 8px',
+      border: '1px solid rgba(255,255,255,0.2)'
+    },
+    'clear': { 
+      background: 'linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.15) 75%), linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.15) 75%)',
+      backgroundPosition: '0 0, 4px 4px',
+      backgroundSize: '8px 8px',
+      border: '1px solid rgba(255,255,255,0.2)'
+    },
+    'transparent': { 
+      background: 'linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.15) 75%), linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.15) 75%)',
+      backgroundPosition: '0 0, 4px 4px',
+      backgroundSize: '8px 8px',
+      border: '1px solid rgba(255,255,255,0.2)'
+    },
+    'різнокольоровий': { background: 'linear-gradient(45deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6)' },
+    'rainbow': { background: 'linear-gradient(45deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6)' },
+    'multicolor': { background: 'linear-gradient(45deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6)' },
+    'мультиколор': { background: 'linear-gradient(45deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6)' },
+    'переливний': { background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)' }
+  };
+  
+  if (colorMap[name]) return colorMap[name];
+  
+  for (const key of Object.keys(colorMap)) {
+    if (name.includes(key)) return colorMap[key];
+  }
+  
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash % 360);
+  return { background: `hsl(${hue}, 70%, 45%)` };
+};
+
 export default function Calculator() {
   const [calculations, setCalculations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activePreset, setActivePreset] = useState(null);
+  
+  // Materials Library filter and multi-select states
+  const [selectedMaterialIds, setSelectedMaterialIds] = useState([]);
+  const [materialSearchQuery, setMaterialSearchQuery] = useState('');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState('All');
+  const [selectedColorFilter, setSelectedColorFilter] = useState('All');
+  
   const [materialsLibrary, setMaterialsLibrary] = useState([]);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [newMaterial, setNewMaterial] = useState({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
@@ -42,6 +139,38 @@ export default function Calculator() {
   const [notification, setNotification] = useState(null);
   const [catalogs, setCatalogs] = useState({ manufacturers: [], types: [], colors: [] });
   const [isMobile, setIsMobile] = useState(false);
+
+  // Dynamic filter helpers derived from materials library
+  const availableTypes = useMemo(() => {
+    const types = materialsLibrary.map(m => m.type).filter(Boolean);
+    return ['All', ...new Set(types)];
+  }, [materialsLibrary]);
+
+  const availableColors = useMemo(() => {
+    const colors = materialsLibrary.map(m => m.color).filter(Boolean);
+    return ['All', ...new Set(colors)];
+  }, [materialsLibrary]);
+
+  const getTypeCount = (type) => {
+    if (type === 'All') return materialsLibrary.length;
+    return materialsLibrary.filter(m => m.type === type).length;
+  };
+
+  const filteredMaterials = useMemo(() => {
+    return materialsLibrary.filter(m => {
+      const query = materialSearchQuery.toLowerCase().trim();
+      const matchesSearch = !query || 
+        m.name.toLowerCase().includes(query) ||
+        (m.manufacturer && m.manufacturer.toLowerCase().includes(query)) ||
+        (m.type && m.type.toLowerCase().includes(query)) ||
+        (m.color && m.color.toLowerCase().includes(query));
+      
+      const matchesType = selectedTypeFilter === 'All' || m.type === selectedTypeFilter;
+      const matchesColor = selectedColorFilter === 'All' || m.color === selectedColorFilter;
+      
+      return matchesSearch && matchesType && matchesColor;
+    });
+  }, [materialsLibrary, materialSearchQuery, selectedTypeFilter, selectedColorFilter]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -271,7 +400,7 @@ export default function Calculator() {
       discount: 0,
       image_url: ''
     });
-    setActivePreset(null);
+    setSelectedMaterialIds([]);
   };
 
   async function handleDelete(id) {
@@ -347,12 +476,48 @@ export default function Calculator() {
   };
 
   const selectFromLibrary = (m) => {
-    setFormData(prev => ({
-      ...prev,
-      plastic_type: m.type,
-      plastic_cost_roll: m.cost_per_kg,
-    }));
-    setActivePreset(m.id);
+    setSelectedMaterialIds(prev => {
+      let next;
+      if (prev.includes(m.id)) {
+        next = prev.filter(id => id !== m.id);
+      } else {
+        next = [...prev, m.id];
+      }
+      
+      if (next.length === 0) {
+        // If nothing is selected, we keep current form data but clear selection
+      } else {
+        const selectedMaterials = materialsLibrary.filter(mat => next.includes(mat.id));
+        if (selectedMaterials.length > 0) {
+          const totalCost = selectedMaterials.reduce((acc, curr) => acc + Number(curr.cost_per_kg), 0);
+          const avgCost = Math.round(totalCost / selectedMaterials.length);
+          
+          const types = [...new Set(selectedMaterials.map(mat => mat.type || ''))].filter(Boolean);
+          const colors = selectedMaterials.map(mat => mat.color || '').filter(Boolean);
+          
+          let combinedType = '';
+          if (types.length === 1) {
+            const type = types[0];
+            if (colors.length > 0) {
+              combinedType = `${type} (${colors.join(' + ')})`;
+            } else {
+              combinedType = type;
+            }
+          } else if (types.length > 1) {
+            combinedType = selectedMaterials.map(mat => `${mat.type || ''} ${mat.color || ''}`.trim()).join(' + ');
+          } else {
+            combinedType = colors.join(' + ') || 'Змішаний';
+          }
+          
+          setFormData(f => ({
+            ...f,
+            plastic_type: combinedType,
+            plastic_cost_roll: avgCost
+          }));
+        }
+      }
+      return next;
+    });
   };
 
   const startEditCalculation = (calc) => {
@@ -363,7 +528,7 @@ export default function Calculator() {
       discount: calc.discount || 0,
       image_url: calc.image_url || ''
     });
-    // Scroll to top
+    setSelectedMaterialIds([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -513,13 +678,22 @@ export default function Calculator() {
 
             {/* Material Presets */}
             <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <label style={{ fontSize: 10, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase' }}>Матеріал та вартість</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <label style={{ fontSize: 11, fontWeight: 950, color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Sparkles size={14} /> Бібліотека матеріалів
+                </label>
                 <button 
                   onClick={() => setShowMaterialForm(!showMaterialForm)}
-                  style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: 'none', padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 800, cursor: 'pointer' }}
+                  style={{ 
+                    background: showMaterialForm ? 'rgba(239,68,68,0.1)' : 'rgba(124,58,237,0.1)', 
+                    color: showMaterialForm ? '#ef4444' : '#a78bfa', 
+                    border: showMaterialForm ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(124,58,237,0.2)', 
+                    padding: '6px 14px', borderRadius: 10, fontSize: 11, fontWeight: 800, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s'
+                  }}
                 >
-                  {showMaterialForm ? 'СХОВАТИ' : '+ БІБЛІОТЕКА'}
+                  <Plus size={14} style={{ transform: showMaterialForm ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s' }} />
+                  {showMaterialForm ? 'Сховати форму' : 'Додати новий'}
                 </button>
               </div>
 
@@ -588,45 +762,372 @@ export default function Calculator() {
                 </motion.div>
               )}
 
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12, marginBottom: 16 }} className="hide-scrollbar">
-                {materialsLibrary.map(m => (
-                  <div 
-                    key={m.id} onClick={() => selectFromLibrary(m)}
+              {/* Search and Filters Panel */}
+              <div style={{ 
+                background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', 
+                padding: 16, borderRadius: 20, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 14 
+              }}>
+                {/* Text Search */}
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Шукати матеріал за назвою, виробником, типом..." 
+                    value={materialSearchQuery} 
+                    onChange={e => setMaterialSearchQuery(e.target.value)}
                     style={{ 
-                      flexShrink: 0, padding: '12px 16px', borderRadius: 16, border: '1px solid',
-                      borderColor: activePreset === m.id ? '#7c3aed' : 'var(--border)',
-                      background: activePreset === m.id ? 'rgba(124,58,237,0.1)' : 'var(--bg-card)',
-                      color: activePreset === m.id ? '#7c3aed' : 'var(--text-main)',
-                      cursor: 'pointer', textAlign: 'left', minWidth: 200, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12
+                      width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', 
+                      borderRadius: 12, padding: '10px 14px 10px 38px', color: 'var(--text-main)', 
+                      fontSize: 12, outline: 'none', boxSizing: 'border-box' 
                     }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 900, fontSize: 12, marginBottom: 4, lineHeight: 1.2 }}>{m.name}</div>
-                      <div style={{ fontSize: 10, opacity: 0.6, fontWeight: 600 }}>{m.manufacturer || '—'} • {m.cost_per_kg} ₴</div>
+                  />
+                  <Search size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  {materialSearchQuery && (
+                    <button 
+                      onClick={() => setMaterialSearchQuery('')}
+                      style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2 }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Type Filters */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Тип пластику</span>
+                  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }} className="hide-scrollbar">
+                    {availableTypes.map(type => {
+                      const count = getTypeCount(type);
+                      const isSelected = selectedTypeFilter === type;
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => setSelectedTypeFilter(type)}
+                          style={{
+                            whiteSpace: 'nowrap',
+                            padding: '6px 12px',
+                            borderRadius: 10,
+                            fontSize: 11,
+                            fontWeight: 800,
+                            border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
+                            background: isSelected ? 'rgba(124,58,237,0.15)' : 'rgba(0,0,0,0.1)',
+                            color: isSelected ? '#a78bfa' : 'var(--text-muted)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {type === 'All' ? 'Всі типи' : type} <span style={{ opacity: 0.5, fontSize: 9, marginLeft: 2 }}>({count})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Color Filters */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Колір пластику</span>
+                  <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, alignItems: 'center' }} className="hide-scrollbar">
+                    {availableColors.map(color => {
+                      const isSelected = selectedColorFilter === color;
+                      const isAll = color === 'All';
+                      const colorStyle = getColorStyle(isAll ? '' : color);
+                      
+                      return (
+                        <button
+                          key={color}
+                          onClick={() => setSelectedColorFilter(color)}
+                          title={isAll ? 'Всі кольори' : color}
+                          style={{
+                            position: 'relative',
+                            flexShrink: 0,
+                            width: 28,
+                            height: 28,
+                            borderRadius: '50%',
+                            cursor: 'pointer',
+                            padding: 0,
+                            transition: 'all 0.2s',
+                            ...colorStyle,
+                            border: isSelected 
+                              ? '2px solid #8b5cf6' 
+                              : (colorStyle.border || '1px solid rgba(255,255,255,0.1)'),
+                            transform: isSelected ? 'scale(1.15)' : 'none',
+                            boxShadow: isSelected 
+                              ? '0 0 10px rgba(124,58,237,0.5)' 
+                              : 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {isAll && (
+                            <span style={{ fontSize: 8, fontWeight: 900, color: '#fff', textTransform: 'uppercase' }}>Всі</span>
+                          )}
+                          {isSelected && !isAll && (
+                            <CheckCircle2 size={12} style={{ color: colorStyle.color || '#fff', filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.5))' }} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Multi-select Summary Banner */}
+              {selectedMaterialIds.length > 0 && (
+                <div style={{ 
+                  background: 'linear-gradient(135deg, rgba(124,58,237,0.08), rgba(236,72,153,0.08))',
+                  border: '1px solid rgba(124,58,237,0.25)',
+                  padding: 16, borderRadius: 20, marginBottom: 16,
+                  display: 'flex', flexDirection: 'column', gap: 10
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CheckCircle2 size={14} style={{ color: '#22c55e' }} /> Вибрано {selectedMaterialIds.length} {selectedMaterialIds.length === 1 ? 'матеріал' : selectedMaterialIds.length < 5 ? 'матеріали' : 'матеріалів'}
+                    </span>
+                    <button 
+                      onClick={() => {
+                        setSelectedMaterialIds([]);
+                        setFormData(f => ({ ...f, plastic_type: 'PLA', plastic_cost_roll: 750 }));
+                      }}
+                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                    >
+                      Скинути вибір
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {materialsLibrary.filter(mat => selectedMaterialIds.includes(mat.id)).map(mat => (
+                      <div 
+                        key={mat.id} 
+                        style={{ 
+                          background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)',
+                          padding: '6px 12px', borderRadius: 10, fontSize: 11, display: 'flex', alignItems: 'center', gap: 8 
+                        }}
+                      >
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', ...getColorStyle(mat.color) }} />
+                        <span style={{ fontWeight: 700, color: '#fff' }}>{mat.name}</span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>({mat.cost_per_kg} ₴)</span>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); selectFromLibrary(mat); }}
+                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, fontSize: 12 }}>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)' }}>Розрахункова ціна (середня): </span>
+                      <strong style={{ color: '#4ade80', fontSize: 13 }}>{formData.plastic_cost_roll} ₴/кг</strong>
                     </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-                      <button onClick={(e) => startEditMaterial(m, e)} style={{ background: 'rgba(124,58,237,0.1)', border: 'none', padding: 6, borderRadius: 8, color: '#7c3aed', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <CalcIcon size={12} />
-                      </button>
-                      <button onClick={(e) => handleDeleteMaterial(m.id, e)} style={{ background: 'rgba(239,68,68,0.1)', border: 'none', padding: 6, borderRadius: 8, color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Trash2 size={12} />
-                      </button>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)' }}>Тип для калькулятора: </span>
+                      <strong style={{ color: '#a78bfa' }}>{formData.plastic_type}</strong>
                     </div>
                   </div>
-                ))}
-                {materialsLibrary.length === 0 && PRESETS.materials.map(m => (
-                   <button 
-                    key={m.name} onClick={() => applyMaterialPreset(m)}
-                    style={{ 
-                      flexShrink: 0, padding: '10px 16px', borderRadius: 12, border: '1px solid var(--border)',
-                      background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 11, fontWeight: 700, cursor: 'pointer'
-                    }}
-                  >
-                    {m.name}
-                  </button>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Grid of Materials */}
+              {materialsLibrary.length > 0 ? (
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(170px, 1fr))', 
+                  gap: 12, 
+                  marginBottom: 16 
+                }}>
+                  {filteredMaterials.map(m => {
+                    const isSelected = selectedMaterialIds.includes(m.id);
+                    const colorStyle = getColorStyle(m.color);
+                    
+                    return (
+                      <div 
+                        key={m.id} 
+                        onClick={() => selectFromLibrary(m)}
+                        style={{ 
+                          position: 'relative',
+                          padding: '16px 14px', 
+                          borderRadius: 20, 
+                          border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
+                          background: isSelected ? 'rgba(124,58,237,0.04)' : 'rgba(255,255,255,0.02)',
+                          boxShadow: isSelected ? '0 0 15px rgba(124,58,237,0.15)' : 'none',
+                          cursor: 'pointer', 
+                          textAlign: 'left', 
+                          transition: 'all 0.2s ease-in-out',
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: 12,
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {/* Color swatch & Selection indicator */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div 
+                            style={{ 
+                              width: 22, 
+                              height: 22, 
+                              borderRadius: '50%', 
+                              ...colorStyle,
+                              border: colorStyle.border || '1px solid rgba(255,255,255,0.15)',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                            }}
+                            title={`Колір: ${m.color || 'Не вказано'}`}
+                          />
+                          <div 
+                            style={{ 
+                              width: 18, 
+                              height: 18, 
+                              borderRadius: 6, 
+                              border: isSelected ? 'none' : '2px solid var(--border)',
+                              background: isSelected ? '#7c3aed' : 'transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {isSelected && <CheckCircle2 size={12} style={{ color: '#fff' }} />}
+                          </div>
+                        </div>
+
+                        {/* Core Metadata */}
+                        <div>
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                            <span style={{ 
+                              fontSize: 9, 
+                              fontWeight: 900, 
+                              background: 'rgba(124,58,237,0.15)', 
+                              color: '#c084fc', 
+                              padding: '2px 6px', 
+                              borderRadius: 6,
+                              textTransform: 'uppercase'
+                            }}>
+                              {m.type || 'PLA'}
+                            </span>
+                            {m.manufacturer && (
+                              <span style={{ 
+                                fontSize: 9, 
+                                fontWeight: 800, 
+                                background: 'rgba(255,255,255,0.05)', 
+                                color: 'var(--text-muted)', 
+                                padding: '2px 6px', 
+                                borderRadius: 6 
+                              }}>
+                                {m.manufacturer}
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ 
+                            fontWeight: 800, 
+                            fontSize: 12, 
+                            color: '#fff', 
+                            lineHeight: 1.3,
+                            marginBottom: 4,
+                            wordBreak: 'break-word'
+                          }}>
+                            {m.name}
+                          </div>
+                        </div>
+
+                        {/* Price & Actions */}
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          marginTop: 4,
+                          borderTop: '1px solid rgba(255,255,255,0.03)',
+                          paddingTop: 8
+                        }}>
+                          <span style={{ fontWeight: 900, fontSize: 13, color: '#4ade80' }}>
+                            {m.cost_per_kg} ₴<span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)' }}>/кг</span>
+                          </span>
+                          
+                          <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
+                            <button 
+                              onClick={(e) => startEditMaterial(m, e)} 
+                              title="Редагувати матеріал"
+                              style={{ 
+                                background: 'rgba(255,255,255,0.05)', 
+                                border: 'none', 
+                                padding: 6, 
+                                borderRadius: 8, 
+                                color: 'var(--text-muted)', 
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Pencil size={12} />
+                            </button>
+                            <button 
+                              onClick={(e) => handleDeleteMaterial(m.id, e)} 
+                              title="Видалити матеріал"
+                              style={{ 
+                                background: 'rgba(239,68,68,0.05)', 
+                                border: 'none', 
+                                padding: 6, 
+                                borderRadius: 8, 
+                                color: 'rgba(239,68,68,0.7)', 
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {filteredMaterials.length === 0 && (
+                    <div style={{ 
+                      gridColumn: '1 / -1', 
+                      textAlign: 'center', 
+                      padding: '40px 20px', 
+                      color: 'var(--text-muted)', 
+                      fontSize: 12,
+                      background: 'rgba(255,255,255,0.01)',
+                      border: '1px dashed var(--border)',
+                      borderRadius: 20
+                    }}>
+                      Матеріалів не знайдено за поточними фільтрами
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 20, background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--border)', borderRadius: 20, textAlign: 'center', marginBottom: 16 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ваша бібліотека порожня. Використовуйте стандартні пресети:</span>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                    {PRESETS.materials.map(m => (
+                      <button 
+                        key={m.name} 
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            plastic_type: m.name,
+                            plastic_cost_roll: m.cost
+                          }));
+                        }}
+                        style={{ 
+                          padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)',
+                          background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 11, fontWeight: 800, cursor: 'pointer'
+                        }}
+                      >
+                        {m.name} ({m.cost} ₴)
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
