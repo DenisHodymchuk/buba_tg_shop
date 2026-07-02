@@ -1987,9 +1987,16 @@ export default function AdminPanel() {
                         </button>
                         <button 
                           onClick={() => {
-                            if (confirm(`Видалити принтер ${load.printer.name}?`)) {
-                              handleDeletePrinter(load.printer.id);
-                            }
+                            setModal({
+                              open: true,
+                              title: 'Видалити принтер?',
+                              message: `Ви впевнені, що хочете видалити принтер ${load.printer.name}? Його також буде видалено з пресетів калькулятора.`,
+                              type: 'danger',
+                              onConfirm: () => {
+                                handleDeletePrinter(load.printer.id);
+                                setModal({ open: false });
+                              }
+                            });
                           }}
                           style={{ 
                             padding: '8px 12px', 
