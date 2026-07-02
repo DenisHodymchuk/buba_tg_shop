@@ -1025,35 +1025,36 @@ export default function SalesDashboard({ showToast }) {
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 
-                {/* Platform select using ThemeSelect */}
-                <ThemeSelect 
-                  label="Канал продажу"
-                  value={formData.source}
-                  onChange={(val) => setFormData({ ...formData, source: val })}
-                  displayValue={getPlatformBadgeName(formData.source)}
-                  options={[
-                    { value: 'olx', label: 'OLX' },
-                    { value: 'instagram', label: 'Instagram' },
-                    { value: 'facebook', label: 'Facebook' },
-                    { value: 'telegram', label: 'Telegram' },
-                    { value: 'tiktok', label: 'TikTok' },
-                    { value: 'offline', label: 'Магазин (офлайн)' },
-                    { value: 'other', label: 'Інше' }
-                  ]}
-                />
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -4 }}>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    {/* Platform select using ThemeSelect */}
+                    <ThemeSelect 
+                      label="Канал продажу"
+                      value={formData.source}
+                      onChange={(val) => setFormData({ ...formData, source: val })}
+                      displayValue={getPlatformBadgeName(formData.source)}
+                      options={[
+                        { value: 'olx', label: 'OLX' },
+                        { value: 'instagram', label: 'Instagram' },
+                        { value: 'facebook', label: 'Facebook' },
+                        { value: 'telegram', label: 'Telegram' },
+                        { value: 'tiktok', label: 'TikTok' },
+                        { value: 'offline', label: 'Магазин (офлайн)' },
+                        { value: 'other', label: 'Інше' }
+                      ]}
+                    />
+                  </div>
                   <button 
                     type="button"
                     onClick={handleQuickFill}
                     style={{ 
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      background: 'rgba(45,212,191,0.08)', border: '1px dashed rgba(45,212,191,0.3)',
-                      color: '#2dd4bf', padding: '8px 16px', borderRadius: 10, fontSize: 11, fontWeight: 800,
-                      cursor: 'pointer', transition: 'all 0.2s'
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      background: 'rgba(45,212,191,0.06)', border: '1px solid rgba(45,212,191,0.2)',
+                      color: '#2dd4bf', padding: '12px 16px', borderRadius: 12, fontSize: 13, fontWeight: 800,
+                      cursor: 'pointer', transition: 'all 0.2s', height: 41, whiteSpace: 'nowrap'
                     }}
                   >
-                    <Sparkles size={12} /> Заповнити як Гість
+                    <Sparkles size={14} /> Заповнити як Гість
                   </button>
                 </div>
 
