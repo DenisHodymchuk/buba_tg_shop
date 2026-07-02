@@ -456,6 +456,7 @@ export default function SalesDashboard({ showToast }) {
     if (p === 'instagram') return '#f43f5e';
     if (p === 'facebook') return '#1877f2';
     if (p === 'telegram') return '#0ea5e9';
+    if (p === 'tiktok') return '#ff0050';
     if (p === 'offline') return '#22c55e';
     return '#a855f7';
   };
@@ -467,6 +468,7 @@ export default function SalesDashboard({ showToast }) {
     if (p === 'instagram') return 'Instagram';
     if (p === 'facebook') return 'Facebook';
     if (p === 'telegram') return 'Telegram';
+    if (p === 'tiktok') return 'TikTok';
     if (p === 'offline') return 'Магазин (офлайн)';
     return 'Інше';
   };
@@ -643,6 +645,7 @@ export default function SalesDashboard({ showToast }) {
                 { val: 'instagram', label: 'INSTAGRAM', color: '#f43f5e' },
                 { val: 'facebook', label: 'FACEBOOK', color: '#1877f2' },
                 { val: 'telegram', label: 'TELEGRAM', color: '#0ea5e9' },
+                { val: 'tiktok', label: 'TIKTOK', color: '#ff0050' },
                 { val: 'offline', label: 'ОФЛАЙН', color: '#22c55e' },
                 { val: 'other', label: 'ІНШЕ', color: '#a855f7' }
               ].map(item => {
@@ -1033,6 +1036,7 @@ export default function SalesDashboard({ showToast }) {
                     { value: 'instagram', label: 'Instagram' },
                     { value: 'facebook', label: 'Facebook' },
                     { value: 'telegram', label: 'Telegram' },
+                    { value: 'tiktok', label: 'TikTok' },
                     { value: 'offline', label: 'Магазин (офлайн)' },
                     { value: 'other', label: 'Інше' }
                   ]}
