@@ -87,24 +87,56 @@ export default function AdminPanel() {
   const [printers, setPrinters] = useState([]);
   const [showFarmMonitor, setShowFarmMonitor] = useState(true);
   const [showAddPrinterForm, setShowAddPrinterForm] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
+
+  const fetchPrinters = async () => {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'buba_printers')
+        .single();
+      
+      const defaultPrinters = [
+        { id: '1', name: 'Bambu Lab X1C', wattage: 350, wear: 10, is_repair: false, ip_address: '', access_code: '', serial_number: '' },
+        { id: '2', name: 'Bambu Lab P1S/P1P', wattage: 350, wear: 8, is_repair: false, ip_address: '', access_code: '', serial_number: '' },
+        { id: '3', name: 'Bambu Lab A1', wattage: 200, wear: 6, is_repair: false, ip_address: '', access_code: '', serial_number: '' },
+        { id: '4', name: 'Bambu Lab A1 Mini', wattage: 150, wear: 5, is_repair: false, ip_address: '', access_code: '', serial_number: '' }
+      ];
+
+      if (data && data.value) {
+        setPrinters(data.value);
+      } else {
+        setPrinters(defaultPrinters);
+        await supabase.from('settings').upsert({ key: 'buba_printers', value: defaultPrinters });
+      }
+    } catch (e) {
+      console.error('Error fetching printers:', e);
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('buba_printers');
+        if (saved) setPrinters(JSON.parse(saved));
+      }
+    }
+  };
 
   useEffect(() => {
-    if ((activeTab === 'sales' || activeTab === 'farm') && typeof window !== 'undefined') {
-      const saved = localStorage.getItem('buba_printers');
-      const defaultPrinters = [
-        { id: '1', name: 'Bambu Lab X1C', wattage: 350, wear: 10, is_repair: false },
-        { id: '2', name: 'Bambu Lab P1S/P1P', wattage: 350, wear: 8, is_repair: false },
-        { id: '3', name: 'Bambu Lab A1', wattage: 200, wear: 6, is_repair: false },
-        { id: '4', name: 'Bambu Lab A1 Mini', wattage: 150, wear: 5, is_repair: false }
-      ];
-      setPrinters(saved ? JSON.parse(saved) : defaultPrinters);
+    if (activeTab === 'farm') {
+      fetchPrinters();
     }
   }, [activeTab]);
 
-  const savePrinters = (newPrinters) => {
+  const savePrinters = async (newPrinters) => {
     setPrinters(newPrinters);
     if (typeof window !== 'undefined') {
       localStorage.setItem('buba_printers', JSON.stringify(newPrinters));
+    }
+    if (supabase) {
+      try {
+        await supabase.from('settings').upsert({ key: 'buba_printers', value: newPrinters });
+      } catch (e) {
+        console.error('Error saving printers to Supabase:', e);
+      }
     }
   };
 
@@ -116,13 +148,16 @@ export default function AdminPanel() {
     showToast('Статус принтера оновлено');
   };
 
-  const handleAddPrinter = (name, wattage, wear) => {
+  const handleAddPrinter = (name, wattage, wear, ipAddress = '', accessCode = '', serialNumber = '') => {
     const newPrinter = {
       id: Date.now().toString(),
       name,
       wattage: parseFloat(wattage) || 300,
       wear: parseFloat(wear) || 5,
-      is_repair: false
+      is_repair: false,
+      ip_address: ipAddress,
+      access_code: accessCode,
+      serial_number: serialNumber
     };
     const updated = [...printers, newPrinter];
     savePrinters(updated);
@@ -213,6 +248,7 @@ export default function AdminPanel() {
     fetchOrders();
     fetchUsers();
     fetchReviews();
+    fetchPrinters();
 
     // 1. Налаштовуємо Realtime для миттєвих оновлень
     const channel = supabase
@@ -227,6 +263,7 @@ export default function AdminPanel() {
       fetchOrders();
       fetchUsers();
       fetchReviews();
+      fetchPrinters();
     }, 5000);
 
     // 3. Telegram Mini App Initialization & Auto-Auth
@@ -708,7 +745,8 @@ export default function AdminPanel() {
       await Promise.all([
         fetchUsers(),
         fetchOrders(),
-        fetchReviews()
+        fetchReviews(),
+        fetchPrinters()
       ]);
     } catch (e) {
       console.error('Refresh error:', e);
@@ -971,7 +1009,10 @@ export default function AdminPanel() {
           let remainingMinutes = 0;
           let percentElapsed = 0;
 
-          if (startedAt) {
+          if (order.shipping_details?.print_progress !== undefined && order.shipping_details?.print_progress !== null) {
+            percentElapsed = Math.min(100, parseInt(order.shipping_details.print_progress) || 0);
+            remainingMinutes = Math.max(0, parseInt(order.shipping_details.print_remaining) || 0);
+          } else if (startedAt) {
             const elapsedMs = new Date() - new Date(startedAt);
             const totalMs = hours * 60 * 60 * 1000;
             percentElapsed = Math.min(100, Math.floor((elapsedMs / totalMs) * 100));
@@ -1785,9 +1826,15 @@ export default function AdminPanel() {
                             const nameEl = document.getElementById('new-printer-name');
                             const wattageEl = document.getElementById('new-printer-wattage');
                             const wearEl = document.getElementById('new-printer-wear');
+                            const ipEl = document.getElementById('new-printer-ip');
+                            const codeEl = document.getElementById('new-printer-code');
+                            const snEl = document.getElementById('new-printer-sn');
                             if (nameEl) nameEl.value = tpl.name;
                             if (wattageEl) wattageEl.value = tpl.wattage;
                             if (wearEl) wearEl.value = tpl.wear;
+                            if (ipEl) ipEl.value = '';
+                            if (codeEl) codeEl.value = '';
+                            if (snEl) snEl.value = '';
                           }}
                           style={{
                             padding: '6px 12px',
@@ -1807,45 +1854,81 @@ export default function AdminPanel() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 150 }}>
-                      <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Назва принтера</label>
-                      <input 
-                        type="text" 
-                        id="new-printer-name" 
-                        placeholder="Напр. Bambu Lab X1C" 
-                        style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
-                      />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 2, minWidth: 150 }}>
+                        <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Назва принтера</label>
+                        <input 
+                          type="text" 
+                          id="new-printer-name" 
+                          placeholder="Напр. Bambu Lab X1C" 
+                          style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 80 }}>
+                        <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Потужність (Вт)</label>
+                        <input 
+                          type="number" 
+                          id="new-printer-wattage" 
+                          placeholder="350" 
+                          style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 80 }}>
+                        <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Знос (₴/год)</label>
+                        <input 
+                          type="number" 
+                          id="new-printer-wear" 
+                          placeholder="10" 
+                          style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
+                        />
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 100 }}>
-                      <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Потужність (Вт)</label>
-                      <input 
-                        type="number" 
-                        id="new-printer-wattage" 
-                        placeholder="350" 
-                        style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
-                      />
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 140 }}>
+                        <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 850 }}>IP-адреса принтера (Wi-Fi)</label>
+                        <input 
+                          type="text" 
+                          id="new-printer-ip" 
+                          placeholder="Напр. 192.168.1.100" 
+                          style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 120 }}>
+                        <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 850 }}>Код доступу (Access Code)</label>
+                        <input 
+                          type="text" 
+                          id="new-printer-code" 
+                          placeholder="8-значний код" 
+                          style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 140 }}>
+                        <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 850 }}>Серійний номер (SN)</label>
+                        <input 
+                          type="text" 
+                          id="new-printer-sn" 
+                          placeholder="Напр. 01P00A12345678" 
+                          style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
+                        />
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 120 }}>
-                      <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Знос (₴/год)</label>
-                      <input 
-                        type="number" 
-                        id="new-printer-wear" 
-                        placeholder="10" 
-                        style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, outline: 'none' }} 
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
+
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
                       <button 
                         onClick={() => {
                           const name = document.getElementById('new-printer-name').value;
                           const wattage = document.getElementById('new-printer-wattage').value;
                           const wear = document.getElementById('new-printer-wear').value;
+                          const ip = document.getElementById('new-printer-ip').value;
+                          const code = document.getElementById('new-printer-code').value;
+                          const sn = document.getElementById('new-printer-sn').value;
                           if (!name) {
                             showToast('Введіть назву принтера', 'error');
                             return;
                           }
-                          handleAddPrinter(name, wattage, wear);
+                          handleAddPrinter(name, wattage, wear, ip, code, sn);
                           setShowAddPrinterForm(false);
                         }}
                         style={{ padding: '9px 16px', borderRadius: 8, background: '#22c55e', color: '#fff', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
@@ -1890,8 +1973,27 @@ export default function AdminPanel() {
                             <Printer size={18} style={{ color: status === 'printing' ? '#7c3aed' : status === 'repair' ? '#ef4444' : '#22c55e' }} />
                             <span style={{ fontSize: 14, fontWeight: 900, color: '#fff' }}>{load.printer.name}</span>
                           </div>
-                          <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 4, fontWeight: 700 }}>
-                            {load.printer.wattage} Вт • {load.printer.wear} ₴/год
+                          <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 4, fontWeight: 700, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <div>{load.printer.wattage} Вт • {load.printer.wear} ₴/год</div>
+                            {(load.printer.ip_address || load.printer.serial_number) && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                <span style={{ 
+                                  fontSize: 9, 
+                                  fontWeight: 800, 
+                                  padding: '2px 6px', 
+                                  borderRadius: 6, 
+                                  background: load.printer.is_online ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', 
+                                  color: load.printer.is_online ? '#22c55e' : '#ef4444' 
+                                }}>
+                                  {load.printer.is_online ? 'З\'єднано 🟢' : 'Офлайн 🔴'}
+                                </span>
+                                {load.printer.is_online && load.printer.nozzle_temp !== undefined && (
+                                  <span style={{ fontSize: 9, color: '#a78bfa', fontWeight: 800 }}>
+                                    🔥 {load.printer.nozzle_temp}°C / {load.printer.bed_temp || 0}°C
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -2032,6 +2134,35 @@ export default function AdminPanel() {
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Instructions Panel */}
+              <div style={{ marginTop: 40, background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 24, padding: 20 }}>
+                <h3 style={{ fontSize: 13, fontWeight: 900, color: '#fff', display: 'flex', alignItems: 'center', gap: 8, margin: 0, cursor: 'pointer', userSelect: 'none' }} onClick={() => setShowInstructions(!showInstructions)}>
+                  🔧 ІНСТРУКЦІЯ: ЯК ПІДКЛЮЧИТИ ФІЗИЧНИЙ ПРИНТЕР {showInstructions ? '▲' : '▼'}
+                </h3>
+                {showInstructions && (
+                  <div style={{ marginTop: 16, fontSize: 12, color: '#6b6b8a', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div>
+                      Для того щоб автоматично синхронізувати статус друку, відсоток виконання та температури безпосередньо з вашого принтера Bambu Lab, виконайте наступні кроки:
+                    </div>
+                    <ol style={{ paddingLeft: 20, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <li>Додайте принтер у меню вище, вказавши його локальну <strong>IP-адресу</strong>, <strong>Код доступу (Access Code)</strong> та <strong>Серійний номер (Serial Number)</strong>.</li>
+                      <li>Переконайтеся, що на вашому комп'ютері встановлено Python (версія 3.7+).</li>
+                      <li>Завантажте та запустіть локальний міст-скрипт <code>bambu_bridge.py</code> у фоновому режимі на будь-якому комп'ютері у тій самій Wi-Fi мережі, що й принтер.</li>
+                    </ol>
+                    <div style={{ background: 'rgba(0,0,0,0.3)', padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: '#a78bfa', textTransform: 'uppercase', marginBottom: 6 }}>Команда для першого запуску:</div>
+                      <code style={{ fontSize: 11, color: '#fff', wordBreak: 'break-all' }}>
+                        pip install paho-mqtt supabase python-dotenv<br/>
+                        python bambu_bridge.py
+                      </code>
+                    </div>
+                    <div>
+                      Скрипт самостійно зчитає налаштування з файлу <code>.env.local</code> вашого проекту, підключиться до принтерів локально та почне стрімити телеметрію в базу даних Supabase кожні 5 секунд.
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           ) : activeTab === 'sales_cabinet' ? (
