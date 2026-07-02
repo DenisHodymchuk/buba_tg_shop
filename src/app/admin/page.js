@@ -1604,28 +1604,17 @@ export default function AdminPanel() {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4, marginBottom: 12, padding: 12, background: 'rgba(124,58,237,0.03)', border: '1px solid rgba(124,58,237,0.1)', borderRadius: 16 }}>
                                 <div style={{ fontSize: 10, color: '#a78bfa', fontWeight: 900, textTransform: 'uppercase' }}>Призначення 3D-принтера</div>
                                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 180 }}>
                                     <label style={{ fontSize: 9, color: '#6b6b8a', fontWeight: 700 }}>Принтер</label>
-                                    <select
+                                    <ThemeSelect
                                       value={order.shipping_details?.assigned_printer || ''}
-                                      onChange={(e) => assignPrinter(order.id, e.target.value || null)}
-                                      style={{
-                                        padding: '6px 12px',
-                                        borderRadius: 8,
-                                        background: 'rgba(0,0,0,0.2)',
-                                        border: '1px solid rgba(255,255,255,0.05)',
-                                        color: '#fff',
-                                        fontSize: 11,
-                                        fontWeight: 800,
-                                        outline: 'none',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      <option value="">Не призначено</option>
-                                      {printers.map(p => (
-                                        <option key={p.id} value={p.name}>{p.name}</option>
-                                      ))}
-                                    </select>
+                                      placeholder="Не призначено"
+                                      options={printers.map(p => ({
+                                        value: p.name,
+                                        label: p.name
+                                      }))}
+                                      onChange={(val) => assignPrinter(order.id, val || null)}
+                                    />
                                   </div>
 
                                   {order.shipping_details?.assigned_printer && (
@@ -1976,34 +1965,23 @@ export default function AdminPanel() {
                           <div style={{ fontSize: 11, color: '#4a4a6a', textAlign: 'center' }}>Немає активних завдань</div>
                           
                           {orders.filter(o => o.status === 'preparing').length > 0 && (
-                            <select
-                              onChange={(e) => {
-                                if (e.target.value) {
-                                  assignPrinter(e.target.value, load.printer.name);
-                                  updateOrderStatus(e.target.value, 'printing');
+                            <ThemeSelect
+                              value=""
+                              placeholder="Призначити друк..."
+                              options={orders
+                                .filter(o => o.status === 'preparing')
+                                .map(o => ({
+                                  value: o.id,
+                                  label: `${o.order_number || `#${o.id.slice(0, 8)}`} (${o.shipping_details?.firstName || ''})`
+                                }))
+                              }
+                              onChange={(orderId) => {
+                                if (orderId) {
+                                  assignPrinter(orderId, load.printer.name);
+                                  updateOrderStatus(orderId, 'printing');
                                 }
                               }}
-                              defaultValue=""
-                              style={{
-                                padding: '8px 10px',
-                                borderRadius: 10,
-                                background: 'rgba(0,0,0,0.2)',
-                                border: '1px solid rgba(255,255,255,0.05)',
-                                color: '#fff',
-                                fontSize: 11,
-                                fontWeight: 800,
-                                outline: 'none',
-                                cursor: 'pointer',
-                                width: '100%'
-                              }}
-                            >
-                              <option value="">Призначити друк...</option>
-                              {orders.filter(o => o.status === 'preparing').map(o => (
-                                <option key={o.id} value={o.id}>
-                                  {o.order_number || `#${o.id.slice(0, 8)}`} ({o.shipping_details?.firstName})
-                                </option>
-                              ))}
-                            </select>
+                            />
                           )}
                         </div>
                       )}
@@ -2857,5 +2835,76 @@ function StatusBtn({ label, active, color, onClick, icon }) {
       {icon}
       {label}
     </button>
+  );
+}
+
+function ThemeSelect({ label, value, options, onChange, displayValue, placeholder = "Виберіть...", inline = false }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+  
+  return (
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+      {label && <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>{label}</label>}
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ 
+          width: '100%', background: 'rgba(0,0,0,0.3)', border: isOpen ? '1px solid #7c3aed' : '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', 
+          color: '#fff', fontSize: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
+          userSelect: 'none', transition: 'border-color 0.2s'
+        }}
+      >
+        <span style={{ fontWeight: 650, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayValue || value || placeholder}</span>
+        <ChevronDown size={14} style={{ color: 'var(--text-muted)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
+            exit={{ opacity: 0, height: 0 }}
+            style={{ 
+              position: inline ? 'relative' : 'absolute', 
+              top: inline ? 'auto' : 'calc(100% + 6px)', 
+              left: 0, right: 0, 
+              marginTop: 6,
+              background: '#0a192f', border: '1px solid rgba(124, 58, 237, 0.4)', borderRadius: 12, 
+              zIndex: inline ? 1002 : 1000, padding: 6, maxHeight: 200, overflowY: 'auto', 
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.5)'
+            }}
+          >
+            {options.map(opt => (
+              <div 
+                key={opt.value}
+                onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); }}
+                style={{ 
+                  padding: '8px 12px', fontSize: 12, color: '#fff', borderRadius: 8, cursor: 'pointer', 
+                  fontWeight: value === opt.value ? 800 : 500, 
+                  background: value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={(e) => e.target.style.background = value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent'}
+              >
+                {opt.label}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
