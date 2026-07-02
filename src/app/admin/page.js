@@ -1777,6 +1777,47 @@ export default function AdminPanel() {
               {showAddPrinterForm && (
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 20, marginBottom: 24 }}>
                   <h3 style={{ fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 12 }}>Нове обладнання</h3>
+                  
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>Шаблони Bambu Lab (клікніть для автозаповнення):</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {[
+                        { name: 'Bambu Lab X1C', wattage: 350, wear: 10 },
+                        { name: 'Bambu Lab X1E', wattage: 350, wear: 12 },
+                        { name: 'Bambu Lab P1S', wattage: 350, wear: 8 },
+                        { name: 'Bambu Lab P1P', wattage: 350, wear: 7 },
+                        { name: 'Bambu Lab A1', wattage: 200, wear: 6 },
+                        { name: 'Bambu Lab A1 Mini', wattage: 150, wear: 5 }
+                      ].map(tpl => (
+                        <button
+                          key={tpl.name}
+                          type="button"
+                          onClick={() => {
+                            const nameEl = document.getElementById('new-printer-name');
+                            const wattageEl = document.getElementById('new-printer-wattage');
+                            const wearEl = document.getElementById('new-printer-wear');
+                            if (nameEl) nameEl.value = tpl.name;
+                            if (wattageEl) wattageEl.value = tpl.wattage;
+                            if (wearEl) wearEl.value = tpl.wear;
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: 10,
+                            fontSize: 10,
+                            fontWeight: 800,
+                            background: 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            color: '#6b6b8a',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {tpl.name.replace('Bambu Lab ', '')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 150 }}>
                       <label style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 800 }}>Назва принтера</label>
