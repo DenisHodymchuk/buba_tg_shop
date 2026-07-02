@@ -1092,6 +1092,15 @@ export default function SalesDashboard({ showToast }) {
                   </div>
                 </div>
 
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Відділення / Поштомат (Реквізити відправки)</label>
+                  <input 
+                    type="text" placeholder="Напр. Відділення №5 або Поштомат №1234" value={formData.warehouse || ''} 
+                    onChange={e => setFormData({ ...formData, warehouse: e.target.value })}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                  />
+                </div>
+
                 {/* Items selection */}
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 20, padding: 16, overflow: 'visible' }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 12, textTransform: 'uppercase' }}>Склад кошика замовлення</label>
