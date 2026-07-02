@@ -1398,7 +1398,7 @@ export default function AdminPanel() {
                       { val: 'new', label: 'НОВІ', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
                       { val: 'preparing', label: 'ПІДГОТОВКА', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
                       { val: 'printing', label: 'ДРУК', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
-                      { val: 'shipping', label: 'ДОСТАВКА', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+                      { val: 'shipping', label: 'ОЧІКУЄ НА ВІДПРАВКУ', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
                       { val: 'shipped', label: 'ВІДПРАВЛЕНО ПОШТОЮ', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send },
                       { val: 'completed', label: 'ВИКОНАНО', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', icon: CheckCircle2 },
                       { val: 'cancelled', label: 'СКАСОВАНО', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
@@ -1546,7 +1546,7 @@ export default function AdminPanel() {
                                 new: { label: 'Нове', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
                                 preparing: { label: 'Підготовка', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
                                 printing: { label: 'Друк', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
-                                shipping: { label: 'Відправка', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+                                shipping: { label: 'Очікує на відправку', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
                                 shipped: { label: 'Пошта', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send },
                                 completed: { label: 'Виконано', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', icon: CheckCircle2 },
                                 cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
@@ -1703,7 +1703,7 @@ export default function AdminPanel() {
                             <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                               <StatusBtn label="Підготовка" active={order.status === 'preparing'} color="#f59e0b" icon={<ClipboardList size={12} />} onClick={() => updateOrderStatus(order.id, 'preparing')} />
                               <StatusBtn label="Друкується" active={order.status === 'printing'} color="#7c3aed" icon={<Printer size={12} />} onClick={() => updateOrderStatus(order.id, 'printing')} />
-                              <StatusBtn label="Відправка" active={order.status === 'shipping'} color="#ec4899" icon={<Truck size={12} />} onClick={() => updateOrderStatus(order.id, 'shipping')} />
+                              <StatusBtn label="Очікує на відправку" active={order.status === 'shipping'} color="#ec4899" icon={<Truck size={12} />} onClick={() => updateOrderStatus(order.id, 'shipping')} />
                               <StatusBtn label="Відправлено поштою" active={order.status === 'shipped'} color="#10b981" icon={<Send size={12} />} onClick={() => updateOrderStatus(order.id, 'shipped')} />
                               <StatusBtn label="Виконано" active={order.status === 'completed'} color="#22c55e" icon={<CheckCircle2 size={12} />} onClick={() => updateOrderStatus(order.id, 'completed')} />
                               
