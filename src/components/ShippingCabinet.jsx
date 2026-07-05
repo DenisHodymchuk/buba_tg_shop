@@ -5,7 +5,7 @@ import {
   Truck, Search, User, Phone, MapPin, Home, 
   CheckCircle2, Clock, ClipboardList, Printer, Send, XCircle,
   Coins, Copy, Check, ExternalLink, Loader2, ShoppingBag, 
-  ArrowRight, RefreshCw
+  ArrowRight, RefreshCw, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -39,6 +39,15 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
   const [copiedId, setCopiedId] = useState(null);
   const [copiedAddressId, setCopiedAddressId] = useState(null);
   const [statusChangingId, setStatusChangingId] = useState(null);
+  const [expandedOrderIds, setExpandedOrderIds] = useState([]);
+
+  const toggleExpand = (orderId) => {
+    setExpandedOrderIds(prev => 
+      prev.includes(orderId) 
+        ? prev.filter(id => id !== orderId) 
+        : [...prev, orderId]
+    );
+  };
 
   // Main filter logic (only show active/non-completed/non-cancelled orders)
   const filteredOrders = useMemo(() => {
@@ -207,7 +216,7 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
           />
         </div>
 
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 24, justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16, justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', width: '100%' }}>
           
           {/* Delivery Method Filter */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -232,6 +241,28 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Expand/Collapse Actions */}
+          <div style={{ display: 'flex', gap: 8, alignSelf: isMobile ? 'flex-start' : 'flex-end', marginTop: isMobile ? -4 : 0 }}>
+            <button
+              onClick={() => setExpandedOrderIds(filteredOrders.map(o => o.id))}
+              style={{
+                padding: '6px 12px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 10, fontWeight: 800, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', transition: 'all 0.2s'
+              }}
+            >
+              Розгорнути всі
+            </button>
+            <button
+              onClick={() => setExpandedOrderIds([])}
+              style={{
+                padding: '6px 12px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 10, fontWeight: 800, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', transition: 'all 0.2s'
+              }}
+            >
+              Згорнути всі
+            </button>
           </div>
 
         </div>
@@ -260,346 +291,385 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
             // Handle TTN local value change
             const currentTtnVal = tempTtn[order.id] !== undefined ? tempTtn[order.id] : ttnValue;
 
+            const isExpanded = expandedOrderIds.includes(order.id);
+
             return (
               <div 
                 key={order.id}
                 style={{ 
                   background: 'var(--bg-card)', borderRadius: isMobile ? 18 : 24, border: '1px solid var(--border)', 
-                  padding: isMobile ? 16 : 24, display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 20,
-                  position: 'relative', overflow: 'hidden'
+                  padding: isMobile ? 16 : 24, display: 'flex', flexDirection: 'column', gap: isMobile && !isExpanded ? 0 : (isMobile ? 16 : 20),
+                  position: 'relative', overflow: 'hidden',
+                  transition: 'all 0.2s ease-in-out'
                 }}
               >
-                {/* Platform tag line */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, fontWeight: 950, color: '#fff' }}>
-                      {order.order_number || `#${order.id.slice(0, 8)}`}
-                    </span>
-                    <span style={{ 
-                      fontSize: 10, fontWeight: 900, 
-                      color: PLATFORM_META[platform]?.color || PLATFORM_META.other.color,
-                      background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: 8
-                    }}>
-                      {PLATFORM_META[platform]?.label || PLATFORM_META.other.label}
-                    </span>
-                  </div>
-                  
-                  {/* Status Badge */}
-                  {(() => {
-                    const meta = STATUS_META[order.status] || STATUS_META.new;
-                    const Icon = meta.icon;
-                    return (
-                      <span style={{ 
-                        padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 900, 
-                        background: meta.bg, color: meta.color, display: 'inline-flex', alignItems: 'center', gap: 6
-                      }}>
-                        {Icon && <Icon size={12} />}
-                        {meta.label}
+                {/* Clickable Header/Summary block */}
+                <div 
+                  onClick={() => toggleExpand(order.id)}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer', userSelect: 'none' }}
+                >
+                  {/* Row 1: Order details & Status */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <span style={{ fontSize: 13, fontWeight: 950, color: '#fff' }}>
+                        {order.order_number || `#${order.id.slice(0, 8)}`}
                       </span>
-                    );
-                  })()}
+                      <span style={{ 
+                        fontSize: 10, fontWeight: 900, 
+                        color: PLATFORM_META[platform]?.color || PLATFORM_META.other.color,
+                        background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: 8
+                      }}>
+                        {PLATFORM_META[platform]?.label || PLATFORM_META.other.label}
+                      </span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {/* Status Badge */}
+                      {(() => {
+                        const meta = STATUS_META[order.status] || STATUS_META.new;
+                        const Icon = meta.icon;
+                        return (
+                          <span style={{ 
+                            padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 900, 
+                            background: meta.bg, color: meta.color, display: 'inline-flex', alignItems: 'center', gap: 6
+                          }}>
+                            {Icon && <Icon size={12} />}
+                            {meta.label}
+                          </span>
+                        );
+                      })()}
+
+                      {/* Chevron Toggle Icon */}
+                      {isExpanded ? <ChevronUp size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} />}
+                    </div>
+                  </div>
+
+                  {/* Row 2: Customer Name and Destination */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-muted)' }}>
+                    <div style={{ fontWeight: 750, color: '#e2e8f0' }}>
+                      {clientName} {clientPhone ? `(${clientPhone})` : ''}
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 650, color: '#ec4899' }}>
+                      {details.city || 'Самовивіз'}
+                    </div>
+                  </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr 1fr', gap: isMobile ? 14 : 24 }}>
-                  
-                  {/* Column 1: Recipient and Destination details */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Отримувач та адреса</div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(0,0,0,0.15)', padding: isMobile ? 12 : 14, borderRadius: 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: '#fff' }}>
-                          <User size={14} style={{ color: 'var(--text-muted)' }} />
-                          {clientName}
-                        </div>
-                        <button 
-                          onClick={() => { navigator.clipboard.writeText(clientName); showToast("Ім'я скопійовано"); }}
-                          style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
-                          title="Скопіювати ім'я"
-                        >
-                          <Copy size={12} />
-                        </button>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#e2e8f0' }}>
-                          <Phone size={14} style={{ color: 'var(--text-muted)' }} />
-                          {clientPhone}
-                        </div>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <a 
-                            href={`tel:${clientPhone}`} 
-                            style={{ background: 'rgba(34,197,94,0.1)', border: 'none', color: '#22c55e', borderRadius: 4, padding: '2px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
-                            title="Подзвонити"
-                          >
-                            <Phone size={12} />
-                          </a>
-                          <button 
-                            onClick={() => { navigator.clipboard.writeText(clientPhone); showToast("Телефон скопійовано"); }}
-                            style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
-                            title="Скопіювати телефон"
-                          >
-                            <Copy size={12} />
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '4px 0' }} />
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 16 }}
+                    >
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }} />
 
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: '#e2e8f0', lineHeight: 1.4 }}>
-                        <MapPin size={14} style={{ color: '#ec4899', marginTop: 2, flexShrink: 0 }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            <strong>{details.city || 'Місто не вказано'}</strong>
-                            {details.city && (
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr 1fr', gap: isMobile ? 14 : 24 }}>
+                        
+                        {/* Column 1: Recipient and Destination details */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Отримувач та адреса</div>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(0,0,0,0.15)', padding: isMobile ? 12 : 14, borderRadius: 16 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: '#fff' }}>
+                                <User size={14} style={{ color: 'var(--text-muted)' }} />
+                                {clientName}
+                              </div>
                               <button 
-                                onClick={() => { navigator.clipboard.writeText(details.city); showToast("Місто скопійовано"); }}
+                                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(clientName); showToast("Ім'я скопійовано"); }}
                                 style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
-                                title="Скопіювати місто"
+                                title="Скопіювати ім'я"
                               >
                                 <Copy size={12} />
                               </button>
-                            )}
-                          </div>
-                          {isNovaPoshta ? (
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                              <Home size={12} style={{ flexShrink: 0, marginTop: 2 }} />
-                              <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                                <span>{details.warehouse || 'Відділення не вказано'}</span>
-                                {details.warehouse && (
-                                  <button 
-                                    onClick={() => { navigator.clipboard.writeText(details.warehouse); showToast("Відділення скопійовано"); }}
-                                    style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', marginLeft: 4 }}
-                                    title="Скопіювати відділення"
-                                  >
-                                    <Copy size={10} />
-                                  </button>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#e2e8f0' }}>
+                                <Phone size={14} style={{ color: 'var(--text-muted)' }} />
+                                {clientPhone}
+                              </div>
+                              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <a 
+                                  href={`tel:${clientPhone}`} 
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{ background: 'rgba(34,197,94,0.1)', border: 'none', color: '#22c55e', borderRadius: 4, padding: '2px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+                                  title="Подзвонити"
+                                >
+                                  <Phone size={12} />
+                                </a>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(clientPhone); showToast("Телефон скопійовано"); }}
+                                  style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
+                                  title="Скопіювати телефон"
+                                >
+                                  <Copy size={12} />
+                                </button>
+                              </div>
+                            </div>
+                            
+                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '4px 0' }} />
+
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: '#e2e8f0', lineHeight: 1.4 }}>
+                              <MapPin size={14} style={{ color: '#ec4899', marginTop: 2, flexShrink: 0 }} />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                  <strong>{details.city || 'Місто не вказано'}</strong>
+                                  {details.city && (
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(details.city); showToast("Місто скопійовано"); }}
+                                      style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
+                                      title="Скопіювати місто"
+                                    >
+                                      <Copy size={12} />
+                                    </button>
+                                  )}
+                                </div>
+                                {isNovaPoshta ? (
+                                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                                    <Home size={12} style={{ flexShrink: 0, marginTop: 2 }} />
+                                    <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                      <span>{details.warehouse || 'Відділення не вказано'}</span>
+                                      {details.warehouse && (
+                                        <button 
+                                          onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(details.warehouse); showToast("Відділення скопійовано"); }}
+                                          style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', marginLeft: 4 }}
+                                          title="Скопіювати відділення"
+                                        >
+                                          <Copy size={10} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div style={{ fontSize: 11, color: '#2dd4bf', marginTop: 4, fontWeight: 700 }}>
+                                    Самовивіз (Хмельницький, ТЦ Дитячий світ)
+                                  </div>
                                 )}
                               </div>
                             </div>
-                          ) : (
-                            <div style={{ fontSize: 11, color: '#2dd4bf', marginTop: 4, fontWeight: 700 }}>
-                              Самовивіз (Хмельницький, ТЦ Дитячий світ)
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Copy actions */}
-                    <button 
-                      onClick={() => copyAddressInfo(order, order.id)}
-                      style={{ 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, 
-                        background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', 
-                        padding: '10px 14px', borderRadius: 12, color: '#fff', fontSize: 12, 
-                        fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' 
-                      }}
-                    >
-                      {copiedAddressId === order.id ? <Check size={14} style={{ color: '#22c55e' }} /> : <Copy size={14} />}
-                      {copiedAddressId === order.id ? 'Адресу скопійовано!' : 'Копіювати дані для ТТН'}
-                    </button>
-                  </div>
-
-                  {/* Column 2: Items checklist */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Вироби (склад замовлення)</div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', padding: 14, borderRadius: 16, maxHeight: 180, overflowY: 'auto' }}>
-                      {details.items && details.items.length > 0 ? (
-                        details.items.map((item, idx) => (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: idx < details.items.length - 1 ? '1px solid rgba(255,255,255,0.02)' : 'none' }}>
-                            <span style={{ fontSize: 12, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <ShoppingBag size={12} style={{ color: 'rgba(255,255,255,0.3)' }} />
-                              {item.name}
-                            </span>
-                            <span style={{ fontSize: 11, fontWeight: 900, color: '#a78bfa', background: 'rgba(167,139,250,0.1)', padding: '2px 6px', borderRadius: 6 }}>
-                              x{item.quantity || 1}
-                            </span>
                           </div>
-                        ))
-                      ) : (
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '10px 0' }}>Немає інформації про товари</div>
-                      )}
-                    </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>Загальна сума:</span>
-                      <span style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>{order.total} ₴</span>
-                    </div>
-                  </div>
-
-                  {/* Column 3: Payment details, COD & TTN setup */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Оплата та наложка</div>
-                    
-                    {/* COD / Payment Info block */}
-                    {isCod ? (
-                      <div style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', padding: 12, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#f97316', fontWeight: 900 }}>
-                          <Coins size={14} />
-                          НАКЛАДЕНИЙ ПЛАТІЖ (НАЛОЖКА)
-                        </div>
-                        <div style={{ fontSize: 18, fontWeight: 950, color: '#fff', marginTop: 4 }}>
-                          {codAmount} ₴
-                        </div>
-                        {(() => {
-                          const totalVal = parseFloat(order.total || 0);
-                          const codVal = parseFloat(codAmount || 0);
-                          const prepaymentVal = Math.max(0, totalVal - codVal);
-                          const prepaymentPct = totalVal > 0 ? Math.round((prepaymentVal / totalVal) * 100) : 0;
-                          return (
-                            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 650, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <span>Передплата ({prepaymentPct}% — {prepaymentVal} ₴):</span>
-                              <strong style={{ 
-                                color: order.payment_status === 'partially_paid' || order.payment_status === 'paid' ? '#22c55e' : '#f59e0b',
-                                fontSize: 11
-                              }}>
-                                {order.payment_status === 'partially_paid' ? 'Оплачено частково ✅' : order.payment_status === 'paid' ? 'Оплачено повністю ✅' : 'Очікує оплати ⏳'}
-                              </strong>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    ) : (
-                      <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', padding: 12, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#22c55e', fontWeight: 900 }}>
-                          <CheckCircle2 size={14} />
-                          ПЕРЕДПЛАТА 100%
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', marginTop: 4 }}>
-                          Без накладеного платежу
-                        </div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 650 }}>
-                          Статус оплати: <strong style={{ color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'partially_paid' ? '#38bdf8' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b' }}>
-                            {order.payment_status === 'paid' ? 'Оплачено' : order.payment_status === 'partially_paid' ? 'Частково оплачено' : order.payment_status === 'verifying' ? 'Перевірка' : 'Очікує'}
-                          </strong>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* TTN Input & Tracking */}
-                    {isNovaPoshta && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-                        <label style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>НОМЕР ТТН НОВОЇ ПОШТИ</label>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <input 
-                            type="text" 
-                            placeholder="Введіть 14-значний код ТТН" 
-                            value={currentTtnVal} 
-                            onChange={(e) => setTempTtn({ ...tempTtn, [order.id]: e.target.value })}
-                            style={{ 
-                              flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', 
-                              borderRadius: 10, padding: '8px 12px', color: '#fff', fontSize: 12, outline: 'none' 
-                            }}
-                          />
+                          {/* Copy actions */}
                           <button 
-                            onClick={() => saveTtn(order.id)}
-                            disabled={savingTtnId === order.id || currentTtnVal === ttnValue}
+                            onClick={(e) => { e.stopPropagation(); copyAddressInfo(order, order.id); }}
                             style={{ 
-                              padding: isMobile ? '0 10px' : '0 12px', background: currentTtnVal === ttnValue ? 'rgba(255,255,255,0.02)' : 'linear-gradient(135deg, #7c3aed, #ec4899)', 
-                              border: 'none', borderRadius: 10, color: '#fff', fontSize: isMobile ? 9 : 10, fontWeight: 900, cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center'
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, 
+                              background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', 
+                              padding: '10px 14px', borderRadius: 12, color: '#fff', fontSize: 12, 
+                              fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' 
                             }}
                           >
-                            {savingTtnId === order.id ? <Loader2 size={14} className="animate-spin" /> : (isMobile ? 'OK' : 'ЗБЕРЕГТИ')}
+                            {copiedAddressId === order.id ? <Check size={14} style={{ color: '#22c55e' }} /> : <Copy size={14} />}
+                            {copiedAddressId === order.id ? 'Адресу скопійовано!' : 'Копіювати дані для ТТН'}
                           </button>
                         </div>
-                        
-                        {/* If TTN exists, render copy and tracking links */}
-                        {ttnValue && (
-                          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                            <button 
-                              onClick={() => copyToClipboard(ttnValue, order.id)}
-                              style={{ 
-                                flex: 1, padding: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', 
-                                borderRadius: 8, color: 'var(--text-muted)', fontSize: 10, fontWeight: 800, cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 
-                              }}
-                            >
-                              {copiedId === order.id ? <Check size={10} style={{ color: '#22c55e' }} /> : <Copy size={10} />}
-                              {copiedId === order.id ? 'Скопійовано' : 'Копіювати ТТН'}
-                            </button>
-                            <a 
-                              href={trackingUrl} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              style={{ 
-                                flex: 1, padding: '6px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', 
-                                borderRadius: 8, color: '#ef4444', fontSize: 10, fontWeight: 900, textAlign: 'center',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, textDecoration: 'none'
-                              }}
-                            >
-                              Відстежити <ExternalLink size={10} />
-                            </a>
+
+                        {/* Column 2: Items checklist */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Вироби (склад замовлення)</div>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', padding: 14, borderRadius: 16, maxHeight: 180, overflowY: 'auto' }}>
+                            {details.items && details.items.length > 0 ? (
+                              details.items.map((item, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: idx < details.items.length - 1 ? '1px solid rgba(255,255,255,0.02)' : 'none' }}>
+                                  <span style={{ fontSize: 12, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <ShoppingBag size={12} style={{ color: 'rgba(255,255,255,0.3)' }} />
+                                    {item.name}
+                                  </span>
+                                  <span style={{ fontSize: 11, fontWeight: 900, color: '#a78bfa', background: 'rgba(167,139,250,0.1)', padding: '2px 6px', borderRadius: 6 }}>
+                                    x{item.quantity || 1}
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '10px 0' }}>Немає інформації про товари</div>
+                            )}
                           </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>Загальна сума:</span>
+                            <span style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>{order.total} ₴</span>
+                          </div>
+                        </div>
+
+                        {/* Column 3: Payment details, COD & TTN setup */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Оплата та наложка</div>
+                          
+                          {/* COD / Payment Info block */}
+                          {isCod ? (
+                            <div style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', padding: 12, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#f97316', fontWeight: 900 }}>
+                                <Coins size={14} />
+                                НАКЛАДЕНИЙ ПЛАТІЖ (НАЛОЖКА)
+                              </div>
+                              <div style={{ fontSize: 18, fontWeight: 950, color: '#fff', marginTop: 4 }}>
+                                {codAmount} ₴
+                              </div>
+                              {(() => {
+                                const totalVal = parseFloat(order.total || 0);
+                                const codVal = parseFloat(codAmount || 0);
+                                const prepaymentVal = Math.max(0, totalVal - codVal);
+                                const prepaymentPct = totalVal > 0 ? Math.round((prepaymentVal / totalVal) * 100) : 0;
+                                return (
+                                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 650, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    <span>Передплата ({prepaymentPct}% — {prepaymentVal} ₴):</span>
+                                    <strong style={{ 
+                                      color: order.payment_status === 'partially_paid' || order.payment_status === 'paid' ? '#22c55e' : '#f59e0b',
+                                      fontSize: 11
+                                    }}>
+                                      {order.payment_status === 'partially_paid' ? 'Оплачено частково ✅' : order.payment_status === 'paid' ? 'Оплачено повністю ✅' : 'Очікує оплати ⏳'}
+                                    </strong>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          ) : (
+                            <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', padding: 12, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#22c55e', fontWeight: 900 }}>
+                                <CheckCircle2 size={14} />
+                                ПЕРЕДПЛАТА 100%
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', marginTop: 4 }}>
+                                Без накладеного платежу
+                              </div>
+                              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 650 }}>
+                                Статус оплати: <strong style={{ color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'partially_paid' ? '#38bdf8' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b' }}>
+                                  {order.payment_status === 'paid' ? 'Оплачено' : order.payment_status === 'partially_paid' ? 'Частково оплачено' : order.payment_status === 'verifying' ? 'Перевірка' : 'Очікує'}
+                                </strong>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* TTN Input & Tracking */}
+                          {isNovaPoshta && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+                              <label style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>НОМЕР ТТН НОВОЇ ПОШТИ</label>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                <input 
+                                  type="text" 
+                                  placeholder="Введіть 14-значний код ТТН" 
+                                  value={currentTtnVal} 
+                                  onChange={(e) => setTempTtn({ ...tempTtn, [order.id]: e.target.value })}
+                                  style={{ 
+                                    flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', 
+                                    borderRadius: 10, padding: '8px 12px', color: '#fff', fontSize: 12, outline: 'none' 
+                                  }}
+                                />
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); saveTtn(order.id); }}
+                                  disabled={savingTtnId === order.id || currentTtnVal === ttnValue}
+                                  style={{ 
+                                    padding: isMobile ? '0 10px' : '0 12px', background: currentTtnVal === ttnValue ? 'rgba(255,255,255,0.02)' : 'linear-gradient(135deg, #7c3aed, #ec4899)', 
+                                    border: 'none', borderRadius: 10, color: '#fff', fontSize: isMobile ? 9 : 10, fontWeight: 900, cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                  }}
+                                >
+                                  {savingTtnId === order.id ? <Loader2 size={14} className="animate-spin" /> : (isMobile ? 'OK' : 'ЗБЕРЕГТИ')}
+                                </button>
+                              </div>
+                              
+                              {/* If TTN exists, render copy and tracking links */}
+                              {ttnValue && (
+                                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(ttnValue, order.id); }}
+                                    style={{ 
+                                      flex: 1, padding: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', 
+                                      borderRadius: 8, color: 'var(--text-muted)', fontSize: 10, fontWeight: 800, cursor: 'pointer',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 
+                                    }}
+                                  >
+                                    {copiedId === order.id ? <Check size={10} style={{ color: '#22c55e' }} /> : <Copy size={10} />}
+                                    {copiedId === order.id ? 'Скопійовано' : 'Копіювати ТТН'}
+                                  </button>
+                                  <a 
+                                    href={trackingUrl} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{ 
+                                      flex: 1, padding: '6px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', 
+                                      borderRadius: 8, color: '#ef4444', fontSize: 10, fontWeight: 900, textAlign: 'center',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, textDecoration: 'none'
+                                    }}
+                                  >
+                                    Відстежити <ExternalLink size={10} />
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                        </div>
+                      </div>
+
+                      {/* Bottom Quick Status Transition Actions */}
+                      <div style={{ display: 'flex', gap: isMobile ? 6 : 8, flexWrap: 'wrap', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
+                        <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: isMobile ? 4 : 8 }}>Швидкі дії:</span>
+                        
+                        {order.status !== 'preparing' && order.status !== 'completed' && order.status !== 'cancelled' && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'preparing'); }}
+                            disabled={statusChangingId === order.id}
+                            style={{ 
+                              padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', 
+                              color: '#f59e0b', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                            }}
+                          >
+                            <ClipboardList size={isMobile ? 10 : 12} /> {isMobile ? 'В роботу' : 'Почати підготовку'}
+                          </button>
+                        )}
+
+                        {order.status !== 'shipping' && order.status !== 'completed' && order.status !== 'cancelled' && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'shipping'); }}
+                            disabled={statusChangingId === order.id}
+                            style={{ 
+                              padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.2)', 
+                              color: '#ec4899', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                            }}
+                          >
+                            <Truck size={isMobile ? 10 : 12} /> {isMobile ? 'Готово' : 'Готово до відправки'}
+                          </button>
+                        )}
+
+                        {order.status !== 'shipped' && order.status !== 'completed' && order.status !== 'cancelled' && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'shipped'); }}
+                            disabled={statusChangingId === order.id}
+                            style={{ 
+                              padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', 
+                              color: '#10b981', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                            }}
+                          >
+                            <Send size={isMobile ? 10 : 12} /> {isMobile ? 'Відправлено' : 'Відправлено поштою (ТТН)'}
+                          </button>
+                        )}
+
+                        {order.status !== 'completed' && order.status !== 'cancelled' && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'completed'); }}
+                            disabled={statusChangingId === order.id}
+                            style={{ 
+                              padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', 
+                              color: '#22c55e', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                            }}
+                          >
+                            <CheckCircle2 size={isMobile ? 10 : 12} /> {isMobile ? 'Виконати' : 'Завершити замовлення'}
+                          </button>
+                        )}
+
+                        {statusChangingId === order.id && (
+                          <Loader2 size={16} className="animate-spin" style={{ color: '#fff', marginLeft: 8 }} />
                         )}
                       </div>
-                    )}
-
-                  </div>
-                </div>
-
-                {/* Bottom Quick Status Transition Actions */}
-                <div style={{ display: 'flex', gap: isMobile ? 6 : 8, flexWrap: 'wrap', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: isMobile ? 4 : 8 }}>Швидкі дії:</span>
-                  
-                  {order.status !== 'preparing' && order.status !== 'completed' && order.status !== 'cancelled' && (
-                    <button 
-                      onClick={() => updateStatus(order.id, 'preparing')}
-                      disabled={statusChangingId === order.id}
-                      style={{ 
-                        padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', 
-                        color: '#f59e0b', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
-                      }}
-                    >
-                      <ClipboardList size={isMobile ? 10 : 12} /> {isMobile ? 'В роботу' : 'Почати підготовку'}
-                    </button>
+                    </motion.div>
                   )}
-
-                  {order.status !== 'shipping' && order.status !== 'completed' && order.status !== 'cancelled' && (
-                    <button 
-                      onClick={() => updateStatus(order.id, 'shipping')}
-                      disabled={statusChangingId === order.id}
-                      style={{ 
-                        padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.2)', 
-                        color: '#ec4899', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
-                      }}
-                    >
-                      <Truck size={isMobile ? 10 : 12} /> {isMobile ? 'Готово' : 'Готово до відправки'}
-                    </button>
-                  )}
-
-                  {order.status !== 'shipped' && order.status !== 'completed' && order.status !== 'cancelled' && (
-                    <button 
-                      onClick={() => updateStatus(order.id, 'shipped')}
-                      disabled={statusChangingId === order.id}
-                      style={{ 
-                        padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', 
-                        color: '#10b981', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
-                      }}
-                    >
-                      <Send size={isMobile ? 10 : 12} /> {isMobile ? 'Відправлено' : 'Відправлено поштою (ТТН)'}
-                    </button>
-                  )}
-
-                  {order.status !== 'completed' && order.status !== 'cancelled' && (
-                    <button 
-                      onClick={() => updateStatus(order.id, 'completed')}
-                      disabled={statusChangingId === order.id}
-                      style={{ 
-                        padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', 
-                        color: '#22c55e', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
-                      }}
-                    >
-                      <CheckCircle2 size={isMobile ? 10 : 12} /> {isMobile ? 'Виконати' : 'Завершити замовлення'}
-                    </button>
-                  )}
-
-                  {statusChangingId === order.id && (
-                    <Loader2 size={16} className="animate-spin" style={{ color: '#fff', marginLeft: 8 }} />
-                  )}
-                </div>
-
+                </AnimatePresence>
               </div>
             );
           })
