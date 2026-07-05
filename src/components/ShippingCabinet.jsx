@@ -43,8 +43,8 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
   // Main filter logic (only show active/non-completed/non-cancelled orders)
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      // 1. Filter out completed and cancelled orders
-      const matchesStatus = order.status !== 'completed' && order.status !== 'cancelled';
+      // 1. Filter out completed, cancelled, and shipped orders
+      const matchesStatus = order.status !== 'completed' && order.status !== 'cancelled' && order.status !== 'shipped';
       
       // 2. Filter by delivery method
       const method = order.shipping_method || 'pickup';
