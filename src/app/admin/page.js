@@ -6,7 +6,7 @@ import {
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
   Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone, Menu,
-  Clock, ClipboardList, Printer, Truck, XCircle, ChevronDown, ChevronUp
+  Clock, ClipboardList, Printer, Truck, XCircle, ChevronDown, ChevronUp, Hammer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
@@ -14,6 +14,7 @@ import InventoryDashboard from '@/components/InventoryDashboard';
 import AdvertisingDashboard from '@/components/AdvertisingDashboard';
 import SalesDashboard from '@/components/SalesDashboard';
 import ShippingCabinet from '@/components/ShippingCabinet';
+import ProductionCabinet from '@/components/ProductionCabinet';
 
 
 const scrollbarHide = `
@@ -1264,6 +1265,7 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Package size={18} />} label="Товари" />
           <SidebarBtn active={activeTab === 'sales'} onClick={() => { setActiveTab('sales'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={18} />} label="Замовлення" />
           <SidebarBtn active={activeTab === 'shipping_list'} onClick={() => { setActiveTab('shipping_list'); setIsSidebarOpen(false); }} icon={<Truck size={18} />} label="Відправки" />
+          <SidebarBtn active={activeTab === 'production'} onClick={() => { setActiveTab('production'); setIsSidebarOpen(false); }} icon={<Hammer size={18} />} label="Виготовлення" />
           <SidebarBtn active={activeTab === 'farm'} onClick={() => { setActiveTab('farm'); setIsSidebarOpen(false); }} icon={<Printer size={18} />} label="3D Ферма" />
           <SidebarBtn active={activeTab === 'sales_cabinet'} onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }} icon={<Coins size={18} />} label="Продажі" />
           <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
@@ -2190,6 +2192,8 @@ export default function AdminPanel() {
             </>
           ) : activeTab === 'shipping_list' ? (
             <ShippingCabinet orders={orders} setOrders={setOrders} showToast={showToast} isMobile={isMobile} />
+          ) : activeTab === 'production' ? (
+            <ProductionCabinet orders={orders} isMobile={isMobile} />
           ) : activeTab === 'sales_cabinet' ? (
             <SalesDashboard showToast={showToast} />
           ) : activeTab === 'inventory' ? (
