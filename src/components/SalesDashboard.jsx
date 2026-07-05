@@ -390,7 +390,7 @@ export default function SalesDashboard({ showToast }) {
       fetchSales();
     } catch (err) {
       console.error('Error saving sale:', err);
-      showToast('Помилка при збереженні запису', 'error');
+      showToast(`Помилка при збереженні: ${err.message || err.details || JSON.stringify(err)}`, 'error');
     } finally {
       setSaving(false);
     }
@@ -424,7 +424,7 @@ export default function SalesDashboard({ showToast }) {
       fetchSales();
     } catch (err) {
       console.error(err);
-      showToast('Помилка видалення', 'error');
+      showToast(`Помилка видалення: ${err.message || err.details || JSON.stringify(err)}`, 'error');
     }
   };
 
