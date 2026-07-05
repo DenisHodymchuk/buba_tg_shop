@@ -264,8 +264,8 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
               <div 
                 key={order.id}
                 style={{ 
-                  background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', 
-                  padding: 24, display: 'flex', flexDirection: 'column', gap: 20,
+                  background: 'var(--bg-card)', borderRadius: isMobile ? 18 : 24, border: '1px solid var(--border)', 
+                  padding: isMobile ? 16 : 24, display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 20,
                   position: 'relative', overflow: 'hidden'
                 }}
               >
@@ -300,32 +300,81 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                   })()}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr 1fr', gap: 24 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr 1fr', gap: isMobile ? 14 : 24 }}>
                   
                   {/* Column 1: Recipient and Destination details */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Отримувач та адреса</div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(0,0,0,0.15)', padding: 14, borderRadius: 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: '#fff' }}>
-                        <User size={14} style={{ color: 'var(--text-muted)' }} />
-                        {clientName}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(0,0,0,0.15)', padding: isMobile ? 12 : 14, borderRadius: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: '#fff' }}>
+                          <User size={14} style={{ color: 'var(--text-muted)' }} />
+                          {clientName}
+                        </div>
+                        <button 
+                          onClick={() => { navigator.clipboard.writeText(clientName); showToast("Ім'я скопійовано"); }}
+                          style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
+                          title="Скопіювати ім'я"
+                        >
+                          <Copy size={12} />
+                        </button>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#e2e8f0' }}>
-                        <Phone size={14} style={{ color: 'var(--text-muted)' }} />
-                        {clientPhone}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#e2e8f0' }}>
+                          <Phone size={14} style={{ color: 'var(--text-muted)' }} />
+                          {clientPhone}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <a 
+                            href={`tel:${clientPhone}`} 
+                            style={{ background: 'rgba(34,197,94,0.1)', border: 'none', color: '#22c55e', borderRadius: 4, padding: '2px 6px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+                            title="Подзвонити"
+                          >
+                            <Phone size={12} />
+                          </a>
+                          <button 
+                            onClick={() => { navigator.clipboard.writeText(clientPhone); showToast("Телефон скопійовано"); }}
+                            style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
+                            title="Скопіювати телефон"
+                          >
+                            <Copy size={12} />
+                          </button>
+                        </div>
                       </div>
                       
                       <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '4px 0' }} />
 
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: '#e2e8f0', lineHeight: 1.4 }}>
                         <MapPin size={14} style={{ color: '#ec4899', marginTop: 2, flexShrink: 0 }} />
-                        <div>
-                          <strong>{details.city || 'Місто не вказано'}</strong>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <strong>{details.city || 'Місто не вказано'}</strong>
+                            {details.city && (
+                              <button 
+                                onClick={() => { navigator.clipboard.writeText(details.city); showToast("Місто скопійовано"); }}
+                                style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
+                                title="Скопіювати місто"
+                              >
+                                <Copy size={12} />
+                              </button>
+                            )}
+                          </div>
                           {isNovaPoshta ? (
                             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'flex', gap: 6, alignItems: 'flex-start' }}>
                               <Home size={12} style={{ flexShrink: 0, marginTop: 2 }} />
-                              {details.warehouse || 'Відділення не вказано'}
+                              <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                <span>{details.warehouse || 'Відділення не вказано'}</span>
+                                {details.warehouse && (
+                                  <button 
+                                    onClick={() => { navigator.clipboard.writeText(details.warehouse); showToast("Відділення скопійовано"); }}
+                                    style={{ background: 'transparent', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', marginLeft: 4 }}
+                                    title="Скопіювати відділення"
+                                  >
+                                    <Copy size={10} />
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ) : (
                             <div style={{ fontSize: 11, color: '#2dd4bf', marginTop: 4, fontWeight: 700 }}>
@@ -447,12 +496,12 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                             onClick={() => saveTtn(order.id)}
                             disabled={savingTtnId === order.id || currentTtnVal === ttnValue}
                             style={{ 
-                              padding: '0 12px', background: currentTtnVal === ttnValue ? 'rgba(255,255,255,0.02)' : 'linear-gradient(135deg, #7c3aed, #ec4899)', 
-                              border: 'none', borderRadius: 10, color: '#fff', fontSize: 10, fontWeight: 900, cursor: 'pointer',
+                              padding: isMobile ? '0 10px' : '0 12px', background: currentTtnVal === ttnValue ? 'rgba(255,255,255,0.02)' : 'linear-gradient(135deg, #7c3aed, #ec4899)', 
+                              border: 'none', borderRadius: 10, color: '#fff', fontSize: isMobile ? 9 : 10, fontWeight: 900, cursor: 'pointer',
                               display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }}
                           >
-                            {savingTtnId === order.id ? <Loader2 size={14} className="animate-spin" /> : 'ЗБЕРЕГТИ'}
+                            {savingTtnId === order.id ? <Loader2 size={14} className="animate-spin" /> : (isMobile ? 'OK' : 'ЗБЕРЕГТИ')}
                           </button>
                         </div>
                         
@@ -491,19 +540,19 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                 </div>
 
                 {/* Bottom Quick Status Transition Actions */}
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: 8 }}>Швидкі дії:</span>
+                <div style={{ display: 'flex', gap: isMobile ? 6 : 8, flexWrap: 'wrap', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: isMobile ? 4 : 8 }}>Швидкі дії:</span>
                   
                   {order.status !== 'preparing' && order.status !== 'completed' && order.status !== 'cancelled' && (
                     <button 
                       onClick={() => updateStatus(order.id, 'preparing')}
                       disabled={statusChangingId === order.id}
                       style={{ 
-                        padding: '8px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', 
-                        color: '#f59e0b', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                        padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', 
+                        color: '#f59e0b', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                       }}
                     >
-                      <ClipboardList size={12} /> Почати підготовку
+                      <ClipboardList size={isMobile ? 10 : 12} /> {isMobile ? 'В роботу' : 'Почати підготовку'}
                     </button>
                   )}
 
@@ -512,11 +561,11 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                       onClick={() => updateStatus(order.id, 'shipping')}
                       disabled={statusChangingId === order.id}
                       style={{ 
-                        padding: '8px 14px', borderRadius: 10, background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.2)', 
-                        color: '#ec4899', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                        padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.2)', 
+                        color: '#ec4899', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                       }}
                     >
-                      <Truck size={12} /> Готово до відправки
+                      <Truck size={isMobile ? 10 : 12} /> {isMobile ? 'Готово' : 'Готово до відправки'}
                     </button>
                   )}
 
@@ -525,11 +574,11 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                       onClick={() => updateStatus(order.id, 'shipped')}
                       disabled={statusChangingId === order.id}
                       style={{ 
-                        padding: '8px 14px', borderRadius: 10, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', 
-                        color: '#10b981', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                        padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', 
+                        color: '#10b981', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                       }}
                     >
-                      <Send size={12} /> Відправлено поштою (ТТН)
+                      <Send size={isMobile ? 10 : 12} /> {isMobile ? 'Відправлено' : 'Відправлено поштою (ТТН)'}
                     </button>
                   )}
 
@@ -538,11 +587,11 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                       onClick={() => updateStatus(order.id, 'completed')}
                       disabled={statusChangingId === order.id}
                       style={{ 
-                        padding: '8px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', 
-                        color: '#22c55e', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                        padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', 
+                        color: '#22c55e', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                       }}
                     >
-                      <CheckCircle2 size={12} /> Завершити замовлення
+                      <CheckCircle2 size={isMobile ? 10 : 12} /> {isMobile ? 'Виконати' : 'Завершити замовлення'}
                     </button>
                   )}
 
