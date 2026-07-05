@@ -632,7 +632,12 @@ export default function SalesDashboard({ showToast }) {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>{item.total.toLocaleString('uk-UA')} ₴</div>
-                      <div style={{ fontSize: 10, color: '#22c55e', marginTop: 2, fontWeight: 800 }}>Оплачено: {item.paid.toLocaleString('uk-UA')} ₴</div>
+                      <div style={{ fontSize: 10, color: '#22c55e', marginTop: 2, fontWeight: 800, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                        <span>Оплачено: {item.paid.toLocaleString('uk-UA')} ₴</span>
+                        {item.total - item.paid > 0 && (
+                          <span style={{ color: '#fbbf24' }}>Очікує: {(item.total - item.paid).toLocaleString('uk-UA')} ₴</span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
