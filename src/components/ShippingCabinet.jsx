@@ -393,8 +393,14 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                         <div style={{ fontSize: 18, fontWeight: 950, color: '#fff', marginTop: 4 }}>
                           {codAmount} ₴
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 650 }}>
-                          Передплата 30% має бути отримана окремо
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 650, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span>Передплата 30%:</span>
+                          <strong style={{ 
+                            color: order.payment_status === 'partially_paid' || order.payment_status === 'paid' ? '#22c55e' : '#f59e0b',
+                            fontSize: 11
+                          }}>
+                            {order.payment_status === 'partially_paid' ? 'Оплачено частково ✅' : order.payment_status === 'paid' ? 'Оплачено повністю ✅' : 'Очікує оплати ⏳'}
+                          </strong>
                         </div>
                       </div>
                     ) : (
@@ -407,7 +413,9 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                           Без накладеного платежу
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 650 }}>
-                          Статус оплати: {order.payment_status === 'paid' ? 'Оплачено' : 'Очікує підтвердження'}
+                          Статус оплати: <strong style={{ color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'partially_paid' ? '#38bdf8' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b' }}>
+                            {order.payment_status === 'paid' ? 'Оплачено' : order.payment_status === 'partially_paid' ? 'Частково оплачено' : order.payment_status === 'verifying' ? 'Перевірка' : 'Очікує'}
+                          </strong>
                         </div>
                       </div>
                     )}

@@ -1437,6 +1437,7 @@ export default function AdminPanel() {
                       { val: 'Всі', label: 'ВСІ' },
                       { val: 'pending', label: 'ОЧІКУЄ' },
                       { val: 'verifying', label: 'ПЕРЕВІРКА' },
+                      { val: 'partially_paid', label: 'ЧАСТКОВО' },
                       { val: 'paid', label: 'ОПЛАЧЕНО' }
                     ].map(item => {
                       const active = item.val === 'Всі' 
@@ -1520,8 +1521,8 @@ export default function AdminPanel() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end', minWidth: 160 }}>
                             <div style={{ textAlign: 'right' }}>
                               <span style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>{order.total} ₴</span>
-                              <div style={{ fontSize: 9, color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b', fontWeight: 900 }}>
-                                {order.payment_status === 'paid' ? 'ОПЛАЧЕНО' : order.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
+                              <div style={{ fontSize: 9, color: order.payment_status === 'paid' ? '#22c55e' : order.payment_status === 'partially_paid' ? '#38bdf8' : order.payment_status === 'verifying' ? '#f97316' : '#f59e0b', fontWeight: 900 }}>
+                                {order.payment_status === 'paid' ? 'ОПЛАЧЕНО' : order.payment_status === 'partially_paid' ? 'ЧАСТКОВО' : order.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
                               </div>
                             </div>
                             
@@ -1617,6 +1618,7 @@ export default function AdminPanel() {
                                 {[
                                   { val: 'pending', label: 'Очікує оплати', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
                                   { val: 'verifying', label: 'Перевірка', color: '#f97316', bg: 'rgba(249,115,22,0.1)' },
+                                  { val: 'partially_paid', label: 'Частково оплачено', color: '#38bdf8', bg: 'rgba(14,165,233,0.1)' },
                                   { val: 'paid', label: 'Оплачено', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' }
                                 ].map(p => {
                                   const isSelected = order.payment_status === p.val;

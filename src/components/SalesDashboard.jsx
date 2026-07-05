@@ -690,6 +690,7 @@ export default function SalesDashboard({ showToast }) {
                 { val: 'Всі', label: 'ВСІ' },
                 { val: 'pending', label: 'ОЧІКУЄ' },
                 { val: 'verifying', label: 'ПЕРЕВІРКА' },
+                { val: 'partially_paid', label: 'ЧАСТКОВО' },
                 { val: 'paid', label: 'ОПЛАЧЕНО' }
               ].map(item => {
                 const active = item.val === 'Всі' 
@@ -828,11 +829,11 @@ export default function SalesDashboard({ showToast }) {
                       <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Оплата</div>
                       <div style={{ 
                         fontSize: 9, fontWeight: 900, display: 'inline-block', padding: '4px 6px', borderRadius: 6,
-                        background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
-                        color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24',
+                        background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'partially_paid' ? 'rgba(14,165,233,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
+                        color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'partially_paid' ? '#38bdf8' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24',
                         textAlign: 'center', width: '100%', boxSizing: 'border-box', whiteSpace: 'nowrap'
                       }}>
-                        {sale.payment_status === 'paid' ? 'ОПЛ.' : sale.payment_status === 'verifying' ? 'ПЕРЕВ.' : 'ОЧІК.'}
+                        {sale.payment_status === 'paid' ? 'ОПЛ.' : sale.payment_status === 'partially_paid' ? 'ЧАСТ.' : sale.payment_status === 'verifying' ? 'ПЕРЕВ.' : 'ОЧІК.'}
                       </div>
                     </div>
                     <div>
@@ -938,10 +939,10 @@ export default function SalesDashboard({ showToast }) {
                         <td style={{ padding: '16px 20px', textAlign: 'center' }}>
                           <span style={{ 
                             fontSize: 10, fontWeight: 900, padding: '4px 8px', borderRadius: 6,
-                            background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
-                            color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24'
+                            background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'partially_paid' ? 'rgba(14,165,233,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
+                            color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'partially_paid' ? '#38bdf8' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24'
                           }}>
-                            {sale.payment_status === 'paid' ? 'ОПЛАЧЕНО' : sale.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
+                            {sale.payment_status === 'paid' ? 'ОПЛАЧЕНО' : sale.payment_status === 'partially_paid' ? 'ЧАСТКОВО ОПЛАЧЕНО' : sale.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
                           </span>
                         </td>
                         <td style={{ padding: '16px 20px', textAlign: 'center' }}>
@@ -1250,9 +1251,10 @@ export default function SalesDashboard({ showToast }) {
                     label="Оплата"
                     value={formData.payment_status}
                     onChange={(val) => setFormData({ ...formData, payment_status: val })}
-                    displayValue={formData.payment_status === 'paid' ? 'Оплачено' : formData.payment_status === 'pending' ? 'Очікує' : 'Перевірка'}
+                    displayValue={formData.payment_status === 'paid' ? 'Оплачено' : formData.payment_status === 'partially_paid' ? 'Частково оплачено' : formData.payment_status === 'pending' ? 'Очікує' : 'Перевірка'}
                     options={[
                       { value: 'paid', label: 'Оплачено' },
+                      { value: 'partially_paid', label: 'Частково оплачено' },
                       { value: 'pending', label: 'Очікує' },
                       { value: 'verifying', label: 'Перевірка' }
                     ]}
