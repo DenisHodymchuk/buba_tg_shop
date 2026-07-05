@@ -393,15 +393,23 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                         <div style={{ fontSize: 18, fontWeight: 950, color: '#fff', marginTop: 4 }}>
                           {codAmount} ₴
                         </div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 650, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                          <span>Передплата 30%:</span>
-                          <strong style={{ 
-                            color: order.payment_status === 'partially_paid' || order.payment_status === 'paid' ? '#22c55e' : '#f59e0b',
-                            fontSize: 11
-                          }}>
-                            {order.payment_status === 'partially_paid' ? 'Оплачено частково ✅' : order.payment_status === 'paid' ? 'Оплачено повністю ✅' : 'Очікує оплати ⏳'}
-                          </strong>
-                        </div>
+                        {(() => {
+                          const totalVal = parseFloat(order.total || 0);
+                          const codVal = parseFloat(codAmount || 0);
+                          const prepaymentVal = Math.max(0, totalVal - codVal);
+                          const prepaymentPct = totalVal > 0 ? Math.round((prepaymentVal / totalVal) * 100) : 0;
+                          return (
+                            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 650, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              <span>Передплата ({prepaymentPct}% — {prepaymentVal} ₴):</span>
+                              <strong style={{ 
+                                color: order.payment_status === 'partially_paid' || order.payment_status === 'paid' ? '#22c55e' : '#f59e0b',
+                                fontSize: 11
+                              }}>
+                                {order.payment_status === 'partially_paid' ? 'Оплачено частково ✅' : order.payment_status === 'paid' ? 'Оплачено повністю ✅' : 'Очікує оплати ⏳'}
+                              </strong>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', padding: 12, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
