@@ -1505,6 +1505,15 @@ export default function AdminPanel() {
                             <div style={{ fontSize: 11, color: '#6b6b8a' }}>
                               {order.shipping_details?.phone}
                             </div>
+                            {order.shipping_details?.notes && (
+                              <div style={{ 
+                                marginTop: 4, padding: '2px 6px', borderRadius: 6, display: 'inline-block',
+                                background: 'rgba(245,158,11,0.1)', border: '1px dashed rgba(245,158,11,0.2)',
+                                color: '#fbbf24', fontSize: 10, fontWeight: 800
+                              }}>
+                                ⚠️ {order.shipping_details.notes}
+                              </div>
+                            )}
                           </div>
 
                           {/* Delivery */}
@@ -1592,6 +1601,16 @@ export default function AdminPanel() {
                               gap: 16
                             }}
                           >
+                            {order.shipping_details?.notes && (
+                              <div style={{ 
+                                padding: '10px 14px', borderRadius: 12, 
+                                background: 'rgba(245,158,11,0.06)', border: '1px dashed rgba(245,158,11,0.3)',
+                                color: '#fbbf24', fontSize: 12, fontWeight: 750, display: 'flex', gap: 6, alignItems: 'center'
+                              }}>
+                                <span>⚠️ <strong>Уточнення:</strong> {order.shipping_details.notes}</span>
+                              </div>
+                            )}
+
                             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 20 }}>
                               {order.shipping_method === 'nova_poshta' && order.shipping_details?.warehouse && (
                                 <div>

@@ -321,6 +321,15 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                       }}>
                         {PLATFORM_META[platform]?.label || PLATFORM_META.other.label}
                       </span>
+                      {details.notes && (
+                        <span style={{ 
+                          fontSize: 9, fontWeight: 900, 
+                          color: '#fbbf24', background: 'rgba(245,158,11,0.1)',
+                          padding: '2px 6px', borderRadius: 6, border: '1px solid rgba(245,158,11,0.2)'
+                        }}>
+                          ⚠️ УТОЧНЕННЯ
+                        </span>
+                      )}
                     </div>
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -365,6 +374,16 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                       style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 16 }}
                     >
                       <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }} />
+
+                      {details.notes && (
+                        <div style={{ 
+                          padding: '10px 14px', borderRadius: 12, 
+                          background: 'rgba(245,158,11,0.06)', border: '1px dashed rgba(245,158,11,0.3)',
+                          color: '#fbbf24', fontSize: 12, fontWeight: 750, display: 'flex', gap: 6, alignItems: 'center'
+                        }}>
+                          <span>⚠️ <strong>Уточнення:</strong> {details.notes}</span>
+                        </div>
+                      )}
 
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr 1fr', gap: isMobile ? 14 : 24 }}>
                         

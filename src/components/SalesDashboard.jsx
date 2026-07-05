@@ -147,7 +147,8 @@ export default function SalesDashboard({ showToast }) {
     status: 'completed',
     items: [], // array of { name, quantity, price }
     is_cod: false,
-    cod_amount: ''
+    cod_amount: '',
+    notes: ''
   });
   
   // Custom manual item inputs
@@ -208,8 +209,8 @@ export default function SalesDashboard({ showToast }) {
   const stats = useMemo(() => {
     let totalRevenue = 0;
     let paidRevenue = 0;
-    let counts = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, offline: 0, other: 0 };
-    let sums = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, offline: 0, other: 0 };
+    let counts = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, tiktok: 0, offline: 0, other: 0 };
+    let sums = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, tiktok: 0, offline: 0, other: 0 };
     
     sales.forEach(sale => {
       const amt = parseFloat(sale.total || 0);
@@ -384,7 +385,8 @@ export default function SalesDashboard({ showToast }) {
           warehouse: formData.warehouse,
           items: formData.items,
           is_cod: formData.is_cod,
-          cod_amount: formData.is_cod ? (parseFloat(formData.cod_amount) || 0) : 0
+          cod_amount: formData.is_cod ? (parseFloat(formData.cod_amount) || 0) : 0,
+          notes: formData.notes
         }
       };
 
@@ -429,7 +431,8 @@ export default function SalesDashboard({ showToast }) {
       status: sale.status || 'completed',
       items: sale.shipping_details?.items || [],
       is_cod: sale.shipping_details?.is_cod || false,
-      cod_amount: sale.shipping_details?.cod_amount || ''
+      cod_amount: sale.shipping_details?.cod_amount || '',
+      notes: sale.shipping_details?.notes || ''
     });
     setShowAddForm(true);
   };
@@ -460,7 +463,8 @@ export default function SalesDashboard({ showToast }) {
       status: 'completed',
       items: [],
       is_cod: false,
-      cod_amount: ''
+      cod_amount: '',
+      notes: ''
     });
     setNewItem({ name: '', quantity: 1, price: '' });
     setSelectedProductId('');
@@ -821,6 +825,15 @@ export default function SalesDashboard({ showToast }) {
                     {sale.shipping_details?.city && (
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Доставка: {sale.shipping_details.city} {sale.shipping_details.warehouse ? `(${sale.shipping_details.warehouse})` : ''}</div>
                     )}
+                    {sale.shipping_details?.notes && (
+                      <div style={{ 
+                        marginTop: 6, padding: '6px 10px', borderRadius: 10, 
+                        background: 'rgba(245,158,11,0.08)', border: '1px dashed rgba(245,158,11,0.3)',
+                        color: '#fbbf24', fontSize: 11, fontWeight: 750, display: 'flex', gap: 6, alignItems: 'center'
+                      }}>
+                        <span>⚠️ {sale.shipping_details.notes}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Items list */}
@@ -944,6 +957,15 @@ export default function SalesDashboard({ showToast }) {
                         <td style={{ padding: '16px 20px' }}>
                           <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{clientName}</div>
                           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{clientPhone}</div>
+                          {sale.shipping_details?.notes && (
+                            <div style={{ 
+                              marginTop: 6, padding: '4px 8px', borderRadius: 8, 
+                              background: 'rgba(245,158,11,0.08)', border: '1px dashed rgba(245,158,11,0.3)',
+                              color: '#fbbf24', fontSize: 11, fontWeight: 700, display: 'inline-flex', gap: 4, alignItems: 'center'
+                            }}>
+                              <span>⚠️ {sale.shipping_details.notes}</span>
+                            </div>
+                          )}
                         </td>
                         <td style={{ padding: '16px 20px', fontSize: 12, maxWidth: 220 }}>
                           {sale.shipping_details?.items?.map((item, idx) => (
@@ -1326,6 +1348,18 @@ export default function SalesDashboard({ showToast }) {
                       </div>
                     </motion.div>
                   )}
+                </div>
+
+                {/* Уточнення / Нотатки */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Уточнення / Нотатки до замовлення</label>
+                  <textarea 
+                    placeholder="Наприклад: клієнт просив інший колір, відправити подарунком тощо..." 
+                    value={formData.notes || ''} 
+                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                    rows={2}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', resize: 'vertical' }}
+                  />
                 </div>
 
                 <ThemeSelect 
