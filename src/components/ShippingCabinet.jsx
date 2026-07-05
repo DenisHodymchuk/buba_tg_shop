@@ -33,7 +33,6 @@ const STATUS_META = {
 
 export default function ShippingCabinet({ orders, setOrders, showToast, isMobile }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState(['shipping']); // Default to 'shipping'
   const [deliveryFilter, setDeliveryFilter] = useState('all'); // 'all' | 'nova_poshta' | 'pickup'
   const [savingTtnId, setSavingTtnId] = useState(null);
   const [tempTtn, setTempTtn] = useState({});
@@ -41,19 +40,11 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
   const [copiedAddressId, setCopiedAddressId] = useState(null);
   const [statusChangingId, setStatusChangingId] = useState(null);
 
-  const toggleStatusFilter = (status) => {
-    setSelectedStatuses(prev => 
-      prev.includes(status) 
-        ? (prev.length > 1 ? prev.filter(s => s !== status) : prev) // keep at least one
-        : [...prev, status]
-    );
-  };
-
-  // Main filter logic
+  // Main filter logic (only show active/non-completed/non-cancelled orders)
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      // 1. Filter by shipping status
-      const matchesStatus = selectedStatuses.includes(order.status);
+      // 1. Filter out completed and cancelled orders
+      const matchesStatus = order.status !== 'completed' && order.status !== 'cancelled';
       
       // 2. Filter by delivery method
       const method = order.shipping_method || 'pickup';
@@ -73,7 +64,7 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
 
       return matchesStatus && matchesDelivery && matchesSearch;
     });
-  }, [orders, selectedStatuses, deliveryFilter, searchQuery]);
+  }, [orders, deliveryFilter, searchQuery]);
 
   // Update order status directly in Supabase
   const updateStatus = async (orderId, newStatus) => {
@@ -216,37 +207,8 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
           />
         </div>
 
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 24, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 24, justifyContent: 'space-between', alignItems: 'center' }}>
           
-          {/* Status checkboxes */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус відправки:</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {Object.keys(STATUS_META).map(key => {
-                const meta = STATUS_META[key];
-                const active = selectedStatuses.includes(key);
-                const Icon = meta.icon;
-                return (
-                  <button 
-                    key={key}
-                    onClick={() => toggleStatusFilter(key)}
-                    style={{ 
-                      padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
-                      background: active ? meta.color : 'rgba(255,255,255,0.03)', 
-                      color: active ? '#fff' : 'var(--text-muted)', 
-                      border: 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {Icon && <Icon size={12} />}
-                    {meta.label.toUpperCase()}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Delivery Method Filter */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Спосіб доставки:</label>
