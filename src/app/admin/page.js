@@ -1272,6 +1272,7 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
           <SidebarBtn active={activeTab === 'reviews'} onClick={() => { setActiveTab('reviews'); setIsSidebarOpen(false); }} icon={<MessageSquare size={18} />} label="Відгуки" />
           <SidebarBtn active={activeTab === 'broadcast'} onClick={() => { setActiveTab('broadcast'); setIsSidebarOpen(false); }} icon={<Send size={18} />} label="Розсилка" />
+          <SidebarBtn active={activeTab === 'marketing'} onClick={() => { setActiveTab('marketing'); setIsSidebarOpen(false); }} icon={<Megaphone size={18} />} label="Кабінет Реклами" />
         </nav>
 
         <div style={{ padding: 24, borderTop: '1px solid var(--border)' }}>
