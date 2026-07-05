@@ -180,7 +180,9 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
             ...formData,
             tg_id: tgUser?.id?.toString(),
             bonus_used: useBonuses ? bonusDiscount : 0,
-            items: items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1 }))
+            items: items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1 })),
+            is_cod: paymentMethod === 'cash',
+            cod_amount: paymentMethod === 'cash' ? Math.round(total * 0.7) : 0
           },
           order_number: newOrderNumber
         }])

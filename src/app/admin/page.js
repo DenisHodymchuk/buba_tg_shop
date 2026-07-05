@@ -13,6 +13,7 @@ import CalculatorComp from '@/components/Calculator';
 import InventoryDashboard from '@/components/InventoryDashboard';
 import AdvertisingDashboard from '@/components/AdvertisingDashboard';
 import SalesDashboard from '@/components/SalesDashboard';
+import ShippingCabinet from '@/components/ShippingCabinet';
 
 
 const scrollbarHide = `
@@ -1262,6 +1263,7 @@ export default function AdminPanel() {
         <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <SidebarBtn active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Package size={18} />} label="Товари" />
           <SidebarBtn active={activeTab === 'sales'} onClick={() => { setActiveTab('sales'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={18} />} label="Замовлення" />
+          <SidebarBtn active={activeTab === 'shipping_list'} onClick={() => { setActiveTab('shipping_list'); setIsSidebarOpen(false); }} icon={<Truck size={18} />} label="Відправки" />
           <SidebarBtn active={activeTab === 'farm'} onClick={() => { setActiveTab('farm'); setIsSidebarOpen(false); }} icon={<Printer size={18} />} label="3D Ферма" />
           <SidebarBtn active={activeTab === 'sales_cabinet'} onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }} icon={<Coins size={18} />} label="Продажі" />
           <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
@@ -2165,6 +2167,8 @@ export default function AdminPanel() {
                 )}
               </div>
             </>
+          ) : activeTab === 'shipping_list' ? (
+            <ShippingCabinet orders={orders} setOrders={setOrders} showToast={showToast} isMobile={isMobile} />
           ) : activeTab === 'sales_cabinet' ? (
             <SalesDashboard showToast={showToast} />
           ) : activeTab === 'inventory' ? (
