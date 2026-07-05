@@ -216,6 +216,14 @@ export default function SalesDashboard({ showToast }) {
       totalRevenue += amt;
       if (sale.payment_status === 'paid') {
         paidRevenue += amt;
+      } else if (sale.payment_status === 'partially_paid') {
+        const isCod = !!sale.shipping_details?.is_cod;
+        const codAmount = parseFloat(sale.shipping_details?.cod_amount || 0);
+        if (isCod && codAmount > 0) {
+          paidRevenue += Math.max(0, amt - codAmount);
+        } else {
+          paidRevenue += amt * 0.3;
+        }
       }
       
       const src = sale.source || 'website';
@@ -270,10 +278,21 @@ export default function SalesDashboard({ showToast }) {
       if (!groups[key]) {
         groups[key] = { label, total: 0, paid: 0, count: 0, key };
       }
-      groups[key].total += amt;
-      if (isPaid) {
-        groups[key].paid += amt;
+      let paidAmt = 0;
+      if (sale.payment_status === 'paid') {
+        paidAmt = amt;
+      } else if (sale.payment_status === 'partially_paid') {
+        const isCod = !!sale.shipping_details?.is_cod;
+        const codAmount = parseFloat(sale.shipping_details?.cod_amount || 0);
+        if (isCod && codAmount > 0) {
+          paidAmt = Math.max(0, amt - codAmount);
+        } else {
+          paidAmt = amt * 0.3;
+        }
       }
+      
+      groups[key].total += amt;
+      groups[key].paid += paidAmt;
       groups[key].count++;
     });
     
