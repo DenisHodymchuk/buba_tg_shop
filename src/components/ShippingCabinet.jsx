@@ -5,7 +5,7 @@ import {
   Truck, Search, User, Phone, MapPin, Home, 
   CheckCircle2, Clock, ClipboardList, Printer, Send, XCircle,
   Coins, Copy, Check, ExternalLink, Loader2, ShoppingBag, 
-  ArrowRight, RefreshCw, ChevronDown, ChevronUp
+  ArrowRight, RefreshCw, ChevronDown, ChevronUp, Star
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -49,9 +49,9 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
     );
   };
 
-  // Main filter logic (only show active/non-completed/non-cancelled orders)
+  // Main filter logic (only show active/non-completed/non-cancelled orders) and sorting (priority first, then created_at desc)
   const filteredOrders = useMemo(() => {
-    return orders.filter(order => {
+    const filtered = orders.filter(order => {
       // 1. Filter out completed, cancelled, and shipped orders
       const matchesStatus = order.status !== 'completed' && order.status !== 'cancelled' && order.status !== 'shipped';
       
@@ -72,6 +72,18 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
         ttn.includes(query);
 
       return matchesStatus && matchesDelivery && matchesSearch;
+    });
+
+    // Sort: priority first, then created_at descending (newest first)
+    return filtered.sort((a, b) => {
+      const aPriority = a.shipping_details?.is_priority ? 1 : 0;
+      const bPriority = b.shipping_details?.is_priority ? 1 : 0;
+      
+      if (aPriority !== bPriority) {
+        return bPriority - aPriority;
+      }
+      
+      return new Date(b.created_at) - new Date(a.created_at);
     });
   }, [orders, deliveryFilter, searchQuery]);
 
@@ -170,6 +182,38 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
       showToast(`Помилка збереження ТТН: ${e.message}`, 'error');
     } finally {
       setSavingTtnId(null);
+    }
+  };
+
+  // Toggle order priority status (stored in shipping_details.is_priority)
+  const togglePriority = async (orderId, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      const currentPriority = !!order.shipping_details?.is_priority;
+      const updatedDetails = {
+        ...(order.shipping_details || {}),
+        is_priority: !currentPriority
+      };
+
+      const { error } = await supabase
+        .from('orders')
+        .update({ shipping_details: updatedDetails })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Update parent state
+      setOrders(orders.map(o => o.id === orderId ? { ...o, shipping_details: updatedDetails } : o));
+      showToast(
+        !currentPriority ? 'Замовлення додано в пріоритет' : 'Замовлення вилучено з пріоритету', 
+        'success'
+      );
+    } catch (err) {
+      console.error(err);
+      showToast(`Помилка оновлення пріоритету: ${err.message}`, 'error');
     }
   };
 
@@ -297,9 +341,16 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
               <div 
                 key={order.id}
                 style={{ 
-                  background: 'var(--bg-card)', borderRadius: isMobile ? 18 : 24, border: '1px solid var(--border)', 
-                  padding: isMobile ? 16 : 24, display: 'flex', flexDirection: 'column', gap: isMobile && !isExpanded ? 0 : (isMobile ? 16 : 20),
-                  position: 'relative', overflow: 'hidden',
+                  background: 'var(--bg-card)', 
+                  borderRadius: isMobile ? 18 : 24, 
+                  border: details.is_priority ? '1px solid rgba(251, 191, 36, 0.35)' : '1px solid var(--border)', 
+                  padding: isMobile ? 16 : 24, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: isMobile && !isExpanded ? 0 : (isMobile ? 16 : 20),
+                  position: 'relative', 
+                  overflow: 'hidden',
+                  boxShadow: details.is_priority ? '0 0 16px rgba(251, 191, 36, 0.05)' : 'none',
                   transition: 'all 0.2s ease-in-out'
                 }}
               >
@@ -311,6 +362,32 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                   {/* Row 1: Order details & Status */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <button
+                        onClick={(e) => togglePriority(order.id, e)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'transform 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        title={details.is_priority ? "Прибрати з пріоритету" : "Зробити пріоритетним"}
+                      >
+                        <Star 
+                          size={16} 
+                          fill={details.is_priority ? "#fbbf24" : "transparent"} 
+                          stroke={details.is_priority ? "#fbbf24" : "var(--text-muted)"}
+                          style={{
+                            opacity: details.is_priority ? 1 : 0.3,
+                            transition: 'all 0.2s'
+                          }}
+                        />
+                      </button>
                       <span style={{ fontSize: 13, fontWeight: 950, color: '#fff' }}>
                         {order.order_number || `#${order.id.slice(0, 8)}`}
                       </span>
