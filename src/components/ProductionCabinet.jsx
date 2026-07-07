@@ -6,7 +6,6 @@ import {
   ChevronDown, ChevronUp, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import PrintTimings from './PrintTimings';
 
 // Meta definitions for order statuses
 const STATUS_META = {
@@ -17,7 +16,7 @@ const STATUS_META = {
   shipped: { label: 'Відправлені', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send }
 };
 
-export default function ProductionCabinet({ orders, printers = [], isMobile, showToast }) {
+export default function ProductionCabinet({ orders, isMobile }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState(['new', 'preparing', 'printing', 'shipping']);
   const [expandedProductNames, setExpandedProductNames] = useState([]);
@@ -182,9 +181,6 @@ export default function ProductionCabinet({ orders, printers = [], isMobile, sho
         </div>
 
       </div>
-
-      {/* Print Timings Timeline */}
-      <PrintTimings orders={orders} printers={printers} isMobile={isMobile} showToast={showToast} />
 
       {/* Filters Cabinet */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 24, padding: 24 }}>

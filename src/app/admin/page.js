@@ -15,7 +15,6 @@ import AdvertisingDashboard from '@/components/AdvertisingDashboard';
 import SalesDashboard from '@/components/SalesDashboard';
 import ShippingCabinet from '@/components/ShippingCabinet';
 import ProductionCabinet from '@/components/ProductionCabinet';
-import PrintTimings from '@/components/PrintTimings';
 
 
 const scrollbarHide = `
@@ -1268,7 +1267,6 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'sales'} onClick={() => { setActiveTab('sales'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={18} />} label="Замовлення" />
           <SidebarBtn active={activeTab === 'shipping_list'} onClick={() => { setActiveTab('shipping_list'); setIsSidebarOpen(false); }} icon={<Truck size={18} />} label="Відправки" />
           <SidebarBtn active={activeTab === 'production'} onClick={() => { setActiveTab('production'); setIsSidebarOpen(false); }} icon={<Hammer size={18} />} label="Виготовлення" />
-          <SidebarBtn active={activeTab === 'farm'} onClick={() => { setActiveTab('farm'); setIsSidebarOpen(false); }} icon={<Printer size={18} />} label="3D Ферма" />
           <SidebarBtn active={activeTab === 'calculator'} onClick={() => { setActiveTab('calculator'); setIsSidebarOpen(false); }} icon={<Calculator size={18} />} label="Калькулятор" />
           <SidebarBtn active={activeTab === 'inventory'} onClick={() => { setActiveTab('inventory'); setIsSidebarOpen(false); }} icon={<Box size={18} />} label="Склад (Облік)" />
           <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
@@ -1827,11 +1825,6 @@ export default function AdminPanel() {
                 </button>
               </div>
 
-              {/* Print Timings Timeline */}
-              <div style={{ marginBottom: 24 }}>
-                <PrintTimings orders={orders} printers={printers} isMobile={isMobile} showToast={showToast} />
-              </div>
-
               {/* Add Printer Form */}
               {showAddPrinterForm && (
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: 20, marginBottom: 24 }}>
@@ -2197,7 +2190,7 @@ export default function AdminPanel() {
           ) : activeTab === 'shipping_list' ? (
             <ShippingCabinet orders={orders} setOrders={setOrders} showToast={showToast} isMobile={isMobile} />
           ) : activeTab === 'production' ? (
-            <ProductionCabinet orders={orders} printers={printers} isMobile={isMobile} showToast={showToast} />
+            <ProductionCabinet orders={orders} isMobile={isMobile} />
           ) : activeTab === 'sales_cabinet' ? (
             <SalesDashboard showToast={showToast} />
           ) : activeTab === 'inventory' ? (
