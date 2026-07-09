@@ -209,8 +209,8 @@ export default function SalesDashboard({ showToast }) {
   const stats = useMemo(() => {
     let totalRevenue = 0;
     let paidRevenue = 0;
-    let counts = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, tiktok: 0, offline: 0, other: 0 };
-    let sums = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, tiktok: 0, offline: 0, other: 0 };
+    let counts = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, tiktok: 0, threads: 0, offline: 0, other: 0 };
+    let sums = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, tiktok: 0, threads: 0, offline: 0, other: 0 };
     
     sales.forEach(sale => {
       const amt = parseFloat(sale.total || 0);
@@ -489,6 +489,7 @@ export default function SalesDashboard({ showToast }) {
     if (p === 'facebook') return '#1877f2';
     if (p === 'telegram') return '#0ea5e9';
     if (p === 'tiktok') return '#ff0050';
+    if (p === 'threads') return '#ffffff';
     if (p === 'offline') return '#22c55e';
     return '#a855f7';
   };
@@ -501,6 +502,7 @@ export default function SalesDashboard({ showToast }) {
     if (p === 'facebook') return 'Facebook';
     if (p === 'telegram') return 'Telegram';
     if (p === 'tiktok') return 'TikTok';
+    if (p === 'threads') return 'Threads';
     if (p === 'offline') return 'Магазин (офлайн)';
     return 'Інше';
   };
@@ -683,6 +685,7 @@ export default function SalesDashboard({ showToast }) {
                 { val: 'facebook', label: 'FACEBOOK', color: '#1877f2' },
                 { val: 'telegram', label: 'TELEGRAM', color: '#0ea5e9' },
                 { val: 'tiktok', label: 'TIKTOK', color: '#ff0050' },
+                { val: 'threads', label: 'THREADS', color: '#ffffff' },
                 { val: 'offline', label: 'ОФЛАЙН', color: '#22c55e' },
                 { val: 'other', label: 'ІНШЕ', color: '#a855f7' }
               ].map(item => {
@@ -1095,6 +1098,7 @@ export default function SalesDashboard({ showToast }) {
                         { value: 'facebook', label: 'Facebook' },
                         { value: 'telegram', label: 'Telegram' },
                         { value: 'tiktok', label: 'TikTok' },
+                        { value: 'threads', label: 'Threads' },
                         { value: 'offline', label: 'Магазин (офлайн)' },
                         { value: 'other', label: 'Інше' }
                       ]}

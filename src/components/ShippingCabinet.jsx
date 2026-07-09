@@ -17,6 +17,7 @@ const PLATFORM_META = {
   facebook: { label: 'Facebook', color: '#1877f2' },
   telegram: { label: 'Telegram', color: '#0ea5e9' },
   tiktok: { label: 'TikTok', color: '#ff0050' },
+  threads: { label: 'Threads', color: '#ffffff' },
   offline: { label: 'Магазин (офлайн)', color: '#22c55e' },
   other: { label: 'Інше', color: '#a855f7' }
 };
