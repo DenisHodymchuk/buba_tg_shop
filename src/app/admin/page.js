@@ -473,9 +473,14 @@ export default function AdminPanel() {
     try {
       const order = orders.find(o => o.id === orderId);
       
+      const updateData = { status: newStatus };
+      if (newStatus === 'completed') {
+        updateData.payment_status = 'paid';
+      }
+      
       const { error } = await supabase
         .from('orders')
-        .update({ status: newStatus })
+        .update(updateData)
         .eq('id', orderId);
       
       if (error) throw error;
@@ -522,7 +527,7 @@ export default function AdminPanel() {
         }
       }
       
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      setOrders(orders.map(o => o.id === orderId ? (newStatus === 'completed' ? { ...o, status: newStatus, payment_status: 'paid' } : { ...o, status: newStatus }) : o));
       showToast('Статус змінено, клієнт отримав сповіщення');
     } catch (e) {
       alert('Помилка оновлення статусу: ' + e.message);

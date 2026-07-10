@@ -1374,7 +1374,13 @@ export default function SalesDashboard({ showToast }) {
                 <ThemeSelect 
                   label="Статус замовлення"
                   value={formData.status}
-                  onChange={(val) => setFormData({ ...formData, status: val })}
+                  onChange={(val) => {
+                    const updated = { status: val };
+                    if (val === 'completed') {
+                      updated.payment_status = 'paid';
+                    }
+                    setFormData({ ...formData, ...updated });
+                  }}
                   displayValue={STATUS_META[formData.status]?.label || STATUS_META.new.label}
                   options={Object.keys(STATUS_META).map(key => ({ value: key, label: STATUS_META[key].label }))}
                 />
