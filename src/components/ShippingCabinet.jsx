@@ -363,111 +363,198 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                 {/* Clickable Header/Summary block */}
                 <div 
                   onClick={() => toggleExpand(order.id)}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer', userSelect: 'none' }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 10, cursor: 'pointer', userSelect: 'none' }}
                 >
-                  {/* Row 1: Order details & Status */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 0, flex: 1, marginRight: 8 }}>
-                      <button
-                        onClick={(e) => togglePriority(order.id, e)}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'transform 0.15s ease'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                        title={details.is_priority ? "Прибрати з пріоритету" : "Зробити пріоритетним"}
-                      >
-                        <Star 
-                          size={16} 
-                          fill={details.is_priority ? "#fbbf24" : "transparent"} 
-                          stroke={details.is_priority ? "#fbbf24" : "var(--text-muted)"}
-                          style={{
-                            opacity: details.is_priority ? 1 : 0.3,
-                            transition: 'all 0.2s',
-                            flexShrink: 0
-                          }}
-                        />
-                      </button>
-                      <span style={{ 
-                        fontSize: 13, 
-                        fontWeight: 950, 
-                        color: '#fff',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        flexShrink: 1,
-                        minWidth: 0
-                      }}>
-                        {isMobile ? (
-                          `${clientName} (${order.order_number ? `#${order.order_number.replace(/^MAN-[A-Z]+-/, '')}` : `#${order.id.slice(0, 8)}`})`
-                        ) : (
-                          order.order_number || `#${order.id.slice(0, 8)}`
-                        )}
-                      </span>
-                      <span style={{ 
-                        fontSize: 10, fontWeight: 900, 
-                        color: PLATFORM_META[platform]?.color || PLATFORM_META.other.color,
-                        background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: 8,
-                        flexShrink: 0
-                      }}>
-                        {PLATFORM_META[platform]?.label || PLATFORM_META.other.label}
-                      </span>
-                      {details.notes && (
-                        <span style={{ 
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          fontSize: 10,
-                          fontWeight: 900, 
-                          color: '#fbbf24',
-                          background: 'rgba(245,158,11,0.1)',
-                          padding: '4px 8px',
-                          borderRadius: 8,
-                          whiteSpace: 'nowrap',
-                          flexShrink: 0
-                        }}>
-                          ⚠️ УТОЧНЕННЯ
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                      {/* Status Badge */}
-                      {(() => {
-                        const meta = STATUS_META[order.status] || STATUS_META.new;
-                        const Icon = meta.icon;
-                        return (
+                  {isMobile ? (
+                    <>
+                      {/* Mobile Row 1: Badges & Actions */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <button
+                            onClick={(e) => togglePriority(order.id, e)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              padding: 0,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'transform 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            title={details.is_priority ? "Прибрати з пріоритету" : "Зробити пріоритетним"}
+                          >
+                            <Star 
+                              size={16} 
+                              fill={details.is_priority ? "#fbbf24" : "transparent"} 
+                              stroke={details.is_priority ? "#fbbf24" : "var(--text-muted)"}
+                              style={{
+                                opacity: details.is_priority ? 1 : 0.3,
+                                transition: 'all 0.2s',
+                                flexShrink: 0
+                              }}
+                            />
+                          </button>
+                          
                           <span style={{ 
-                            padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 900, 
-                            background: meta.bg, color: meta.color, display: 'inline-flex', alignItems: 'center', gap: 6
+                            fontSize: 10, fontWeight: 900, 
+                            color: PLATFORM_META[platform]?.color || PLATFORM_META.other.color,
+                            background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: 8,
+                            flexShrink: 0
                           }}>
-                            {Icon && <Icon size={12} />}
-                            {meta.label}
+                            {PLATFORM_META[platform]?.label || PLATFORM_META.other.label}
                           </span>
-                        );
-                      })()}
 
-                      {/* Chevron Toggle Icon */}
-                      {isExpanded ? <ChevronUp size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} />}
-                    </div>
-                  </div>
+                          {details.notes && (
+                            <span style={{ 
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              fontSize: 10,
+                              fontWeight: 900, 
+                              color: '#fbbf24',
+                              background: 'rgba(245,158,11,0.1)',
+                              padding: '4px 8px',
+                              borderRadius: 8,
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0
+                            }}>
+                              ⚠️ УТОЧНЕННЯ
+                            </span>
+                          )}
+                        </div>
 
-                  {/* Row 2: Customer Name and Destination */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-muted)' }}>
-                    <div style={{ fontWeight: 750, color: '#e2e8f0' }}>
-                      {isMobile ? (clientPhone || '') : `${clientName} ${clientPhone ? `(${clientPhone})` : ''}`}
-                    </div>
-                    <div style={{ fontSize: 11, fontWeight: 650, color: '#ec4899' }}>
-                      {details.city || 'Самовивіз'}
-                    </div>
-                  </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          {(() => {
+                            const meta = STATUS_META[order.status] || STATUS_META.new;
+                            const Icon = meta.icon;
+                            return (
+                              <span style={{ 
+                                padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 900, 
+                                background: meta.bg, color: meta.color, display: 'inline-flex', alignItems: 'center', gap: 6
+                              }}>
+                                {Icon && <Icon size={12} />}
+                                {meta.label}
+                              </span>
+                            );
+                          })()}
+                          {isExpanded ? <ChevronUp size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} />}
+                        </div>
+                      </div>
+
+                      {/* Mobile Row 2: Customer Name, Suffix & Destination */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, fontWeight: 950, color: '#fff' }}>
+                          {clientName} {order.order_number ? `(#${order.order_number.replace(/^MAN-[A-Z]+-/, '')})` : `#${order.id.slice(0, 8)}`}
+                        </span>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#ec4899' }}>
+                          {details.city || 'Самовивіз'}
+                        </span>
+                      </div>
+
+                      {/* Mobile Row 3: Phone number */}
+                      {clientPhone && (
+                        <div style={{ fontSize: 12, fontWeight: 750, color: 'var(--text-muted)', marginTop: -4 }}>
+                          {clientPhone}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {/* Desktop Row 1: Order details & Status */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <button
+                            onClick={(e) => togglePriority(order.id, e)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              padding: 0,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'transform 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            title={details.is_priority ? "Прибрати з пріоритету" : "Зробити пріоритетним"}
+                          >
+                            <Star 
+                              size={16} 
+                              fill={details.is_priority ? "#fbbf24" : "transparent"} 
+                              stroke={details.is_priority ? "#fbbf24" : "var(--text-muted)"}
+                              style={{
+                                opacity: details.is_priority ? 1 : 0.3,
+                                transition: 'all 0.2s',
+                                flexShrink: 0
+                              }}
+                            />
+                          </button>
+                          <span style={{ fontSize: 13, fontWeight: 950, color: '#fff' }}>
+                            {order.order_number || `#${order.id.slice(0, 8)}`}
+                          </span>
+                          <span style={{ 
+                            fontSize: 10, fontWeight: 900, 
+                            color: PLATFORM_META[platform]?.color || PLATFORM_META.other.color,
+                            background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: 8,
+                            flexShrink: 0
+                          }}>
+                            {PLATFORM_META[platform]?.label || PLATFORM_META.other.label}
+                          </span>
+                          {details.notes && (
+                            <span style={{ 
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              fontSize: 10,
+                              fontWeight: 900, 
+                              color: '#fbbf24',
+                              background: 'rgba(245,158,11,0.1)',
+                              padding: '4px 8px',
+                              borderRadius: 8,
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0
+                            }}>
+                              ⚠️ УТОЧНЕННЯ
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          {/* Status Badge */}
+                          {(() => {
+                            const meta = STATUS_META[order.status] || STATUS_META.new;
+                            const Icon = meta.icon;
+                            return (
+                              <span style={{ 
+                                padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 900, 
+                                background: meta.bg, color: meta.color, display: 'inline-flex', alignItems: 'center', gap: 6
+                              }}>
+                                {Icon && <Icon size={12} />}
+                                {meta.label}
+                              </span>
+                            );
+                          })()}
+
+                          {/* Chevron Toggle Icon */}
+                          {isExpanded ? <ChevronUp size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} />}
+                        </div>
+                      </div>
+
+                      {/* Desktop Row 2: Customer Name and Destination */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'var(--text-muted)' }}>
+                        <div style={{ fontWeight: 750, color: '#e2e8f0' }}>
+                          {clientName} {clientPhone ? `(${clientPhone})` : ''}
+                        </div>
+                        <div style={{ fontSize: 11, fontWeight: 650, color: '#ec4899' }}>
+                          {details.city || 'Самовивіз'}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <AnimatePresence initial={false}>
