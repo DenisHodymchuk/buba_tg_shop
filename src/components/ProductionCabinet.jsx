@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import { supabase } from '@/lib/supabase';
 import { 
-  Hammer, Search, Check, ShoppingBag, User, Clock, 
-  ClipboardList, Printer, Truck, Send, CheckCircle2, 
+  Hammer, Search, Check, Clock, 
+  ClipboardList, Printer, Truck, Send, 
   ChevronDown, ChevronUp, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,56 +17,10 @@ const STATUS_META = {
   shipped: { label: 'Відправлені', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send }
 };
 
-export default function ProductionCabinet({ orders, isMobile }) {
+export default function ProductionCabinet({ orders, setOrders, showToast, isMobile }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState(['new', 'preparing', 'printing', 'shipping']);
   const [expandedProductNames, setExpandedProductNames] = useState([]);
-  const [checkedProducts, setCheckedProducts] = useState({});
-
-  // Load checked items checklist from localStorage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('buba_production_checklist');
-      if (saved) {
-        setCheckedProducts(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.error('Failed to load production checklist:', e);
-    }
-  }, []);
-
-  // Save checklist to localStorage
-  const toggleCheckProduct = (productName) => {
-    setCheckedProducts(prev => {
-      const updated = { ...prev, [productName]: !prev[productName] };
-      localStorage.setItem('buba_production_checklist', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  // Clear all checked items
-  const clearChecklist = () => {
-    if (window.confirm('Очистити весь список відмічених виробів?')) {
-      setCheckedProducts({});
-      localStorage.removeItem('buba_production_checklist');
-    }
-  };
-
-  // Toggle single status filter
-  const toggleStatusFilter = (status) => {
-    setSelectedStatuses(prev => 
-      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
-    );
-  };
-
-  // Toggle single product card accordion
-  const toggleProductExpand = (productName) => {
-    setExpandedProductNames(prev => 
-      prev.includes(productName) 
-        ? prev.filter(name => name !== productName) 
-        : [...prev, productName]
-    );
-  };
 
   // Aggregate items from active orders
   const productionList = useMemo(() => {
@@ -94,17 +49,24 @@ export default function ProductionCabinet({ orders, isMobile }) {
           itemsMap[name] = {
             name,
             totalQuantity: 0,
+            manufacturedQuantity: 0,
             orders: []
           };
         }
 
+        const isItemManufactured = !!item.is_manufactured;
         itemsMap[name].totalQuantity += (item.quantity || 1);
+        if (isItemManufactured) {
+          itemsMap[name].manufacturedQuantity += (item.quantity || 1);
+        }
+
         itemsMap[name].orders.push({
           orderId: order.id,
           orderNumber: order.order_number || `#${order.id.slice(0, 8)}`,
           clientName,
           quantity: item.quantity || 1,
-          status: order.status
+          status: order.status,
+          isManufactured: isItemManufactured
         });
       });
     });
@@ -112,16 +74,23 @@ export default function ProductionCabinet({ orders, isMobile }) {
     return Object.values(itemsMap).sort((a, b) => b.totalQuantity - a.totalQuantity);
   }, [orders, selectedStatuses, searchQuery]);
 
-  // Totals calculations
+  // Derived checkedProducts map (fully checked if manufacturedQuantity === totalQuantity)
+  const checkedProducts = useMemo(() => {
+    const checked = {};
+    productionList.forEach(item => {
+      checked[item.name] = item.manufacturedQuantity === item.totalQuantity;
+    });
+    return checked;
+  }, [productionList]);
+
+  // Totals calculations based on actual order-level manufactured statuses
   const totals = useMemo(() => {
     let totalItems = 0;
     let checkedCount = 0;
 
     productionList.forEach(item => {
       totalItems += item.totalQuantity;
-      if (checkedProducts[item.name]) {
-        checkedCount += item.totalQuantity;
-      }
+      checkedCount += item.manufacturedQuantity;
     });
 
     return {
@@ -129,7 +98,167 @@ export default function ProductionCabinet({ orders, isMobile }) {
       checkedCount,
       uniqueProducts: productionList.length
     };
-  }, [productionList, checkedProducts]);
+  }, [productionList]);
+
+  // Toggle manufactured state of a product across ALL filtered active orders
+  const toggleCheckProduct = async (productName, currentChecked) => {
+    if (!supabase) return;
+    try {
+      const activeOrders = orders.filter(o => 
+        o.status !== 'completed' && 
+        o.status !== 'cancelled' && 
+        (selectedStatuses.length === 0 || selectedStatuses.includes(o.status))
+      );
+
+      const newCheckedState = !currentChecked;
+
+      // Update orders in Supabase
+      const updatePromises = activeOrders.map(async (order) => {
+        const details = order.shipping_details || {};
+        const items = details.items || [];
+
+        const hasItem = items.some(item => item.name === productName);
+        if (!hasItem) return null;
+
+        const updatedItems = items.map(item => {
+          if (item.name === productName) {
+            return { ...item, is_manufactured: newCheckedState };
+          }
+          return item;
+        });
+
+        const updatedDetails = { ...details, items: updatedItems };
+
+        const { error } = await supabase
+          .from('orders')
+          .update({ shipping_details: updatedDetails })
+          .eq('id', order.id);
+
+        if (error) throw error;
+
+        return { orderId: order.id, updatedDetails };
+      });
+
+      const results = await Promise.all(updatePromises);
+
+      // Update parent state
+      let updatedOrders = [...orders];
+      results.forEach(res => {
+        if (res) {
+          updatedOrders = updatedOrders.map(o => o.id === res.orderId ? { ...o, shipping_details: res.updatedDetails } : o);
+        }
+      });
+      setOrders(updatedOrders);
+      if (showToast) {
+        showToast(newCheckedState ? `Всі одиниці "${productName}" відмічено як виготовлені` : `Відмітки виготовлення для "${productName}" знято`);
+      }
+    } catch (e) {
+      console.error('Error toggling product manufactured state:', e);
+      if (showToast) showToast('Помилка оновлення статусу виготовлення', 'error');
+    }
+  };
+
+  // Toggle manufactured state of a product for a specific order
+  const toggleOrderItemCheck = async (orderId, productName, currentChecked) => {
+    if (!supabase) return;
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      const details = order.shipping_details || {};
+      const items = details.items || [];
+      const newCheckedState = !currentChecked;
+
+      const updatedItems = items.map(item => {
+        if (item.name === productName) {
+          return { ...item, is_manufactured: newCheckedState };
+        }
+        return item;
+      });
+
+      const updatedDetails = { ...details, items: updatedItems };
+
+      const { error } = await supabase
+        .from('orders')
+        .update({ shipping_details: updatedDetails })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Update parent state
+      setOrders(orders.map(o => o.id === orderId ? { ...o, shipping_details: updatedDetails } : o));
+      if (showToast) {
+        showToast(newCheckedState ? 'Виріб відмічено як виготовлений' : 'Відмітку виготовлення знято');
+      }
+    } catch (e) {
+      console.error('Error toggling order item manufactured state:', e);
+      if (showToast) showToast('Помилка оновлення статусу виготовлення', 'error');
+    }
+  };
+
+  // Clear all checked items
+  const clearChecklist = async () => {
+    if (!supabase) return;
+    if (!window.confirm('Очистити статус виготовлення для всіх виробів у активних замовленнях?')) return;
+
+    try {
+      const activeOrders = orders.filter(o => 
+        o.status !== 'completed' && 
+        o.status !== 'cancelled'
+      );
+
+      const updatePromises = activeOrders.map(async (order) => {
+        const details = order.shipping_details || {};
+        const items = details.items || [];
+
+        const hasManufactured = items.some(item => item.is_manufactured);
+        if (!hasManufactured) return null;
+
+        const updatedItems = items.map(item => ({ ...item, is_manufactured: false }));
+        const updatedDetails = { ...details, items: updatedItems };
+
+        const { error } = await supabase
+          .from('orders')
+          .update({ shipping_details: updatedDetails })
+          .eq('id', order.id);
+
+        if (error) throw error;
+
+        return { orderId: order.id, updatedDetails };
+      });
+
+      const results = await Promise.all(updatePromises);
+
+      // Update parent state
+      let updatedOrders = [...orders];
+      results.forEach(res => {
+        if (res) {
+          updatedOrders = updatedOrders.map(o => o.id === res.orderId ? { ...o, shipping_details: res.updatedDetails } : o);
+        }
+      });
+      setOrders(updatedOrders);
+      if (showToast) showToast('Всі відмітки виготовлення скинуто');
+    } catch (e) {
+      console.error('Error clearing checklist:', e);
+      if (showToast) showToast('Помилка при скиданні відміток', 'error');
+    }
+  };
+
+  // Toggle single status filter
+  const toggleStatusFilter = (status) => {
+    setSelectedStatuses(prev => 
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
+  };
+
+  // Toggle single product card accordion
+  const toggleProductExpand = (productName) => {
+    setExpandedProductNames(prev => 
+      prev.includes(productName) 
+        ? prev.filter(name => name !== productName) 
+        : [...prev, productName]
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
@@ -148,7 +277,7 @@ export default function ProductionCabinet({ orders, isMobile }) {
             style={{ 
               padding: '10px 18px', borderRadius: 12, border: '1px solid rgba(239,68,68,0.2)',
               background: 'rgba(239,68,68,0.08)', color: '#ef4444',
-              fontWeight: 800, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              fontWeight: 800, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', center: 6,
               transition: 'all 0.2s'
             }}
           >
@@ -257,7 +386,7 @@ export default function ProductionCabinet({ orders, isMobile }) {
                   {/* Left checklist & title */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
                     <div 
-                      onClick={() => toggleCheckProduct(item.name)}
+                      onClick={() => toggleCheckProduct(item.name, isChecked)}
                       style={{ 
                         width: 20, height: 20, border: isChecked ? 'none' : '2px solid var(--text-muted)', 
                         borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', 
@@ -288,7 +417,11 @@ export default function ProductionCabinet({ orders, isMobile }) {
                       background: isChecked ? 'rgba(255,255,255,0.03)' : 'rgba(167,139,250,0.1)', 
                       padding: '4px 10px', borderRadius: 8
                     }}>
-                      {item.totalQuantity} шт
+                      {item.manufacturedQuantity > 0 && item.manufacturedQuantity < item.totalQuantity ? (
+                        `${item.manufacturedQuantity} з ${item.totalQuantity} шт`
+                      ) : (
+                        `${item.totalQuantity} шт`
+                      )}
                     </span>
                     <button 
                       onClick={() => toggleProductExpand(item.name)}
@@ -324,13 +457,28 @@ export default function ProductionCabinet({ orders, isMobile }) {
                               style={{ 
                                 display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
                                 background: 'rgba(0,0,0,0.15)', padding: '10px 14px', borderRadius: 12,
-                                fontSize: 12, gap: 12, flexWrap: 'wrap'
+                                fontSize: 12, gap: 12, flexWrap: 'wrap',
+                                opacity: ord.isManufactured ? 0.6 : 1,
+                                transition: 'opacity 0.2s'
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 150 }}>
-                                <strong style={{ color: '#fff' }}>{ord.orderNumber}</strong>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 150 }}>
+                                {/* Order level checkbox */}
+                                <div 
+                                  onClick={() => toggleOrderItemCheck(ord.orderId, item.name, ord.isManufactured)}
+                                  style={{ 
+                                    width: 16, height: 16, border: ord.isManufactured ? 'none' : '2px solid var(--text-muted)', 
+                                    borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                    background: ord.isManufactured ? '#2dd4bf' : 'transparent', cursor: 'pointer', transition: 'all 0.2s',
+                                    flexShrink: 0
+                                  }}
+                                >
+                                  {ord.isManufactured && <Check size={12} style={{ color: '#000', fontWeight: 900 }} />}
+                                </div>
+                                
+                                <strong style={{ color: '#fff', textDecoration: ord.isManufactured ? 'line-through' : 'none' }}>{ord.orderNumber}</strong>
                                 <span style={{ color: 'var(--text-muted)' }}>—</span>
-                                <span style={{ color: '#e2e8f0', fontWeight: 650 }}>{ord.clientName}</span>
+                                <span style={{ color: '#e2e8f0', fontWeight: 650, textDecoration: ord.isManufactured ? 'line-through' : 'none' }}>{ord.clientName}</span>
                               </div>
                               
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

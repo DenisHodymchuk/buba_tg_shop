@@ -2195,7 +2195,7 @@ export default function AdminPanel() {
           ) : activeTab === 'shipping_list' ? (
             <ShippingCabinet orders={orders} setOrders={setOrders} showToast={showToast} isMobile={isMobile} />
           ) : activeTab === 'production' ? (
-            <ProductionCabinet orders={orders} isMobile={isMobile} />
+            <ProductionCabinet orders={orders} setOrders={setOrders} showToast={showToast} isMobile={isMobile} />
           ) : activeTab === 'sales_cabinet' ? (
             <SalesDashboard showToast={showToast} />
           ) : activeTab === 'inventory' ? (
