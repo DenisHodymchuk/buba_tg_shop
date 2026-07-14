@@ -2605,9 +2605,55 @@ export default function AdminPanel() {
                   );
                 })()}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Категорія</label>
-                  <input type="text" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                    <label style={{ fontSize: 9, fontWeight: 900, color: '#4a4a6a', textTransform: 'uppercase' }}>Категорія</label>
+                    {formData.category && (
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData({...formData, category: ''})} 
+                        style={{ fontSize: 9, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800 }}
+                      >
+                        ОЧИСТИТИ
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Список існуючих категорій для швидкого вибору */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+                    {categories.filter(c => c !== 'Всі').map(c => {
+                      const isSelected = formData.category === c;
+                      return (
+                        <button 
+                          key={c} 
+                          type="button" 
+                          onClick={() => setFormData({...formData, category: c})} 
+                          style={{ 
+                            fontSize: 10, 
+                            padding: '6px 12px', 
+                            borderRadius: 10, 
+                            background: isSelected ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.02)', 
+                            color: isSelected ? '#a78bfa' : '#6b6b8a', 
+                            border: '1px solid',
+                            borderColor: isSelected ? '#7c3aed' : 'rgba(255,255,255,0.05)', 
+                            cursor: 'pointer',
+                            fontWeight: 700,
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {c}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <input 
+                    type="text" 
+                    value={formData.category} 
+                    onChange={e => setFormData({...formData, category: e.target.value})} 
+                    placeholder="Введіть або виберіть категорію..."
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} 
+                  />
                 </div>
                 
                 <div style={{ 
