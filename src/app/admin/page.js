@@ -70,6 +70,8 @@ export default function AdminPanel() {
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false);
+  const [reassignDropdownOpen, setReassignDropdownOpen] = useState(false);
   const [reassignModal, setReassignModal] = useState({
     open: false,
     catIdToDelete: null,
@@ -2856,7 +2858,7 @@ export default function AdminPanel() {
                           <button 
                             key={c.id} 
                             type="button" 
-                            onClick={() => setFormData({...formData, category: c.name})} 
+                            onClick={() => { setFormData({...formData, category: c.name}); setCatDropdownOpen(false); }}
                             style={{ 
                               fontSize: 10, 
                               padding: '6px 12px', 
@@ -2877,29 +2879,97 @@ export default function AdminPanel() {
                     </div>
                   )}
 
-                  <select 
-                    required
-                    value={formData.category} 
-                    onChange={e => setFormData({...formData, category: e.target.value})} 
-                    style={{ 
-                      background: 'rgba(255,255,255,0.03)', 
-                      border: '1px solid rgba(255,255,255,0.05)', 
-                      borderRadius: 12, 
-                      padding: 14, 
-                      color: formData.category ? '#fff' : '#6b6b8a', 
-                      outline: 'none',
-                      cursor: 'pointer',
-                      width: '100%',
-                      fontFamily: 'inherit'
-                    }}
-                  >
-                    <option value="" disabled style={{ background: '#0a192f', color: '#6b6b8a' }}>Оберіть категорію...</option>
-                    {dbCategories.map(c => (
-                      <option key={c.id} value={c.name} style={{ background: '#0a192f', color: '#fff' }}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                  {/* Custom styled category dropdown */}
+                  <div style={{ position: 'relative' }}>
+                    <button 
+                      type="button"
+                      onClick={() => setCatDropdownOpen(!catDropdownOpen)}
+                      style={{ 
+                        width: '100%',
+                        background: 'rgba(255,255,255,0.03)', 
+                        border: '1px solid', 
+                        borderColor: catDropdownOpen ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.05)', 
+                        borderRadius: 12, 
+                        padding: '14px 16px', 
+                        color: formData.category ? '#fff' : '#6b6b8a', 
+                        outline: 'none',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        fontSize: 14,
+                        textAlign: 'left',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <span>{formData.category || 'Оберіть категорію...'}</span>
+                      <span style={{ 
+                        transition: 'transform 0.2s', 
+                        transform: catDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
+                        color: '#6b6b8a', 
+                        fontSize: 12 
+                      }}>▼</span>
+                    </button>
+                    
+                    {catDropdownOpen && (
+                      <>
+                        <div onClick={() => setCatDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 50 }} />
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: 'calc(100% + 4px)', 
+                          left: 0, right: 0, 
+                          background: '#0d1b2a', 
+                          border: '1px solid rgba(124,58,237,0.3)', 
+                          borderRadius: 14, 
+                          padding: 6,
+                          zIndex: 51,
+                          maxHeight: 220,
+                          overflowY: 'auto',
+                          boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
+                          animation: 'fadeIn 0.15s ease-out'
+                        }}
+                        className="hide-scrollbar"
+                        >
+                          {dbCategories.length === 0 ? (
+                            <div style={{ padding: '12px 14px', color: '#4a4a6a', fontSize: 13, textAlign: 'center' }}>Немає категорій</div>
+                          ) : (
+                            dbCategories.map(c => (
+                              <button 
+                                key={c.id} 
+                                type="button"
+                                onClick={() => { setFormData({...formData, category: c.name}); setCatDropdownOpen(false); }}
+                                style={{ 
+                                  width: '100%', 
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 10,
+                                  background: formData.category === c.name ? 'rgba(124,58,237,0.15)' : 'transparent', 
+                                  border: 'none', 
+                                  borderRadius: 10,
+                                  padding: '11px 14px', 
+                                  color: formData.category === c.name ? '#a78bfa' : '#cbd5e1', 
+                                  fontSize: 13, 
+                                  fontWeight: formData.category === c.name ? 800 : 500,
+                                  cursor: 'pointer',
+                                  textAlign: 'left',
+                                  transition: 'all 0.15s',
+                                  fontFamily: 'inherit'
+                                }}
+                                onMouseEnter={(e) => { if (formData.category !== c.name) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                                onMouseLeave={(e) => { if (formData.category !== c.name) e.currentTarget.style.background = 'transparent'; }}
+                              >
+                                {formData.category === c.name && <span style={{ fontSize: 10, color: '#7c3aed' }}>●</span>}
+                                {c.name}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {/* Hidden input for form validation */}
+                  <input type="text" required value={formData.category} onChange={() => {}} style={{ display: 'none' }} tabIndex={-1} />
                 </div>
                 
                 <div style={{ 
@@ -3113,28 +3183,90 @@ export default function AdminPanel() {
               {/* Selection of new category */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
                 <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Нова категорія</label>
-                <select 
-                  value={reassignModal.selectedNewCatName} 
-                  onChange={e => setReassignModal({ ...reassignModal, selectedNewCatName: e.target.value })}
-                  style={{ 
-                    background: 'rgba(255,255,255,0.03)', 
-                    border: '1px solid rgba(255,255,255,0.05)', 
-                    borderRadius: 12, 
-                    padding: 14, 
-                    color: reassignModal.selectedNewCatName ? '#fff' : '#6b6b8a', 
-                    outline: 'none',
-                    cursor: 'pointer',
-                    width: '100%',
-                    fontFamily: 'inherit'
-                  }}
-                >
-                  <option value="" disabled style={{ background: '#0a192f', color: '#6b6b8a' }}>Оберіть категорію...</option>
-                  {dbCategories.filter(c => c.name !== reassignModal.catNameToDelete).map(c => (
-                    <option key={c.id} value={c.name} style={{ background: '#0a192f', color: '#fff' }}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <div style={{ position: 'relative' }}>
+                  <button 
+                    type="button"
+                    onClick={() => setReassignDropdownOpen(!reassignDropdownOpen)}
+                    style={{ 
+                      width: '100%',
+                      background: 'rgba(255,255,255,0.03)', 
+                      border: '1px solid', 
+                      borderColor: reassignDropdownOpen ? 'rgba(124,58,237,0.5)' : 'rgba(255,255,255,0.05)', 
+                      borderRadius: 12, 
+                      padding: '14px 16px', 
+                      color: reassignModal.selectedNewCatName ? '#fff' : '#6b6b8a', 
+                      outline: 'none',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: 14,
+                      textAlign: 'left',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <span>{reassignModal.selectedNewCatName || 'Оберіть категорію...'}</span>
+                    <span style={{ 
+                      transition: 'transform 0.2s', 
+                      transform: reassignDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
+                      color: '#6b6b8a', 
+                      fontSize: 12 
+                    }}>▼</span>
+                  </button>
+                  
+                  {reassignDropdownOpen && (
+                    <>
+                      <div onClick={() => setReassignDropdownOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 50 }} />
+                      <div style={{ 
+                        position: 'absolute', 
+                        top: 'calc(100% + 4px)', 
+                        left: 0, right: 0, 
+                        background: '#0d1b2a', 
+                        border: '1px solid rgba(124,58,237,0.3)', 
+                        borderRadius: 14, 
+                        padding: 6,
+                        zIndex: 51,
+                        maxHeight: 200,
+                        overflowY: 'auto',
+                        boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
+                        animation: 'fadeIn 0.15s ease-out'
+                      }}
+                      className="hide-scrollbar"
+                      >
+                        {dbCategories.filter(c => c.name !== reassignModal.catNameToDelete).map(c => (
+                          <button 
+                            key={c.id} 
+                            type="button"
+                            onClick={() => { setReassignModal({ ...reassignModal, selectedNewCatName: c.name }); setReassignDropdownOpen(false); }}
+                            style={{ 
+                              width: '100%', 
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 10,
+                              background: reassignModal.selectedNewCatName === c.name ? 'rgba(124,58,237,0.15)' : 'transparent', 
+                              border: 'none', 
+                              borderRadius: 10,
+                              padding: '11px 14px', 
+                              color: reassignModal.selectedNewCatName === c.name ? '#a78bfa' : '#cbd5e1', 
+                              fontSize: 13, 
+                              fontWeight: reassignModal.selectedNewCatName === c.name ? 800 : 500,
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.15s',
+                              fontFamily: 'inherit'
+                            }}
+                            onMouseEnter={(e) => { if (reassignModal.selectedNewCatName !== c.name) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                            onMouseLeave={(e) => { if (reassignModal.selectedNewCatName !== c.name) e.currentTarget.style.background = 'transparent'; }}
+                          >
+                            {reassignModal.selectedNewCatName === c.name && <span style={{ fontSize: 10, color: '#7c3aed' }}>●</span>}
+                            {c.name}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Actions */}

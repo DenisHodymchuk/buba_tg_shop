@@ -144,3 +144,9 @@ body::before {
   to { transform: rotate(360deg); }
 }
 .animate-spin-slow { animation: spin-slow 20s linear infinite; }
+
+/* Dropdown fade in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
