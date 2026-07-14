@@ -91,124 +91,6 @@ const STATUS_META = {
   cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
 };
 
-const parseQuickContact = (text) => {
-  if (!text) return null;
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  
-  let phone = '';
-  let firstName = '';
-  let lastName = '';
-  let city = '';
-  let warehouse = '';
-  let notes = '';
-
-  const phoneRegex = /(?:\+?38)?(?:0\d{9}|\(0\d{2}\)\s?\d{3}\s?\d{2}\s?\d{2}|\d{3}\s?\d{3}\s?\d{4}|0\d{2}\s?\d{3}\s?\d{2}\s?\d{2})/g;
-  
-  let textWithoutPhone = text;
-  const phoneMatches = text.match(phoneRegex);
-  if (phoneMatches && phoneMatches.length > 0) {
-    let rawPhone = phoneMatches[0];
-    let cleanedPhone = rawPhone.replace(/[^\d+]/g, '');
-    if (!cleanedPhone.startsWith('+')) {
-      if (cleanedPhone.startsWith('380')) {
-        cleanedPhone = '+' + cleanedPhone;
-      } else if (cleanedPhone.startsWith('0')) {
-        cleanedPhone = '+38' + cleanedPhone;
-      }
-    }
-    phone = cleanedPhone;
-    textWithoutPhone = text.replace(rawPhone, '');
-  }
-
-  const workingLines = textWithoutPhone.split('\n').map(l => l.trim()).filter(Boolean);
-
-  for (let line of workingLines) {
-    const lowerLine = line.toLowerCase();
-    const hasShippingKeyword = /вул\.?|поштомат|відділення|нова\s?пошта|укрпошта|нп|уп|буд\.?|область|район|квартира|кв\.?/i.test(lowerLine);
-    
-    if (hasShippingKeyword) {
-      if (line.includes(',')) {
-        const parts = line.split(',').map(p => p.trim()).filter(Boolean);
-        let foundCity = '';
-        let warehouseParts = [];
-        
-        for (let part of parts) {
-          const isCityCandidate = !/вул\.?|поштомат|відділення|нова\s?пошта|укрпошта|нп|уп|буд\.?|№|\d/i.test(part);
-          if (isCityCandidate && !foundCity) {
-            foundCity = part;
-          } else {
-            warehouseParts.push(part);
-          }
-        }
-        
-        if (foundCity) {
-          city = foundCity;
-          warehouse = warehouseParts.join(', ');
-        }
-      }
-      
-      if (!city) {
-        const splitRegex = /(вул\.?|поштомат|відділення|нова\s?пошта|укрпошта|нп|уп|буд\.?)/i;
-        const parts = line.split(splitRegex);
-        if (parts.length > 1) {
-          let rawCity = parts[0].trim();
-          city = rawCity.replace(/^[,\s.]+|[,\s.]+$/g, '');
-          warehouse = parts.slice(1).join('').trim();
-        } else {
-          warehouse = line;
-        }
-      }
-    } else {
-      const words = line.split(/\s+/).map(w => w.trim()).filter(Boolean);
-      const hasNumbers = /\d/.test(line);
-      
-      if (words.length >= 2 && words.length <= 4 && !hasNumbers) {
-        let word1 = words[0];
-        let word2 = words[1];
-        let word3 = words[2] || '';
-
-        const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-        word1 = capitalize(word1);
-        word2 = capitalize(word2);
-        if (word3) word3 = capitalize(word3);
-
-        const isPatronymic = (w) => /ович$|івна$|ич$|на$/i.test(w);
-        
-        if (word3 && isPatronymic(word3)) {
-          lastName = word1;
-          firstName = word2 + ' ' + word3;
-        } else if (isPatronymic(word2)) {
-          firstName = word1 + ' ' + word2;
-          lastName = word3 || '';
-        } else {
-          lastName = word1;
-          firstName = words.slice(1).map(w => capitalize(w)).join(' ');
-        }
-      } else {
-        if (line.toLowerCase() !== city.toLowerCase() && line.toLowerCase() !== warehouse.toLowerCase()) {
-          if (!notes) {
-            notes = line;
-          } else {
-            notes += '\n' + line;
-          }
-        }
-      }
-    }
-  }
-
-  if (!city && workingLines.length > 0) {
-    for (let line of workingLines) {
-      const words = line.split(/\s+/).filter(Boolean);
-      if (words.length <= 2 && !/\d/.test(line) && !line.includes(firstName) && !line.includes(lastName)) {
-        city = line.replace(/^[,\s.]+|[,\s.]+$/g, '');
-        break;
-      }
-    }
-  }
-
-  return { firstName, lastName, phone, city, warehouse, notes };
-};
-
 export default function SalesDashboard({ showToast }) {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -272,25 +154,6 @@ export default function SalesDashboard({ showToast }) {
   // Custom manual item inputs
   const [newItem, setNewItem] = useState({ name: '', quantity: 1, price: '' });
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [quickText, setQuickText] = useState('');
-
-  const handleQuickTextChange = (e) => {
-    const text = e.target.value;
-    setQuickText(text);
-
-    const parsed = parseQuickContact(text);
-    if (parsed) {
-      setFormData(prev => ({
-        ...prev,
-        firstName: parsed.firstName || prev.firstName,
-        lastName: parsed.lastName || prev.lastName,
-        phone: parsed.phone || prev.phone,
-        city: parsed.city || prev.city,
-        warehouse: parsed.warehouse || prev.warehouse,
-        notes: parsed.notes ? (prev.notes ? prev.notes + '\n' + parsed.notes : parsed.notes) : prev.notes
-      }));
-    }
-  };
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -605,7 +468,6 @@ export default function SalesDashboard({ showToast }) {
     });
     setNewItem({ name: '', quantity: 1, price: '' });
     setSelectedProductId('');
-    setQuickText('');
     setEditingSale(null);
   };
 
@@ -1222,53 +1084,6 @@ export default function SalesDashboard({ showToast }) {
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 
-                {/* Telegram Text Importer */}
-                <div style={{ 
-                  background: 'rgba(59, 130, 246, 0.03)', 
-                  border: '1px dashed rgba(59, 130, 246, 0.2)', 
-                  borderRadius: 20, 
-                  padding: 16, 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: 10 
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 13 }}>⚡</span>
-                      <label style={{ fontSize: 10, fontWeight: 950, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Швидкий імпорт контактів
-                      </label>
-                    </div>
-                    {quickText && (
-                      <button 
-                        type="button" 
-                        onClick={() => setQuickText('')} 
-                        style={{ fontSize: 9, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 800 }}
-                      >
-                        ОЧИСТИТИ
-                      </button>
-                    )}
-                  </div>
-                  <textarea 
-                    placeholder={"Вставте сюди текст, наприклад:\nСухий Лиман вул. Степова 5-а поштомат 30999\nМатвієнко Віталій Сергійович 0935436534"}
-                    value={quickText}
-                    onChange={handleQuickTextChange}
-                    style={{ 
-                      width: '100%', 
-                      height: 70, 
-                      background: 'rgba(0,0,0,0.2)', 
-                      border: '1px solid rgba(255,255,255,0.05)', 
-                      borderRadius: 12, 
-                      padding: '10px 12px', 
-                      color: '#93c5fd', 
-                      fontSize: 12, 
-                      outline: 'none', 
-                      resize: 'none',
-                      lineHeight: '1.4'
-                    }}
-                  />
-                </div>
-
                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 200 }}>
                     {/* Platform select using ThemeSelect */}
