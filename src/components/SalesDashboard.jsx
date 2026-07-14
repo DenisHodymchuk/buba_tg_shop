@@ -1512,7 +1512,15 @@ export default function SalesDashboard({ showToast }) {
                   <ThemeSelect 
                     label="Оплата"
                     value={formData.payment_status}
-                    onChange={(val) => setFormData({ ...formData, payment_status: val })}
+                    onChange={(val) => {
+                      const updated = { payment_status: val };
+                      if (val === 'partially_paid') {
+                        updated.is_cod = true;
+                        const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                        updated.cod_amount = Math.round(calculatedTotal * 0.7).toString();
+                      }
+                      setFormData({ ...formData, ...updated });
+                    }}
                     displayValue={formData.payment_status === 'paid' ? 'Оплачено' : formData.payment_status === 'partially_paid' ? 'Частково оплачено' : formData.payment_status === 'pending' ? 'Очікує' : 'Перевірка'}
                     options={[
                       { value: 'paid', label: 'Оплачено' },
@@ -1571,18 +1579,6 @@ export default function SalesDashboard({ showToast }) {
                   )}
                 </div>
 
-                {/* Уточнення / Нотатки */}
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Уточнення / Нотатки до замовлення</label>
-                  <textarea 
-                    placeholder="Наприклад: клієнт просив інший колір, відправити подарунком тощо..." 
-                    value={formData.notes || ''} 
-                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    rows={2}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', resize: 'vertical' }}
-                  />
-                </div>
-
                 <ThemeSelect 
                   label="Статус замовлення"
                   value={formData.status}
@@ -1597,6 +1593,18 @@ export default function SalesDashboard({ showToast }) {
                   options={Object.keys(STATUS_META).map(key => ({ value: key, label: STATUS_META[key].label }))}
                 />
 
+                {/* Уточнення / Нотатки */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Уточнення / Нотатки до замовлення</label>
+                  <textarea 
+                    placeholder="Наприклад: клієнт просив інший колір, відправити подарунком тощо..." 
+                    value={formData.notes || ''} 
+                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                    rows={2}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', resize: 'vertical' }}
+                  />
+                </div>
+
                 {/* Submit buttons */}
                 <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                   <button 
@@ -1607,8 +1615,7 @@ export default function SalesDashboard({ showToast }) {
                     {saving ? 'ЗБЕРЕЖЕННЯ...' : 'ЗБЕРЕГТИ'}
                   </button>
                   <button 
-                    type="button" 
-                    onClick={() => setShowAddForm(false)} 
+                    type="button"                     onClick={() => setShowAddForm(false)} 
                     style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}
                   >
                     СКАСУВАТИ
