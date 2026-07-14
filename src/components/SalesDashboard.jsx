@@ -59,7 +59,7 @@ function ThemeSelect({ label, value, options, onChange, displayValue, placeholde
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.5)'
             }}
           >
-            {options.map(opt => (
+            {options.filter(opt => opt.value !== '').map(opt => (
               <div 
                 key={opt.value}
                 onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); }}
@@ -145,14 +145,17 @@ export default function SalesDashboard({ showToast }) {
     cityRef: '',
     warehouse: '',
     total: '',
-    payment_status: 'paid',
-    status: 'completed',
+    payment_status: 'pending',
+    status: 'new',
     items: [], // array of { name, quantity, price }
     is_cod: false,
     cod_amount: '',
     notes: ''
   });
   
+  // Tab inside cart adder: 'catalog' | 'manual'
+  const [itemTab, setItemTab] = useState('catalog');
+
   // Nova Poshta autocomplete states
   const [npCityQuery, setNpCityQuery] = useState('');
   const [npCities, setNpCities] = useState([]);
@@ -511,8 +514,8 @@ export default function SalesDashboard({ showToast }) {
       cityRef: '',
       warehouse: '',
       total: '',
-      payment_status: 'paid',
-      status: 'completed',
+      payment_status: 'pending',
+      status: 'new',
       items: [],
       is_cod: false,
       cod_amount: '',
@@ -521,6 +524,7 @@ export default function SalesDashboard({ showToast }) {
     setNewItem({ name: '', quantity: 1, price: '' });
     setSelectedProductId('');
     setEditingSale(null);
+    setItemTab('catalog');
     setNpCityQuery('');
     setNpCities([]);
     setNpShowCities(false);
@@ -1301,24 +1305,23 @@ export default function SalesDashboard({ showToast }) {
                     )}
                   </AnimatePresence>
                 </div>
-
-                {/* Items selection */}
+                
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 20, padding: 16, overflow: 'visible' }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 12, textTransform: 'uppercase' }}>Склад кошика замовлення</label>
                   
                   {/* Existing items list */}
                   {formData.items.length > 0 ? (
                     <div style={{ 
-                      display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20,
+                      display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16,
                       background: 'rgba(45, 212, 191, 0.03)', border: '1px solid rgba(45, 212, 191, 0.15)',
                       padding: 12, borderRadius: 14
                     }}>
                       <div style={{ fontSize: 9, fontWeight: 900, color: '#2dd4bf', textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <ShoppingBag size={12} /> УСПІШНО ДОДАНО ({formData.items.length})
+                        <ShoppingBag size={12} /> ВАШ КОШИК ({formData.items.length})
                       </div>
                       {formData.items.map((item, idx) => (
                         <div key={idx} style={{ 
-                          display: 'flex', alignItems: 'center', gap: 12, 
+                          display: 'flex', alignItems: 'center', justifyBehavior: 'space-between', gap: 12, 
                           background: 'rgba(0,0,0,0.15)', padding: '10px 12px', borderRadius: 10, 
                           fontSize: 12, border: '1px solid rgba(255,255,255,0.02)' 
                         }}>
@@ -1326,15 +1329,41 @@ export default function SalesDashboard({ showToast }) {
                           <div style={{ flex: 1, minWidth: 0, color: '#fff', fontWeight: 650, lineHeight: '1.4' }}>
                             {item.name}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                            <span style={{ 
-                              background: 'rgba(139,92,246,0.15)', color: '#a78bfa', 
-                              padding: '2px 6px', borderRadius: 6, fontSize: 10, fontWeight: 900,
-                              whiteSpace: 'nowrap'
-                            }}>
-                              x{item.quantity}
-                            </span>
-                            <span style={{ fontWeight: 800, color: '#2dd4bf', whiteSpace: 'nowrap' }}>
+                          
+                          {/* Quantity Controls and Price */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 2, border: '1px solid rgba(255,255,255,0.05)' }}>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...formData.items];
+                                  if (updated[idx].quantity > 1) {
+                                    updated[idx].quantity -= 1;
+                                    setFormData({ ...formData, items: updated });
+                                  } else {
+                                    handleRemoveItem(idx);
+                                  }
+                                }}
+                                style={{ width: 20, height: 20, border: 'none', background: 'transparent', color: '#6b6b8a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}
+                              >
+                                -
+                              </button>
+                              <span style={{ minWidth: 16, textAlign: 'center', color: '#fff', fontSize: 11, fontWeight: 800 }}>
+                                {item.quantity}
+                              </span>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...formData.items];
+                                  updated[idx].quantity += 1;
+                                  setFormData({ ...formData, items: updated });
+                                }}
+                                style={{ width: 20, height: 20, border: 'none', background: 'transparent', color: '#2dd4bf', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}
+                              >
+                                +
+                              </button>
+                            </div>
+                            <span style={{ fontWeight: 800, color: '#2dd4bf', whiteSpace: 'nowrap', minWidth: 60, textAlign: 'right' }}>
                               {item.price * item.quantity} ₴
                             </span>
                             <button 
@@ -1350,73 +1379,120 @@ export default function SalesDashboard({ showToast }) {
                           </div>
                         </div>
                       ))}
+                      
+                      {/* Cart Total Display */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, pt: 8, borderTop: '1px dashed rgba(255,255,255,0.08)', fontSize: 12, fontWeight: 900, color: '#fff' }}>
+                        <span>РАЗОМ КОШИК:</span>
+                        <span style={{ color: '#2dd4bf', fontSize: 13 }}>
+                          {formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)} ₴
+                        </span>
+                      </div>
                     </div>
                   ) : (
                     <div style={{ 
                       textAlign: 'center', padding: '20px 12px', borderRadius: 14, 
                       background: 'rgba(0,0,0,0.1)', border: '1px dashed var(--border)',
-                      color: 'var(--text-muted)', fontSize: 12, marginBottom: 20
+                      color: 'var(--text-muted)', fontSize: 12, marginBottom: 16
                     }}>
                       Кошик порожній. Додайте товари нижче.
                     </div>
                   )}
 
-                  {/* Horizontal Divider */}
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '20px 0' }} />
-
-                  {/* Add item to form fields */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflow: 'visible' }}>
-                    <div style={{ fontSize: 9, fontWeight: 900, color: '#8b5cf6', textTransform: 'uppercase', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Plus size={12} /> ДОДАТИ НОВИЙ ТОВАР У КОШИК
-                    </div>
-
-                    <ThemeSelect 
-                      value={selectedProductId}
-                      onChange={handleProductSelect}
-                      displayValue={products.find(p => p.id === selectedProductId)?.name || ''}
-                      placeholder="-- Виберіть наявний товар --"
-                      options={productOptions}
-                      inline={true}
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div style={{ gridColumn: '1 / -1' }}>
-                        <input 
-                          type="text" placeholder="Або введіть назву..." value={newItem.name}
-                          onChange={e => setNewItem({ ...newItem, name: e.target.value })}
-                          style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none' }}
-                        />
-                      </div>
-                      <input 
-                        type="text" inputMode="numeric" placeholder="Кількість" value={newItem.quantity}
-                        onChange={e => {
-                          const val = e.target.value.replace(/\D/g, '');
-                          setNewItem({ ...newItem, quantity: val });
-                        }}
-                        style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
-                      />
-                      <input 
-                        type="text" inputMode="decimal" placeholder="Ціна (₴)" value={newItem.price}
-                        onChange={e => {
-                          const val = e.target.value.replace(/[^0-9.]/g, '');
-                          setNewItem({ ...newItem, price: val });
-                        }}
-                        style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
-                      />
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={handleAddManualItem}
-                      style={{ 
-                        background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(45,212,191,0.15))', 
-                        color: '#fff', border: '1px solid rgba(45,212,191,0.2)', padding: 12, borderRadius: 12, 
-                        fontSize: 12, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        transition: 'all 0.2s'
+                  {/* Tab Selector */}
+                  <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: 4, borderRadius: 12, marginBottom: 16 }}>
+                    <button
+                      type="button"
+                      onClick={() => setItemTab('catalog')}
+                      style={{
+                        flex: 1, padding: '8px 12px', border: 'none', borderRadius: 8,
+                        background: itemTab === 'catalog' ? 'rgba(124,58,237,0.2)' : 'transparent',
+                        color: itemTab === 'catalog' ? '#a78bfa' : '#6b6b8a',
+                        fontSize: 12, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
                       }}
                     >
-                      <Plus size={14} style={{ color: '#2dd4bf' }} /> ДОДАТИ ДО СПИСКУ
+                      З каталогу
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setItemTab('manual')}
+                      style={{
+                        flex: 1, padding: '8px 12px', border: 'none', borderRadius: 8,
+                        background: itemTab === 'manual' ? 'rgba(124,58,237,0.2)' : 'transparent',
+                        color: itemTab === 'manual' ? '#a78bfa' : '#6b6b8a',
+                        fontSize: 12, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
+                      }}
+                    >
+                      Власний товар
                     </button>
                   </div>
+
+                  {/* Add item to form fields based on Tab */}
+                  {itemTab === 'catalog' ? (
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
+                        <ThemeSelect 
+                          value={selectedProductId}
+                          onChange={(prodId) => {
+                            if (!prodId) return;
+                            const prod = products.find(p => p.id === prodId);
+                            if (prod) {
+                              // Direct fast add to the cart
+                              setFormData({
+                                ...formData,
+                                items: [...formData.items, { name: prod.name, price: prod.price, quantity: 1 }]
+                              });
+                              showToast(`Додано: ${prod.name}`);
+                              setSelectedProductId('');
+                            }
+                          }}
+                          displayValue=""
+                          placeholder="-- Оберіть товар з каталогу --"
+                          options={productOptions}
+                          inline={true}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <input 
+                            type="text" placeholder="Назва власного товару..." value={newItem.name}
+                            onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                            style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none' }}
+                          />
+                        </div>
+                        <input 
+                          type="text" inputMode="numeric" placeholder="Кількість" value={newItem.quantity}
+                          onChange={e => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            setNewItem({ ...newItem, quantity: val });
+                          }}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
+                        />
+                        <input 
+                          type="text" inputMode="decimal" placeholder="Ціна (₴)" value={newItem.price}
+                          onChange={e => {
+                            const val = e.target.value.replace(/[^0-9.]/g, '');
+                            setNewItem({ ...newItem, price: val });
+                          }}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
+                        />
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={handleAddManualItem}
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(45,212,191,0.15))', 
+                          color: '#fff', border: '1px solid rgba(45,212,191,0.2)', padding: 12, borderRadius: 12, 
+                          fontSize: 12, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <Plus size={14} style={{ color: '#2dd4bf' }} /> ДОДАТИ ДО КОШИКА
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Financial overview */}
