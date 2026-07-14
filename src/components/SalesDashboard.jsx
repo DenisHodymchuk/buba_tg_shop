@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { novaPoshta } from '@/lib/novaposhta';
 import { 
   Coins, Search, Plus, Trash2, Calendar, ShoppingBag, 
   ArrowUpRight, AlertCircle, Edit3, X, ChevronDown, 
@@ -141,6 +142,7 @@ export default function SalesDashboard({ showToast }) {
     lastName: '',
     phone: '',
     city: '',
+    cityRef: '',
     warehouse: '',
     total: '',
     payment_status: 'paid',
@@ -151,6 +153,55 @@ export default function SalesDashboard({ showToast }) {
     notes: ''
   });
   
+  // Nova Poshta autocomplete states
+  const [npCityQuery, setNpCityQuery] = useState('');
+  const [npCities, setNpCities] = useState([]);
+  const [npLoadingCities, setNpLoadingCities] = useState(false);
+  const [npShowCities, setNpShowCities] = useState(false);
+  const [npWarehouses, setNpWarehouses] = useState([]);
+  const [npWarehouseQuery, setNpWarehouseQuery] = useState('');
+  const [npLoadingWarehouses, setNpLoadingWarehouses] = useState(false);
+  const [npShowWarehouses, setNpShowWarehouses] = useState(false);
+
+  // City search effect
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (npCityQuery.length >= 2 && npCityQuery !== formData.city) {
+        setNpLoadingCities(true);
+        const data = await novaPoshta.getCities(npCityQuery);
+        setNpCities(data);
+        setNpLoadingCities(false);
+        setNpShowCities(true);
+      } else {
+        setNpCities([]);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [npCityQuery, formData.city]);
+
+  // Warehouse fetch effect
+  useEffect(() => {
+    async function fetchWarehouses() {
+      if (formData.cityRef) {
+        setNpLoadingWarehouses(true);
+        const data = await novaPoshta.getWarehouses(formData.cityRef);
+        setNpWarehouses(data);
+        setNpLoadingWarehouses(false);
+      } else {
+        setNpWarehouses([]);
+      }
+    }
+    fetchWarehouses();
+  }, [formData.cityRef]);
+
+  const npFilteredWarehouses = useMemo(() => {
+    if (!npWarehouseQuery) return npWarehouses;
+    if (npWarehouseQuery === formData.warehouse) return [];
+    return npWarehouses.filter(w => 
+      w.Description.toLowerCase().includes(npWarehouseQuery.toLowerCase())
+    );
+  }, [npWarehouses, npWarehouseQuery, formData.warehouse]);
+
   // Custom manual item inputs
   const [newItem, setNewItem] = useState({ name: '', quantity: 1, price: '' });
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -457,6 +508,7 @@ export default function SalesDashboard({ showToast }) {
       lastName: '',
       phone: '',
       city: '',
+      cityRef: '',
       warehouse: '',
       total: '',
       payment_status: 'paid',
@@ -469,6 +521,12 @@ export default function SalesDashboard({ showToast }) {
     setNewItem({ name: '', quantity: 1, price: '' });
     setSelectedProductId('');
     setEditingSale(null);
+    setNpCityQuery('');
+    setNpCities([]);
+    setNpShowCities(false);
+    setNpWarehouseQuery('');
+    setNpWarehouses([]);
+    setNpShowWarehouses(false);
   };
 
   const handleQuickFill = () => {
@@ -1147,23 +1205,101 @@ export default function SalesDashboard({ showToast }) {
                       style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
                     />
                   </div>
-                  <div>
+                  <div style={{ position: 'relative' }}>
                     <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Місто доставки</label>
                     <input 
-                      type="text" placeholder="Хмельницький" value={formData.city} 
-                      onChange={e => setFormData({ ...formData, city: e.target.value })}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                      type="text" placeholder="Почніть вводити місто..." value={npCityQuery || formData.city} 
+                      onChange={e => { setNpCityQuery(e.target.value); setNpShowCities(true); }}
+                      onFocus={() => { if (npCities.length > 0) setNpShowCities(true); }}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: npShowCities && npCities.length > 0 ? '1px solid #7c3aed' : '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none', transition: 'border-color 0.2s' }}
                     />
+                    {npLoadingCities && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 12, bottom: 14, color: '#7c3aed' }} />}
+                    
+                    <AnimatePresence>
+                      {npShowCities && npCities.length > 0 && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                          style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#1e293b', borderRadius: 14, border: '1px solid rgba(124,58,237,0.4)', marginTop: 6, maxHeight: 200, overflowY: 'auto', boxShadow: '0 16px 40px rgba(0,0,0,0.5)', padding: 6 }}
+                          className="hide-scrollbar"
+                        >
+                          {npCities.map(city => (
+                            <button
+                              key={city.Ref} type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, city: city.Description, cityRef: city.Ref, warehouse: '' });
+                                setNpCityQuery(city.Description);
+                                setNpShowCities(false);
+                                setNpWarehouseQuery('');
+                              }}
+                              style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.15s' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.15)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              {city.Description} <span style={{ color: '#6b6b8a', fontSize: 11 }}>({city.AreaDescription})</span>
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Відділення / Поштомат (Реквізити відправки)</label>
+                {/* Warehouse / Post office selection */}
+                <div style={{ position: 'relative' }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>
+                    Відділення / Поштомат
+                    {formData.cityRef && !npLoadingWarehouses && npWarehouses.length > 0 && (
+                      <span style={{ color: '#7c3aed', fontWeight: 700, marginLeft: 6 }}>({npWarehouses.length} знайдено)</span>
+                    )}
+                  </label>
                   <input 
-                    type="text" placeholder="Напр. Відділення №5 або Поштомат №1234" value={formData.warehouse || ''} 
-                    onChange={e => setFormData({ ...formData, warehouse: e.target.value })}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                    type="text" 
+                    placeholder={formData.cityRef ? "Пошук відділення або поштомату..." : "Спочатку оберіть місто..."} 
+                    value={npWarehouseQuery || formData.warehouse || ''} 
+                    onChange={e => { setNpWarehouseQuery(e.target.value); setNpShowWarehouses(true); }}
+                    onFocus={() => { if (formData.cityRef) setNpShowWarehouses(true); }}
+                    disabled={!formData.cityRef}
+                    style={{ 
+                      width: '100%', background: 'rgba(0,0,0,0.3)', 
+                      border: npShowWarehouses && npFilteredWarehouses.length > 0 ? '1px solid #7c3aed' : '1px solid var(--border)', 
+                      borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none',
+                      opacity: formData.cityRef ? 1 : 0.5,
+                      transition: 'border-color 0.2s'
+                    }}
                   />
+                  {npLoadingWarehouses && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 12, bottom: 14, color: '#7c3aed' }} />}
+                  
+                  <AnimatePresence>
+                    {npShowWarehouses && formData.cityRef && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                        style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 90, background: '#1e293b', borderRadius: 14, border: '1px solid rgba(124,58,237,0.4)', marginTop: 6, maxHeight: 250, overflowY: 'auto', boxShadow: '0 16px 40px rgba(0,0,0,0.5)', padding: 6 }}
+                        className="hide-scrollbar"
+                      >
+                        {npLoadingWarehouses ? (
+                          <div style={{ padding: 16, textAlign: 'center', color: '#6b6b8a', fontSize: 13 }}>Завантаження відділень...</div>
+                        ) : npFilteredWarehouses.length > 0 ? (
+                          npFilteredWarehouses.map(wh => (
+                            <button
+                              key={wh.Ref} type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, warehouse: wh.Description });
+                                setNpWarehouseQuery(wh.Description);
+                                setNpShowWarehouses(false);
+                              }}
+                              style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: 12, borderRadius: 8, cursor: 'pointer', lineHeight: 1.4, fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.15s' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.15)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              {wh.Description}
+                            </button>
+                          ))
+                        ) : (
+                          <div style={{ padding: 16, textAlign: 'center', color: '#6b6b8a', fontSize: 13 }}>Нічого не знайдено</div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Items selection */}
