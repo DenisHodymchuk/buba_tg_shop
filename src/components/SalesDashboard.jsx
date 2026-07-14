@@ -1518,6 +1518,9 @@ export default function SalesDashboard({ showToast }) {
                         updated.is_cod = true;
                         const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
                         updated.cod_amount = Math.round(calculatedTotal * 0.7).toString();
+                      } else {
+                        updated.is_cod = false;
+                        updated.cod_amount = '';
                       }
                       setFormData({ ...formData, ...updated });
                     }}
@@ -1532,52 +1535,54 @@ export default function SalesDashboard({ showToast }) {
                 </div>
 
                 {/* Накладений платіж */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 16 }}>
-                  <div 
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}
-                    onClick={() => {
-                      const newIsCod = !formData.is_cod;
-                      let newCodAmount = formData.cod_amount;
-                      if (newIsCod && !newCodAmount) {
-                        const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-                        newCodAmount = Math.round(calculatedTotal * 0.7).toString();
-                      }
-                      setFormData({ ...formData, is_cod: newIsCod, cod_amount: newCodAmount });
-                    }}
-                  >
-                    <div style={{ width: 18, height: 18, border: '2px solid #7c3aed', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: formData.is_cod ? '#7c3aed' : 'transparent', transition: 'all 0.2s' }}>
-                      {formData.is_cod && <CheckCircle2 size={12} style={{ color: '#fff' }} />}
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 750, color: '#fff' }}>Накладений платіж (наложка)</span>
-                  </div>
-
-                  {formData.is_cod && (
-                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Сума наложки (₴)</label>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input 
-                          type="text" inputMode="decimal" placeholder="Наприклад: 840" value={formData.cod_amount} 
-                          onChange={e => {
-                            const val = e.target.value.replace(/[^0-9.]/g, '');
-                            setFormData({ ...formData, cod_amount: val });
-                          }}
-                          style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none' }}
-                        />
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-                            const calculated = Math.round(calculatedTotal * 0.7);
-                            setFormData({ ...formData, cod_amount: calculated.toString() });
-                          }}
-                          style={{ padding: '0 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 12, color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
-                        >
-                          70%
-                        </button>
+                {formData.payment_status === 'partially_paid' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 16 }}>
+                    <div 
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}
+                      onClick={() => {
+                        const newIsCod = !formData.is_cod;
+                        let newCodAmount = formData.cod_amount;
+                        if (newIsCod && !newCodAmount) {
+                          const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                          newCodAmount = Math.round(calculatedTotal * 0.7).toString();
+                        }
+                        setFormData({ ...formData, is_cod: newIsCod, cod_amount: newCodAmount });
+                      }}
+                    >
+                      <div style={{ width: 18, height: 18, border: '2px solid #7c3aed', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: formData.is_cod ? '#7c3aed' : 'transparent', transition: 'all 0.2s' }}>
+                        {formData.is_cod && <CheckCircle2 size={12} style={{ color: '#fff' }} />}
                       </div>
-                    </motion.div>
-                  )}
-                </div>
+                      <span style={{ fontSize: 13, fontWeight: 750, color: '#fff' }}>Накладений платіж (наложка)</span>
+                    </div>
+
+                    {formData.is_cod && (
+                      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Сума наложки (₴)</label>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input 
+                            type="text" inputMode="decimal" placeholder="Наприклад: 840" value={formData.cod_amount} 
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9.]/g, '');
+                              setFormData({ ...formData, cod_amount: val });
+                            }}
+                            style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 13, outline: 'none' }}
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                              const calculated = Math.round(calculatedTotal * 0.7);
+                              setFormData({ ...formData, cod_amount: calculated.toString() });
+                            }}
+                            style={{ padding: '0 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 12, color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            70%
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                )}
 
                 <ThemeSelect 
                   label="Статус замовлення"
