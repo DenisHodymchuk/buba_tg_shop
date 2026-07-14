@@ -64,10 +64,19 @@ const scrollbarHide = `
 
 export default function AdminPanel() {
   const [products, setProducts] = useState([]);
+  const [dbCategories, setDbCategories] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [reassignModal, setReassignModal] = useState({
+    open: false,
+    catIdToDelete: null,
+    catNameToDelete: '',
+    products: [],
+    selectedNewCatName: ''
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -907,6 +916,114 @@ export default function AdminPanel() {
     }
   }
 
+  async function fetchDbCategories(currentProducts = products) {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase.from('categories').select('*').order('name');
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setDbCategories(data);
+      } else {
+        // Categories table is empty, let's sync from existing products if any
+        const uniqueCats = [...new Set(currentProducts.map(p => p.category).filter(Boolean))];
+        if (uniqueCats.length > 0) {
+          const inserts = uniqueCats.map(name => ({
+            name,
+            slug: name.toLowerCase().replace(/\s+/g, '-')
+          }));
+          const { data: insertedData, error: insertError } = await supabase.from('categories').insert(inserts).select();
+          if (!insertError && insertedData) {
+            setDbCategories(insertedData);
+          }
+        } else {
+          setDbCategories([]);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching categories:', e);
+    }
+  }
+
+  async function handleAddCategory(e) {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+    if (!supabase) return;
+    try {
+      const slug = newCategoryName.trim().toLowerCase().replace(/\s+/g, '-');
+      const { data, error } = await supabase
+        .from('categories')
+        .insert([{ name: newCategoryName.trim(), slug }])
+        .select();
+      if (error) throw error;
+      setDbCategories([...dbCategories, data[0]]);
+      setNewCategoryName('');
+      showToast('Категорію додано успішно!', 'success');
+    } catch (err) {
+      alert('Помилка додавання категорії: ' + err.message);
+    }
+  }
+
+  async function handleDeleteCategory(catId, catName) {
+    if (!supabase) return;
+    const relatedProducts = products.filter(p => p.category === catName);
+    if (relatedProducts.length > 0) {
+      setReassignModal({
+        open: true,
+        catIdToDelete: catId,
+        catNameToDelete: catName,
+        products: relatedProducts,
+        selectedNewCatName: ''
+      });
+    } else {
+      if (confirm(`Ви впевнені, що хочете видалити категорію "${catName}"?`)) {
+        try {
+          const { error } = await supabase.from('categories').delete().eq('id', catId);
+          if (error) throw error;
+          setDbCategories(dbCategories.filter(c => c.id !== catId));
+          showToast('Категорію видалено', 'success');
+        } catch (err) {
+          alert('Помилка видалення: ' + err.message);
+        }
+      }
+    }
+  }
+
+  async function handleConfirmReassignment() {
+    if (!supabase) return;
+    if (!reassignModal.selectedNewCatName) {
+      alert('Будь ласка, оберіть нову категорію');
+      return;
+    }
+    setLoading(true);
+    try {
+      const productIds = reassignModal.products.map(p => p.id);
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ category: reassignModal.selectedNewCatName })
+        .in('id', productIds);
+      if (updateError) throw updateError;
+      
+      const { error: deleteError } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', reassignModal.catIdToDelete);
+      if (deleteError) throw deleteError;
+      
+      setProducts(products.map(p => 
+        productIds.includes(p.id) ? { ...p, category: reassignModal.selectedNewCatName } : p
+      ));
+      setDbCategories(dbCategories.filter(c => c.id !== reassignModal.catIdToDelete));
+      
+      setReassignModal({ open: false, catIdToDelete: null, catNameToDelete: '', products: [], selectedNewCatName: '' });
+      showToast('Категорію видалено, а товари перенесено успішно!', 'success');
+    } catch (err) {
+      alert('Помилка перенесення: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function fetchProducts() {
     if (!supabase) {
       setLoading(false);
@@ -918,7 +1035,10 @@ export default function AdminPanel() {
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
-      if (data) setProducts(data);
+      if (data) {
+        setProducts(data);
+        await fetchDbCategories(data);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -969,9 +1089,9 @@ export default function AdminPanel() {
   }
 
   const categories = useMemo(() => {
-    const cats = products.map(p => p.category).filter(Boolean);
-    return ['Всі', ...new Set(cats)];
-  }, [products]);
+    const cats = dbCategories.map(c => c.name);
+    return ['Всі', ...cats];
+  }, [dbCategories]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
@@ -1278,6 +1398,7 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'reviews'} onClick={() => { setActiveTab('reviews'); setIsSidebarOpen(false); }} icon={<MessageSquare size={18} />} label="Відгуки" />
           <SidebarBtn active={activeTab === 'broadcast'} onClick={() => { setActiveTab('broadcast'); setIsSidebarOpen(false); }} icon={<Send size={18} />} label="Розсилка" />
           <SidebarBtn active={activeTab === 'marketing'} onClick={() => { setActiveTab('marketing'); setIsSidebarOpen(false); }} icon={<Megaphone size={18} />} label="Кабінет Реклами" />
+          <SidebarBtn active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }} icon={<Settings size={18} />} label="Налаштування" />
         </nav>
 
         <div style={{ padding: 24, borderTop: '1px solid var(--border)' }}>
@@ -2422,6 +2543,113 @@ export default function AdminPanel() {
             <div style={{ width: '100%', maxWidth: 1200 }}>
               <AdvertisingDashboard showToast={showToast} />
             </div>
+          ) : activeTab === 'settings' ? (
+            <div style={{ width: '100%', maxWidth: 800 }}>
+              <div style={{ marginBottom: 32 }}>
+                <h1 style={{ fontSize: 28, fontWeight: 950, color: '#fff', margin: 0 }}>⚙️ Налаштування магазину</h1>
+                <p style={{ fontSize: 14, color: '#6b6b8a', marginTop: 4 }}>Керуйте категоріями товарів та іншими параметрами магазину</p>
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 32 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 20 }}>Керування категоріями</h2>
+                
+                {/* Form to add a new category */}
+                <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+                  <input 
+                    type="text" 
+                    placeholder="Назва нової категорії (напр. Світильники)..." 
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    style={{ 
+                      flex: 1, 
+                      background: 'rgba(0,0,0,0.2)', 
+                      border: '1px solid rgba(255,255,255,0.05)', 
+                      borderRadius: 12, 
+                      padding: '14px 16px', 
+                      color: '#fff', 
+                      fontSize: 14, 
+                      outline: 'none' 
+                    }}
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={!newCategoryName.trim()}
+                    style={{ 
+                      padding: '14px 24px', 
+                      borderRadius: 12, 
+                      background: 'linear-gradient(135deg, #7c3aed, #ec4899)', 
+                      color: '#fff', 
+                      border: 'none', 
+                      fontWeight: 900, 
+                      cursor: 'pointer', 
+                      fontSize: 14,
+                      opacity: !newCategoryName.trim() ? 0.5 : 1,
+                      transition: 'all 0.2s',
+                      boxShadow: '0 8px 16px rgba(124,58,237,0.2)'
+                    }}
+                  >
+                    ДОДАТИ
+                  </button>
+                </form>
+
+                {/* Categories list */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {dbCategories.length === 0 ? (
+                    <div style={{ color: '#4a4a6a', fontSize: 14, textAlign: 'center', padding: 20 }}>
+                      Немає категорій. Створіть нову категорію вище.
+                    </div>
+                  ) : (
+                    dbCategories.map(cat => {
+                      const productCount = products.filter(p => p.category === cat.name).length;
+                      return (
+                        <div 
+                          key={cat.id} 
+                          style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            padding: '16px 20px', 
+                            background: 'rgba(255,255,255,0.01)', 
+                            border: '1px solid rgba(255,255,255,0.03)', 
+                            borderRadius: 16,
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{cat.name}</div>
+                            <div style={{ fontSize: 12, color: '#6b6b8a', marginTop: 4 }}>
+                              Товарів у категорії: <span style={{ color: '#a78bfa', fontWeight: 800 }}>{productCount}</span>
+                            </div>
+                          </div>
+                          
+                          <button 
+                            type="button"
+                            onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                            style={{ 
+                              padding: 10, 
+                              background: 'rgba(239,68,68,0.1)', 
+                              color: '#ef4444', 
+                              border: 'none', 
+                              borderRadius: 10, 
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.2)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
+                            title="Видалити категорію"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#4a4a6a' }}>
               Тут будуть налаштування магазину
@@ -2620,40 +2848,58 @@ export default function AdminPanel() {
                   </div>
                   
                   {/* Список існуючих категорій для швидкого вибору */}
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
-                    {categories.filter(c => c !== 'Всі').map(c => {
-                      const isSelected = formData.category === c;
-                      return (
-                        <button 
-                          key={c} 
-                          type="button" 
-                          onClick={() => setFormData({...formData, category: c})} 
-                          style={{ 
-                            fontSize: 10, 
-                            padding: '6px 12px', 
-                            borderRadius: 10, 
-                            background: isSelected ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.02)', 
-                            color: isSelected ? '#a78bfa' : '#6b6b8a', 
-                            border: '1px solid',
-                            borderColor: isSelected ? '#7c3aed' : 'rgba(255,255,255,0.05)', 
-                            cursor: 'pointer',
-                            fontWeight: 700,
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          {c}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {dbCategories.length > 0 && (
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+                      {dbCategories.map(c => {
+                        const isSelected = formData.category === c.name;
+                        return (
+                          <button 
+                            key={c.id} 
+                            type="button" 
+                            onClick={() => setFormData({...formData, category: c.name})} 
+                            style={{ 
+                              fontSize: 10, 
+                              padding: '6px 12px', 
+                              borderRadius: 10, 
+                              background: isSelected ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.02)', 
+                              color: isSelected ? '#a78bfa' : '#6b6b8a', 
+                              border: '1px solid',
+                              borderColor: isSelected ? '#7c3aed' : 'rgba(255,255,255,0.05)', 
+                              cursor: 'pointer',
+                              fontWeight: 700,
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {c.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
 
-                  <input 
-                    type="text" 
+                  <select 
+                    required
                     value={formData.category} 
                     onChange={e => setFormData({...formData, category: e.target.value})} 
-                    placeholder="Введіть або виберіть категорію..."
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: '#fff', outline: 'none' }} 
-                  />
+                    style={{ 
+                      background: 'rgba(255,255,255,0.03)', 
+                      border: '1px solid rgba(255,255,255,0.05)', 
+                      borderRadius: 12, 
+                      padding: 14, 
+                      color: formData.category ? '#fff' : '#6b6b8a', 
+                      outline: 'none',
+                      cursor: 'pointer',
+                      width: '100%',
+                      fontFamily: 'inherit'
+                    }}
+                  >
+                    <option value="" disabled style={{ background: '#0a192f', color: '#6b6b8a' }}>Оберіть категорію...</option>
+                    {dbCategories.map(c => (
+                      <option key={c.id} value={c.name} style={{ background: '#0a192f', color: '#fff' }}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 
                 <div style={{ 
@@ -2819,6 +3065,98 @@ export default function AdminPanel() {
                   }}
                 >
                   {individualMessageModal.isSending ? 'ВІДПРАВКА...' : 'ВІДПРАВИТИ'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Category Reassignment Modal */}
+      <AnimatePresence>
+        {reassignModal.open && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div 
+              onClick={() => setReassignModal({ ...reassignModal, open: false })}
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              style={{ 
+                position: 'relative', width: '100%', maxWidth: 500, background: '#0a0a1a', borderRadius: 32, 
+                border: '1px solid rgba(255,255,255,0.1)', padding: 32, boxShadow: '0 32px 64px rgba(0,0,0,0.5)',
+                maxHeight: '90vh', display: 'flex', flexDirection: 'column'
+              }}
+            >
+              <h3 style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 12 }}>Увага! Перепризначення товарів ⚠️</h3>
+              
+              <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.5, marginBottom: 20 }}>
+                Категорія <span style={{ color: '#ec4899', fontWeight: 800 }}>"{reassignModal.catNameToDelete}"</span> містить товари (<span style={{ color: '#fff', fontWeight: 800 }}>{reassignModal.products.length} шт.</span>).
+                Будь ласка, оберіть категорію, до якої будуть перенесені ці товари перед видаленням:
+              </p>
+
+              {/* Products list */}
+              <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)', padding: 16, marginBottom: 24, maxHeight: 150 }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase', marginBottom: 10 }}>Товари, що переносяться:</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {reassignModal.products.map(p => (
+                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.02)', paddingBottom: 6 }}>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>{p.name}</span>
+                      <span style={{ color: '#6b6b8a', fontSize: 11 }}>{p.price} ₴</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selection of new category */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
+                <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Нова категорія</label>
+                <select 
+                  value={reassignModal.selectedNewCatName} 
+                  onChange={e => setReassignModal({ ...reassignModal, selectedNewCatName: e.target.value })}
+                  style={{ 
+                    background: 'rgba(255,255,255,0.03)', 
+                    border: '1px solid rgba(255,255,255,0.05)', 
+                    borderRadius: 12, 
+                    padding: 14, 
+                    color: reassignModal.selectedNewCatName ? '#fff' : '#6b6b8a', 
+                    outline: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  <option value="" disabled style={{ background: '#0a192f', color: '#6b6b8a' }}>Оберіть категорію...</option>
+                  {dbCategories.filter(c => c.name !== reassignModal.catNameToDelete).map(c => (
+                    <option key={c.id} value={c.name} style={{ background: '#0a192f', color: '#fff' }}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button 
+                  onClick={() => setReassignModal({ ...reassignModal, open: false })}
+                  style={{ flex: 1, padding: '16px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)', background: 'transparent', color: '#6b6b8a', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Скасувати
+                </button>
+                <button 
+                  onClick={handleConfirmReassignment}
+                  disabled={loading || !reassignModal.selectedNewCatName}
+                  style={{ 
+                    flex: 1, padding: '16px', borderRadius: 16, border: 'none', fontSize: 14, fontWeight: 900, cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff',
+                    opacity: (loading || !reassignModal.selectedNewCatName) ? 0.5 : 1,
+                    boxShadow: '0 10px 20px rgba(124,58,237,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                  }}
+                >
+                  {loading ? 'ЗБЕРЕЖЕННЯ...' : 'ПЕРЕНЕСТИ ТА ВИДАЛИТИ'}
                 </button>
               </div>
             </motion.div>
