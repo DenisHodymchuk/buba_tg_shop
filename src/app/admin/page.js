@@ -96,6 +96,69 @@ export default function AdminPanel() {
   }, [activeTab]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [selectedPayments, setSelectedPayments] = useState([]);
+  const [orderFilterTemplates, setOrderFilterTemplates] = useState([]);
+  const [showOrderTemplatesDropdown, setShowOrderTemplatesDropdown] = useState(false);
+  const [newOrderTemplateName, setNewOrderTemplateName] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('buba_orders_filter_templates');
+      if (saved) {
+        const templates = JSON.parse(saved);
+        setOrderFilterTemplates(templates);
+        const defaultTemplate = templates.find(t => t.isDefault);
+        if (defaultTemplate) {
+          setSelectedStatuses(defaultTemplate.selectedStatuses || []);
+          setSelectedPayments(defaultTemplate.selectedPayments || []);
+        }
+      }
+    }
+  }, []);
+
+  const saveOrderFilterTemplate = (name) => {
+    if (!name.trim()) return;
+    const newTemplate = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      selectedStatuses,
+      selectedPayments,
+      isDefault: false
+    };
+    const updated = [...orderFilterTemplates, newTemplate];
+    setOrderFilterTemplates(updated);
+    localStorage.setItem('buba_orders_filter_templates', JSON.stringify(updated));
+    setNewOrderTemplateName('');
+    showToast('Шаблон збережено', 'success');
+  };
+
+  const deleteOrderFilterTemplate = (id, e) => {
+    e.stopPropagation();
+    const updated = orderFilterTemplates.filter(t => t.id !== id);
+    setOrderFilterTemplates(updated);
+    localStorage.setItem('buba_orders_filter_templates', JSON.stringify(updated));
+    showToast('Шаблон видалено', 'info');
+  };
+
+  const toggleOrderTemplateDefault = (id, e) => {
+    e.stopPropagation();
+    const updated = orderFilterTemplates.map(t => {
+      if (t.id === id) {
+        return { ...t, isDefault: !t.isDefault };
+      }
+      return { ...t, isDefault: false };
+    });
+    setOrderFilterTemplates(updated);
+    localStorage.setItem('buba_orders_filter_templates', JSON.stringify(updated));
+    showToast('Налаштування оновлено', 'success');
+  };
+
+  const applyOrderTemplate = (template) => {
+    setSelectedStatuses(template.selectedStatuses || []);
+    setSelectedPayments(template.selectedPayments || []);
+    showToast(`Застосовано шаблон "${template.name}"`, 'success');
+    setShowOrderTemplatesDropdown(false);
+  };
+
   const [expandedOrderIds, setExpandedOrderIds] = useState([]);
   const [printers, setPrinters] = useState([]);
   const [showFarmMonitor, setShowFarmMonitor] = useState(true);
@@ -1519,6 +1582,77 @@ export default function AdminPanel() {
                 </div>
               </div>              {/* Filters */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 32, padding: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
+                {/* Блок шаблонів фільтрів */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', marginBottom: 12, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Filter size={14} style={{ color: '#a78bfa' }} />
+                      <span style={{ fontSize: 11, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Шаблони фільтрів</span>
+                    </div>
+                    
+                    {/* Швидке створення шаблону */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input 
+                        type="text" 
+                        placeholder="Назва шаблону (н-д: Нові)..." 
+                        value={newOrderTemplateName}
+                        onChange={(e) => setNewOrderTemplateName(e.target.value)}
+                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '6px 12px', color: '#fff', fontSize: 11, outline: 'none' }}
+                      />
+                      <button 
+                        onClick={() => saveOrderFilterTemplate(newOrderTemplateName)}
+                        disabled={!newOrderTemplateName.trim()}
+                        style={{ padding: '6px 12px', borderRadius: 10, background: newOrderTemplateName.trim() ? '#7c3aed' : 'rgba(255,255,255,0.02)', color: newOrderTemplateName.trim() ? '#fff' : '#6b6b8a', border: 'none', fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                      >
+                        Зберегти поточні
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Список існуючих шаблонів */}
+                  {orderFilterTemplates.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                      {orderFilterTemplates.map(t => (
+                        <div 
+                          key={t.id} 
+                          onClick={() => applyOrderTemplate(t)}
+                          style={{ 
+                            display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px', 
+                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', 
+                            borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s' 
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(167,139,250,0.4)'}
+                          onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+                        >
+                          <span style={{ fontSize: 11, color: '#e2e8f0', fontWeight: 600 }}>{t.name}</span>
+                          
+                          {/* Зірочка за замовчуванням */}
+                          <button 
+                            type="button"
+                            onClick={(e) => toggleOrderTemplateDefault(t.id, e)}
+                            title={t.isDefault ? "Використовується при відкритті" : "Встановити за замовчуванням при відкритті"}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', alignItems: 'center' }}
+                          >
+                            <span style={{ fontSize: 11, color: t.isDefault ? '#fbbf24' : '#4a4a6a' }}>
+                              {t.isDefault ? '★' : '☆'}
+                            </span>
+                          </button>
+
+                          {/* Видалити */}
+                          <button 
+                            type="button"
+                            onClick={(e) => deleteOrderFilterTemplate(t.id, e)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2, display: 'flex', alignItems: 'center', fontSize: 10 }}
+                            title="Видалити шаблон"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', textTransform: 'uppercase' }}>Статус замовлення (можна обрати декілька):</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>

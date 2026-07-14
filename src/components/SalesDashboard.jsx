@@ -101,6 +101,69 @@ export default function SalesDashboard({ showToast }) {
   const [selectedSources, setSelectedSources] = useState([]);
   const [selectedPayments, setSelectedPayments] = useState([]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
+  const [salesFilterTemplates, setSalesFilterTemplates] = useState([]);
+  const [newSalesTemplateName, setNewSalesTemplateName] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('buba_sales_filter_templates');
+      if (saved) {
+        const templates = JSON.parse(saved);
+        setSalesFilterTemplates(templates);
+        const defaultTemplate = templates.find(t => t.isDefault);
+        if (defaultTemplate) {
+          setSelectedSources(defaultTemplate.selectedSources || []);
+          setSelectedPayments(defaultTemplate.selectedPayments || []);
+          setSelectedStatuses(defaultTemplate.selectedStatuses || []);
+        }
+      }
+    }
+  }, []);
+
+  const saveSalesFilterTemplate = (name) => {
+    if (!name.trim()) return;
+    const newTemplate = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      selectedSources,
+      selectedPayments,
+      selectedStatuses,
+      isDefault: false
+    };
+    const updated = [...salesFilterTemplates, newTemplate];
+    setSalesFilterTemplates(updated);
+    localStorage.setItem('buba_sales_filter_templates', JSON.stringify(updated));
+    setNewSalesTemplateName('');
+    showToast('Шаблон збережено', 'success');
+  };
+
+  const deleteSalesFilterTemplate = (id, e) => {
+    e.stopPropagation();
+    const updated = salesFilterTemplates.filter(t => t.id !== id);
+    setSalesFilterTemplates(updated);
+    localStorage.setItem('buba_sales_filter_templates', JSON.stringify(updated));
+    showToast('Шаблон видалено', 'info');
+  };
+
+  const toggleSalesTemplateDefault = (id, e) => {
+    e.stopPropagation();
+    const updated = salesFilterTemplates.map(t => {
+      if (t.id === id) {
+        return { ...t, isDefault: !t.isDefault };
+      }
+      return { ...t, isDefault: false };
+    });
+    setSalesFilterTemplates(updated);
+    localStorage.setItem('buba_sales_filter_templates', JSON.stringify(updated));
+    showToast('Налаштування оновлено', 'success');
+  };
+
+  const applySalesTemplate = (template) => {
+    setSelectedSources(template.selectedSources || []);
+    setSelectedPayments(template.selectedPayments || []);
+    setSelectedStatuses(template.selectedStatuses || []);
+    showToast(`Застосовано шаблон "${template.name}"`, 'success');
+  };
 
   const toggleSourceFilter = (source) => {
     if (source === 'Всі') {
@@ -735,6 +798,78 @@ export default function SalesDashboard({ showToast }) {
 
         {/* Multi-Select Pills */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Блок шаблонів фільтрів */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Filter size={14} style={{ color: '#a78bfa' }} />
+                <span style={{ fontSize: 11, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Шаблони фільтрів</span>
+              </div>
+              
+              {/* Швидке створення шаблону */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input 
+                  type="text" 
+                  placeholder="Назва шаблону..." 
+                  value={newSalesTemplateName}
+                  onChange={(e) => setNewSalesTemplateName(e.target.value)}
+                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '6px 12px', color: '#fff', fontSize: 11, outline: 'none' }}
+                />
+                <button 
+                  type="button"
+                  onClick={() => saveSalesFilterTemplate(newSalesTemplateName)}
+                  disabled={!newSalesTemplateName.trim()}
+                  style={{ padding: '6px 12px', borderRadius: 10, background: newSalesTemplateName.trim() ? '#7c3aed' : 'rgba(255,255,255,0.02)', color: newSalesTemplateName.trim() ? '#fff' : '#6b6b8a', border: 'none', fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                >
+                  Зберегти поточні
+                </button>
+              </div>
+            </div>
+
+            {/* Список існуючих шаблонів */}
+            {salesFilterTemplates.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                {salesFilterTemplates.map(t => (
+                  <div 
+                    key={t.id} 
+                    onClick={() => applySalesTemplate(t)}
+                    style={{ 
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px', 
+                      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', 
+                      borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s' 
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(167,139,250,0.4)'}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+                  >
+                    <span style={{ fontSize: 11, color: '#e2e8f0', fontWeight: 600 }}>{t.name}</span>
+                    
+                    {/* Зірочка за замовчуванням */}
+                    <button 
+                      type="button"
+                      onClick={(e) => toggleSalesTemplateDefault(t.id, e)}
+                      title={t.isDefault ? "Використовується при відкритті" : "Встановити за замовчуванням при відкритті"}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', alignItems: 'center' }}
+                    >
+                      <span style={{ fontSize: 11, color: t.isDefault ? '#fbbf24' : '#4a4a6a' }}>
+                        {t.isDefault ? '★' : '☆'}
+                      </span>
+                    </button>
+
+                    {/* Видалити */}
+                    <button 
+                      type="button"
+                      onClick={(e) => deleteSalesFilterTemplate(t.id, e)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2, display: 'flex', alignItems: 'center', fontSize: 10 }}
+                      title="Видалити шаблон"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Source/Channel Filter */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Джерело замовлення (можна обрати декілька):</label>
