@@ -196,6 +196,7 @@ export default function SalesDashboard({ showToast }) {
   };
   const [showAddForm, setShowAddForm] = useState(false);
   const [periodType, setPeriodType] = useState('month'); // 'week' | 'month' | 'quarter'
+  const [ads, setAds] = useState([]);
   
   // Form state
   const [editingSale, setEditingSale] = useState(null);
@@ -213,7 +214,9 @@ export default function SalesDashboard({ showToast }) {
     items: [], // array of { name, quantity, price }
     is_cod: false,
     cod_amount: '',
-    notes: ''
+    notes: '',
+    sold_via_ad: false,
+    attributed_ad_id: ''
   });
   
   // Tab inside cart adder: 'catalog' | 'manual'
@@ -283,7 +286,44 @@ export default function SalesDashboard({ showToast }) {
   useEffect(() => {
     fetchSales();
     fetchProducts();
+    fetchAds();
   }, []);
+
+  async function fetchAds() {
+    try {
+      const { data, error } = await supabase
+        .from('advertisements')
+        .select('id, platform, product_id, product_name, ad_date')
+        .order('ad_date', { ascending: false });
+      if (error) throw error;
+      setAds(data || []);
+    } catch (err) {
+      console.error('Error fetching ads:', err);
+    }
+  }
+
+  async function adjustAdRevenue(adId, amountChange) {
+    if (!adId) return;
+    try {
+      const { data, error } = await supabase
+        .from('advertisements')
+        .select('revenue')
+        .eq('id', adId)
+        .single();
+      if (error) throw error;
+      
+      const currentRevenue = parseFloat(data.revenue || 0);
+      const newRevenue = currentRevenue + amountChange;
+      
+      const { error: updateError } = await supabase
+        .from('advertisements')
+        .update({ revenue: newRevenue })
+        .eq('id', adId);
+      if (updateError) throw updateError;
+    } catch (err) {
+      console.error('Error adjusting ad revenue:', err);
+    }
+  }
 
   async function fetchSales() {
     setLoading(true);
@@ -503,22 +543,46 @@ export default function SalesDashboard({ showToast }) {
           items: formData.items,
           is_cod: formData.is_cod,
           cod_amount: formData.is_cod ? (parseFloat(formData.cod_amount) || 0) : 0,
-          notes: formData.notes
+          notes: formData.notes,
+          sold_via_ad: formData.sold_via_ad,
+          attributed_ad_id: formData.sold_via_ad ? formData.attributed_ad_id : null
         }
       };
 
       if (editingSale) {
+        const oldStatus = editingSale.status;
+        const newStatus = formData.status;
+        const oldAdId = editingSale.shipping_details?.attributed_ad_id;
+        const newAdId = formData.sold_via_ad ? formData.attributed_ad_id : null;
+        const oldTotal = parseFloat(editingSale.total || 0);
+        const newTotal = finalTotal;
+
         const { error } = await supabase
           .from('orders')
           .update(saleData)
           .eq('id', editingSale.id);
         if (error) throw error;
+
+        // Attribute revenue changes
+        if (oldStatus === 'completed' && oldAdId) {
+          await adjustAdRevenue(oldAdId, -oldTotal);
+        }
+        if (newStatus === 'completed' && newAdId) {
+          await adjustAdRevenue(newAdId, newTotal);
+        }
+
         showToast('Продаж оновлено успішно!');
       } else {
         const { error } = await supabase
           .from('orders')
           .insert([saleData]);
         if (error) throw error;
+
+        const newAdId = formData.sold_via_ad ? formData.attributed_ad_id : null;
+        if (formData.status === 'completed' && newAdId) {
+          await adjustAdRevenue(newAdId, finalTotal);
+        }
+
         showToast('Продаж додано успішно!');
       }
 
@@ -549,7 +613,9 @@ export default function SalesDashboard({ showToast }) {
       items: sale.shipping_details?.items || [],
       is_cod: sale.shipping_details?.is_cod || false,
       cod_amount: sale.shipping_details?.cod_amount || '',
-      notes: sale.shipping_details?.notes || ''
+      notes: sale.shipping_details?.notes || '',
+      sold_via_ad: sale.shipping_details?.sold_via_ad || false,
+      attributed_ad_id: sale.shipping_details?.attributed_ad_id || ''
     });
     setShowAddForm(true);
   };
@@ -557,8 +623,14 @@ export default function SalesDashboard({ showToast }) {
   const handleDelete = async (id) => {
     if (!confirm('Ви впевнені, що хочете видалити цей запис про продаж?')) return;
     try {
+      const sale = sales.find(s => s.id === id);
       const { error } = await supabase.from('orders').delete().eq('id', id);
       if (error) throw error;
+
+      if (sale && sale.status === 'completed' && sale.shipping_details?.attributed_ad_id) {
+        await adjustAdRevenue(sale.shipping_details.attributed_ad_id, -parseFloat(sale.total || 0));
+      }
+
       showToast('Запис видалено');
       fetchSales();
     } catch (err) {
@@ -582,7 +654,9 @@ export default function SalesDashboard({ showToast }) {
       items: [],
       is_cod: false,
       cod_amount: '',
-      notes: ''
+      notes: '',
+      sold_via_ad: false,
+      attributed_ad_id: ''
     });
     setNewItem({ name: '', quantity: 1, price: '' });
     setSelectedProductId('');
@@ -641,6 +715,26 @@ export default function SalesDashboard({ showToast }) {
         .map(p => ({ value: p.id, label: `${p.name} (${p.price} ₴)` }))
     ];
   }, [products, formData.items]);
+
+  const matchingAds = useMemo(() => {
+    const productIdsInCart = new Set(formData.items.map(item => item.product_id).filter(Boolean));
+    const productNamesInCart = new Set(formData.items.map(item => item.name?.toLowerCase()).filter(Boolean));
+
+    const directAds = ads.filter(ad => 
+      (ad.product_id && productIdsInCart.has(ad.product_id)) || 
+      (ad.product_name && Array.from(productNamesInCart).some(name => ad.product_name.toLowerCase().includes(name)))
+    );
+
+    const generalAds = ads.filter(ad => !ad.product_id && !directAds.some(da => da.id === ad.id));
+    const otherAds = ads.filter(ad => !directAds.some(da => da.id === ad.id) && !generalAds.some(ga => ga.id === ad.id));
+
+    return {
+      direct: directAds,
+      general: generalAds,
+      other: otherAds,
+      all: [...directAds, ...generalAds, ...otherAds]
+    };
+  }, [ads, formData.items]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
@@ -1574,7 +1668,7 @@ export default function SalesDashboard({ showToast }) {
                               // Direct fast add to the cart
                               setFormData({
                                 ...formData,
-                                items: [...formData.items, { name: prod.name, price: prod.price, quantity: 1 }]
+                                items: [...formData.items, { product_id: prod.id, name: prod.name, price: prod.price, quantity: 1 }]
                               });
                               showToast(`Додано: ${prod.name}`);
                               setSelectedProductId('');
@@ -1732,6 +1826,48 @@ export default function SalesDashboard({ showToast }) {
                   displayValue={STATUS_META[formData.status]?.label || STATUS_META.new.label}
                   options={Object.keys(STATUS_META).map(key => ({ value: key, label: STATUS_META[key].label }))}
                 />
+
+                {/* Рекламна інтеграція */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 16 }}>
+                  <div 
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => setFormData({ ...formData, sold_via_ad: !formData.sold_via_ad })}
+                  >
+                    <div style={{ width: 18, height: 18, border: '2px solid #ec4899', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: formData.sold_via_ad ? '#ec4899' : 'transparent', transition: 'all 0.2s' }}>
+                      {formData.sold_via_ad && <CheckCircle2 size={12} style={{ color: '#fff' }} />}
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 750, color: '#fff' }}>Продано завдяки рекламі (маркетинг)</span>
+                  </div>
+
+                  {formData.sold_via_ad && (
+                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Оберіть рекламну кампанію</label>
+                      <ThemeSelect
+                        value={formData.attributed_ad_id}
+                        onChange={(adId) => setFormData({ ...formData, attributed_ad_id: adId })}
+                        displayValue={ads.find(a => a.id === formData.attributed_ad_id) ? `${ads.find(a => a.id === formData.attributed_ad_id).platform} - ${ads.find(a => a.id === formData.attributed_ad_id).product_name} (${new Date(ads.find(a => a.id === formData.attributed_ad_id).ad_date).toLocaleDateString('uk-UA')})` : ''}
+                        placeholder="-- Оберіть кампанію --"
+                        options={[
+                          ...(matchingAds.direct.length > 0 ? [{ value: 'header-direct', label: '⭐ Відповідна реклама для товарів у кошику:', disabled: true }] : []),
+                          ...matchingAds.direct.map(ad => ({
+                            value: ad.id,
+                            label: `[${ad.platform}] ${ad.product_name} (${new Date(ad.ad_date).toLocaleDateString('uk-UA')})`
+                          })),
+                          ...(matchingAds.general.length > 0 ? [{ value: 'header-general', label: '📢 Загальна реклама магазину:', disabled: true }] : []),
+                          ...matchingAds.general.map(ad => ({
+                            value: ad.id,
+                            label: `[${ad.platform}] ${ad.product_name || 'Загальна'} (${new Date(ad.ad_date).toLocaleDateString('uk-UA')})`
+                          })),
+                          ...(matchingAds.other.length > 0 ? [{ value: 'header-other', label: '🔍 Інші рекламні кампанії:', disabled: true }] : []),
+                          ...matchingAds.other.map(ad => ({
+                            value: ad.id,
+                            label: `[${ad.platform}] ${ad.product_name} (${new Date(ad.ad_date).toLocaleDateString('uk-UA')})`
+                          }))
+                        ]}
+                      />
+                    </motion.div>
+                  )}
+                </div>
 
                 {/* Уточнення / Нотатки */}
                 <div>

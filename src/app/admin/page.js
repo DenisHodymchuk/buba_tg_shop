@@ -522,6 +522,29 @@ export default function AdminPanel() {
     });
   }
 
+  async function adjustAdRevenue(adId, amountChange) {
+    if (!adId || !supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('advertisements')
+        .select('revenue')
+        .eq('id', adId)
+        .single();
+      if (error) throw error;
+      
+      const currentRevenue = parseFloat(data.revenue || 0);
+      const newRevenue = currentRevenue + amountChange;
+      
+      const { error: updateError } = await supabase
+        .from('advertisements')
+        .update({ revenue: newRevenue })
+        .eq('id', adId);
+      if (updateError) throw updateError;
+    } catch (err) {
+      console.error('Error adjusting ad revenue:', err);
+    }
+  }
+
   async function handleDeleteOrder(orderId) {
     if (!supabase) return;
     setModal({
@@ -531,8 +554,14 @@ export default function AdminPanel() {
       type: 'danger',
       onConfirm: async () => {
         try {
+          const order = orders.find(o => o.id === orderId);
           const { error } = await supabase.from('orders').delete().eq('id', orderId);
           if (error) throw error;
+
+          if (order && order.status === 'completed' && order.shipping_details?.attributed_ad_id) {
+            await adjustAdRevenue(order.shipping_details.attributed_ad_id, -parseFloat(order.total || 0));
+          }
+
           setOrders(orders.filter(o => o.id !== orderId));
           setModal({ ...modal, open: false });
         } catch (e) {
@@ -546,6 +575,7 @@ export default function AdminPanel() {
     if (!supabase) return;
     try {
       const order = orders.find(o => o.id === orderId);
+      if (!order) return;
       
       const updateData = { status: newStatus };
       if (newStatus === 'completed') {
@@ -558,6 +588,19 @@ export default function AdminPanel() {
         .eq('id', orderId);
       
       if (error) throw error;
+
+      // Adjust ad revenue if status changes to/from completed
+      const oldStatus = order.status;
+      const adId = order.shipping_details?.attributed_ad_id;
+      const totalAmount = parseFloat(order.total || 0);
+
+      if (adId) {
+        if (oldStatus === 'completed' && newStatus !== 'completed') {
+          await adjustAdRevenue(adId, -totalAmount);
+        } else if (oldStatus !== 'completed' && newStatus === 'completed') {
+          await adjustAdRevenue(adId, totalAmount);
+        }
+      }
 
       // Надсилаємо сповіщення клієнту
       const customer = order?.customers;
