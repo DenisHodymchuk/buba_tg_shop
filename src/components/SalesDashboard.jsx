@@ -934,12 +934,12 @@ export default function SalesDashboard({ showToast }) {
       </div>
 
       {/* Search and Filters */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 24, padding: isMobile ? 16 : 20 }}>
-        {/* Search Bar & Filter Toggle Row */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: isMobile ? 12 : 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {/* Main Toolbar Row */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {/* Search Input */}
-          <div style={{ flex: '1 1 220px', display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border)', borderRadius: 14, padding: '10px 14px' }}>
-            <Search size={16} style={{ color: 'var(--text-muted)' }} />
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 12px' }}>
+            <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             <input 
               type="text" 
               placeholder="Пошук клієнта чи телефону..." 
@@ -948,7 +948,7 @@ export default function SalesDashboard({ showToast }) {
               style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} 
             />
             {searchQuery && (
-              <X size={14} style={{ cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setSearchQuery('')} />
+              <X size={14} style={{ cursor: 'pointer', color: 'var(--text-muted)', flexShrink: 0 }} onClick={() => setSearchQuery('')} />
             )}
           </div>
 
@@ -957,8 +957,8 @@ export default function SalesDashboard({ showToast }) {
             type="button"
             onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
             style={{
-              padding: '10px 16px',
-              borderRadius: 14,
+              padding: '8px 12px',
+              borderRadius: 12,
               border: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0 || isFiltersExpanded)
                 ? '1px solid #7c3aed' 
                 : '1px solid var(--border)',
@@ -973,8 +973,9 @@ export default function SalesDashboard({ showToast }) {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
-              transition: 'all 0.2s'
+              gap: 6,
+              whiteSpace: 'nowrap',
+              flexShrink: 0
             }}
           >
             <Filter size={14} />
@@ -982,7 +983,7 @@ export default function SalesDashboard({ showToast }) {
             {(selectedSources.length + selectedPayments.length + selectedStatuses.length) > 0 && (
               <span style={{ 
                 background: '#7c3aed', color: '#fff', fontSize: 10, fontWeight: 900, 
-                padding: '2px 7px', borderRadius: 10 
+                padding: '1px 6px', borderRadius: 8 
               }}>
                 {selectedSources.length + selectedPayments.length + selectedStatuses.length}
               </span>
@@ -990,7 +991,7 @@ export default function SalesDashboard({ showToast }) {
             {isFiltersExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
 
-          {/* Reset Filters button */}
+          {/* Reset Filters Button */}
           {(selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0 || searchQuery) && (
             <button
               type="button"
@@ -1001,15 +1002,16 @@ export default function SalesDashboard({ showToast }) {
                 setSearchQuery('');
               }}
               style={{
-                padding: '10px 14px',
-                borderRadius: 14,
+                padding: '8px 10px',
+                borderRadius: 12,
                 border: '1px solid rgba(239, 68, 68, 0.2)',
                 background: 'rgba(239, 68, 68, 0.08)',
                 color: '#ef4444',
                 fontSize: 11,
                 fontWeight: 800,
                 cursor: 'pointer',
-                transition: 'all 0.2s'
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
             >
               Скинути
@@ -1025,12 +1027,12 @@ export default function SalesDashboard({ showToast }) {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 4 }}
+              style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4 }}
             >
               <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
 
               {/* Блок шаблонів фільтрів */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Filter size={14} style={{ color: '#a78bfa' }} />
@@ -1220,21 +1222,26 @@ export default function SalesDashboard({ showToast }) {
 
       {/* Sales List Container */}
       {isMobile ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {filteredSales.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button
-                onClick={() => setExpandedSalesIds(filteredSales.map(s => s.id))}
-                style={{ padding: '6px 12px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 10, fontWeight: 800, cursor: 'pointer', background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)' }}
-              >
-                Розгорнути всі
-              </button>
-              <button
-                onClick={() => setExpandedSalesIds([])}
-                style={{ padding: '6px 12px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 10, fontWeight: 800, cursor: 'pointer', background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)' }}
-              >
-                Згорнути всі
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>
+                Всього: <strong style={{ color: '#fff' }}>{filteredSales.length}</strong>
+              </span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={() => setExpandedSalesIds(filteredSales.map(s => s.id))}
+                  style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 10, fontWeight: 800, cursor: 'pointer', background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)' }}
+                >
+                  Розгорнути всі
+                </button>
+                <button
+                  onClick={() => setExpandedSalesIds([])}
+                  style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 10, fontWeight: 800, cursor: 'pointer', background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)' }}
+                >
+                  Згорнути всі
+                </button>
+              </div>
             </div>
           )}
 
