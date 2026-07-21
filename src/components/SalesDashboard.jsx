@@ -6,7 +6,7 @@ import {
   Coins, Search, Plus, Trash2, Calendar, ShoppingBag, 
   ArrowUpRight, AlertCircle, Edit3, X, ChevronDown, 
   CheckCircle2, Info, Loader2, Filter, Receipt, ExternalLink,
-  Clock, ClipboardList, Printer, Truck, Send, XCircle, Sparkles
+  Clock, ClipboardList, Printer, Truck, Send, XCircle, Sparkles, Copy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -620,6 +620,37 @@ export default function SalesDashboard({ showToast }) {
     setShowAddForm(true);
   };
 
+  const handleDuplicate = (sale) => {
+    setEditingSale(null);
+    const duplicatedItems = sale.shipping_details?.items 
+      ? JSON.parse(JSON.stringify(sale.shipping_details.items)) 
+      : [];
+
+    setFormData({
+      source: sale.source || 'olx',
+      firstName: sale.shipping_details?.firstName || '',
+      lastName: sale.shipping_details?.lastName || '',
+      phone: sale.shipping_details?.phone || '',
+      city: sale.shipping_details?.city || '',
+      cityRef: sale.shipping_details?.cityRef || '',
+      warehouse: sale.shipping_details?.warehouse || '',
+      total: sale.total || '',
+      payment_status: 'pending',
+      status: 'new',
+      items: duplicatedItems,
+      is_cod: sale.shipping_details?.is_cod || false,
+      cod_amount: sale.shipping_details?.cod_amount || '',
+      notes: sale.shipping_details?.notes || '',
+      sold_via_ad: sale.shipping_details?.sold_via_ad || false,
+      attributed_ad_id: sale.shipping_details?.attributed_ad_id || ''
+    });
+
+    setNpCityQuery(sale.shipping_details?.city || '');
+    setNpWarehouseQuery(sale.shipping_details?.warehouse || '');
+    setShowAddForm(true);
+    showToast('Дані замовлення скопійовано! Внесіть зміни та збережіть.', 'info');
+  };
+
   const handleDelete = async (id) => {
     if (!confirm('Ви впевнені, що хочете видалити цей запис про продаж?')) return;
     try {
@@ -1187,16 +1218,23 @@ export default function SalesDashboard({ showToast }) {
                   </div>
 
                   {/* Actions */}
-                  <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
                     <button 
                       onClick={() => handleEdit(sale)}
-                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 10, padding: '10px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
                     >
                       <Edit3 size={14} /> Редагувати
                     </button>
                     <button 
+                      onClick={() => handleDuplicate(sale)}
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                      title="Дублювати замовлення"
+                    >
+                      <Copy size={14} /> Дублювати
+                    </button>
+                    <button 
                       onClick={() => handleDelete(sale.id)}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, padding: '10px 16px', cursor: 'pointer' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -1305,12 +1343,21 @@ export default function SalesDashboard({ showToast }) {
                           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                             <button 
                               onClick={() => handleEdit(sale)}
+                              title="Редагувати"
                               style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 8, padding: 6, cursor: 'pointer' }}
                             >
                               <Edit3 size={14} />
                             </button>
                             <button 
+                              onClick={() => handleDuplicate(sale)}
+                              title="Дублювати замовлення"
+                              style={{ border: 'none', background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderRadius: 8, padding: 6, cursor: 'pointer' }}
+                            >
+                              <Copy size={14} />
+                            </button>
+                            <button 
                               onClick={() => handleDelete(sale.id)}
+                              title="Видалити"
                               style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}
                             >
                               <Trash2 size={14} />
@@ -1374,6 +1421,32 @@ export default function SalesDashboard({ showToast }) {
               </div>
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                
+                {!editingSale && sales.length > 0 && (
+                  <div style={{ background: 'rgba(124,58,237,0.08)', border: '1px dashed rgba(124,58,237,0.3)', padding: 14, borderRadius: 16 }}>
+                    <ThemeSelect 
+                      label="📋 Швидке копіювання з минулого замовлення клієнта"
+                      value=""
+                      placeholder="Оберіть замовлення для підтягування даних..."
+                      onChange={(saleId) => {
+                        const selected = sales.find(s => s.id === saleId);
+                        if (selected) handleDuplicate(selected);
+                      }}
+                      options={[
+                        { value: '', label: 'Оберіть замовлення для підтягування даних...' },
+                        ...sales.map(s => {
+                          const name = `${s.shipping_details?.firstName || ''} ${s.shipping_details?.lastName || ''} ${s.customers?.first_name || ''} ${s.customers?.last_name || ''}`.trim() || 'Гість';
+                          const phone = s.shipping_details?.phone || s.customers?.phone || '';
+                          const num = s.order_number || `#${s.id.slice(0, 8)}`;
+                          return {
+                            value: s.id,
+                            label: `${num} • ${name}${phone ? ` (${phone})` : ''} • ${s.total || 0} ₴`
+                          };
+                        })
+                      ]}
+                    />
+                  </div>
+                )}
                 
                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 200 }}>
