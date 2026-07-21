@@ -11,15 +11,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Meta definitions for order statuses
 const STATUS_META = {
   new: { label: 'Нові', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
-  preparing: { label: 'Підготовка', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
-  printing: { label: 'Друк', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
-  shipping: { label: 'Очікують', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+  printing: { label: 'Друкується', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
+  shipping: { label: 'Готово до відправки', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
   shipped: { label: 'Відправлені', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send }
 };
 
 export default function ProductionCabinet({ orders, setOrders, showToast, isMobile }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState(['new', 'preparing', 'printing', 'shipping']);
+  const [selectedStatuses, setSelectedStatuses] = useState(['new', 'printing', 'shipping']);
   const [expandedProductNames, setExpandedProductNames] = useState([]);
 
   // Aggregate items from active orders

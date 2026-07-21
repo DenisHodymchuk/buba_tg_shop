@@ -152,10 +152,10 @@ export default function Profile() {
                       <div style={{ fontSize: 14, fontWeight: 900, color: '#7c3aed', marginBottom: 4 }}>{order.total} ₴</div>
                       {(() => {
                         const statusMap = {
-                          'new': { label: 'Отримано', color: '#3b82f6' },
-                          'preparing': { label: 'Підготовка', color: '#f59e0b' },
+                          'new': { label: 'Нове', color: '#3b82f6' },
                           'printing': { label: 'Друкується', color: '#7c3aed' },
-                          'shipping': { label: 'Відправлено', color: '#ec4899' },
+                          'shipping': { label: 'Готово до відправки', color: '#ec4899' },
+                          'shipped': { label: 'Відправлено поштою', color: '#10b981' },
                           'completed': { label: 'Виконано', color: '#22c55e' },
                           'cancelled': { label: 'Скасовано', color: '#ef4444' }
                         };

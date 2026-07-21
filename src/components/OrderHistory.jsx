@@ -38,10 +38,10 @@ export default function OrderHistory({ isOpen, onClose }) {
 
   const getStatusInfo = (status) => {
     switch (status) {
-      case 'new': return { label: 'Отримано', color: '#3b82f6', icon: <Clock size={14}/> };
-      case 'preparing': return { label: 'Підготовка', color: '#f59e0b', icon: <Package size={14}/> };
+      case 'new': return { label: 'Нове', color: '#3b82f6', icon: <Clock size={14}/> };
       case 'printing': return { label: 'Друкується', color: '#7c3aed', icon: <Box size={14}/> };
-      case 'shipping': return { label: 'Відправлено', color: '#ec4899', icon: <Truck size={14}/> };
+      case 'shipping': return { label: 'Готово до відправки', color: '#ec4899', icon: <Truck size={14}/> };
+      case 'shipped': return { label: 'Відправлено поштою', color: '#10b981', icon: <Truck size={14}/> };
       case 'completed': return { label: 'Виконано', color: '#22c55e', icon: <CheckCircle2 size={14}/> };
       case 'cancelled': return { label: 'Скасовано', color: '#ef4444', icon: <XCircle size={14}/> };
       default: return { label: status, color: '#6b6b8a', icon: <Clock size={14}/> };
