@@ -1360,15 +1360,11 @@ export default function SalesDashboard({ showToast }) {
                             <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Товари ({sale.shipping_details.items.length})</div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                               {sale.shipping_details.items.map((item, idx) => (
-                                <div key={idx} style={{ 
-                                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
-                                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', 
-                                  borderRadius: 10, padding: '8px 12px' 
-                                }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>{item.name}</span>
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>• {item.name}</span>
                                     <span style={{ 
-                                      background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)',
+                                      background: 'rgba(124,58,237,0.2)',
                                       color: '#a78bfa', fontSize: 10, fontWeight: 900, padding: '2px 6px', borderRadius: 6 
                                     }}>x{item.quantity}</span>
                                   </div>
@@ -1511,19 +1507,15 @@ export default function SalesDashboard({ showToast }) {
                               {sale.shipping_details.items.map((item, idx) => (
                                 <div 
                                   key={idx} 
-                                  style={{ 
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', 
-                                    borderRadius: 10, padding: '6px 10px'
-                                  }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                                 >
                                   <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>
-                                    {item.name}
+                                    • {item.name}
                                   </span>
                                   <span style={{ 
-                                    background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)',
+                                    background: 'rgba(124,58,237,0.2)',
                                     color: '#a78bfa', fontSize: 10, fontWeight: 900, 
-                                    padding: '2px 7px', borderRadius: 8, whiteSpace: 'nowrap', flexShrink: 0 
+                                    padding: '2px 6px', borderRadius: 6, whiteSpace: 'nowrap', flexShrink: 0 
                                   }}>
                                     x{item.quantity}
                                   </span>
