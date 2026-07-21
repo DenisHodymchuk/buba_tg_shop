@@ -1356,13 +1356,23 @@ export default function SalesDashboard({ showToast }) {
 
                         {/* Items list */}
                         {sale.shipping_details?.items && sale.shipping_details.items.length > 0 && (
-                          <div>
-                            <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 900, marginBottom: 6, textTransform: 'uppercase' }}>Товари ({sale.shipping_details.items.length})</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Товари ({sale.shipping_details.items.length})</div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                               {sale.shipping_details.items.map((item, idx) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderBottom: '1px solid rgba(255,255,255,0.02)', paddingBottom: 4 }}>
-                                  <span style={{ color: '#fff', fontWeight: 600 }}>{item.name} <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>x{item.quantity}</span></span>
-                                  <span style={{ fontWeight: 800 }}>{item.price * item.quantity} ₴</span>
+                                <div key={idx} style={{ 
+                                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+                                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', 
+                                  borderRadius: 10, padding: '8px 12px' 
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>{item.name}</span>
+                                    <span style={{ 
+                                      background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)',
+                                      color: '#a78bfa', fontSize: 10, fontWeight: 900, padding: '2px 6px', borderRadius: 6 
+                                    }}>x{item.quantity}</span>
+                                  </div>
+                                  <span style={{ fontWeight: 800, fontSize: 12, color: '#fff' }}>{item.price * item.quantity} ₴</span>
                                 </div>
                               ))}
                             </div>
@@ -1495,12 +1505,34 @@ export default function SalesDashboard({ showToast }) {
                             </div>
                           )}
                         </td>
-                        <td style={{ padding: '16px 20px', fontSize: 12, maxWidth: 220 }}>
-                          {sale.shipping_details?.items?.map((item, idx) => (
-                            <div key={idx} style={{ color: '#fff', fontSize: 12 }}>
-                              • {item.name} <strong style={{ color: '#8b5cf6' }}>x{item.quantity}</strong>
+                        <td style={{ padding: '16px 20px', minWidth: 200, maxWidth: 280 }}>
+                          {sale.shipping_details?.items && sale.shipping_details.items.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {sale.shipping_details.items.map((item, idx) => (
+                                <div 
+                                  key={idx} 
+                                  style={{ 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', 
+                                    borderRadius: 10, padding: '6px 10px'
+                                  }}
+                                >
+                                  <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>
+                                    {item.name}
+                                  </span>
+                                  <span style={{ 
+                                    background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.3)',
+                                    color: '#a78bfa', fontSize: 10, fontWeight: 900, 
+                                    padding: '2px 7px', borderRadius: 8, whiteSpace: 'nowrap', flexShrink: 0 
+                                  }}>
+                                    x{item.quantity}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
-                          )) || '—'}
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>—</span>
+                          )}
                         </td>
                         <td style={{ padding: '16px 20px', textAlign: 'center', fontSize: 14, fontWeight: 900, color: '#2dd4bf' }}>
                           {sale.total} ₴
