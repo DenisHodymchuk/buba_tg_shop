@@ -1422,32 +1422,6 @@ export default function SalesDashboard({ showToast }) {
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 
-                {!editingSale && sales.length > 0 && (
-                  <div style={{ background: 'rgba(124,58,237,0.08)', border: '1px dashed rgba(124,58,237,0.3)', padding: 14, borderRadius: 16 }}>
-                    <ThemeSelect 
-                      label="📋 Швидке копіювання з минулого замовлення клієнта"
-                      value=""
-                      placeholder="Оберіть замовлення для підтягування даних..."
-                      onChange={(saleId) => {
-                        const selected = sales.find(s => s.id === saleId);
-                        if (selected) handleDuplicate(selected);
-                      }}
-                      options={[
-                        { value: '', label: 'Оберіть замовлення для підтягування даних...' },
-                        ...sales.map(s => {
-                          const name = `${s.shipping_details?.firstName || ''} ${s.shipping_details?.lastName || ''} ${s.customers?.first_name || ''} ${s.customers?.last_name || ''}`.trim() || 'Гість';
-                          const phone = s.shipping_details?.phone || s.customers?.phone || '';
-                          const num = s.order_number || `#${s.id.slice(0, 8)}`;
-                          return {
-                            value: s.id,
-                            label: `${num} • ${name}${phone ? ` (${phone})` : ''} • ${s.total || 0} ₴`
-                          };
-                        })
-                      ]}
-                    />
-                  </div>
-                )}
-                
                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 200 }}>
                     {/* Platform select using ThemeSelect */}
