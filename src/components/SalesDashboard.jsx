@@ -1318,9 +1318,10 @@ export default function SalesDashboard({ showToast }) {
                           <span style={{ 
                             fontSize: 10, fontWeight: 900, padding: '4px 8px', borderRadius: 6,
                             background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'partially_paid' ? 'rgba(14,165,233,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
-                            color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'partially_paid' ? '#38bdf8' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24'
+                            color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'partially_paid' ? '#38bdf8' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24',
+                            whiteSpace: 'nowrap'
                           }}>
-                            {sale.payment_status === 'paid' ? 'ОПЛАЧЕНО' : sale.payment_status === 'partially_paid' ? 'ЧАСТКОВО ОПЛАЧЕНО' : sale.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
+                            {sale.payment_status === 'paid' ? 'ОПЛАЧЕНО' : sale.payment_status === 'partially_paid' ? 'ЧАСТКОВО' : sale.payment_status === 'verifying' ? 'ПЕРЕВІРКА' : 'ОЧІКУЄ'}
                           </span>
                         </td>
                         <td style={{ padding: '16px 20px', textAlign: 'center' }}>
