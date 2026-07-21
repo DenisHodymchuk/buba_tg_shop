@@ -216,6 +216,7 @@ export default function SalesDashboard({ showToast }) {
   const [periodType, setPeriodType] = useState('month'); // 'week' | 'month' | 'quarter'
   const [ads, setAds] = useState([]);
   const [expandedSalesIds, setExpandedSalesIds] = useState([]);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
 
   const toggleExpandSale = (id) => {
     setExpandedSalesIds(prev => 
@@ -933,206 +934,288 @@ export default function SalesDashboard({ showToast }) {
       </div>
 
       {/* Search and Filters */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 24, padding: 24 }}>
-        {/* Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 18px' }}>
-          <Search size={16} style={{ color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Пошук клієнта, телефону чи номера замовлення..." 
-            value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} 
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} 
-          />
-        </div>
-
-        {/* Multi-Select Pills */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Блок шаблонів фільтрів */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Filter size={14} style={{ color: '#a78bfa' }} />
-                <span style={{ fontSize: 11, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Шаблони фільтрів</span>
-              </div>
-              
-              {/* Швидке створення шаблону */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input 
-                  type="text" 
-                  placeholder="Назва шаблону..." 
-                  value={newSalesTemplateName}
-                  onChange={(e) => setNewSalesTemplateName(e.target.value)}
-                  style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '6px 12px', color: '#fff', fontSize: 11, outline: 'none' }}
-                />
-                <button 
-                  type="button"
-                  onClick={() => saveSalesFilterTemplate(newSalesTemplateName)}
-                  disabled={!newSalesTemplateName.trim()}
-                  style={{ padding: '6px 12px', borderRadius: 10, background: newSalesTemplateName.trim() ? '#7c3aed' : 'rgba(255,255,255,0.02)', color: newSalesTemplateName.trim() ? '#fff' : '#6b6b8a', border: 'none', fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
-                >
-                  Зберегти поточні
-                </button>
-              </div>
-            </div>
-
-            {/* Список існуючих шаблонів */}
-            {salesFilterTemplates.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-                {salesFilterTemplates.map(t => (
-                  <div 
-                    key={t.id} 
-                    onClick={() => applySalesTemplate(t)}
-                    style={{ 
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px', 
-                      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', 
-                      borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s' 
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(167,139,250,0.4)'}
-                    onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
-                  >
-                    <span style={{ fontSize: 11, color: '#e2e8f0', fontWeight: 600 }}>{t.name}</span>
-                    
-                    {/* Зірочка за замовчуванням */}
-                    <button 
-                      type="button"
-                      onClick={(e) => toggleSalesTemplateDefault(t.id, e)}
-                      title={t.isDefault ? "Використовується при відкритті" : "Встановити за замовчуванням при відкритті"}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', alignItems: 'center' }}
-                    >
-                      <span style={{ fontSize: 11, color: t.isDefault ? '#fbbf24' : '#4a4a6a' }}>
-                        {t.isDefault ? '★' : '☆'}
-                      </span>
-                    </button>
-
-                    {/* Видалити */}
-                    <button 
-                      type="button"
-                      onClick={(e) => deleteSalesFilterTemplate(t.id, e)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2, display: 'flex', alignItems: 'center', fontSize: 10 }}
-                      title="Видалити шаблон"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 24, padding: isMobile ? 16 : 20 }}>
+        {/* Search Bar & Filter Toggle Row */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Search Input */}
+          <div style={{ flex: '1 1 220px', display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border)', borderRadius: 14, padding: '10px 14px' }}>
+            <Search size={16} style={{ color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              placeholder="Пошук клієнта чи телефону..." 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} 
+            />
+            {searchQuery && (
+              <X size={14} style={{ cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setSearchQuery('')} />
             )}
           </div>
 
-          {/* Source/Channel Filter */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Джерело замовлення (можна обрати декілька):</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {[
-                { val: 'Всі', label: 'ВСІ', color: '#6b6b8a' },
-                { val: 'website', label: 'САЙТ', color: '#3b82f6' },
-                { val: 'olx', label: 'OLX', color: '#23e5db' },
-                { val: 'instagram', label: 'INSTAGRAM', color: '#f43f5e' },
-                { val: 'facebook', label: 'FACEBOOK', color: '#1877f2' },
-                { val: 'telegram', label: 'TELEGRAM', color: '#0ea5e9' },
-                { val: 'tiktok', label: 'TIKTOK', color: '#ff0050' },
-                { val: 'threads', label: 'THREADS', color: '#ffffff' },
-                { val: 'offline', label: 'ОФЛАЙН', color: '#22c55e' },
-                { val: 'other', label: 'ІНШЕ', color: '#a855f7' }
-              ].map(item => {
-                const active = item.val === 'Всі' 
-                  ? selectedSources.length === 0 
-                  : selectedSources.includes(item.val);
-                return (
-                  <button 
-                    key={item.val} 
-                    onClick={() => toggleSourceFilter(item.val)} 
-                    style={{ 
-                      padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
-                      background: active ? item.color : 'rgba(255,255,255,0.03)', 
-                      color: active ? '#fff' : 'var(--text-muted)', 
-                      border: 'none', cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Filter Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+            style={{
+              padding: '10px 16px',
+              borderRadius: 14,
+              border: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0 || isFiltersExpanded)
+                ? '1px solid #7c3aed' 
+                : '1px solid var(--border)',
+              background: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0) 
+                ? 'rgba(124, 58, 237, 0.15)' 
+                : 'rgba(255, 255, 255, 0.03)',
+              color: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0)
+                ? '#a78bfa'
+                : 'var(--text-main)',
+              fontSize: 12,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'all 0.2s'
+            }}
+          >
+            <Filter size={14} />
+            <span>Фільтри</span>
+            {(selectedSources.length + selectedPayments.length + selectedStatuses.length) > 0 && (
+              <span style={{ 
+                background: '#7c3aed', color: '#fff', fontSize: 10, fontWeight: 900, 
+                padding: '2px 7px', borderRadius: 10 
+              }}>
+                {selectedSources.length + selectedPayments.length + selectedStatuses.length}
+              </span>
+            )}
+            {isFiltersExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
 
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
-
-          {/* Payment Filter */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус оплати (можна обрати декілька):</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {[
-                { val: 'Всі', label: 'ВСІ' },
-                { val: 'pending', label: 'ОЧІКУЄ' },
-                { val: 'verifying', label: 'ПЕРЕВІРКА' },
-                { val: 'partially_paid', label: 'ЧАСТКОВО' },
-                { val: 'paid', label: 'ОПЛАЧЕНО' }
-              ].map(item => {
-                const active = item.val === 'Всі' 
-                  ? selectedPayments.length === 0 
-                  : selectedPayments.includes(item.val);
-                return (
-                  <button 
-                    key={item.val} 
-                    onClick={() => togglePaymentFilter(item.val)} 
-                    style={{ 
-                      padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
-                      background: active ? '#f97316' : 'rgba(255,255,255,0.03)', 
-                      color: active ? '#fff' : 'var(--text-muted)', 
-                      border: 'none', cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
-
-          {/* Status Filter */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус замовлення (можна обрати декілька):</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {[
-                { val: 'Всі', label: 'ВСІ', color: '#6b6b8a', icon: null },
-                ...Object.keys(STATUS_META).map(key => ({
-                  val: key,
-                  label: STATUS_META[key].label.toUpperCase(),
-                  color: STATUS_META[key].color,
-                  icon: STATUS_META[key].icon
-                }))
-              ].map(item => {
-                const Icon = item.icon;
-                const active = item.val === 'Всі' 
-                  ? selectedStatuses.length === 0 
-                  : selectedStatuses.includes(item.val);
-                return (
-                  <button 
-                    key={item.val} 
-                    onClick={() => toggleStatusFilter(item.val)} 
-                    style={{ 
-                      padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
-                      background: active ? item.color : 'rgba(255,255,255,0.03)', 
-                      color: active ? '#fff' : 'var(--text-muted)', 
-                      border: 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {Icon && <Icon size={12} />}
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Reset Filters button */}
+          {(selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0 || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedSources([]);
+                setSelectedPayments([]);
+                setSelectedStatuses([]);
+                setSearchQuery('');
+              }}
+              style={{
+                padding: '10px 14px',
+                borderRadius: 14,
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                background: 'rgba(239, 68, 68, 0.08)',
+                color: '#ef4444',
+                fontSize: 11,
+                fontWeight: 800,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Скинути
+            </button>
+          )}
         </div>
+
+        {/* Collapsible Filters Content */}
+        <AnimatePresence initial={false}>
+          {isFiltersExpanded && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 4 }}
+            >
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+
+              {/* Блок шаблонів фільтрів */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Filter size={14} style={{ color: '#a78bfa' }} />
+                    <span style={{ fontSize: 11, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Шаблони фільтрів</span>
+                  </div>
+                  
+                  {/* Швидке створення шаблону */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input 
+                      type="text" 
+                      placeholder="Назва шаблону..." 
+                      value={newSalesTemplateName}
+                      onChange={(e) => setNewSalesTemplateName(e.target.value)}
+                      style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: '6px 12px', color: '#fff', fontSize: 11, outline: 'none' }}
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => saveSalesFilterTemplate(newSalesTemplateName)}
+                      disabled={!newSalesTemplateName.trim()}
+                      style={{ padding: '6px 12px', borderRadius: 10, background: newSalesTemplateName.trim() ? '#7c3aed' : 'rgba(255,255,255,0.02)', color: newSalesTemplateName.trim() ? '#fff' : '#6b6b8a', border: 'none', fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                    >
+                      Зберегти
+                    </button>
+                  </div>
+                </div>
+
+                {/* Список існуючих шаблонів */}
+                {salesFilterTemplates.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                    {salesFilterTemplates.map(t => (
+                      <div 
+                        key={t.id} 
+                        onClick={() => applySalesTemplate(t)}
+                        style={{ 
+                          display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px', 
+                          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', 
+                          borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s' 
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(167,139,250,0.4)'}
+                        onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'}
+                      >
+                        <span style={{ fontSize: 11, color: '#e2e8f0', fontWeight: 600 }}>{t.name}</span>
+                        
+                        {/* Зірочка за замовчуванням */}
+                        <button 
+                          type="button"
+                          onClick={(e) => toggleSalesTemplateDefault(t.id, e)}
+                          title={t.isDefault ? "Використовується при відкритті" : "Встановити за замовчуванням при відкритті"}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', alignItems: 'center' }}
+                        >
+                          <span style={{ fontSize: 11, color: t.isDefault ? '#fbbf24' : '#4a4a6a' }}>
+                            {t.isDefault ? '★' : '☆'}
+                          </span>
+                        </button>
+
+                        {/* Видалити */}
+                        <button 
+                          type="button"
+                          onClick={(e) => deleteSalesFilterTemplate(t.id, e)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 2, display: 'flex', alignItems: 'center', fontSize: 10 }}
+                          title="Видалити шаблон"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Source/Channel Filter */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Джерело замовлення:</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {[
+                    { val: 'Всі', label: 'ВСІ', color: '#6b6b8a' },
+                    { val: 'website', label: 'САЙТ', color: '#3b82f6' },
+                    { val: 'olx', label: 'OLX', color: '#23e5db' },
+                    { val: 'instagram', label: 'INSTAGRAM', color: '#f43f5e' },
+                    { val: 'facebook', label: 'FACEBOOK', color: '#1877f2' },
+                    { val: 'telegram', label: 'TELEGRAM', color: '#0ea5e9' },
+                    { val: 'tiktok', label: 'TIKTOK', color: '#ff0050' },
+                    { val: 'threads', label: 'THREADS', color: '#ffffff' },
+                    { val: 'offline', label: 'ОФЛАЙН', color: '#22c55e' },
+                    { val: 'other', label: 'ІНШЕ', color: '#a855f7' }
+                  ].map(item => {
+                    const active = item.val === 'Всі' 
+                      ? selectedSources.length === 0 
+                      : selectedSources.includes(item.val);
+                    return (
+                      <button 
+                        key={item.val} 
+                        onClick={() => toggleSourceFilter(item.val)} 
+                        style={{ 
+                          padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                          background: active ? item.color : 'rgba(255,255,255,0.03)', 
+                          color: active ? '#fff' : 'var(--text-muted)', 
+                          border: 'none', cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+
+              {/* Payment Filter */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус оплати:</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {[
+                    { val: 'Всі', label: 'ВСІ' },
+                    { val: 'pending', label: 'ОЧІКУЄ' },
+                    { val: 'verifying', label: 'ПЕРЕВІРКА' },
+                    { val: 'partially_paid', label: 'ЧАСТКОВО' },
+                    { val: 'paid', label: 'ОПЛАЧЕНО' }
+                  ].map(item => {
+                    const active = item.val === 'Всі' 
+                      ? selectedPayments.length === 0 
+                      : selectedPayments.includes(item.val);
+                    return (
+                      <button 
+                        key={item.val} 
+                        onClick={() => togglePaymentFilter(item.val)} 
+                        style={{ 
+                          padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                          background: active ? '#f97316' : 'rgba(255,255,255,0.03)', 
+                          color: active ? '#fff' : 'var(--text-muted)', 
+                          border: 'none', cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+
+              {/* Status Filter */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Статус замовлення:</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {[
+                    { val: 'Всі', label: 'ВСІ', color: '#6b6b8a', icon: null },
+                    ...Object.keys(STATUS_META).map(key => ({
+                      val: key,
+                      label: STATUS_META[key].label.toUpperCase(),
+                      color: STATUS_META[key].color,
+                      icon: STATUS_META[key].icon
+                    }))
+                  ].map(item => {
+                    const Icon = item.icon;
+                    const active = item.val === 'Всі' 
+                      ? selectedStatuses.length === 0 
+                      : selectedStatuses.includes(item.val);
+                    return (
+                      <button 
+                        key={item.val} 
+                        onClick={() => toggleStatusFilter(item.val)} 
+                        style={{ 
+                          padding: '6px 12px', borderRadius: 10, fontSize: 10, fontWeight: 800, 
+                          background: active ? item.color : 'rgba(255,255,255,0.03)', 
+                          color: active ? '#fff' : 'var(--text-muted)', 
+                          border: 'none', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {Icon && <Icon size={12} />}
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Sales List Container */}
@@ -1223,10 +1306,10 @@ export default function SalesDashboard({ showToast }) {
                       </div>
                     </div>
 
-                    {/* Bottom Header Row: Client Name, Order Number & Amount */}
+                    {/* Bottom Header Row: Client Name & Amount */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ fontSize: 13, fontWeight: 900, color: '#fff' }}>
-                        {clientName} <span style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>({sale.order_number || `#${sale.id.slice(0, 8)}`})</span>
+                        {clientName}
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>
                         {sale.total} ₴
