@@ -59,22 +59,41 @@ function ThemeSelect({ label, value, options, onChange, displayValue, placeholde
               boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.5)'
             }}
           >
-            {options.filter(opt => opt.value !== '').map(opt => (
-              <div 
-                key={opt.value}
-                onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); }}
-                style={{ 
-                  padding: '10px 14px', fontSize: 13, color: '#fff', borderRadius: 8, cursor: 'pointer', 
-                  fontWeight: value === opt.value ? 800 : 500, 
-                  background: value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseLeave={(e) => e.target.style.background = value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent'}
-              >
-                {opt.label}
-              </div>
-            ))}
+            {options.filter(opt => opt.value !== '').map(opt => {
+              const isDisabled = opt.disabled || opt.isHeader || (typeof opt.value === 'string' && opt.value.startsWith('header-'));
+              if (isDisabled) {
+                return (
+                  <div 
+                    key={opt.value || opt.label}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ 
+                      padding: '8px 12px', fontSize: 11, fontWeight: 900, color: '#a78bfa', 
+                      background: 'rgba(124, 58, 237, 0.12)', borderRadius: 6, marginTop: 4, marginBottom: 2,
+                      cursor: 'default', userSelect: 'none', letterSpacing: '0.02em'
+                    }}
+                  >
+                    {opt.label}
+                  </div>
+                );
+              }
+
+              return (
+                <div 
+                  key={opt.value}
+                  onClick={(e) => { e.stopPropagation(); onChange(opt.value); setIsOpen(false); }}
+                  style={{ 
+                    padding: '10px 14px', fontSize: 13, color: '#fff', borderRadius: 8, cursor: 'pointer', 
+                    fontWeight: value === opt.value ? 800 : 500, 
+                    background: value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = value === opt.value ? 'rgba(124,58,237,0.2)' : 'transparent'}
+                >
+                  {opt.label}
+                </div>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>
@@ -545,7 +564,7 @@ export default function SalesDashboard({ showToast }) {
           cod_amount: formData.is_cod ? (parseFloat(formData.cod_amount) || 0) : 0,
           notes: formData.notes,
           sold_via_ad: formData.sold_via_ad,
-          attributed_ad_id: formData.sold_via_ad ? formData.attributed_ad_id : null
+          attributed_ad_id: (formData.sold_via_ad && formData.attributed_ad_id && !formData.attributed_ad_id.startsWith('header-')) ? formData.attributed_ad_id : null
         }
       };
 
