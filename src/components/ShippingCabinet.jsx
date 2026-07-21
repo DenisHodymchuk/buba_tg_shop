@@ -822,16 +822,16 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                       <div style={{ display: 'flex', gap: isMobile ? 6 : 8, flexWrap: 'wrap', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
                         <span style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginRight: isMobile ? 4 : 8 }}>Швидкі дії:</span>
                         
-                        {order.status !== 'preparing' && order.status !== 'completed' && order.status !== 'cancelled' && (
+                        {order.status !== 'printing' && order.status !== 'completed' && order.status !== 'cancelled' && (
                           <button 
-                            onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'preparing'); }}
+                            onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'printing'); }}
                             disabled={statusChangingId === order.id}
                             style={{ 
-                              padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', 
-                              color: '#f59e0b', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                              padding: isMobile ? '6px 10px' : '8px 14px', borderRadius: 10, background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)', 
+                              color: '#7c3aed', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                             }}
                           >
-                            <ClipboardList size={isMobile ? 10 : 12} /> {isMobile ? 'В роботу' : 'Почати підготовку'}
+                            <Printer size={isMobile ? 10 : 12} /> {isMobile ? 'Друкується' : 'На друк (Друкується)'}
                           </button>
                         )}
 
@@ -844,7 +844,7 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                               color: '#ec4899', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                             }}
                           >
-                            <Truck size={isMobile ? 10 : 12} /> {isMobile ? 'Готово' : 'Готово до відправки'}
+                            <Truck size={isMobile ? 10 : 12} /> {isMobile ? 'Готово до відправки' : 'Готово до відправки'}
                           </button>
                         )}
 
@@ -857,7 +857,7 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                               color: '#10b981', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                             }}
                           >
-                            <Send size={isMobile ? 10 : 12} /> {isMobile ? 'Відправлено' : 'Відправлено поштою (ТТН)'}
+                            <Send size={isMobile ? 10 : 12} /> {isMobile ? 'Відправлено' : 'Відправлено поштою'}
                           </button>
                         )}
 
@@ -870,7 +870,7 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                               color: '#22c55e', fontSize: isMobile ? 10 : 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
                             }}
                           >
-                            <CheckCircle2 size={isMobile ? 10 : 12} /> {isMobile ? 'Виконати' : 'Завершити замовлення'}
+                            <CheckCircle2 size={isMobile ? 10 : 12} /> {isMobile ? 'Виконано' : 'Завершити замовлення'}
                           </button>
                         )}
 
