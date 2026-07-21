@@ -166,33 +166,43 @@ export default function AdminPanel() {
   const [showInstructions, setShowInstructions] = useState(false);
 
   const fetchPrinters = async () => {
+    const defaultPrinters = [
+      { id: '1', name: 'Bambu Lab X1C', wattage: 350, wear: 10, is_repair: false, ip_address: '', access_code: '', serial_number: '' },
+      { id: '2', name: 'Bambu Lab P1S/P1P', wattage: 350, wear: 8, is_repair: false, ip_address: '', access_code: '', serial_number: '' },
+      { id: '3', name: 'Bambu Lab A1', wattage: 200, wear: 6, is_repair: false, ip_address: '', access_code: '', serial_number: '' },
+      { id: '4', name: 'Bambu Lab A1 Mini', wattage: 150, wear: 5, is_repair: false, ip_address: '', access_code: '', serial_number: '' }
+    ];
+
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('buba_printers');
+      if (saved) {
+        try {
+          setPrinters(JSON.parse(saved));
+        } catch (_) {}
+      } else {
+        setPrinters(defaultPrinters);
+      }
+    } else {
+      setPrinters(defaultPrinters);
+    }
+
     if (!supabase) return;
+
     try {
       const { data, error } = await supabase
         .from('settings')
         .select('value')
         .eq('key', 'buba_printers')
-        .single();
-      
-      const defaultPrinters = [
-        { id: '1', name: 'Bambu Lab X1C', wattage: 350, wear: 10, is_repair: false, ip_address: '', access_code: '', serial_number: '' },
-        { id: '2', name: 'Bambu Lab P1S/P1P', wattage: 350, wear: 8, is_repair: false, ip_address: '', access_code: '', serial_number: '' },
-        { id: '3', name: 'Bambu Lab A1', wattage: 200, wear: 6, is_repair: false, ip_address: '', access_code: '', serial_number: '' },
-        { id: '4', name: 'Bambu Lab A1 Mini', wattage: 150, wear: 5, is_repair: false, ip_address: '', access_code: '', serial_number: '' }
-      ];
+        .maybeSingle();
 
       if (data && data.value) {
         setPrinters(data.value);
-      } else {
-        setPrinters(defaultPrinters);
-        await supabase.from('settings').upsert({ key: 'buba_printers', value: defaultPrinters });
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('buba_printers', JSON.stringify(data.value));
+        }
       }
     } catch (e) {
-      console.error('Error fetching printers:', e);
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('buba_printers');
-        if (saved) setPrinters(JSON.parse(saved));
-      }
+      // Silently fallback to local storage
     }
   };
 
@@ -339,7 +349,6 @@ export default function AdminPanel() {
       fetchOrders();
       fetchUsers();
       fetchReviews();
-      fetchPrinters();
     }, 5000);
 
     // 3. Telegram Mini App Initialization & Auto-Auth

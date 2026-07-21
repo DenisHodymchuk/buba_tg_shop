@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { novaPoshta } from '@/lib/novaposhta';
 import { 
   Coins, Search, Plus, Trash2, Calendar, ShoppingBag, 
-  ArrowUpRight, AlertCircle, Edit3, X, ChevronDown, 
+  ArrowUpRight, AlertCircle, Edit3, X, ChevronDown, ChevronUp, 
   CheckCircle2, Info, Loader2, Filter, Receipt, ExternalLink,
   Clock, ClipboardList, Printer, Truck, Send, XCircle, Sparkles, Copy
 } from 'lucide-react';
@@ -215,6 +215,13 @@ export default function SalesDashboard({ showToast }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [periodType, setPeriodType] = useState('month'); // 'week' | 'month' | 'quarter'
   const [ads, setAds] = useState([]);
+  const [expandedSalesIds, setExpandedSalesIds] = useState([]);
+
+  const toggleExpandSale = (id) => {
+    setExpandedSalesIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
   
   // Form state
   const [editingSale, setEditingSale] = useState(null);
@@ -1131,6 +1138,23 @@ export default function SalesDashboard({ showToast }) {
       {/* Sales List Container */}
       {isMobile ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {filteredSales.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button
+                onClick={() => setExpandedSalesIds(filteredSales.map(s => s.id))}
+                style={{ padding: '6px 12px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 10, fontWeight: 800, cursor: 'pointer', background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)' }}
+              >
+                Розгорнути всі
+              </button>
+              <button
+                onClick={() => setExpandedSalesIds([])}
+                style={{ padding: '6px 12px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 10, fontWeight: 800, cursor: 'pointer', background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)' }}
+              >
+                Згорнути всі
+              </button>
+            </div>
+          )}
+
           {filteredSales.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 14, background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)' }}>
               Продажів не знайдено.
@@ -1139,124 +1163,183 @@ export default function SalesDashboard({ showToast }) {
             filteredSales.map(sale => {
               const clientName = `${sale.shipping_details?.firstName || ''} ${sale.shipping_details?.lastName || ''} ${sale.customers?.first_name || ''} ${sale.customers?.last_name || ''}`.trim() || 'Гість';
               const clientPhone = sale.shipping_details?.phone || sale.customers?.phone || 'Не вказано';
+              const isExpanded = expandedSalesIds.includes(sale.id);
               
               return (
-                <div key={sale.id} style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div 
+                  key={sale.id} 
+                  style={{ 
+                    background: 'var(--bg-card)', 
+                    borderRadius: 20, 
+                    border: '1px solid var(--border)', 
+                    padding: 16, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: isExpanded ? 12 : 0,
+                    overflow: 'hidden',
+                    transition: 'all 0.2s'
+                  }}
+                >
                   
-                  {/* Header: Date and Platform */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>
-                      {new Date(sale.created_at).toLocaleDateString('uk-UA')}
-                    </span>
-                    <span style={{ 
-                      fontSize: 10, 
-                      fontWeight: 900, 
-                      color: getPlatformBadgeColor(sale.source),
-                      background: 'rgba(255,255,255,0.05)',
-                      padding: '4px 8px',
-                      borderRadius: 8
-                    }}>
-                      {getPlatformBadgeName(sale.source)}
-                    </span>
-                  </div>
-
-                  {/* Order Number & Client */}
-                  <div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 900, marginBottom: 2 }}>НОМЕР ЗАМОВЛЕННЯ</div>
-                    <div style={{ fontSize: 14, fontWeight: 900, color: '#fff' }}>{sale.order_number || `#${sale.id.slice(0, 8)}`}</div>
-                  </div>
-
-                  {/* Client Info */}
-                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: 12, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{clientName}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Тел: {clientPhone}</div>
-                    {sale.shipping_details?.city && (
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Доставка: {sale.shipping_details.city} {sale.shipping_details.warehouse ? `(${sale.shipping_details.warehouse})` : ''}</div>
-                    )}
-                    {sale.shipping_details?.notes && (
-                      <div style={{ 
-                        marginTop: 6, padding: '6px 10px', borderRadius: 10, 
-                        background: 'rgba(245,158,11,0.08)', border: '1px dashed rgba(245,158,11,0.3)',
-                        color: '#fbbf24', fontSize: 11, fontWeight: 750, display: 'flex', gap: 6, alignItems: 'center'
-                      }}>
-                        <span>⚠️ {sale.shipping_details.notes}</span>
+                  {/* Clickable Card Header */}
+                  <div 
+                    onClick={() => toggleExpandSale(sale.id)}
+                    style={{ display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    {/* Top Row: Date & Platform + Status Badge + Chevron */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>
+                          {new Date(sale.created_at).toLocaleDateString('uk-UA')}
+                        </span>
+                        <span style={{ 
+                          fontSize: 10, 
+                          fontWeight: 900, 
+                          color: getPlatformBadgeColor(sale.source),
+                          background: 'rgba(255,255,255,0.05)',
+                          padding: '3px 8px',
+                          borderRadius: 8
+                        }}>
+                          {getPlatformBadgeName(sale.source)}
+                        </span>
                       </div>
-                    )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {(() => {
+                          const meta = STATUS_META[sale.status] || STATUS_META.new;
+                          const Icon = meta.icon;
+                          return (
+                            <span style={{ 
+                              fontSize: 9, fontWeight: 900, padding: '3px 8px', borderRadius: 8,
+                              background: meta.bg, color: meta.color, display: 'inline-flex', alignItems: 'center', gap: 4,
+                              textTransform: 'uppercase'
+                            }}>
+                              <Icon size={10} />
+                              <span>{meta.label}</span>
+                            </span>
+                          );
+                        })()}
+                        {isExpanded ? <ChevronUp size={16} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={16} style={{ color: 'var(--text-muted)' }} />}
+                      </div>
+                    </div>
+
+                    {/* Bottom Header Row: Client Name, Order Number & Amount */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: '#fff' }}>
+                        {clientName} <span style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>({sale.order_number || `#${sale.id.slice(0, 8)}`})</span>
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>
+                        {sale.total} ₴
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Items list */}
-                  {sale.shipping_details?.items && sale.shipping_details.items.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 900, marginBottom: 6, textTransform: 'uppercase' }}>Товари ({sale.shipping_details.items.length})</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {sale.shipping_details.items.map((item, idx) => (
-                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderBottom: '1px solid rgba(255,255,255,0.02)', paddingBottom: 4 }}>
-                            <span style={{ color: '#fff', fontWeight: 600 }}>{item.name} <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>x{item.quantity}</span></span>
-                            <span style={{ fontWeight: 800 }}>{item.price * item.quantity} ₴</span>
+                  {/* Expanded Content */}
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                        animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 12 }}
+                      >
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }} />
+
+                        {/* Client Info */}
+                        <div style={{ background: 'rgba(0,0,0,0.15)', padding: 12, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{clientName}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Тел: {clientPhone}</div>
+                          {sale.shipping_details?.city && (
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Доставка: {sale.shipping_details.city} {sale.shipping_details.warehouse ? `(${sale.shipping_details.warehouse})` : ''}</div>
+                          )}
+                          {sale.shipping_details?.notes && (
+                            <div style={{ 
+                              marginTop: 6, padding: '6px 10px', borderRadius: 10, 
+                              background: 'rgba(245,158,11,0.08)', border: '1px dashed rgba(245,158,11,0.3)',
+                              color: '#fbbf24', fontSize: 11, fontWeight: 750, display: 'flex', gap: 6, alignItems: 'center'
+                            }}>
+                              <span>⚠️ {sale.shipping_details.notes}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Items list */}
+                        {sale.shipping_details?.items && sale.shipping_details.items.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 900, marginBottom: 6, textTransform: 'uppercase' }}>Товари ({sale.shipping_details.items.length})</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {sale.shipping_details.items.map((item, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, borderBottom: '1px solid rgba(255,255,255,0.02)', paddingBottom: 4 }}>
+                                  <span style={{ color: '#fff', fontWeight: 600 }}>{item.name} <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>x{item.quantity}</span></span>
+                                  <span style={{ fontWeight: 800 }}>{item.price * item.quantity} ₴</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        )}
 
-                  {/* Financial block */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, background: 'rgba(0,0,0,0.15)', padding: 12, borderRadius: 16 }}>
-                    <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Сума</div>
-                      <div style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>{sale.total} ₴</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Оплата</div>
-                      <div style={{ 
-                        fontSize: 9, fontWeight: 900, display: 'inline-block', padding: '4px 6px', borderRadius: 6,
-                        background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'partially_paid' ? 'rgba(14,165,233,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
-                        color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'partially_paid' ? '#38bdf8' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24',
-                        textAlign: 'center', width: '100%', boxSizing: 'border-box', whiteSpace: 'nowrap'
-                      }}>
-                        {sale.payment_status === 'paid' ? 'ОПЛ.' : sale.payment_status === 'partially_paid' ? 'ЧАСТ.' : sale.payment_status === 'verifying' ? 'ПЕРЕВ.' : 'ОЧІК.'}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Статус</div>
-                      {(() => {
-                        const meta = STATUS_META[sale.status] || STATUS_META.new;
-                        const Icon = meta.icon;
-                        return (
-                          <div style={{ 
-                            fontSize: 9, fontWeight: 900, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '4px 6px', borderRadius: 6,
-                            background: meta.bg, color: meta.color, textAlign: 'center', width: '100%', boxSizing: 'border-box', whiteSpace: 'nowrap',
-                            textTransform: 'uppercase'
-                          }}>
-                            <Icon size={10} />
-                            <span>{meta.label === 'Відправлено поштою' ? 'ВІДПР.' : meta.label.toUpperCase()}</span>
+                        {/* Financial block */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, background: 'rgba(0,0,0,0.15)', padding: 12, borderRadius: 16 }}>
+                          <div>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Сума</div>
+                            <div style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>{sale.total} ₴</div>
                           </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
+                          <div>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Оплата</div>
+                            <div style={{ 
+                              fontSize: 9, fontWeight: 900, display: 'inline-block', padding: '4px 6px', borderRadius: 6,
+                              background: sale.payment_status === 'paid' ? 'rgba(34,197,94,0.15)' : sale.payment_status === 'partially_paid' ? 'rgba(14,165,233,0.15)' : sale.payment_status === 'verifying' ? 'rgba(249,115,22,0.15)' : 'rgba(245,158,11,0.15)',
+                              color: sale.payment_status === 'paid' ? '#22c55e' : sale.payment_status === 'partially_paid' ? '#38bdf8' : sale.payment_status === 'verifying' ? '#f97316' : '#fbbf24',
+                              textAlign: 'center', width: '100%', boxSizing: 'border-box', whiteSpace: 'nowrap'
+                            }}>
+                              {sale.payment_status === 'paid' ? 'ОПЛ.' : sale.payment_status === 'partially_paid' ? 'ЧАСТ.' : sale.payment_status === 'verifying' ? 'ПЕРЕВ.' : 'ОЧІК.'}
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 850, textTransform: 'uppercase', marginBottom: 4 }}>Статус</div>
+                            {(() => {
+                              const meta = STATUS_META[sale.status] || STATUS_META.new;
+                              const Icon = meta.icon;
+                              return (
+                                <div style={{ 
+                                  fontSize: 9, fontWeight: 900, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '4px 6px', borderRadius: 6,
+                                  background: meta.bg, color: meta.color, textAlign: 'center', width: '100%', boxSizing: 'border-box', whiteSpace: 'nowrap',
+                                  textTransform: 'uppercase'
+                                }}>
+                                  <Icon size={10} />
+                                  <span>{meta.label}</span>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
 
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
-                    <button 
-                      onClick={() => handleEdit(sale)}
-                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      <Edit3 size={14} /> Редагувати
-                    </button>
-                    <button 
-                      onClick={() => handleDuplicate(sale)}
-                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-                      title="Дублювати замовлення"
-                    >
-                      <Copy size={14} /> Дублювати
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(sale.id)}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
+                          <button 
+                            onClick={() => handleEdit(sale)}
+                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            <Edit3 size={14} /> Редагувати
+                          </button>
+                          <button 
+                            onClick={() => handleDuplicate(sale)}
+                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
+                            title="Дублювати замовлення"
+                          >
+                            <Copy size={14} /> Дублювати
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(sale.id)}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })
