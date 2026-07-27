@@ -137,11 +137,45 @@ export default function OrderKanbanBoard({
     }
   };
 
-  const handleWheel = (e) => {
-    if (boardRef.current && e.deltaY !== 0) {
-      boardRef.current.scrollLeft += e.deltaY * 1.5;
-    }
-  };
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+
+    const handleWheelNative = (e) => {
+      if (e.deltaY === 0) return;
+
+      // Check if target is inside a vertically scrollable container (e.g. column card list)
+      let target = e.target;
+      let isInsideScrollableList = false;
+
+      while (target && target !== el) {
+        if (target.scrollHeight > target.clientHeight && target.clientHeight > 0) {
+          const style = window.getComputedStyle(target);
+          const overflowY = style.overflowY;
+          if (overflowY === 'auto' || overflowY === 'scroll') {
+            const atTop = target.scrollTop === 0;
+            const atBottom = Math.abs(target.scrollHeight - target.clientHeight - target.scrollTop) < 2;
+
+            if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+              isInsideScrollableList = true;
+              break;
+            }
+          }
+        }
+        target = target.parentElement;
+      }
+
+      if (!isInsideScrollableList) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY * 1.5;
+      }
+    };
+
+    el.addEventListener('wheel', handleWheelNative, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', handleWheelNative);
+    };
+  }, []);
 
   // Load columns configuration from localStorage
   useEffect(() => {
@@ -365,7 +399,6 @@ export default function OrderKanbanBoard({
       {/* Kanban Board Container */}
       <div 
         ref={boardRef}
-        onWheel={handleWheel}
         style={{ 
           display: 'flex', 
           gap: 16, 
