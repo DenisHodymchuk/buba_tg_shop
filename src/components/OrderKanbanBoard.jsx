@@ -260,7 +260,7 @@ export default function OrderKanbanBoard({
       );
     } catch (err) {
       console.error("Error moving order:", err);
-      showToast?.("Помилка змінення статусу замовлення", "error");
+      showToast?.(`Помилка: ${err.message || err.details || "Неможливо змінити статус"}`, "error");
     }
   };
 
