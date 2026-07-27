@@ -84,7 +84,7 @@ export default function AdminPanel() {
     if (typeof window !== 'undefined') {
       const savedTab = localStorage.getItem('admin_active_tab');
       if (savedTab) {
-        setActiveTab(savedTab);
+        setActiveTab(savedTab === 'sales' ? 'sales_cabinet' : savedTab);
       }
     }
   }, []);
@@ -1506,7 +1506,6 @@ export default function AdminPanel() {
         <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <SidebarBtn active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Package size={18} />} label="Товари" />
           <SidebarBtn active={activeTab === 'sales_cabinet'} onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }} icon={<Coins size={18} />} label="Продажі" />
-          <SidebarBtn active={activeTab === 'sales'} onClick={() => { setActiveTab('sales'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={18} />} label="Замовлення" />
           <SidebarBtn active={activeTab === 'shipping_list'} onClick={() => { setActiveTab('shipping_list'); setIsSidebarOpen(false); }} icon={<Truck size={18} />} label="Відправки" />
           <SidebarBtn active={activeTab === 'production'} onClick={() => { setActiveTab('production'); setIsSidebarOpen(false); }} icon={<Hammer size={18} />} label="Виготовлення" />
           <SidebarBtn active={activeTab === 'calculator'} onClick={() => { setActiveTab('calculator'); setIsSidebarOpen(false); }} icon={<Calculator size={18} />} label="Калькулятор" />
