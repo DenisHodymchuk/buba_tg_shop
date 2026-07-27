@@ -1,10 +1,10 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Settings, Trash2, Edit3, MoveLeft, MoveRight, 
   Clock, Printer, Truck, Send, CheckCircle2, XCircle, 
   Coins, User, Phone, ShoppingBag, AlertCircle, ArrowUpRight,
-  Sparkles, Layers, ChevronRight, Eye, Tag, DollarSign, ExternalLink
+  Sparkles, Layers, ChevronRight, ChevronLeft, Eye, Tag, DollarSign, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -117,6 +117,19 @@ export default function OrderKanbanBoard({
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [editingColumn, setEditingColumn] = useState(null);
+  const boardRef = useRef(null);
+
+  const scrollBoard = (direction) => {
+    if (boardRef.current) {
+      boardRef.current.scrollBy({ left: direction * 350, behavior: 'smooth' });
+    }
+  };
+
+  const handleWheel = (e) => {
+    if (boardRef.current && e.deltaY !== 0) {
+      boardRef.current.scrollLeft += e.deltaY * 1.5;
+    }
+  };
 
   // Load columns configuration from localStorage
   useEffect(() => {
@@ -285,7 +298,33 @@ export default function OrderKanbanBoard({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {/* Scroll Navigation Buttons */}
+          <div style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 3 }}>
+            <button
+              onClick={() => scrollBoard(-1)}
+              title="Прокрутити ліворуч"
+              style={{
+                padding: '6px 10px', borderRadius: 7, border: 'none',
+                background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => scrollBoard(1)}
+              title="Прокрутити праворуч"
+              style={{
+                padding: '6px 10px', borderRadius: 7, border: 'none',
+                background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
           <button
             onClick={() => setIsConfigModalOpen(true)}
             style={{
@@ -312,14 +351,20 @@ export default function OrderKanbanBoard({
       </div>
 
       {/* Kanban Board Container */}
-      <div style={{ 
-        display: 'flex', 
-        gap: 16, 
-        overflowX: 'auto', 
-        paddingBottom: 16,
-        minHeight: 620,
-        scrollSnapType: 'x mandatory'
-      }}>
+      <div 
+        ref={boardRef}
+        onWheel={handleWheel}
+        style={{ 
+          display: 'flex', 
+          gap: 16, 
+          overflowX: 'auto', 
+          paddingBottom: 16,
+          minHeight: 620,
+          scrollBehavior: 'smooth',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#7c3aed rgba(15, 23, 42, 0.6)'
+        }}
+      >
         {columns.map((col, index) => {
           // Filter orders matching column status
           const colOrders = orders.filter(o => o.status === col.status);
@@ -675,7 +720,10 @@ export default function OrderKanbanBoard({
 // Single Order Kanban Card Component
 function KanbanCard({ order, columnColor, onDragStart, onEditOrder, onViewOrder }) {
   const details = order.shipping_details || {};
-  const customerName = details.fullName || details.name || details.first_name || (order.customers ? `${order.customers.first_name || ''} ${order.customers.last_name || ''}`.trim() : 'Клієнт');
+  const firstName = details.firstName || details.first_name || order.customers?.first_name || '';
+  const lastName = details.lastName || details.last_name || order.customers?.last_name || '';
+  const combinedFullName = `${firstName} ${lastName}`.trim();
+  const customerName = combinedFullName || details.fullName || details.name || details.recipientName || 'Гість';
   const items = details.items || [];
   const sourceInfo = SOURCE_LABELS[order.source] || SOURCE_LABELS.website;
 
