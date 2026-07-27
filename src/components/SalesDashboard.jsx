@@ -2,11 +2,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { novaPoshta } from '@/lib/novaposhta';
+import OrderKanbanBoard from '@/components/OrderKanbanBoard';
 import { 
   Coins, Search, Plus, Trash2, Calendar, ShoppingBag, 
   ArrowUpRight, AlertCircle, Edit3, X, ChevronDown, ChevronUp, 
   CheckCircle2, Info, Loader2, Filter, Receipt, ExternalLink,
-  Clock, ClipboardList, Printer, Truck, Send, XCircle, Sparkles, Copy
+  Clock, ClipboardList, Printer, Truck, Send, XCircle, Sparkles, Copy,
+  LayoutGrid, List
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -121,9 +123,12 @@ export default function SalesDashboard({ showToast }) {
   const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [salesFilterTemplates, setSalesFilterTemplates] = useState([]);
   const [newSalesTemplateName, setNewSalesTemplateName] = useState('');
+  const [viewMode, setViewMode] = useState('table'); // 'table' | 'kanban'
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const savedView = localStorage.getItem('buba_sales_view_mode');
+      if (savedView) setViewMode(savedView);
       const saved = localStorage.getItem('buba_sales_filter_templates');
       if (saved) {
         const templates = JSON.parse(saved);
@@ -137,6 +142,46 @@ export default function SalesDashboard({ showToast }) {
       }
     }
   }, []);
+
+  const switchViewMode = (mode) => {
+    setViewMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('buba_sales_view_mode', mode);
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId, updates) => {
+    const targetSale = sales.find(s => String(s.id) === String(orderId));
+    if (!targetSale) return;
+
+    const oldStatus = targetSale.status;
+    const oldTotal = parseFloat(targetSale.total || 0);
+    const oldAdId = targetSale.shipping_details?.attributed_ad_id;
+
+    // Optimistically update local state
+    setSales(prev => prev.map(s => String(s.id) === String(orderId) ? { ...s, ...updates } : s));
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update(updates)
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      if (updates.status) {
+        if (oldStatus === 'completed' && updates.status !== 'completed' && oldAdId) {
+          await adjustAdRevenue(oldAdId, -oldTotal);
+        } else if (oldStatus !== 'completed' && updates.status === 'completed' && oldAdId) {
+          await adjustAdRevenue(oldAdId, oldTotal);
+        }
+      }
+    } catch (err) {
+      // Rollback on error
+      setSales(prev => prev.map(s => String(s.id) === String(orderId) ? targetSale : s));
+      throw err;
+    }
+  };
 
   const saveSalesFilterTemplate = (name) => {
     if (!name.trim()) return;
@@ -952,6 +997,54 @@ export default function SalesDashboard({ showToast }) {
             )}
           </div>
 
+          {/* View Switcher Buttons */}
+          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 3, gap: 3, flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => switchViewMode('table')}
+              title="Табличний вигляд"
+              style={{
+                padding: '6px 12px',
+                borderRadius: 9,
+                border: 'none',
+                background: viewMode === 'table' ? '#7c3aed' : 'transparent',
+                color: viewMode === 'table' ? '#fff' : 'var(--text-muted)',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'all 0.2s'
+              }}
+            >
+              <List size={14} />
+              <span>Таблиця</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => switchViewMode('kanban')}
+              title="Канбан дошка"
+              style={{
+                padding: '6px 12px',
+                borderRadius: 9,
+                border: 'none',
+                background: viewMode === 'kanban' ? '#7c3aed' : 'transparent',
+                color: viewMode === 'kanban' ? '#fff' : 'var(--text-muted)',
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'all 0.2s'
+              }}
+            >
+              <LayoutGrid size={14} />
+              <span>Канбан</span>
+            </button>
+          </div>
+
           {/* Filter Toggle Button */}
           <button
             type="button"
@@ -1220,8 +1313,15 @@ export default function SalesDashboard({ showToast }) {
         </AnimatePresence>
       </div>
 
-      {/* Sales List Container */}
-      {isMobile ? (
+      {/* Sales Content Container (Table or Kanban) */}
+      {viewMode === 'kanban' ? (
+        <OrderKanbanBoard 
+          orders={filteredSales}
+          onUpdateOrderStatus={handleUpdateOrderStatus}
+          onEditOrder={handleEdit}
+          showToast={showToast}
+        />
+      ) : isMobile ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {filteredSales.length > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
