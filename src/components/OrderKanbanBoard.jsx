@@ -789,13 +789,14 @@ function KanbanCard({ order, columnColor, onDragStart, onEditOrder, onViewOrder 
     <div
       draggable
       onDragStart={onDragStart}
+      onClick={onEditOrder}
       style={{
         background: 'rgba(30, 41, 59, 0.75)',
         backdropFilter: 'blur(10px)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         borderRadius: 14,
         padding: 14,
-        cursor: 'grab',
+        cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
