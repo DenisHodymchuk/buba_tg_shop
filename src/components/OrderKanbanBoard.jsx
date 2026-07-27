@@ -197,6 +197,59 @@ export default function OrderKanbanBoard({
     }
   };
 
+  // Auto-scroll animation ref
+  const autoScrollAnimationRef = useRef(null);
+
+  const stopAutoScroll = () => {
+    if (autoScrollAnimationRef.current) {
+      cancelAnimationFrame(autoScrollAnimationRef.current);
+      autoScrollAnimationRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopAutoScroll();
+    };
+  }, []);
+
+  const autoScrollBoard = (e) => {
+    if (!boardRef.current) return;
+    const rect = boardRef.current.getBoundingClientRect();
+    const mouseX = e.clientX;
+
+    const edgeThreshold = 160;
+    const maxSpeed = 22;
+
+    if (mouseX > rect.right - edgeThreshold && mouseX < rect.right + 60) {
+      const intensity = Math.min(1, Math.max(0.15, (edgeThreshold - (rect.right - mouseX)) / edgeThreshold));
+      const speed = Math.round(intensity * maxSpeed);
+      if (!autoScrollAnimationRef.current) {
+        const step = () => {
+          if (boardRef.current) {
+            boardRef.current.scrollLeft += speed;
+          }
+          autoScrollAnimationRef.current = requestAnimationFrame(step);
+        };
+        autoScrollAnimationRef.current = requestAnimationFrame(step);
+      }
+    } else if (mouseX < rect.left + edgeThreshold && mouseX > rect.left - 60) {
+      const intensity = Math.min(1, Math.max(0.15, (edgeThreshold - (mouseX - rect.left)) / edgeThreshold));
+      const speed = Math.round(intensity * maxSpeed);
+      if (!autoScrollAnimationRef.current) {
+        const step = () => {
+          if (boardRef.current) {
+            boardRef.current.scrollLeft -= speed;
+          }
+          autoScrollAnimationRef.current = requestAnimationFrame(step);
+        };
+        autoScrollAnimationRef.current = requestAnimationFrame(step);
+      }
+    } else {
+      stopAutoScroll();
+    }
+  };
+
   const handleResetColumns = () => {
     if (confirm("Відновити початкові налаштування колонок?")) {
       saveColumns(DEFAULT_KANBAN_COLUMNS);
@@ -211,12 +264,24 @@ export default function OrderKanbanBoard({
     e.dataTransfer.effectAllowed = 'move';
   };
 
+  const handleDragEnd = () => {
+    stopAutoScroll();
+    setDraggedOrderId(null);
+    setDragOverColumnId(null);
+  };
+
   const handleDragOver = (e, colId) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     if (dragOverColumnId !== colId) {
       setDragOverColumnId(colId);
     }
+    autoScrollBoard(e);
+  };
+
+  const handleBoardDragOver = (e) => {
+    e.preventDefault();
+    autoScrollBoard(e);
   };
 
   const handleDragLeave = (e, colId) => {
@@ -227,6 +292,7 @@ export default function OrderKanbanBoard({
 
   const handleDrop = async (e, targetColumn) => {
     e.preventDefault();
+    stopAutoScroll();
     setDragOverColumnId(null);
     const orderId = e.dataTransfer.getData('text/plain') || draggedOrderId;
     setDraggedOrderId(null);
@@ -395,13 +461,15 @@ export default function OrderKanbanBoard({
       {/* Kanban Board Container */}
       <div 
         ref={boardRef}
+        onDragOver={handleBoardDragOver}
+        onDragLeave={() => stopAutoScroll()}
         style={{ 
           display: 'flex', 
           gap: 16, 
           overflowX: 'auto', 
           paddingBottom: 16,
           minHeight: 620,
-          scrollBehavior: 'smooth',
+          scrollBehavior: draggedOrderId ? 'auto' : 'smooth',
           scrollbarWidth: 'thin',
           scrollbarColor: '#7c3aed rgba(15, 23, 42, 0.6)'
         }}
@@ -516,6 +584,7 @@ export default function OrderKanbanBoard({
                       order={order}
                       columnColor={col.color}
                       onDragStart={(e) => handleDragStart(e, order.id)}
+                      onDragEnd={handleDragEnd}
                       onEditOrder={() => onEditOrder?.(order)}
                       onViewOrder={() => onViewOrder?.(order)}
                     />
@@ -761,7 +830,7 @@ export default function OrderKanbanBoard({
 }
 
 // Single Order Kanban Card Component
-function KanbanCard({ order, columnColor, onDragStart, onEditOrder, onViewOrder }) {
+function KanbanCard({ order, columnColor, onDragStart, onDragEnd, onEditOrder, onViewOrder }) {
   const details = order.shipping_details || {};
   const firstName = details.firstName || details.first_name || order.customers?.first_name || '';
   const lastName = details.lastName || details.last_name || order.customers?.last_name || '';
@@ -789,6 +858,7 @@ function KanbanCard({ order, columnColor, onDragStart, onEditOrder, onViewOrder 
     <div
       draggable
       onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onClick={onEditOrder}
       style={{
         background: 'rgba(30, 41, 59, 0.75)',
