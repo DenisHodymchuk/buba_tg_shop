@@ -671,54 +671,106 @@ export default function SalesDashboard({ showToast }) {
   };
 
   const handleEdit = (sale) => {
+    if (!sale) return;
+
+    let details = sale.shipping_details;
+    if (typeof details === 'string') {
+      try {
+        details = JSON.parse(details);
+      } catch (e) {
+        details = {};
+      }
+    }
+    details = details || {};
+
+    let rawItems = details.items || sale.items || [];
+    if (typeof rawItems === 'string') {
+      try {
+        rawItems = JSON.parse(rawItems);
+      } catch (e) {
+        rawItems = [];
+      }
+    }
+    if (!Array.isArray(rawItems)) rawItems = [];
+
+    const firstName = details.firstName || details.first_name || sale.customers?.first_name || '';
+    const lastName = details.lastName || details.last_name || sale.customers?.last_name || '';
+
     setEditingSale(sale);
     setFormData({
       source: sale.source || 'olx',
-      firstName: sale.shipping_details?.firstName || '',
-      lastName: sale.shipping_details?.lastName || '',
-      phone: sale.shipping_details?.phone || '',
-      city: sale.shipping_details?.city || '',
-      warehouse: sale.shipping_details?.warehouse || '',
-      total: sale.total || '',
+      firstName: firstName,
+      lastName: lastName,
+      phone: details.phone || sale.customers?.phone || '',
+      city: details.city || '',
+      cityRef: details.cityRef || '',
+      warehouse: details.warehouse || '',
+      total: sale.total ? String(sale.total) : '',
       payment_status: sale.payment_status || 'paid',
       status: sale.status || 'completed',
-      items: sale.shipping_details?.items || [],
-      is_cod: sale.shipping_details?.is_cod || false,
-      cod_amount: sale.shipping_details?.cod_amount || '',
-      notes: sale.shipping_details?.notes || '',
-      sold_via_ad: sale.shipping_details?.sold_via_ad || false,
-      attributed_ad_id: sale.shipping_details?.attributed_ad_id || ''
+      items: rawItems,
+      is_cod: details.is_cod || false,
+      cod_amount: details.cod_amount ? String(details.cod_amount) : '',
+      notes: details.notes || '',
+      sold_via_ad: details.sold_via_ad || false,
+      attributed_ad_id: details.attributed_ad_id || ''
     });
+
+    setNpCityQuery(details.city || '');
+    setNpWarehouseQuery(details.warehouse || '');
     setShowAddForm(true);
   };
 
   const handleDuplicate = (sale) => {
-    setEditingSale(null);
-    const duplicatedItems = sale.shipping_details?.items 
-      ? JSON.parse(JSON.stringify(sale.shipping_details.items)) 
-      : [];
+    if (!sale) return;
 
+    let details = sale.shipping_details;
+    if (typeof details === 'string') {
+      try {
+        details = JSON.parse(details);
+      } catch (e) {
+        details = {};
+      }
+    }
+    details = details || {};
+
+    let rawItems = details.items || sale.items || [];
+    if (typeof rawItems === 'string') {
+      try {
+        rawItems = JSON.parse(rawItems);
+      } catch (e) {
+        rawItems = [];
+      }
+    }
+    if (!Array.isArray(rawItems)) rawItems = [];
+
+    const duplicatedItems = JSON.parse(JSON.stringify(rawItems));
+
+    const firstName = details.firstName || details.first_name || sale.customers?.first_name || '';
+    const lastName = details.lastName || details.last_name || sale.customers?.last_name || '';
+
+    setEditingSale(null);
     setFormData({
       source: sale.source || 'olx',
-      firstName: sale.shipping_details?.firstName || '',
-      lastName: sale.shipping_details?.lastName || '',
-      phone: sale.shipping_details?.phone || '',
-      city: sale.shipping_details?.city || '',
-      cityRef: sale.shipping_details?.cityRef || '',
-      warehouse: sale.shipping_details?.warehouse || '',
-      total: sale.total || '',
+      firstName: firstName,
+      lastName: lastName,
+      phone: details.phone || sale.customers?.phone || '',
+      city: details.city || '',
+      cityRef: details.cityRef || '',
+      warehouse: details.warehouse || '',
+      total: sale.total ? String(sale.total) : '',
       payment_status: 'pending',
       status: 'new',
       items: duplicatedItems,
-      is_cod: sale.shipping_details?.is_cod || false,
-      cod_amount: sale.shipping_details?.cod_amount || '',
-      notes: sale.shipping_details?.notes || '',
-      sold_via_ad: sale.shipping_details?.sold_via_ad || false,
-      attributed_ad_id: sale.shipping_details?.attributed_ad_id || ''
+      is_cod: details.is_cod || false,
+      cod_amount: details.cod_amount ? String(details.cod_amount) : '',
+      notes: details.notes || '',
+      sold_via_ad: details.sold_via_ad || false,
+      attributed_ad_id: details.attributed_ad_id || ''
     });
 
-    setNpCityQuery(sale.shipping_details?.city || '');
-    setNpWarehouseQuery(sale.shipping_details?.warehouse || '');
+    setNpCityQuery(details.city || '');
+    setNpWarehouseQuery(details.warehouse || '');
     setShowAddForm(true);
     showToast('Дані замовлення скопійовано! Внесіть зміни та збережіть.', 'info');
   };
