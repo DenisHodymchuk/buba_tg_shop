@@ -138,42 +138,38 @@ export default function OrderKanbanBoard({
   };
 
   useEffect(() => {
-    const el = boardRef.current;
-    if (!el) return;
+    const boardEl = boardRef.current;
+    if (!boardEl) return;
 
     const handleWheelNative = (e) => {
       if (e.deltaY === 0) return;
 
-      // Check if target is inside a vertically scrollable container (e.g. column card list)
       let target = e.target;
-      let isInsideScrollableList = false;
+      let cardsListEl = null;
 
-      while (target && target !== el) {
-        if (target.scrollHeight > target.clientHeight && target.clientHeight > 0) {
-          const style = window.getComputedStyle(target);
-          const overflowY = style.overflowY;
-          if (overflowY === 'auto' || overflowY === 'scroll') {
-            const atTop = target.scrollTop === 0;
-            const atBottom = Math.abs(target.scrollHeight - target.clientHeight - target.scrollTop) < 2;
-
-            if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
-              isInsideScrollableList = true;
-              break;
-            }
-          }
+      // Шукаємо чи знаходиться курсор у контейнері карток колонки
+      while (target && target !== boardEl && target !== document.body) {
+        if (target.getAttribute && target.getAttribute('data-kanban-cards-list') === 'true') {
+          cardsListEl = target;
+          break;
         }
         target = target.parentElement;
       }
 
-      if (!isInsideScrollableList) {
+      if (cardsListEl) {
+        // Якщо наведений на колонку з картками — скролиться ТІЛЬКИ вона (і не рухається ні сторінка, ні дошка)
         e.preventDefault();
-        el.scrollLeft += e.deltaY * 1.5;
+        cardsListEl.scrollTop += e.deltaY;
+      } else {
+        // Якщо наведений на назви колонок / шапку дошки — скролиться ТІЛЬКИ Канбан дошка по горизонталі
+        e.preventDefault();
+        boardEl.scrollLeft += e.deltaY * 1.5;
       }
     };
 
-    el.addEventListener('wheel', handleWheelNative, { passive: false });
+    boardEl.addEventListener('wheel', handleWheelNative, { passive: false });
     return () => {
-      el.removeEventListener('wheel', handleWheelNative);
+      boardEl.removeEventListener('wheel', handleWheelNative);
     };
   }, []);
 
@@ -486,7 +482,9 @@ export default function OrderKanbanBoard({
               </div>
 
               {/* Cards list */}
-              <div style={{
+              <div 
+                data-kanban-cards-list="true"
+                style={{
                 padding: 12,
                 display: 'flex',
                 flexDirection: 'column',
