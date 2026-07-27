@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Settings, Trash2, Edit3, MoveLeft, MoveRight, 
-  Clock, Printer, Truck, Send, CheckCircle2, XCircle, 
+  Clock, Printer, Truck, Send, CheckCircle2, XCircle, Palette,
   Coins, User, Phone, ShoppingBag, AlertCircle, ArrowUpRight,
   Sparkles, Layers, ChevronRight, ChevronLeft, Eye, Tag, DollarSign, ExternalLink
 } from 'lucide-react';
@@ -31,6 +31,17 @@ export const DEFAULT_KANBAN_COLUMNS = [
     autoPaymentStatus: null,
     wipLimit: 0,
     icon: 'Printer'
+  },
+  {
+    id: 'col_painting',
+    title: 'Розфарбовується',
+    status: 'painting',
+    color: '#f59e0b',
+    bg: 'rgba(245, 158, 11, 0.08)',
+    borderColor: 'rgba(245, 158, 11, 0.25)',
+    autoPaymentStatus: null,
+    wipLimit: 0,
+    icon: 'Palette'
   },
   {
     id: 'col_shipping',
@@ -82,6 +93,7 @@ const AVAILABLE_STATUSES = [
   { value: 'new', label: 'Нове' },
   { value: 'preparing', label: 'В підготовці' },
   { value: 'printing', label: 'Друкується / Виготовляється' },
+  { value: 'painting', label: 'Розфарбовується' },
   { value: 'shipping', label: 'Готово до відправки' },
   { value: 'shipped', label: 'Відправлено поштою' },
   { value: 'completed', label: 'Виконано' },
