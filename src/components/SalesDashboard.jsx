@@ -336,10 +336,11 @@ export default function SalesDashboard({ showToast }) {
   }, [formData.cityRef]);
 
   const npFilteredWarehouses = useMemo(() => {
+    if (!npWarehouses || !Array.isArray(npWarehouses)) return [];
     if (!npWarehouseQuery) return npWarehouses;
     if (npWarehouseQuery === formData.warehouse) return [];
     return npWarehouses.filter(w => 
-      w.Description.toLowerCase().includes(npWarehouseQuery.toLowerCase())
+      w && w.Description && String(w.Description).toLowerCase().includes(String(npWarehouseQuery).toLowerCase())
     );
   }, [npWarehouses, npWarehouseQuery, formData.warehouse]);
 
@@ -862,26 +863,31 @@ export default function SalesDashboard({ showToast }) {
   };
 
   const productOptions = useMemo(() => {
-    const addedNames = new Set(formData.items.map(item => item.name));
+    const itemsList = Array.isArray(formData?.items) ? formData.items : [];
+    const addedNames = new Set(itemsList.map(item => item?.name).filter(Boolean));
+    const prodList = Array.isArray(products) ? products : [];
     return [
       { value: '', label: '-- Виберіть наявний товар --' },
-      ...products
-        .filter(p => !addedNames.has(p.name))
-        .map(p => ({ value: p.id, label: `${p.name} (${p.price} ₴)` }))
+      ...prodList
+        .filter(p => p && p.name && !addedNames.has(p.name))
+        .map(p => ({ value: p.id, label: `${p.name} (${p.price || 0} ₴)` }))
     ];
-  }, [products, formData.items]);
+  }, [products, formData?.items]);
 
   const matchingAds = useMemo(() => {
-    const productIdsInCart = new Set(formData.items.map(item => item.product_id).filter(Boolean));
-    const productNamesInCart = new Set(formData.items.map(item => item.name?.toLowerCase()).filter(Boolean));
+    const itemsList = Array.isArray(formData?.items) ? formData.items : [];
+    const productIdsInCart = new Set(itemsList.map(item => item?.product_id).filter(Boolean));
+    const productNamesInCart = new Set(itemsList.map(item => item?.name?.toLowerCase()).filter(Boolean));
 
-    const directAds = ads.filter(ad => 
+    const adsList = Array.isArray(ads) ? ads.filter(Boolean) : [];
+
+    const directAds = adsList.filter(ad => 
       (ad.product_id && productIdsInCart.has(ad.product_id)) || 
-      (ad.product_name && Array.from(productNamesInCart).some(name => ad.product_name.toLowerCase().includes(name)))
+      (ad.product_name && Array.from(productNamesInCart).some(name => String(ad.product_name).toLowerCase().includes(name)))
     );
 
-    const generalAds = ads.filter(ad => !ad.product_id && !directAds.some(da => da.id === ad.id));
-    const otherAds = ads.filter(ad => !directAds.some(da => da.id === ad.id) && !generalAds.some(ga => ga.id === ad.id));
+    const generalAds = adsList.filter(ad => !ad.product_id && !directAds.some(da => da.id === ad.id));
+    const otherAds = adsList.filter(ad => !directAds.some(da => da.id === ad.id) && !generalAds.some(ga => ga.id === ad.id));
 
     return {
       direct: directAds,
@@ -889,7 +895,7 @@ export default function SalesDashboard({ showToast }) {
       other: otherAds,
       all: [...directAds, ...generalAds, ...otherAds]
     };
-  }, [ads, formData.items]);
+  }, [ads, formData?.items]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
@@ -903,7 +909,12 @@ export default function SalesDashboard({ showToast }) {
           <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Облік всіх продажів (сайт, соцмережі, маркетплейси, офлайн)</p>
         </div>
         <button 
-          onClick={() => { resetForm(); setShowAddForm(true); }}
+          type="button"
+          onClick={(e) => { 
+            e?.preventDefault();
+            resetForm(); 
+            setShowAddForm(true); 
+          }}
           style={{ 
             padding: '12px 24px', borderRadius: 14, border: 'none',
             background: 'linear-gradient(135deg, #2dd4bf, #3b82f6)', color: '#fff',
@@ -1803,7 +1814,8 @@ export default function SalesDashboard({ showToast }) {
                 </div>
 
                 <button 
-                  onClick={() => setShowAddForm(false)} 
+                  type="button"
+                  onClick={(e) => { e?.preventDefault(); setShowAddForm(false); }} 
                   style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#94a3b8', borderRadius: 10, padding: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   <X size={18} />
@@ -2088,23 +2100,31 @@ export default function SalesDashboard({ showToast }) {
                         <ThemeSelect
                           value={formData.attributed_ad_id}
                           onChange={(adId) => setFormData({ ...formData, attributed_ad_id: adId })}
-                          displayValue={ads.find(a => a.id === formData.attributed_ad_id) ? `${ads.find(a => a.id === formData.attributed_ad_id).platform} - ${ads.find(a => a.id === formData.attributed_ad_id).product_name} (${new Date(ads.find(a => a.id === formData.attributed_ad_id).ad_date).toLocaleDateString('uk-UA')})` : ''}
+                          displayValue={
+                            (() => {
+                              if (!formData.attributed_ad_id) return '';
+                              const foundAd = (ads || []).find(a => a && a.id === formData.attributed_ad_id);
+                              if (!foundAd) return '';
+                              const dateStr = foundAd.ad_date ? new Date(foundAd.ad_date).toLocaleDateString('uk-UA') : '';
+                              return `${foundAd.platform || ''} - ${foundAd.product_name || 'Загальна'}${dateStr ? ` (${dateStr})` : ''}`;
+                            })()
+                          }
                           placeholder="-- Оберіть кампанію --"
                           options={[
-                            ...(matchingAds.direct.length > 0 ? [{ value: 'header-direct', label: '⭐ Відповідна реклама для товарів:', disabled: true }] : []),
-                            ...matchingAds.direct.map(ad => ({
+                            ...((matchingAds.direct || []).length > 0 ? [{ value: 'header-direct', label: '⭐ Відповідна реклама для товарів:', disabled: true }] : []),
+                            ...(matchingAds.direct || []).map(ad => ({
                               value: ad.id,
-                              label: `[${ad.platform}] ${ad.product_name} (${new Date(ad.ad_date).toLocaleDateString('uk-UA')})`
+                              label: `[${ad.platform || 'Ad'}] ${ad.product_name || 'Товар'} (${ad.ad_date ? new Date(ad.ad_date).toLocaleDateString('uk-UA') : ''})`
                             })),
-                            ...(matchingAds.general.length > 0 ? [{ value: 'header-general', label: '📢 Загальна реклама:', disabled: true }] : []),
-                            ...matchingAds.general.map(ad => ({
+                            ...((matchingAds.general || []).length > 0 ? [{ value: 'header-general', label: '📢 Загальна реклама:', disabled: true }] : []),
+                            ...(matchingAds.general || []).map(ad => ({
                               value: ad.id,
-                              label: `[${ad.platform}] ${ad.product_name || 'Загальна'} (${new Date(ad.ad_date).toLocaleDateString('uk-UA')})`
+                              label: `[${ad.platform || 'Ad'}] ${ad.product_name || 'Загальна'} (${ad.ad_date ? new Date(ad.ad_date).toLocaleDateString('uk-UA') : ''})`
                             })),
-                            ...(matchingAds.other.length > 0 ? [{ value: 'header-other', label: '🔍 Інші рекламні кампанії:', disabled: true }] : []),
-                            ...matchingAds.other.map(ad => ({
+                            ...((matchingAds.other || []).length > 0 ? [{ value: 'header-other', label: '🔍 Інші рекламні кампанії:', disabled: true }] : []),
+                            ...(matchingAds.other || []).map(ad => ({
                               value: ad.id,
-                              label: `[${ad.platform}] ${ad.product_name} (${new Date(ad.ad_date).toLocaleDateString('uk-UA')})`
+                              label: `[${ad.platform || 'Ad'}] ${ad.product_name || 'Кампанія'} (${ad.ad_date ? new Date(ad.ad_date).toLocaleDateString('uk-UA') : ''})`
                             }))
                           ]}
                         />
