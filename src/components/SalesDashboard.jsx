@@ -1758,39 +1758,36 @@ export default function SalesDashboard({ showToast }) {
       <AnimatePresence>
         {showAddForm && (
           <div 
-            onClick={() => {
-              // Any general outer click defaults
-            }}
+            onClick={() => setShowAddForm(false)}
             style={{ 
               position: 'fixed', 
               inset: 0, 
-              background: 'rgba(0,0,0,0.85)', 
-              backdropFilter: 'blur(10px)', 
+              background: 'rgba(0, 0, 0, 0.85)', 
               zIndex: 1000, 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              padding: isMobile ? '20px 10px' : '40px 20px',
-              overflowY: 'auto'
+              padding: isMobile ? 12 : 20
             }}
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }} 
               animate={{ opacity: 1, scale: 1 }} 
+              exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
               style={{ 
                 background: '#0f172a', 
-                borderRadius: 28, 
-                padding: isMobile ? 20 : 30, 
+                borderRadius: 24, 
+                padding: isMobile ? 18 : 28, 
                 width: '100%', 
-                maxWidth: isMobile ? 540 : 1050, 
+                maxWidth: 680, 
                 border: '1px solid rgba(124, 58, 237, 0.4)', 
                 color: '#fff', 
-                maxHeight: '92vh',
+                maxHeight: '90vh',
                 overflowY: 'auto',
-                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8), 0 0 35px rgba(124, 58, 237, 0.15)',
-                margin: 'auto 0'
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8), 0 0 35px rgba(124, 58, 237, 0.15)'
               }}
+              className="hide-scrollbar"
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1822,555 +1819,532 @@ export default function SalesDashboard({ showToast }) {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 20, alignItems: 'start' }}>
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 
-                {/* LEFT COLUMN: Client Info, Delivery & Statuses */}
-                <div style={{ 
-                  display: 'flex', flexDirection: 'column', gap: 16, 
-                  background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.07)', 
-                  borderRadius: 20, padding: isMobile ? 14 : 20 
-                }}>
-                  <div style={{ fontSize: 12, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <User size={15} /> Інформація про клієнта та доставку
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: 180 }}>
-                      <ThemeSelect 
-                        label="Канал продажу"
-                        value={formData.source}
-                        onChange={(val) => setFormData({ ...formData, source: val })}
-                        displayValue={getPlatformBadgeName(formData.source)}
-                        options={[
-                          { value: 'olx', label: 'OLX' },
-                          { value: 'instagram', label: 'Instagram' },
-                          { value: 'facebook', label: 'Facebook' },
-                          { value: 'telegram', label: 'Telegram' },
-                          { value: 'tiktok', label: 'TikTok' },
-                          { value: 'threads', label: 'Threads' },
-                          { value: 'offline', label: 'Магазин (офлайн)' },
-                          { value: 'other', label: 'Інше' }
-                        ]}
-                      />
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={handleQuickFill}
-                      style={{ 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        background: 'rgba(45,212,191,0.06)', border: '1px solid rgba(45,212,191,0.2)',
-                        color: '#2dd4bf', padding: '11px 14px', borderRadius: 12, fontSize: 12, fontWeight: 800,
-                        cursor: 'pointer', transition: 'all 0.2s', height: 41, whiteSpace: 'nowrap'
-                      }}
-                    >
-                      <Sparkles size={14} /> Заповнити як Гість
-                    </button>
-                  </div>
-
-                  {/* Client Info Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Ім'я</label>
-                      <input 
-                        type="text" placeholder="Дмитро" value={formData.firstName} 
-                        onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Прізвище</label>
-                      <input 
-                        type="text" placeholder="Коваленко" value={formData.lastName} 
-                        onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Телефон</label>
-                      <input 
-                        type="text" placeholder="+380" value={formData.phone} 
-                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
-                      />
-                    </div>
-                    <div style={{ position: 'relative' }}>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Місто доставки</label>
-                      <input 
-                        type="text" placeholder="Місто..." value={npCityQuery || formData.city} 
-                        onChange={e => { setNpCityQuery(e.target.value); setNpShowCities(true); }}
-                        onFocus={() => { if (npCities.length > 0) setNpShowCities(true); }}
-                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: npShowCities && npCities.length > 0 ? '1px solid #7c3aed' : '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none', transition: 'border-color 0.2s' }}
-                      />
-                      {npLoadingCities && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 10, bottom: 12, color: '#7c3aed' }} />}
-                      
-                      <AnimatePresence>
-                        {npShowCities && npCities.length > 0 && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                            style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#1e293b', borderRadius: 14, border: '1px solid rgba(124,58,237,0.4)', marginTop: 6, maxHeight: 200, overflowY: 'auto', boxShadow: '0 16px 40px rgba(0,0,0,0.5)', padding: 6 }}
-                            className="hide-scrollbar"
-                          >
-                            {npCities.map(city => (
-                              <button
-                                key={city.Ref} type="button"
-                                onClick={() => {
-                                  setFormData({ ...formData, city: city.Description, cityRef: city.Ref, warehouse: '' });
-                                  setNpCityQuery(city.Description);
-                                  setNpShowCities(false);
-                                  setNpWarehouseQuery('');
-                                }}
-                                style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.15s' }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.15)'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                              >
-                                {city.Description} <span style={{ color: '#6b6b8a', fontSize: 11 }}>({city.AreaDescription})</span>
-                              </button>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-
-                  {/* Warehouse selection */}
-                  <div style={{ position: 'relative' }}>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>
-                      Відділення / Поштомат
-                      {formData.cityRef && !npLoadingWarehouses && npWarehouses.length > 0 && (
-                        <span style={{ color: '#7c3aed', fontWeight: 700, marginLeft: 6 }}>({npWarehouses.length} знайдено)</span>
-                      )}
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder={formData.cityRef ? "Пошук відділення або поштомату..." : "Спочатку оберіть місто..."} 
-                      value={npWarehouseQuery || formData.warehouse || ''} 
-                      onChange={e => { setNpWarehouseQuery(e.target.value); setNpShowWarehouses(true); }}
-                      onFocus={() => { if (formData.cityRef) setNpShowWarehouses(true); }}
-                      disabled={!formData.cityRef}
-                      style={{ 
-                        width: '100%', background: 'rgba(0,0,0,0.3)', 
-                        border: npShowWarehouses && npFilteredWarehouses.length > 0 ? '1px solid #7c3aed' : '1px solid var(--border)', 
-                        borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none',
-                        opacity: formData.cityRef ? 1 : 0.5,
-                        transition: 'border-color 0.2s'
-                      }}
-                    />
-                    {npLoadingWarehouses && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 10, bottom: 12, color: '#7c3aed' }} />}
-                    
-                    <AnimatePresence>
-                      {npShowWarehouses && formData.cityRef && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                          style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 90, background: '#1e293b', borderRadius: 14, border: '1px solid rgba(124,58,237,0.4)', marginTop: 6, maxHeight: 220, overflowY: 'auto', boxShadow: '0 16px 40px rgba(0,0,0,0.5)', padding: 6 }}
-                          className="hide-scrollbar"
-                        >
-                          {npLoadingWarehouses ? (
-                            <div style={{ padding: 14, textAlign: 'center', color: '#6b6b8a', fontSize: 13 }}>Завантаження відділень...</div>
-                          ) : npFilteredWarehouses.length > 0 ? (
-                            npFilteredWarehouses.map(wh => (
-                              <button
-                                key={wh.Ref} type="button"
-                                onClick={() => {
-                                  setFormData({ ...formData, warehouse: wh.Description });
-                                  setNpWarehouseQuery(wh.Description);
-                                  setNpShowWarehouses(false);
-                                }}
-                                style={{ width: '100%', padding: '9px 12px', textAlign: 'left', background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: 12, borderRadius: 8, cursor: 'pointer', lineHeight: 1.4, fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.15s' }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.15)'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                              >
-                                {wh.Description}
-                              </button>
-                            ))
-                          ) : (
-                            <div style={{ padding: 14, textAlign: 'center', color: '#6b6b8a', fontSize: 13 }}>Нічого не знайдено</div>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Statuses Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {/* Канал продажу та швидке заповнення */}
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 180 }}>
                     <ThemeSelect 
-                      label="Статус замовлення"
-                      value={formData.status}
-                      onChange={(val) => {
-                        const updated = { status: val };
-                        if (val === 'completed') {
-                          updated.payment_status = 'paid';
-                        }
-                        setFormData({ ...formData, ...updated });
-                      }}
-                      displayValue={STATUS_META[formData.status]?.label || STATUS_META.new.label}
-                      options={Object.keys(STATUS_META).map(key => ({ value: key, label: STATUS_META[key].label }))}
-                    />
-
-                    <ThemeSelect 
-                      label="Оплата"
-                      value={formData.payment_status}
-                      onChange={(val) => {
-                        const updated = { payment_status: val };
-                        if (val === 'partially_paid') {
-                          updated.is_cod = true;
-                          const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-                          updated.cod_amount = Math.round(calculatedTotal * 0.7).toString();
-                        } else {
-                          updated.is_cod = false;
-                          updated.cod_amount = '';
-                        }
-                        setFormData({ ...formData, ...updated });
-                      }}
-                      displayValue={formData.payment_status === 'paid' ? 'Оплачено' : formData.payment_status === 'partially_paid' ? 'Частково оплачено' : formData.payment_status === 'pending' ? 'Очікує' : 'Перевірка'}
+                      label="Канал продажу"
+                      value={formData.source}
+                      onChange={(val) => setFormData({ ...formData, source: val })}
+                      displayValue={getPlatformBadgeName(formData.source)}
                       options={[
-                        { value: 'paid', label: 'Оплачено' },
-                        { value: 'partially_paid', label: 'Частково оплачено' },
-                        { value: 'pending', label: 'Очікує' },
-                        { value: 'verifying', label: 'Перевірка' }
+                        { value: 'olx', label: 'OLX' },
+                        { value: 'instagram', label: 'Instagram' },
+                        { value: 'facebook', label: 'Facebook' },
+                        { value: 'telegram', label: 'Telegram' },
+                        { value: 'tiktok', label: 'TikTok' },
+                        { value: 'threads', label: 'Threads' },
+                        { value: 'offline', label: 'Магазин (офлайн)' },
+                        { value: 'other', label: 'Інше' }
                       ]}
                     />
                   </div>
+                  <button 
+                    type="button"
+                    onClick={handleQuickFill}
+                    style={{ 
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      background: 'rgba(45,212,191,0.06)', border: '1px solid rgba(45,212,191,0.2)',
+                      color: '#2dd4bf', padding: '11px 14px', borderRadius: 12, fontSize: 12, fontWeight: 800,
+                      cursor: 'pointer', transition: 'all 0.2s', height: 41, whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <Sparkles size={14} /> Заповнити як Гість
+                  </button>
+                </div>
 
-                  {/* Накладений платіж */}
-                  {formData.payment_status === 'partially_paid' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 14 }}>
-                      <div 
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
-                        onClick={() => {
-                          const newIsCod = !formData.is_cod;
-                          let newCodAmount = formData.cod_amount;
-                          if (newIsCod && !newCodAmount) {
-                            const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-                            newCodAmount = Math.round(calculatedTotal * 0.7).toString();
-                          }
-                          setFormData({ ...formData, is_cod: newIsCod, cod_amount: newCodAmount });
-                        }}
-                      >
-                        <div style={{ width: 16, height: 16, border: '2px solid #7c3aed', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: formData.is_cod ? '#7c3aed' : 'transparent', transition: 'all 0.2s' }}>
-                          {formData.is_cod && <CheckCircle2 size={11} style={{ color: '#fff' }} />}
-                        </div>
-                        <span style={{ fontSize: 12, fontWeight: 750, color: '#fff' }}>Накладений платіж (наложка)</span>
-                      </div>
-
-                      {formData.is_cod && (
-                        <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <input 
-                              type="text" inputMode="decimal" placeholder="Сума наложки (₴)" value={formData.cod_amount} 
-                              onChange={e => {
-                                const val = e.target.value.replace(/[^0-9.]/g, '');
-                                setFormData({ ...formData, cod_amount: val });
-                              }}
-                              style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
-                            />
-                            <button 
-                              type="button"
-                              onClick={() => {
-                                const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-                                const calculated = Math.round(calculatedTotal * 0.7);
-                                setFormData({ ...formData, cod_amount: calculated.toString() });
-                              }}
-                              style={{ padding: '0 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 10, color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
-                            >
-                              70%
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Рекламна інтеграція */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 14 }}>
-                    <div 
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
-                      onClick={() => setFormData({ ...formData, sold_via_ad: !formData.sold_via_ad })}
-                    >
-                      <div style={{ width: 16, height: 16, border: '2px solid #ec4899', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: formData.sold_via_ad ? '#ec4899' : 'transparent', transition: 'all 0.2s' }}>
-                        {formData.sold_via_ad && <CheckCircle2 size={11} style={{ color: '#fff' }} />}
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 750, color: '#fff' }}>Продано завдяки рекламі (маркетинг)</span>
-                    </div>
-
-                    {formData.sold_via_ad && (
-                      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <ThemeSelect
-                          value={formData.attributed_ad_id}
-                          onChange={(adId) => setFormData({ ...formData, attributed_ad_id: adId })}
-                          displayValue={
-                            (() => {
-                              if (!formData.attributed_ad_id) return '';
-                              const foundAd = (ads || []).find(a => a && a.id === formData.attributed_ad_id);
-                              if (!foundAd) return '';
-                              const dateStr = foundAd.ad_date ? new Date(foundAd.ad_date).toLocaleDateString('uk-UA') : '';
-                              return `${foundAd.platform || ''} - ${foundAd.product_name || 'Загальна'}${dateStr ? ` (${dateStr})` : ''}`;
-                            })()
-                          }
-                          placeholder="-- Оберіть кампанію --"
-                          options={[
-                            ...((matchingAds.direct || []).length > 0 ? [{ value: 'header-direct', label: '⭐ Відповідна реклама для товарів:', disabled: true }] : []),
-                            ...(matchingAds.direct || []).map(ad => ({
-                              value: ad.id,
-                              label: `[${ad.platform || 'Ad'}] ${ad.product_name || 'Товар'} (${ad.ad_date ? new Date(ad.ad_date).toLocaleDateString('uk-UA') : ''})`
-                            })),
-                            ...((matchingAds.general || []).length > 0 ? [{ value: 'header-general', label: '📢 Загальна реклама:', disabled: true }] : []),
-                            ...(matchingAds.general || []).map(ad => ({
-                              value: ad.id,
-                              label: `[${ad.platform || 'Ad'}] ${ad.product_name || 'Загальна'} (${ad.ad_date ? new Date(ad.ad_date).toLocaleDateString('uk-UA') : ''})`
-                            })),
-                            ...((matchingAds.other || []).length > 0 ? [{ value: 'header-other', label: '🔍 Інші рекламні кампанії:', disabled: true }] : []),
-                            ...(matchingAds.other || []).map(ad => ({
-                              value: ad.id,
-                              label: `[${ad.platform || 'Ad'}] ${ad.product_name || 'Кампанія'} (${ad.ad_date ? new Date(ad.ad_date).toLocaleDateString('uk-UA') : ''})`
-                            }))
-                          ]}
-                        />
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* Уточнення / Нотатки */}
+                {/* Client Info Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Уточнення / Нотатки до замовлення</label>
-                    <textarea 
-                      placeholder="Коментарі клієнта, колір, побажання..." 
-                      value={formData.notes || ''} 
-                      onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                      rows={2}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none', resize: 'vertical' }}
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Ім'я</label>
+                    <input 
+                      type="text" placeholder="Дмитро" value={formData.firstName} 
+                      onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Прізвище</label>
+                    <input 
+                      type="text" placeholder="Коваленко" value={formData.lastName} 
+                      onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
                     />
                   </div>
                 </div>
 
-                {/* RIGHT COLUMN: Items Cart, Product Picker, Totals & Buttons */}
-                <div style={{ 
-                  display: 'flex', flexDirection: 'column', gap: 16, 
-                  background: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255,255,255,0.07)', 
-                  borderRadius: 20, padding: isMobile ? 14 : 20 
-                }}>
-                  <div style={{ fontSize: 12, fontWeight: 900, color: '#2dd4bf', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <ShoppingBag size={15} /> Склад замовлення та Розрахунок
-                  </div>
-
-                  {/* Items List */}
-                  <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 16, padding: 14, overflow: 'visible' }}>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 10, textTransform: 'uppercase' }}>Склад кошика замовлення</label>
-                    
-                    {formData.items.length > 0 ? (
-                      <div style={{ 
-                        display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14,
-                        background: 'rgba(45, 212, 191, 0.03)', border: '1px solid rgba(45, 212, 191, 0.15)',
-                        padding: 10, borderRadius: 14
-                      }}>
-                        <div style={{ fontSize: 9, fontWeight: 900, color: '#2dd4bf', textTransform: 'uppercase', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <ShoppingBag size={12} /> ВАШ КОШИК ({formData.items.length})
-                        </div>
-                        {formData.items.map((item, idx) => (
-                          <div key={idx} style={{ 
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, 
-                            background: 'rgba(0,0,0,0.2)', padding: '8px 12px', borderRadius: 10, 
-                            fontSize: 12, border: '1px solid rgba(255,255,255,0.03)' 
-                          }}>
-                            <CheckCircle2 size={12} style={{ color: '#2dd4bf', flexShrink: 0 }} />
-                            <div style={{ flex: 1, minWidth: 0, color: '#fff', fontWeight: 650, lineHeight: '1.4' }}>
-                              {item.name}
-                            </div>
-                            
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 2, border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <button 
-                                  type="button"
-                                  onClick={() => {
-                                    const updated = [...formData.items];
-                                    if (updated[idx].quantity > 1) {
-                                      updated[idx].quantity -= 1;
-                                      setFormData({ ...formData, items: updated });
-                                    } else {
-                                      handleRemoveItem(idx);
-                                    }
-                                  }}
-                                  style={{ width: 20, height: 20, border: 'none', background: 'transparent', color: '#6b6b8a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}
-                                >
-                                  -
-                                </button>
-                                <span style={{ minWidth: 16, textAlign: 'center', color: '#fff', fontSize: 11, fontWeight: 800 }}>
-                                  {item.quantity}
-                                </span>
-                                <button 
-                                  type="button"
-                                  onClick={() => {
-                                    const updated = [...formData.items];
-                                    updated[idx].quantity += 1;
-                                    setFormData({ ...formData, items: updated });
-                                  }}
-                                  style={{ width: 20, height: 20, border: 'none', background: 'transparent', color: '#2dd4bf', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}
-                                >
-                                  +
-                                </button>
-                              </div>
-                              <span style={{ fontWeight: 800, color: '#2dd4bf', whiteSpace: 'nowrap', minWidth: 55, textAlign: 'right' }}>
-                                {item.price * item.quantity} ₴
-                              </span>
-                              <button 
-                                type="button" 
-                                onClick={() => handleRemoveItem(idx)} 
-                                style={{ 
-                                  background: 'none', border: 'none', color: '#ef4444', 
-                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' 
-                                }}
-                              >
-                                <Trash2 size={13}/>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, paddingTop: 8, borderTop: '1px dashed rgba(255,255,255,0.08)', fontSize: 12, fontWeight: 900, color: '#fff' }}>
-                          <span>РАЗОМ КОШИК:</span>
-                          <span style={{ color: '#2dd4bf', fontSize: 14 }}>
-                            {formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)} ₴
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ 
-                        textAlign: 'center', padding: '16px 12px', borderRadius: 12, 
-                        background: 'rgba(0,0,0,0.15)', border: '1px dashed var(--border)',
-                        color: 'var(--text-muted)', fontSize: 12, marginBottom: 14
-                      }}>
-                        Кошик порожній. Додайте товари нижче.
-                      </div>
-                    )}
-
-                    {/* Tab Selector */}
-                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: 3, borderRadius: 10, marginBottom: 14 }}>
-                      <button
-                        type="button"
-                        onClick={() => setItemTab('catalog')}
-                        style={{
-                          flex: 1, padding: '7px 10px', border: 'none', borderRadius: 8,
-                          background: itemTab === 'catalog' ? 'rgba(124,58,237,0.25)' : 'transparent',
-                          color: itemTab === 'catalog' ? '#a78bfa' : '#6b6b8a',
-                          fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
-                        }}
-                      >
-                        З каталогу
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setItemTab('manual')}
-                        style={{
-                          flex: 1, padding: '7px 10px', border: 'none', borderRadius: 8,
-                          background: itemTab === 'manual' ? 'rgba(124,58,237,0.25)' : 'transparent',
-                          color: itemTab === 'manual' ? '#a78bfa' : '#6b6b8a',
-                          fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
-                        }}
-                      >
-                        Власний товар
-                      </button>
-                    </div>
-
-                    {/* Add product inputs */}
-                    {itemTab === 'catalog' ? (
-                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                        <div style={{ flex: 1 }}>
-                          <ThemeSelect 
-                            value={selectedProductId}
-                            onChange={(prodId) => {
-                              if (!prodId) return;
-                              const prod = products.find(p => p.id === prodId);
-                              if (prod) {
-                                setFormData({
-                                  ...formData,
-                                  items: [...formData.items, { product_id: prod.id, name: prod.name, price: prod.price, quantity: 1 }]
-                                });
-                                showToast(`Додано: ${prod.name}`);
-                                setSelectedProductId('');
-                              }
-                            }}
-                            displayValue=""
-                            placeholder="-- Оберіть товар з каталогу --"
-                            options={productOptions}
-                            inline={true}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                          <div style={{ gridColumn: '1 / -1' }}>
-                            <input 
-                              type="text" placeholder="Назва власного товару..." value={newItem.name}
-                              onChange={e => setNewItem({ ...newItem, name: e.target.value })}
-                              style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
-                            />
-                          </div>
-                          <input 
-                            type="text" inputMode="numeric" placeholder="Кількість" value={newItem.quantity}
-                            onChange={e => {
-                              const val = e.target.value.replace(/\D/g, '');
-                              setNewItem({ ...newItem, quantity: val });
-                            }}
-                            style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
-                          />
-                          <input 
-                            type="text" inputMode="decimal" placeholder="Ціна (₴)" value={newItem.price}
-                            onChange={e => {
-                              const val = e.target.value.replace(/[^0-9.]/g, '');
-                              setNewItem({ ...newItem, price: val });
-                            }}
-                            style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
-                          />
-                        </div>
-                        <button 
-                          type="button" 
-                          onClick={handleAddManualItem}
-                          style={{ 
-                            background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(45,212,191,0.15))', 
-                            color: '#fff', border: '1px solid rgba(45,212,191,0.2)', padding: 10, borderRadius: 10, 
-                            fontSize: 12, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          <Plus size={14} style={{ color: '#2dd4bf' }} /> ДОДАТИ ДО КОШИКА
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Custom Total Amount Input */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Ручна підсумкова сума (₴) (залишіть пустим для авто-розрахунку)</label>
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Телефон</label>
                     <input 
-                      type="text" inputMode="decimal" placeholder="Наприклад: 1200" value={formData.total} 
-                      onChange={e => {
-                        const val = e.target.value.replace(/[^0-9.]/g, '');
-                        setFormData({ ...formData, total: val });
-                      }}
+                      type="text" placeholder="+380" value={formData.phone} 
+                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
                       style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
                     />
                   </div>
+                  <div style={{ position: 'relative' }}>
+                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Місто доставки</label>
+                    <input 
+                      type="text" placeholder="Місто..." value={npCityQuery || formData.city} 
+                      onChange={e => { setNpCityQuery(e.target.value); setNpShowCities(true); }}
+                      onFocus={() => { if (npCities.length > 0) setNpShowCities(true); }}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: npShowCities && npCities.length > 0 ? '1px solid #7c3aed' : '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none', transition: 'border-color 0.2s' }}
+                    />
+                    {npLoadingCities && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 10, bottom: 12, color: '#7c3aed' }} />}
+                    
+                    <AnimatePresence>
+                      {npShowCities && npCities.length > 0 && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                          style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#1e293b', borderRadius: 14, border: '1px solid rgba(124,58,237,0.4)', marginTop: 6, maxHeight: 200, overflowY: 'auto', boxShadow: '0 16px 40px rgba(0,0,0,0.5)', padding: 6 }}
+                          className="hide-scrollbar"
+                        >
+                          {npCities.map(city => (
+                            <button
+                              key={city.Ref} type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, city: city.Description, cityRef: city.Ref, warehouse: '' });
+                                setNpCityQuery(city.Description);
+                                setNpShowCities(false);
+                                setNpWarehouseQuery('');
+                              }}
+                              style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: 13, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.15s' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.15)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              {city.Description} <span style={{ color: '#6b6b8a', fontSize: 11 }}>({city.AreaDescription})</span>
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
 
-                  {/* Submit & Cancel Buttons */}
-                  <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                    <button 
-                      type="submit" 
-                      disabled={saving}
-                      style={{ flex: 1, padding: 13, borderRadius: 14, background: 'linear-gradient(135deg, #2dd4bf, #3b82f6)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', opacity: saving ? 0.7 : 1, fontSize: 13, letterSpacing: '0.03em' }}
+                {/* Warehouse selection */}
+                <div style={{ position: 'relative' }}>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>
+                    Відділення / Поштомат
+                    {formData.cityRef && !npLoadingWarehouses && npWarehouses.length > 0 && (
+                      <span style={{ color: '#7c3aed', fontWeight: 700, marginLeft: 6 }}>({npWarehouses.length} знайдено)</span>
+                    )}
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder={formData.cityRef ? "Пошук відділення або поштомату..." : "Спочатку оберіть місто..."} 
+                    value={npWarehouseQuery || formData.warehouse || ''} 
+                    onChange={e => { setNpWarehouseQuery(e.target.value); setNpShowWarehouses(true); }}
+                    onFocus={() => { if (formData.cityRef) setNpShowWarehouses(true); }}
+                    disabled={!formData.cityRef}
+                    style={{ 
+                      width: '100%', background: 'rgba(0,0,0,0.3)', 
+                      border: npShowWarehouses && npFilteredWarehouses.length > 0 ? '1px solid #7c3aed' : '1px solid var(--border)', 
+                      borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none',
+                      opacity: formData.cityRef ? 1 : 0.5,
+                      transition: 'border-color 0.2s'
+                    }}
+                  />
+                  {npLoadingWarehouses && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 10, bottom: 12, color: '#7c3aed' }} />}
+                  
+                  <AnimatePresence>
+                    {npShowWarehouses && formData.cityRef && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                        style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 90, background: '#1e293b', borderRadius: 14, border: '1px solid rgba(124,58,237,0.4)', marginTop: 6, maxHeight: 220, overflowY: 'auto', boxShadow: '0 16px 40px rgba(0,0,0,0.5)', padding: 6 }}
+                        className="hide-scrollbar"
+                      >
+                        {npLoadingWarehouses ? (
+                          <div style={{ padding: 14, textAlign: 'center', color: '#6b6b8a', fontSize: 13 }}>Завантаження відділень...</div>
+                        ) : npFilteredWarehouses.length > 0 ? (
+                          npFilteredWarehouses.map(wh => (
+                            <button
+                              key={wh.Ref} type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, warehouse: wh.Description });
+                                setNpWarehouseQuery(wh.Description);
+                                setNpShowWarehouses(false);
+                              }}
+                              style={{ width: '100%', padding: '9px 12px', textAlign: 'left', background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: 12, borderRadius: 8, cursor: 'pointer', lineHeight: 1.4, fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.15s' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.15)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              {wh.Description}
+                            </button>
+                          ))
+                        ) : (
+                          <div style={{ padding: 14, textAlign: 'center', color: '#6b6b8a', fontSize: 13 }}>Нічого не знайдено</div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Statuses Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <ThemeSelect 
+                    label="Статус замовлення"
+                    value={formData.status}
+                    onChange={(val) => {
+                      const updated = { status: val };
+                      if (val === 'completed') {
+                        updated.payment_status = 'paid';
+                      }
+                      setFormData({ ...formData, ...updated });
+                    }}
+                    displayValue={STATUS_META[formData.status]?.label || STATUS_META.new.label}
+                    options={Object.keys(STATUS_META).map(key => ({ value: key, label: STATUS_META[key].label }))}
+                  />
+
+                  <ThemeSelect 
+                    label="Оплата"
+                    value={formData.payment_status}
+                    onChange={(val) => {
+                      const updated = { payment_status: val };
+                      if (val === 'partially_paid') {
+                        updated.is_cod = true;
+                        const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                        updated.cod_amount = Math.round(calculatedTotal * 0.7).toString();
+                      } else {
+                        updated.is_cod = false;
+                        updated.cod_amount = '';
+                      }
+                      setFormData({ ...formData, ...updated });
+                    }}
+                    displayValue={formData.payment_status === 'paid' ? 'Оплачено' : formData.payment_status === 'partially_paid' ? 'Частково оплачено' : formData.payment_status === 'pending' ? 'Очікує' : 'Перевірка'}
+                    options={[
+                      { value: 'paid', label: 'Оплачено' },
+                      { value: 'partially_paid', label: 'Частково оплачено' },
+                      { value: 'pending', label: 'Очікує' },
+                      { value: 'verifying', label: 'Перевірка' }
+                    ]}
+                  />
+                </div>
+
+                {/* Накладений платіж */}
+                {formData.payment_status === 'partially_paid' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                    <div 
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                      onClick={() => {
+                        const newIsCod = !formData.is_cod;
+                        let newCodAmount = formData.cod_amount;
+                        if (newIsCod && !newCodAmount) {
+                          const calculatedTotal = parseFloat(formData.total) || formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                          newCodAmount = Math.round(calculatedTotal * 0.7).toString();
+                        }
+                        setFormData({ ...formData, is_cod: newIsCod, cod_amount: newCodAmount });
+                      }}
                     >
-                      {saving ? 'ЗБЕРЕЖЕННЯ...' : 'ЗБЕРЕГТИ'}
+                      <div style={{ width: 16, height: 16, border: '2px solid #7c3aed', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: formData.is_cod ? '#7c3aed' : 'transparent', transition: 'all 0.2s' }}>
+                        {formData.is_cod && <CheckCircle2 size={11} style={{ color: '#fff' }} />}
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 750, color: '#fff' }}>Накладений платіж (наложка)</span>
+                    </div>
+
+                    {formData.is_cod && (
+                      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input 
+                            type="text" inputMode="decimal" placeholder="Сума наложки (₴)" value={formData.cod_amount} 
+                            onChange={e => {
+                              const val = e.target.value.replace(/[^0-9.]/g, '');
+                              setFormData({ ...formData, cod_amount: val });
+                            }}
+                            style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const calculatedTotal = parseFloat(formData.total) || (formData.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                              const calculated = Math.round(calculatedTotal * 0.7);
+                              setFormData({ ...formData, cod_amount: calculated.toString() });
+                            }}
+                            style={{ padding: '0 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 10, color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            70%
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+
+                {/* Рекламна інтеграція */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 14 }}>
+                  <div 
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => setFormData({ ...formData, sold_via_ad: !formData.sold_via_ad })}
+                  >
+                    <div style={{ width: 16, height: 16, border: '2px solid #ec4899', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: formData.sold_via_ad ? '#ec4899' : 'transparent', transition: 'all 0.2s' }}>
+                      {formData.sold_via_ad && <CheckCircle2 size={11} style={{ color: '#fff' }} />}
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 750, color: '#fff' }}>Продано завдяки рекламі (маркетинг)</span>
+                  </div>
+
+                  {formData.sold_via_ad && (
+                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <ThemeSelect
+                        value={formData.attributed_ad_id}
+                        onChange={(adId) => setFormData({ ...formData, attributed_ad_id: adId })}
+                        displayValue={
+                          (() => {
+                            if (!formData.attributed_ad_id) return '';
+                            const foundAd = (ads || []).find(a => a && a.id === formData.attributed_ad_id);
+                            if (!foundAd) return '';
+                            const dateStr = foundAd.ad_date ? new Date(foundAd.ad_date).toLocaleDateString('uk-UA') : '';
+                            return `${foundAd.platform || ''} - ${foundAd.product_name || 'Загальна'}${dateStr ? ` (${dateStr})` : ''}`;
+                          })()
+                        }
+                        placeholder="-- Оберіть кампанію --"
+                        options={[
+                          ...((matchingAds.direct || []).length > 0 ? [{ value: 'header-direct', label: '⭐ Відповідна реклама для товарів:', disabled: true }] : []),
+                          ...(matchingAds.direct || []).map(ad => ({
+                            value: ad.id,
+                            label: `[${ad.platform || 'Ad'}] ${ad.product_name || 'Товар'} (${ad.ad_date ? new Date(ad.ad_date).toLocaleDateString('uk-UA') : ''})`
+                          })),
+                          ...((matchingAds.general || []).length > 0 ? [{ value: 'header-general', label: '📢 Загальна реклама:', disabled: true }] : []),
+                          ...(matchingAds.general || []).map(ad => ({
+                            value: ad.id,
+                            label: `[${ad.platform || 'Ad'}] ${ad.product_name || 'Загальна'} (${ad.ad_date ? new Date(ad.ad_date).toLocaleDateString('uk-UA') : ''})`
+                          })),
+                          ...((matchingAds.other || []).length > 0 ? [{ value: 'header-other', label: '🔍 Інші рекламні кампанії:', disabled: true }] : []),
+                          ...(matchingAds.other || []).map(ad => ({
+                            value: ad.id,
+                            label: `[${ad.platform || 'Ad'}] ${ad.product_name || 'Кампанія'} (${ad.ad_date ? new Date(ad.ad_date).toLocaleDateString('uk-UA') : ''})`
+                          }))
+                        ]}
+                      />
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Склад замовлення */}
+                <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 16, padding: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: '#2dd4bf', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <ShoppingBag size={15} /> Склад замовлення
+                  </div>
+                  
+                  {(formData.items || []).length > 0 ? (
+                    <div style={{ 
+                      display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14,
+                      background: 'rgba(45, 212, 191, 0.03)', border: '1px solid rgba(45, 212, 191, 0.15)',
+                      padding: 10, borderRadius: 14
+                    }}>
+                      {formData.items.map((item, idx) => (
+                        <div key={idx} style={{ 
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, 
+                          background: 'rgba(0,0,0,0.2)', padding: '8px 12px', borderRadius: 10, 
+                          fontSize: 12, border: '1px solid rgba(255,255,255,0.03)' 
+                        }}>
+                          <CheckCircle2 size={12} style={{ color: '#2dd4bf', flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0, color: '#fff', fontWeight: 650, lineHeight: '1.4' }}>
+                            {item.name}
+                          </div>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 2, border: '1px solid rgba(255,255,255,0.05)' }}>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...formData.items];
+                                  if (updated[idx].quantity > 1) {
+                                    updated[idx].quantity -= 1;
+                                    setFormData({ ...formData, items: updated });
+                                  } else {
+                                    handleRemoveItem(idx);
+                                  }
+                                }}
+                                style={{ width: 20, height: 20, border: 'none', background: 'transparent', color: '#6b6b8a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}
+                              >
+                                -
+                              </button>
+                              <span style={{ minWidth: 16, textAlign: 'center', color: '#fff', fontSize: 11, fontWeight: 800 }}>
+                                {item.quantity}
+                              </span>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...formData.items];
+                                  updated[idx].quantity += 1;
+                                  setFormData({ ...formData, items: updated });
+                                }}
+                                style={{ width: 20, height: 20, border: 'none', background: 'transparent', color: '#2dd4bf', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}
+                              >
+                                +
+                              </button>
+                            </div>
+                            <span style={{ fontWeight: 800, color: '#2dd4bf', whiteSpace: 'nowrap', minWidth: 55, textAlign: 'right' }}>
+                              {item.price * item.quantity} ₴
+                            </span>
+                            <button 
+                              type="button" 
+                              onClick={() => handleRemoveItem(idx)} 
+                              style={{ 
+                                background: 'none', border: 'none', color: '#ef4444', 
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                              }}
+                            >
+                              <Trash2 size={13}/>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, paddingTop: 8, borderTop: '1px dashed rgba(255,255,255,0.08)', fontSize: 12, fontWeight: 900, color: '#fff' }}>
+                        <span>РАЗОМ КОШИК:</span>
+                        <span style={{ color: '#2dd4bf', fontSize: 14 }}>
+                          {(formData.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0)} ₴
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ 
+                      textAlign: 'center', padding: '14px 12px', borderRadius: 12, 
+                      background: 'rgba(0,0,0,0.15)', border: '1px dashed var(--border)',
+                      color: 'var(--text-muted)', fontSize: 12, marginBottom: 14
+                    }}>
+                      Кошик порожній. Додайте товари нижче.
+                    </div>
+                  )}
+
+                  {/* Tab Selector */}
+                  <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: 3, borderRadius: 10, marginBottom: 14 }}>
+                    <button
+                      type="button"
+                      onClick={() => setItemTab('catalog')}
+                      style={{
+                        flex: 1, padding: '7px 10px', border: 'none', borderRadius: 8,
+                        background: itemTab === 'catalog' ? 'rgba(124,58,237,0.25)' : 'transparent',
+                        color: itemTab === 'catalog' ? '#a78bfa' : '#6b6b8a',
+                        fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
+                      }}
+                    >
+                      З каталогу
                     </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setShowAddForm(false)} 
-                      style={{ flex: 1, padding: 13, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)', fontWeight: 900, cursor: 'pointer', fontSize: 13 }}
+                    <button
+                      type="button"
+                      onClick={() => setItemTab('manual')}
+                      style={{
+                        flex: 1, padding: '7px 10px', border: 'none', borderRadius: 8,
+                        background: itemTab === 'manual' ? 'rgba(124,58,237,0.25)' : 'transparent',
+                        color: itemTab === 'manual' ? '#a78bfa' : '#6b6b8a',
+                        fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
+                      }}
                     >
-                      СКАСУВАТИ
+                      Власний товар
                     </button>
                   </div>
+
+                  {/* Add product inputs */}
+                  {itemTab === 'catalog' ? (
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <div style={{ flex: 1 }}>
+                        <ThemeSelect 
+                          value={selectedProductId}
+                          onChange={(prodId) => {
+                            if (!prodId) return;
+                            const prod = products.find(p => p.id === prodId);
+                            if (prod) {
+                              setFormData({
+                                ...formData,
+                                items: [...(formData.items || []), { product_id: prod.id, name: prod.name, price: prod.price, quantity: 1 }]
+                              });
+                              showToast(`Додано: ${prod.name}`);
+                              setSelectedProductId('');
+                            }
+                          }}
+                          displayValue=""
+                          placeholder="-- Оберіть товар з каталогу --"
+                          options={productOptions}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <input 
+                            type="text" placeholder="Назва власного товару..." value={newItem.name}
+                            onChange={e => setNewItem({ ...newItem, name: e.target.value })}
+                            style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
+                          />
+                        </div>
+                        <input 
+                          type="text" inputMode="numeric" placeholder="Кількість" value={newItem.quantity}
+                          onChange={e => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            setNewItem({ ...newItem, quantity: val });
+                          }}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
+                        />
+                        <input 
+                          type="text" inputMode="decimal" placeholder="Ціна (₴)" value={newItem.price}
+                          onChange={e => {
+                            const val = e.target.value.replace(/[^0-9.]/g, '');
+                            setNewItem({ ...newItem, price: val });
+                          }}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 13, outline: 'none', textAlign: 'center' }}
+                        />
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={handleAddManualItem}
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(45,212,191,0.15))', 
+                          color: '#fff', border: '1px solid rgba(45,212,191,0.2)', padding: 10, borderRadius: 10, 
+                          fontSize: 12, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <Plus size={14} style={{ color: '#2dd4bf' }} /> ДОДАТИ ДО КОШИКА
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Custom Total Amount Input */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Ручна підсумкова сума (₴) (залишіть пустим для авто-розрахунку)</label>
+                  <input 
+                    type="text" inputMode="decimal" placeholder="Наприклад: 1200" value={formData.total} 
+                    onChange={e => {
+                      const val = e.target.value.replace(/[^0-9.]/g, '');
+                      setFormData({ ...formData, total: val });
+                    }}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
+                  />
+                </div>
+
+                {/* Уточнення / Нотатки */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>Уточнення / Нотатки до замовлення</label>
+                  <textarea 
+                    placeholder="Коментарі клієнта, колір, побажання..." 
+                    value={formData.notes || ''} 
+                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                    rows={2}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 10, color: '#fff', fontSize: 13, outline: 'none', resize: 'vertical' }}
+                  />
+                </div>
+
+                {/* Submit & Cancel Buttons */}
+                <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                  <button 
+                    type="submit" 
+                    disabled={saving}
+                    style={{ flex: 1, padding: 13, borderRadius: 14, background: 'linear-gradient(135deg, #2dd4bf, #3b82f6)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer', opacity: saving ? 0.7 : 1, fontSize: 13, letterSpacing: '0.03em' }}
+                  >
+                    {saving ? 'ЗБЕРЕЖЕННЯ...' : 'ЗБЕРЕГТИ'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAddForm(false)} 
+                    style={{ flex: 1, padding: 13, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--border)', fontWeight: 900, cursor: 'pointer', fontSize: 13 }}
+                  >
+                    СКАСУВАТИ
+                  </button>
                 </div>
 
               </form>
