@@ -533,32 +533,32 @@ export default function OrderKanbanBoard({
                           onAddOrder(col.status);
                         }
                       }}
-                      title={`Додати продаж у колонку "${col.title}"`}
+                      title={`Додати продаж у "${col.title}"`}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         width: 24,
                         height: 24,
-                        borderRadius: 8,
-                        border: `1px solid ${col.color}40`,
-                        background: `${col.color}15`,
-                        color: col.color,
+                        borderRadius: 7,
+                        border: '1px solid var(--border)',
+                        background: 'rgba(255,255,255,0.06)',
+                        color: 'var(--text-main)',
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease'
+                        transition: 'all 0.2s ease'
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = col.color;
+                        e.currentTarget.style.borderColor = col.color;
                         e.currentTarget.style.color = '#fff';
-                        e.currentTarget.style.transform = 'scale(1.1)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = `${col.color}15`;
-                        e.currentTarget.style.color = col.color;
-                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                        e.currentTarget.style.borderColor = 'var(--border)';
+                        e.currentTarget.style.color = 'var(--text-main)';
                       }}
                     >
-                      <Plus size={14} strokeWidth={2.5} />
+                      <Plus size={14} />
                     </button>
                     <span style={{ 
                       padding: '2px 8px', borderRadius: 12, 
