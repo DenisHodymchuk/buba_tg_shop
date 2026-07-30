@@ -6,7 +6,7 @@ import {
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
   Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone, Menu,
-  Clock, ClipboardList, Printer, Truck, XCircle, ChevronDown, ChevronUp, Hammer
+  Clock, ClipboardList, Printer, Truck, XCircle, ChevronDown, ChevronUp, Hammer, Lightbulb
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
@@ -15,6 +15,7 @@ import AdvertisingDashboard from '@/components/AdvertisingDashboard';
 import SalesDashboard from '@/components/SalesDashboard';
 import ShippingCabinet from '@/components/ShippingCabinet';
 import ProductionCabinet from '@/components/ProductionCabinet';
+import LampStudio from '@/components/LampStudio';
 
 
 const scrollbarHide = `
@@ -1508,6 +1509,7 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'sales_cabinet'} onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }} icon={<Coins size={18} />} label="Продажі" />
           <SidebarBtn active={activeTab === 'shipping_list'} onClick={() => { setActiveTab('shipping_list'); setIsSidebarOpen(false); }} icon={<Truck size={18} />} label="Відправки" />
           <SidebarBtn active={activeTab === 'production'} onClick={() => { setActiveTab('production'); setIsSidebarOpen(false); }} icon={<Hammer size={18} />} label="Виготовлення" />
+          <SidebarBtn active={activeTab === 'lamp_studio'} onClick={() => { setActiveTab('lamp_studio'); setIsSidebarOpen(false); }} icon={<Lightbulb size={18} />} label="Лампова Студія" />
           <SidebarBtn active={activeTab === 'calculator'} onClick={() => { setActiveTab('calculator'); setIsSidebarOpen(false); }} icon={<Calculator size={18} />} label="Калькулятор" />
           <SidebarBtn active={activeTab === 'inventory'} onClick={() => { setActiveTab('inventory'); setIsSidebarOpen(false); }} icon={<Box size={18} />} label="Склад (Облік)" />
           <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
@@ -2717,6 +2719,10 @@ export default function AdminPanel() {
                    </div>
                  </div>
                )}
+            </div>
+          ) : activeTab === 'lamp_studio' ? (
+            <div style={{ width: '100%', maxWidth: 1200 }}>
+              <LampStudio />
             </div>
           ) : activeTab === 'calculator' ? (
             <div style={{ width: '100%', maxWidth: 1200 }}>
