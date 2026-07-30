@@ -122,6 +122,7 @@ export default function OrderKanbanBoard({
   onUpdateOrderStatus, 
   onEditOrder,
   onViewOrder,
+  onAddOrder,
   showToast 
 }) {
   const [columns, setColumns] = useState([]);
@@ -522,14 +523,52 @@ export default function OrderKanbanBoard({
                       {col.title}
                     </h4>
                   </div>
-                  <span style={{ 
-                    padding: '2px 8px', borderRadius: 12, 
-                    background: col.color + '22', color: col.color, 
-                    fontSize: 12, fontWeight: 800 
-                  }}>
-                    {colOrders.length}
-                    {col.wipLimit > 0 && ` / ${col.wipLimit}`}
-                  </span>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onAddOrder) {
+                          onAddOrder(col.status);
+                        }
+                      }}
+                      title={`Додати продаж у колонку "${col.title}"`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 24,
+                        height: 24,
+                        borderRadius: 8,
+                        border: `1px solid ${col.color}40`,
+                        background: `${col.color}15`,
+                        color: col.color,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = col.color;
+                        e.currentTarget.style.color = '#fff';
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = `${col.color}15`;
+                        e.currentTarget.style.color = col.color;
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      <Plus size={14} strokeWidth={2.5} />
+                    </button>
+                    <span style={{ 
+                      padding: '2px 8px', borderRadius: 12, 
+                      background: col.color + '22', color: col.color, 
+                      fontSize: 12, fontWeight: 800 
+                    }}>
+                      {colOrders.length}
+                      {col.wipLimit > 0 && ` / ${col.wipLimit}`}
+                    </span>
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: 'var(--text-muted)' }}>
@@ -563,18 +602,35 @@ export default function OrderKanbanBoard({
                 minHeight: 200
               }}>
                 {colOrders.length === 0 ? (
-                  <div style={{
-                    height: 120,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '2px dashed rgba(255,255,255,0.06)',
-                    borderRadius: 12,
-                    color: 'rgba(255,255,255,0.3)',
-                    fontSize: 12,
-                    gap: 6
-                  }}>
+                  <div 
+                    onClick={() => onAddOrder?.(col.status)}
+                    title={`Додати продаж у "${col.title}"`}
+                    style={{
+                      height: 120,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '2px dashed rgba(255,255,255,0.08)',
+                      borderRadius: 12,
+                      color: 'rgba(255,255,255,0.4)',
+                      fontSize: 12,
+                      gap: 6,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = col.color;
+                      e.currentTarget.style.color = col.color;
+                      e.currentTarget.style.background = `${col.color}08`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                      e.currentTarget.style.color = 'rgba(255,255,255,0.4)';
+                      e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    <Plus size={18} />
                     <span>Немає замовлень</span>
                   </div>
                 ) : (

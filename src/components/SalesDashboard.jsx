@@ -795,7 +795,7 @@ export default function SalesDashboard({ showToast }) {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = (initialStatus = 'new') => {
     setFormData({
       source: 'olx',
       firstName: '',
@@ -806,7 +806,7 @@ export default function SalesDashboard({ showToast }) {
       warehouse: '',
       total: '',
       payment_status: 'pending',
-      status: 'new',
+      status: initialStatus || 'new',
       items: [],
       is_cod: false,
       cod_amount: '',
@@ -1383,6 +1383,10 @@ export default function SalesDashboard({ showToast }) {
           orders={filteredSales}
           onUpdateOrderStatus={handleUpdateOrderStatus}
           onEditOrder={handleEdit}
+          onAddOrder={(colStatus) => {
+            resetForm(colStatus);
+            setShowAddForm(true);
+          }}
           showToast={showToast}
         />
       ) : isMobile ? (
