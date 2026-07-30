@@ -5,12 +5,22 @@ import {
   Box, Cpu, Wrench, Layers, Plus, Trash2, Edit3, 
   Save, BarChart3, Package, Play, Sliders, Search, 
   CheckCircle2, AlertCircle, TrendingUp, PieChart, ShieldAlert,
-  ChevronDown, ChevronUp, DollarSign, Clock, Settings, RefreshCw
+  ChevronDown, ChevronUp, DollarSign, Clock, Settings, RefreshCw, X, Minus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 
-// Default initial hardware components
+// Preset Filament types (identical to main Calculator.jsx)
+const FILAMENT_PRESETS = [
+  { name: 'PLA Standard', type: 'PLA', cost: 750 },
+  { name: 'PLA Premium', type: 'PLA', cost: 950 },
+  { name: 'PETG Matte', type: 'PETG', cost: 680 },
+  { name: 'PLA Silk Gold', type: 'PLA', cost: 920 },
+  { name: 'ABS', type: 'ABS', cost: 600 },
+  { name: 'TPU Flex', type: 'TPU', cost: 1200 },
+];
+
+// Initial default hardware components
 const INITIAL_COMPONENTS = [
   { id: 'comp-1', name: 'Світлодіодна стрічка COB 12V', category: 'Світлодіоди/LED', supplier: 'AliExpress', unit: 'м', purchase_price: 95, stock_qty: 45, min_stock_alert: 10 },
   { id: 'comp-2', name: 'Блок живлення 12V 2A 24W', category: 'Драйвери/БЖ', supplier: 'KSE', unit: 'шт', purchase_price: 140, stock_qty: 18, min_stock_alert: 5 },
@@ -20,32 +30,41 @@ const INITIAL_COMPONENTS = [
 ];
 
 export default function LampStudio() {
-  const [activeTab, setActiveTab] = useState('calculator'); // 'calculator' | 'components' | 'models'
+  const [activeTab, setActiveTab] = useState('calculator'); // 'calculator' | 'components'
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  // --- Components Library State ---
+  // --- Inventory State ---
   const [components, setComponents] = useState(INITIAL_COMPONENTS);
+  const [materialsLibrary, setMaterialsLibrary] = useState([]);
   const [componentSearch, setComponentSearch] = useState('');
-  const [showCompModal, setShowCompModal] = useState(false);
+  
+  // Modals
+  const [showCompModal, setShowCompModal] = useState(false); // Edit/Create Inventory Item
+  const [showPickerModal, setShowPickerModal] = useState(false); // Pick Detail for Product
+  const [pickerSearch, setPickerSearch] = useState('');
   const [editingComp, setEditingComp] = useState(null);
+
   const [compForm, setCompForm] = useState({
-    name: '', category: 'Деталі', supplier: '', unit: 'шт', purchase_price: '', stock_qty: '', min_stock_alert: 5
+    name: '', category: 'Світлодіоди/LED', supplier: '', unit: 'шт', purchase_price: '', stock_qty: '', min_stock_alert: 5
   });
 
-  // --- Saved Product Recipes ---
-  const [lampModels, setLampModels] = useState([]);
-
-  // --- Main Product Calculator Form ---
+  // --- Product Form State ---
   const [productName, setProductName] = useState('Новий виріб');
+  
+  // Filament parameters (matching main Calculator.jsx)
+  const [plasticType, setPlasticType] = useState('PLA Standard');
+  const [plasticPricePerKg, setPlasticPricePerKg] = useState(750);
   const [plasticWeight, setPlasticWeight] = useState(250); // grams
-  const [plasticPricePerKg, setPlasticPricePerKg] = useState(750); // ₴/kg
   const [printHours, setPrintHours] = useState(8); // hours
-  const [laborHours, setLaborHours] = useState(1); // hours
-  const [laborRate, setLaborRate] = useState(150); // ₴/hour
-  const [targetMargin, setTargetMargin] = useState(100); // % margin
 
-  // Selected Hardware Components from Inventory for this product
+  // Master's Labor COST PER ITEM (Фіксована вартість за виріб, не по годинах!)
+  const [laborCostPerItem, setLaborCostPerItem] = useState(150); // ₴ за виріб
+
+  // Target profit margin %
+  const [targetMargin, setTargetMargin] = useState(100);
+
+  // Selected Hardware Components in Product
   const [productComponents, setProductComponents] = useState([
     { id: 'bom-1', component_id: 'comp-1', name: 'Світлодіодна стрічка COB 12V', qty: 1, price: 95 },
     { id: 'bom-2', component_id: 'comp-2', name: 'Блок живлення 12V 2A 24W', qty: 1, price: 140 }
@@ -58,7 +77,7 @@ export default function LampStudio() {
   const [electricityRate, setElectricityRate] = useState(4.32);
   const [printerWattage, setPrinterWattage] = useState(120);
 
-  // Batch production modal
+  // Production batch modal
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [batchQty, setBatchQty] = useState(1);
 
@@ -77,14 +96,14 @@ export default function LampStudio() {
       const { data: compData } = await supabase.from('lamp_components').select('*').order('created_at', { ascending: false });
       if (compData && compData.length > 0) setComponents(compData);
 
-      const { data: modelData } = await supabase.from('lamp_models').select('*').order('created_at', { ascending: false });
-      if (modelData) setLampModels(modelData);
+      const { data: matData } = await supabase.from('material_library').select('*').order('name');
+      if (matData && matData.length > 0) setMaterialsLibrary(matData);
     } catch (e) {
       console.warn('Error loading studio data:', e);
     }
   };
 
-  // --- Simple Cost Calculations ---
+  // --- Calculations Engine ---
   const calculations = useMemo(() => {
     // 1. Plastic cost
     const plasticCost = ((Number(plasticWeight) || 0) / 1000) * (Number(plasticPricePerKg) || 0);
@@ -93,15 +112,15 @@ export default function LampStudio() {
     const kwh = ((Number(printHours) || 0) * (Number(printerWattage) || 120)) / 1000;
     const electricityCost = kwh * (Number(electricityRate) || 4.32);
 
-    // 3. Components cost
+    // 3. Hardware Components cost
     const componentsCost = productComponents.reduce((sum, item) => {
       return sum + (Number(item.qty) || 0) * (Number(item.price) || 0);
     }, 0);
 
-    // 4. Labor cost
-    const laborCost = (Number(laborHours) || 0) * (Number(laborRate) || 0);
+    // 4. Labor cost (FIXED COST PER ITEM!)
+    const laborCost = Number(laborCostPerItem) || 0;
 
-    // 5. Packaging & Defect Reserve
+    // 5. Subtotal & Defect Reserve & Packaging
     const baseSubtotal = plasticCost + electricityCost + componentsCost + laborCost + (Number(packagingCost) || 0);
     const defectReserve = baseSubtotal * ((Number(defectMarginPercent) || 0) / 100);
 
@@ -121,28 +140,37 @@ export default function LampStudio() {
       suggestedPrice,
       netProfit
     };
-  }, [plasticWeight, plasticPricePerKg, printHours, laborHours, laborRate, productComponents, packagingCost, defectMarginPercent, electricityRate, printerWattage, targetMargin]);
+  }, [plasticWeight, plasticPricePerKg, printHours, laborCostPerItem, productComponents, packagingCost, defectMarginPercent, electricityRate, printerWattage, targetMargin]);
 
-  // Add component to product
-  const handleAddComponentToProduct = (compId) => {
-    const comp = components.find(c => c.id === compId);
-    if (!comp) return;
+  // Apply Filament Preset
+  const handleApplyFilamentPreset = (preset) => {
+    setPlasticType(preset.name);
+    setPlasticPricePerKg(preset.cost);
+    showToast(`Обрано філамент: ${preset.name} (${preset.cost} ₴/кг)`);
+  };
 
-    // Check if already added
-    const existing = productComponents.find(p => p.component_id === comp.id);
-    if (existing) {
-      setProductComponents(productComponents.map(p => 
-        p.component_id === comp.id ? { ...p, qty: p.qty + 1 } : p
-      ));
+  // Add component to product from picker
+  const handleAddComponentToProduct = (comp) => {
+    const existingIndex = productComponents.findIndex(p => p.component_id === comp.id);
+    if (existingIndex !== -1) {
+      const updated = [...productComponents];
+      updated[existingIndex].qty += 1;
+      setProductComponents(updated);
     } else {
       setProductComponents([
         ...productComponents,
         { id: `pc-${Date.now()}`, component_id: comp.id, name: comp.name, qty: 1, price: comp.purchase_price }
       ]);
     }
+    showToast(`Додано: ${comp.name}`);
   };
 
-  // Execute Batch Production (Stock Deduction)
+  // Remove component from product
+  const handleRemoveComponentFromProduct = (index) => {
+    setProductComponents(productComponents.filter((_, i) => i !== index));
+  };
+
+  // Execute Production (Stock Deduction)
   const handleExecuteProduction = async () => {
     const qty = Number(batchQty) || 1;
     setLoading(true);
@@ -171,7 +199,7 @@ export default function LampStudio() {
     }
   };
 
-  // Save Component to Inventory
+  // Save / Edit Inventory Item
   const handleSaveInventoryComp = async (e) => {
     e.preventDefault();
     if (!compForm.name.trim() || !compForm.purchase_price) {
@@ -181,7 +209,7 @@ export default function LampStudio() {
 
     const payload = {
       name: compForm.name,
-      category: compForm.category,
+      category: compForm.category || 'Деталі',
       supplier: compForm.supplier,
       unit: compForm.unit || 'шт',
       purchase_price: Number(compForm.purchase_price) || 0,
@@ -206,9 +234,27 @@ export default function LampStudio() {
 
     setShowCompModal(false);
     setEditingComp(null);
-    setCompForm({ name: '', category: 'Деталі', supplier: '', unit: 'шт', purchase_price: '', stock_qty: '', min_stock_alert: 5 });
-    showToast(editingComp ? 'Деталь оновлено!' : 'Деталь додано!');
+    setCompForm({ name: '', category: 'Світлодіоди/LED', supplier: '', unit: 'шт', purchase_price: '', stock_qty: '', min_stock_alert: 5 });
+    showToast(editingComp ? 'Деталь оновлено!' : 'Деталь додано в склад!');
   };
+
+  // DELETE Inventory Item
+  const handleDeleteInventoryComp = async (id) => {
+    if (!confirm('Видалити цю деталь зі складу?')) return;
+    try {
+      if (supabase && !String(id).startsWith('comp-')) {
+        await supabase.from('lamp_components').delete().eq('id', id);
+      }
+      setComponents(components.filter(c => c.id !== id));
+      showToast('Деталь видалено зі складу!');
+    } catch (e) {
+      showToast('Помилка видалення', 'error');
+    }
+  };
+
+  const filteredPickerComponents = useMemo(() => {
+    return components.filter(c => c.name.toLowerCase().includes(pickerSearch.toLowerCase()));
+  }, [components, pickerSearch]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', color: 'var(--text-main)' }}>
@@ -263,12 +309,12 @@ export default function LampStudio() {
               Студія Виробництва
             </h2>
             <p style={{ margin: '2px 0 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
-              Розрахунок собівартості та облік деталей для ваших виробів
+              Розрахунок собівартості, комплектуючих та робіт для вашої продукції
             </p>
           </div>
         </div>
 
-        {/* Tab Switchers matching site buttons */}
+        {/* Navigation Switchers matching site styling */}
         <div style={{ display: 'flex', gap: 6, background: 'rgba(0,0,0,0.3)', padding: 4, borderRadius: 12, border: '1px solid var(--border)' }}>
           <button
             onClick={() => setActiveTab('calculator')}
@@ -296,12 +342,12 @@ export default function LampStudio() {
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: SIMPLE CLEAN CALCULATOR */}
+      {/* TAB 1: PRODUCT CALCULATOR */}
       {/* ========================================================================= */}
       {activeTab === 'calculator' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
           
-          {/* Left Column: Simple Inputs */}
+          {/* Left Column: Form Controls */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             
             {/* Product Name Card */}
@@ -312,9 +358,9 @@ export default function LampStudio() {
               padding: 20,
               display: 'flex',
               flexDirection: 'column',
-              gap: 12
+              gap: 10
             }}>
-              <label style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                 Назва виробу
               </label>
               <input
@@ -336,7 +382,7 @@ export default function LampStudio() {
               />
             </div>
 
-            {/* 1. 3D Print & Material */}
+            {/* 1. 3D Print & Filament Selection */}
             <div style={{
               background: 'rgba(15, 23, 42, 0.6)',
               border: '1px solid var(--border)',
@@ -349,11 +395,104 @@ export default function LampStudio() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
                 <Layers size={18} style={{ color: '#3b82f6' }} />
                 <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#fff' }}>
-                  1. 3D-Друк & Пластик
+                  1. 3D-Друк & Вибір Філаменту
                 </h3>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {/* Filament Presets Picker (Matching main Calculator.jsx) */}
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>
+                  Швидкий вибір пластику (Пресет):
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {FILAMENT_PRESETS.map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => handleApplyFilamentPreset(preset)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 8,
+                        border: plasticType === preset.name ? '1px solid #3b82f6' : '1px solid var(--border)',
+                        background: plasticType === preset.name ? 'rgba(59, 130, 246, 0.2)' : 'rgba(0,0,0,0.3)',
+                        color: plasticType === preset.name ? '#60a5fa' : 'var(--text-muted)',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      {preset.name} ({preset.cost}₴)
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Material Library Quick Select if available */}
+              {materialsLibrary.length > 0 && (
+                <div>
+                  <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>
+                    З бази матеріалів:
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 90, overflowY: 'auto' }}>
+                    {materialsLibrary.map((mat) => (
+                      <button
+                        key={mat.id}
+                        type="button"
+                        onClick={() => {
+                          setPlasticType(mat.name);
+                          setPlasticPricePerKg(mat.cost_per_kg);
+                          showToast(`Обрано матеріали: ${mat.name}`);
+                        }}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: 8,
+                          border: plasticType === mat.name ? '1px solid #8b5cf6' : '1px solid var(--border)',
+                          background: plasticType === mat.name ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255,255,255,0.03)',
+                          color: plasticType === mat.name ? '#c084fc' : '#e2e8f0',
+                          fontSize: 11,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {mat.name} ({mat.cost_per_kg} ₴/кг)
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Inputs: Plastic Type, Price/kg, Weight, Print Hours */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+                    Тип / Назва пластику
+                  </label>
+                  <input
+                    type="text"
+                    value={plasticType}
+                    onChange={(e) => setPlasticType(e.target.value)}
+                    style={{
+                      width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
+                      borderRadius: 10, padding: '9px 12px', color: '#fff', fontSize: 12, fontWeight: 700, outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+                    Ціна за 1 кг (₴)
+                  </label>
+                  <input
+                    type="number"
+                    value={plasticPricePerKg}
+                    onChange={(e) => setPlasticPricePerKg(e.target.value)}
+                    style={{
+                      width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
+                      borderRadius: 10, padding: '9px 12px', color: '#fff', fontSize: 12, fontWeight: 700, outline: 'none'
+                    }}
+                  />
+                </div>
+
                 <div>
                   <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
                     Вага пластику (грам)
@@ -364,50 +503,35 @@ export default function LampStudio() {
                     onChange={(e) => setPlasticWeight(e.target.value)}
                     style={{
                       width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
-                      borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, fontWeight: 700, outline: 'none'
+                      borderRadius: 10, padding: '9px 12px', color: '#fff', fontSize: 12, fontWeight: 700, outline: 'none'
                     }}
                   />
                 </div>
 
                 <div>
                   <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-                    Ціна пластику (₴/кг)
+                    Час друку (годин)
                   </label>
                   <input
                     type="number"
-                    value={plasticPricePerKg}
-                    onChange={(e) => setPlasticPricePerKg(e.target.value)}
+                    step="0.5"
+                    value={printHours}
+                    onChange={(e) => setPrintHours(e.target.value)}
                     style={{
                       width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
-                      borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, fontWeight: 700, outline: 'none'
+                      borderRadius: 10, padding: '9px 12px', color: '#fff', fontSize: 12, fontWeight: 700, outline: 'none'
                     }}
                   />
                 </div>
               </div>
 
-              <div>
-                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-                  Час друку (годин)
-                </label>
-                <input
-                  type="number"
-                  step="0.5"
-                  value={printHours}
-                  onChange={(e) => setPrintHours(e.target.value)}
-                  style={{
-                    width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
-                    borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, fontWeight: 700, outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div style={{ fontSize: 12, color: '#94a3b8', display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: 8 }}>
-                <span>Вартість пластику:</span>
+              <div style={{ fontSize: 12, color: '#94a3b8', display: 'flex', justifyBetween: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: 8 }}>
+                <span>Вартість пластику ({plasticType}):</span>
                 <strong style={{ color: '#3b82f6' }}>{calculations.plasticCost.toFixed(2)} ₴</strong>
               </div>
             </div>
 
-            {/* 2. Hardware Components from Inventory */}
+            {/* 2. Hardware Components in Product (Custom Modal Selector & Added Cards) */}
             <div style={{
               background: 'rgba(15, 23, 42, 0.6)',
               border: '1px solid var(--border)',
@@ -424,71 +548,116 @@ export default function LampStudio() {
                     2. Комплектуючі зі складу
                   </h3>
                 </div>
-              </div>
 
-              {/* Add Component Dropdown */}
-              <div>
-                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-                  Додати деталь зі складу:
-                </label>
-                <select
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      handleAddComponentToProduct(e.target.value);
-                      e.target.value = '';
-                    }
-                  }}
-                  defaultValue=""
+                <button
+                  type="button"
+                  onClick={() => setShowPickerModal(true)}
                   style={{
-                    width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)',
-                    borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 12, outline: 'none', cursor: 'pointer'
+                    padding: '6px 14px', borderRadius: 10, border: 'none',
+                    background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)', color: '#fff',
+                    fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
                   }}
                 >
-                  <option value="" disabled>-- Оберіть деталь --</option>
-                  {components.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.purchase_price}₴ / {c.unit}, на складі: {c.stock_qty})
-                    </option>
-                  ))}
-                </select>
+                  <Plus size={14} /> Додати деталь
+                </button>
               </div>
 
-              {/* List of Added Components */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {productComponents.map((item, idx) => (
-                  <div key={item.id || idx} style={{
-                    display: 'flex', alignItems: 'center', justifyBetween: 'space-between',
-                    padding: '8px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 10, gap: 8
-                  }}>
-                    <span style={{ fontSize: 12, color: '#fff', flex: 1 }}>{item.name}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.qty}
-                        onChange={(e) => {
-                          const updated = [...productComponents];
-                          updated[idx].qty = Number(e.target.value) || 1;
-                          setProductComponents(updated);
-                        }}
-                        style={{
-                          width: 45, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)',
-                          borderRadius: 6, padding: '4px 6px', color: '#fff', fontSize: 12, textAlign: 'center'
-                        }}
-                      />
-                      <span style={{ fontSize: 12, color: '#8b5cf6', fontWeight: 700, width: 60, textAlign: 'right' }}>
-                        {(item.qty * item.price).toFixed(0)}₴
+              {/* Added Components List */}
+              {productComponents.length === 0 ? (
+                <div 
+                  onClick={() => setShowPickerModal(true)}
+                  style={{
+                    padding: 20, border: '2px dashed var(--border)', borderRadius: 12, textAlign: 'center',
+                    color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                >
+                  + Натисніть, щоб обрати деталі зі складу
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {productComponents.map((item, idx) => (
+                    <div key={item.id || idx} style={{
+                      display: 'flex', alignItems: 'center', justifyBetween: 'space-between',
+                      padding: '10px 14px', background: 'rgba(0,0,0,0.25)', border: '1px solid var(--border)', borderRadius: 12, gap: 10
+                    }}>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{item.name}</span>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{item.price} ₴ / шт</span>
+                      </div>
+
+                      {/* Quantity Controls */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...productComponents];
+                            if (updated[idx].qty > 1) {
+                              updated[idx].qty -= 1;
+                              setProductComponents(updated);
+                            }
+                          }}
+                          style={{
+                            width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)',
+                            background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                        >
+                          <Minus size={12} />
+                        </button>
+
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.qty}
+                          onChange={(e) => {
+                            const updated = [...productComponents];
+                            updated[idx].qty = Math.max(1, Number(e.target.value) || 1);
+                            setProductComponents(updated);
+                          }}
+                          style={{
+                            width: 44, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)',
+                            borderRadius: 6, padding: '4px 6px', color: '#fff', fontSize: 12, textAlign: 'center', fontWeight: 800
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...productComponents];
+                            updated[idx].qty += 1;
+                            setProductComponents(updated);
+                          }}
+                          style={{
+                            width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)',
+                            background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+
+                      <span style={{ fontSize: 13, color: '#c084fc', fontWeight: 800, width: 65, textAlign: 'right' }}>
+                        {(item.qty * item.price).toFixed(0)} ₴
                       </span>
+
+                      {/* Delete button from product */}
                       <button
-                        onClick={() => setProductComponents(productComponents.filter((_, i) => i !== idx))}
-                        style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', padding: 2 }}
+                        type="button"
+                        onClick={() => handleRemoveComponentFromProduct(idx)}
+                        title="Видалити деталь з виробу"
+                        style={{
+                          width: 28, height: 28, borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)',
+                          background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s'
+                        }}
                       >
                         <Trash2 size={14} />
                       </button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               <div style={{ fontSize: 12, color: '#94a3b8', display: 'flex', justifyBetween: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: 8 }}>
                 <span>Разом деталі:</span>
@@ -496,7 +665,7 @@ export default function LampStudio() {
               </div>
             </div>
 
-            {/* 3. Labor & Margin */}
+            {/* 3. Labor Per Product & Margin */}
             <div style={{
               background: 'rgba(15, 23, 42, 0.6)',
               border: '1px solid var(--border)',
@@ -509,43 +678,28 @@ export default function LampStudio() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
                 <Wrench size={18} style={{ color: '#10b981' }} />
                 <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#fff' }}>
-                  3. Робота та Націнка
+                  3. Робота Майстра (за виріб) та Націнка
                 </h3>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-                    Години роботи (збірка, пайка)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.25"
-                    value={laborHours}
-                    onChange={(e) => setLaborHours(e.target.value)}
-                    style={{
-                      width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
-                      borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, fontWeight: 700, outline: 'none'
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
-                    Ставка майстра (₴/год)
-                  </label>
-                  <input
-                    type="number"
-                    value={laborRate}
-                    onChange={(e) => setLaborRate(e.target.value)}
-                    style={{
-                      width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
-                      borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, fontWeight: 700, outline: 'none'
-                    }}
-                  />
-                </div>
+              {/* Master labor FIXED COST PER ITEM */}
+              <div>
+                <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+                  Оплата майстру за виготовлення виробу (₴ / виріб)
+                </label>
+                <input
+                  type="number"
+                  value={laborCostPerItem}
+                  onChange={(e) => setLaborCostPerItem(e.target.value)}
+                  placeholder="напр. 150 ₴ за виріб"
+                  style={{
+                    width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)',
+                    borderRadius: 10, padding: '10px 14px', color: '#fff', fontSize: 14, fontWeight: 800, outline: 'none'
+                  }}
+                />
               </div>
 
+              {/* Margin slider */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
                   <span style={{ color: 'var(--text-muted)' }}>Бажана Націнка (Маржа):</span>
@@ -564,6 +718,7 @@ export default function LampStudio() {
 
               {/* Collapsible Advanced Settings */}
               <button
+                type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 style={{
                   background: 'transparent', border: 'none', color: 'var(--text-muted)',
@@ -661,9 +816,10 @@ export default function LampStudio() {
                 </div>
               </div>
 
-              {/* Action Buttons matching site style */}
+              {/* Action Button */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <button
+                  type="button"
                   onClick={() => setShowBatchModal(true)}
                   style={{
                     padding: '14px 20px', borderRadius: 14, border: 'none',
@@ -684,7 +840,7 @@ export default function LampStudio() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: INVENTORY COMPONENTS LIST */}
+      {/* TAB 2: INVENTORY COMPONENTS LIST WITH EDIT & DELETE BUTTONS */}
       {/* ========================================================================= */}
       {activeTab === 'components' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -702,9 +858,10 @@ export default function LampStudio() {
             />
 
             <button
+              type="button"
               onClick={() => {
                 setEditingComp(null);
-                setCompForm({ name: '', category: 'Деталі', supplier: '', unit: 'шт', purchase_price: '', stock_qty: '', min_stock_alert: 5 });
+                setCompForm({ name: '', category: 'Світлодіоди/LED', supplier: '', unit: 'шт', purchase_price: '', stock_qty: '', min_stock_alert: 5 });
                 setShowCompModal(true);
               }}
               style={{
@@ -713,31 +870,154 @@ export default function LampStudio() {
                 fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
               }}
             >
-              <Plus size={16} /> Додати нову деталь
+              <Plus size={16} /> Додати нову деталь у склад
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
             {components.filter(c => c.name.toLowerCase().includes(componentSearch.toLowerCase())).map(comp => (
               <div key={comp.id} style={{
                 background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border)', borderRadius: 16, padding: 16,
-                display: 'flex', flexDirection: 'column', gap: 10
+                display: 'flex', flexDirection: 'column', gap: 12
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#fff' }}>{comp.name}</h4>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#fff' }}>{comp.name}</h4>
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{comp.supplier || 'Постачальник не вказаний'}</span>
+                  </div>
                   <span style={{ fontSize: 10, background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>
                     {comp.category}
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)' }}>
-                  <span>Ціна: <strong style={{ color: '#10b981' }}>{comp.purchase_price}₴</strong></span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)', background: 'rgba(0,0,0,0.2)', padding: 10, borderRadius: 10 }}>
+                  <span>Ціна: <strong style={{ color: '#10b981' }}>{comp.purchase_price} ₴</strong></span>
                   <span>На складі: <strong style={{ color: '#fff' }}>{comp.stock_qty} {comp.unit}</strong></span>
+                </div>
+
+                {/* Edit & Delete Action Buttons */}
+                <div style={{ display: 'flex', justifyBetween: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 10, gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingComp(comp);
+                      setCompForm({
+                        name: comp.name,
+                        category: comp.category || 'Деталі',
+                        supplier: comp.supplier || '',
+                        unit: comp.unit || 'шт',
+                        purchase_price: comp.purchase_price,
+                        stock_qty: comp.stock_qty,
+                        min_stock_alert: comp.min_stock_alert || 5
+                      });
+                      setShowCompModal(true);
+                    }}
+                    style={{
+                      flex: 1, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+                      background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                    }}
+                  >
+                    <Edit3 size={13} /> Редагувати
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteInventoryComp(comp.id)}
+                    style={{
+                      padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)',
+                      background: 'rgba(239,68,68,0.1)', color: '#ef4444', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                    }}
+                  >
+                    <Trash2 size={13} /> Видалити
+                  </button>
                 </div>
               </div>
             ))}
           </div>
 
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: BEAUTIFUL CUSTOM HARDWARE PICKER FOR PRODUCT */}
+      {/* ========================================================================= */}
+      {showPickerModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+        }}>
+          <div style={{
+            background: '#0f172a', border: '1px solid var(--border)', borderRadius: 24, padding: 24,
+            maxWidth: 540, width: '100%', display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '85vh'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', pb: 12 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff' }}>
+                Оберіть деталь зі складу
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowPickerModal(false)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Пошук деталі за назвою..."
+                value={pickerSearch}
+                onChange={(e) => setPickerSearch(e.target.value)}
+                style={{
+                  width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border)',
+                  borderRadius: 12, padding: '10px 14px', color: '#fff', fontSize: 13, outline: 'none'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', maxHeight: 380, paddingRight: 4 }}>
+              {filteredPickerComponents.length === 0 ? (
+                <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                  Нічого не знайдено
+                </div>
+              ) : (
+                filteredPickerComponents.map((comp) => (
+                  <div
+                    key={comp.id}
+                    onClick={() => {
+                      handleAddComponentToProduct(comp);
+                      setShowPickerModal(false);
+                    }}
+                    style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '12px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)',
+                      borderRadius: 14, cursor: 'pointer', transition: 'all 0.15s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.15)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{comp.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        На складі: <strong style={{ color: '#fff' }}>{comp.stock_qty} {comp.unit}</strong>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#2dd4bf' }}>
+                        {comp.purchase_price} ₴
+                      </span>
+                      <span style={{ padding: '4px 10px', borderRadius: 8, background: '#8b5cf6', color: '#fff', fontSize: 11, fontWeight: 800 }}>
+                        + Додати
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -778,12 +1058,14 @@ export default function LampStudio() {
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8 }}>
               <button
+                type="button"
                 onClick={() => setShowBatchModal(false)}
                 style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12 }}
               >
                 Скасувати
               </button>
               <button
+                type="button"
                 onClick={handleExecuteProduction}
                 style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: '#10b981', color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}
               >
@@ -795,7 +1077,7 @@ export default function LampStudio() {
       )}
 
       {/* ========================================================================= */}
-      {/* ADD COMPONENT MODAL */}
+      {/* ADD / EDIT INVENTORY ITEM MODAL */}
       {/* ========================================================================= */}
       {showCompModal && (
         <div style={{
@@ -807,7 +1089,7 @@ export default function LampStudio() {
             maxWidth: 400, width: '100%', display: 'flex', flexDirection: 'column', gap: 14
           }}>
             <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff' }}>
-              Додати деталь у склад
+              {editingComp ? 'Редагувати деталь у складі' : 'Додати деталь у склад'}
             </h3>
 
             <div>
