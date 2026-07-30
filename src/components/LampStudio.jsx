@@ -54,7 +54,7 @@ export default function LampStudio() {
   const [selectedModelId, setSelectedModelId] = useState(null);
 
   // --- Active Calculator / Builder Form State ---
-  const [lampName, setLampName] = useState('Нова Дизайнерська Лампа');
+  const [lampName, setLampName] = useState('Новий Авторський Виріб');
   const [targetMargin, setTargetMargin] = useState(100); // 100% margin default
   const [defectMarginPercent, setDefectMarginPercent] = useState(5); // 5% reserve for defects
   const [packagingCost, setPackagingCost] = useState(48);
@@ -430,14 +430,14 @@ export default function LampStudio() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2.5 bg-amber-500/15 border border-amber-500/30 rounded-2xl text-amber-400">
-                <Lightbulb className="w-7 h-7" />
+                <Box className="w-7 h-7" />
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-amber-200 via-amber-100 to-slate-100 bg-clip-text text-transparent">
-                  Лампова Студія
+                  Студія Виробництва
                 </h1>
                 <p className="text-xs md:text-sm text-slate-400 font-medium">
-                  Облік себевартості, комплектуючих, 3D-друку та поетапних робіт в єдиному місці
+                  Облік себевартості, комплектуючих, 3D-друку та робіт для будь-якого виробу
                 </p>
               </div>
             </div>
@@ -512,13 +512,13 @@ export default function LampStudio() {
             <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex-1 w-full">
                 <label className="text-xs font-semibold text-amber-400 uppercase tracking-wider block mb-1">
-                  Назва Моделі Лампи
+                  Назва Моделі / Виробу
                 </label>
                 <input
                   type="text"
                   value={lampName}
                   onChange={(e) => setLampName(e.target.value)}
-                  placeholder="напр. Cyberpunk Neon Lamp v2"
+                  placeholder="напр. Настільна Лампа, Арт-декор, Гаджет v2"
                   className="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl px-4 py-2.5 text-base font-bold text-slate-100 outline-none transition-all"
                 />
               </div>

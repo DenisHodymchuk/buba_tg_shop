@@ -1509,7 +1509,7 @@ export default function AdminPanel() {
           <SidebarBtn active={activeTab === 'sales_cabinet'} onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }} icon={<Coins size={18} />} label="Продажі" />
           <SidebarBtn active={activeTab === 'shipping_list'} onClick={() => { setActiveTab('shipping_list'); setIsSidebarOpen(false); }} icon={<Truck size={18} />} label="Відправки" />
           <SidebarBtn active={activeTab === 'production'} onClick={() => { setActiveTab('production'); setIsSidebarOpen(false); }} icon={<Hammer size={18} />} label="Виготовлення" />
-          <SidebarBtn active={activeTab === 'lamp_studio'} onClick={() => { setActiveTab('lamp_studio'); setIsSidebarOpen(false); }} icon={<Lightbulb size={18} />} label="Лампова Студія" />
+          <SidebarBtn active={activeTab === 'lamp_studio'} onClick={() => { setActiveTab('lamp_studio'); setIsSidebarOpen(false); }} icon={<Box size={18} />} label="Студія Виробництва" />
           <SidebarBtn active={activeTab === 'calculator'} onClick={() => { setActiveTab('calculator'); setIsSidebarOpen(false); }} icon={<Calculator size={18} />} label="Калькулятор" />
           <SidebarBtn active={activeTab === 'inventory'} onClick={() => { setActiveTab('inventory'); setIsSidebarOpen(false); }} icon={<Box size={18} />} label="Склад (Облік)" />
           <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
