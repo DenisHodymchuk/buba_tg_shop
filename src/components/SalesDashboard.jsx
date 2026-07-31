@@ -439,10 +439,14 @@ export default function SalesDashboard({ showToast }) {
   const stats = useMemo(() => {
     let totalRevenue = 0;
     let paidRevenue = 0;
+    let activeCount = 0;
     let counts = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, tiktok: 0, threads: 0, offline: 0, other: 0 };
     let sums = { website: 0, olx: 0, instagram: 0, facebook: 0, telegram: 0, tiktok: 0, threads: 0, offline: 0, other: 0 };
     
     sales.forEach(sale => {
+      if (sale.status === 'cancelled' || sale.status === 'canceled') return;
+
+      activeCount++;
       const amt = parseFloat(sale.total || 0);
       totalRevenue += amt;
       if (sale.payment_status === 'paid') {
@@ -470,6 +474,7 @@ export default function SalesDashboard({ showToast }) {
     return {
       totalRevenue,
       paidRevenue,
+      activeCount,
       counts,
       sums
     };
@@ -479,6 +484,8 @@ export default function SalesDashboard({ showToast }) {
     const groups = {};
     
     sales.forEach(sale => {
+      if (sale.status === 'cancelled' || sale.status === 'canceled') return;
+
       const date = new Date(sale.created_at);
       const amt = parseFloat(sale.total || 0);
       const isPaid = sale.payment_status === 'paid';
@@ -938,7 +945,7 @@ export default function SalesDashboard({ showToast }) {
             </div>
           </div>
           <div style={{ fontSize: 28, fontWeight: 950, color: '#fff' }}>{stats.totalRevenue.toLocaleString('uk-UA')} ₴</div>
-          <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 8, fontWeight: 700 }}>Всього замовлень та продажів: {sales.length}</div>
+          <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 8, fontWeight: 700 }}>Всього замовлень та продажів: {stats.activeCount}</div>
         </div>
 
         {/* Paid Revenue Card */}
