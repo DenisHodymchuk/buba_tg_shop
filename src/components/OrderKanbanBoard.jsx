@@ -598,7 +598,7 @@ export default function OrderKanbanBoard({
                 gap: 12,
                 flexGrow: 1,
                 overflowY: 'auto',
-                maxHeight: 'calc(100vh - 280px)',
+                maxHeight: 'calc(100vh - 210px)',
                 minHeight: 200
               }}>
                 {colOrders.length === 0 ? (

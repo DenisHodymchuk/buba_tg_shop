@@ -13,6 +13,7 @@ import CalculatorComp from '@/components/Calculator';
 import InventoryDashboard from '@/components/InventoryDashboard';
 import AdvertisingDashboard from '@/components/AdvertisingDashboard';
 import SalesDashboard from '@/components/SalesDashboard';
+import SalesStatsDashboard from '@/components/SalesStatsDashboard';
 import ShippingCabinet from '@/components/ShippingCabinet';
 import ProductionCabinet from '@/components/ProductionCabinet';
 import LampStudio from '@/components/LampStudio';
@@ -1507,6 +1508,7 @@ export default function AdminPanel() {
         <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <SidebarBtn active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Package size={18} />} label="Товари" />
           <SidebarBtn active={activeTab === 'sales_cabinet'} onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }} icon={<Coins size={18} />} label="Продажі" />
+          <SidebarBtn active={activeTab === 'sales_stats'} onClick={() => { setActiveTab('sales_stats'); setIsSidebarOpen(false); }} icon={<BarChart3 size={18} />} label="Статистика продажів" />
           <SidebarBtn active={activeTab === 'shipping_list'} onClick={() => { setActiveTab('shipping_list'); setIsSidebarOpen(false); }} icon={<Truck size={18} />} label="Відправки" />
           <SidebarBtn active={activeTab === 'production'} onClick={() => { setActiveTab('production'); setIsSidebarOpen(false); }} icon={<Hammer size={18} />} label="Виготовлення" />
           <SidebarBtn active={activeTab === 'lamp_studio'} onClick={() => { setActiveTab('lamp_studio'); setIsSidebarOpen(false); }} icon={<Box size={18} />} label="Студія Виробництва" />
@@ -2508,6 +2510,8 @@ export default function AdminPanel() {
             <ProductionCabinet orders={orders} setOrders={setOrders} showToast={showToast} isMobile={isMobile} />
           ) : activeTab === 'sales_cabinet' ? (
             <SalesDashboard showToast={showToast} />
+          ) : activeTab === 'sales_stats' ? (
+            <SalesStatsDashboard showToast={showToast} />
           ) : activeTab === 'inventory' ? (
             <InventoryDashboard showToast={showToast} />
           ) : activeTab === 'reviews' ? (
