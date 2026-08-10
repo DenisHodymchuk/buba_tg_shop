@@ -373,87 +373,62 @@ export default function OrderKanbanBoard({
   };
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Top Header / Bar */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        flexWrap: 'wrap', 
-        gap: 12,
-        background: 'rgba(15, 23, 42, 0.6)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid var(--border)',
-        borderRadius: 16,
-        padding: '12px 18px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.3))',
-            border: '1px solid rgba(124,58,237,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#a78bfa'
-          }}>
-            <Layers size={18} />
-          </div>
-          <div>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff' }}>
-              Канбан Дошка Замовлень
-            </h3>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>
-              Перетягуйте картки між колонками для швидкої зміни статусу
-            </p>
-          </div>
+    <div style={{ width: '100%', height: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Sub Toolbar Row (Scroll & Config) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Layers size={14} style={{ color: '#a78bfa' }} />
+          <span>Канбан дошка</span>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {/* Scroll Navigation Buttons */}
-          <div style={{ display: 'flex', gap: 4, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 3 }}>
+          <div style={{ display: 'flex', gap: 3, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 8, padding: 2 }}>
             <button
+              type="button"
               onClick={() => scrollBoard(-1)}
               title="Прокрутити ліворуч"
               style={{
-                padding: '6px 10px', borderRadius: 7, border: 'none',
+                padding: '4px 8px', borderRadius: 6, border: 'none',
                 background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={14} />
             </button>
             <button
+              type="button"
               onClick={() => scrollBoard(1)}
               title="Прокрутити праворуч"
               style={{
-                padding: '6px 10px', borderRadius: 7, border: 'none',
+                padding: '4px 8px', borderRadius: 6, border: 'none',
                 background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={14} />
             </button>
           </div>
 
           <button
+            type="button"
             onClick={() => setIsConfigModalOpen(true)}
             style={{
-              padding: '8px 14px',
-              borderRadius: 10,
-              background: 'rgba(255,255,255,0.06)',
+              padding: '5px 12px',
+              borderRadius: 8,
+              background: 'rgba(255,255,255,0.04)',
               border: '1px solid var(--border)',
-              color: '#fff',
-              fontSize: 13,
-              fontWeight: 650,
+              color: '#e2e8f0',
+              fontSize: 11,
+              fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 5,
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
           >
-            <Settings size={15} style={{ color: '#a78bfa' }} />
+            <Settings size={13} style={{ color: '#a78bfa' }} />
             Налаштувати колонки
           </button>
         </div>
@@ -466,10 +441,12 @@ export default function OrderKanbanBoard({
         onDragLeave={() => stopAutoScroll()}
         style={{ 
           display: 'flex', 
-          gap: 16, 
+          gap: 14, 
           overflowX: 'auto', 
-          paddingBottom: 16,
-          minHeight: 620,
+          overflowY: 'hidden',
+          flex: 1,
+          minHeight: 0,
+          paddingBottom: 8,
           scrollBehavior: draggedOrderId ? 'auto' : 'smooth',
           scrollbarWidth: 'thin',
           scrollbarColor: '#7c3aed rgba(15, 23, 42, 0.6)'
@@ -489,12 +466,13 @@ export default function OrderKanbanBoard({
               onDragLeave={(e) => handleDragLeave(e, col.id)}
               onDrop={(e) => handleDrop(e, col)}
               style={{
-                flex: '0 0 320px',
-                minWidth: 320,
-                maxWidth: 340,
+                flex: '0 0 310px',
+                minWidth: 310,
+                maxWidth: 330,
+                height: '100%',
                 background: isDropTarget ? `${col.color}15` : 'rgba(15, 23, 42, 0.45)',
                 border: isDropTarget ? `2px dashed ${col.color}` : `1px solid ${col.borderColor || 'var(--border)'}`,
-                borderRadius: 18,
+                borderRadius: 16,
                 display: 'flex',
                 flexDirection: 'column',
                 transition: 'all 0.2s ease',
@@ -592,15 +570,15 @@ export default function OrderKanbanBoard({
               <div 
                 data-kanban-cards-list="true"
                 style={{
-                padding: 12,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-                flexGrow: 1,
-                overflowY: 'auto',
-                maxHeight: 'calc(100vh - 210px)',
-                minHeight: 200
-              }}>
+                  padding: 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                  flex: 1,
+                  minHeight: 0,
+                  overflowY: 'auto'
+                }}
+              >
                 {colOrders.length === 0 ? (
                   <div 
                     onClick={() => onAddOrder?.(col.status)}

@@ -905,168 +905,123 @@ export default function SalesDashboard({ showToast }) {
   }, [ads, formData?.items]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', height: isMobile ? 'auto' : 'calc(100vh - 32px)', overflow: 'hidden' }}>
       
-      {/* Top Header */}
-      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 16 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 950, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Coins size={28} style={{ color: '#2dd4bf' }} /> Кабінет Продажів
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0 0' }}>Облік всіх продажів (сайт, соцмережі, маркетплейси, офлайн)</p>
-        </div>
-        <button 
-          type="button"
-          onClick={(e) => { 
-            e?.preventDefault();
-            resetForm(); 
-            setShowAddForm(true); 
-          }}
-          style={{ 
-            padding: '12px 24px', borderRadius: 14, border: 'none',
-            background: 'linear-gradient(135deg, #2dd4bf, #3b82f6)', color: '#fff',
-            fontWeight: 850, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            boxShadow: '0 8px 20px rgba(45,212,191,0.2)'
-          }}
-        >
-          <Plus size={18} /> ДОДАТИ ПРОДАЖ
-        </button>
-      </div>
-
-
-
-      {/* Search and Filters */}
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 20, padding: isMobile ? 12 : 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {/* Main Toolbar Row */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {/* Search Input */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 12px' }}>
-            <Search size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-            <input 
-              type="text" 
-              placeholder="Пошук клієнта чи телефону..." 
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} 
-            />
-            {searchQuery && (
-              <X size={14} style={{ cursor: 'pointer', color: 'var(--text-muted)', flexShrink: 0 }} onClick={() => setSearchQuery('')} />
-            )}
-          </div>
-
-          {/* View Switcher Buttons */}
-          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 3, gap: 3, flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={() => switchViewMode('table')}
-              title="Табличний вигляд"
-              style={{
-                padding: '6px 12px',
-                borderRadius: 9,
-                border: 'none',
-                background: viewMode === 'table' ? '#7c3aed' : 'transparent',
-                color: viewMode === 'table' ? '#fff' : 'var(--text-muted)',
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                transition: 'all 0.2s'
-              }}
-            >
-              <List size={14} />
-              <span>Таблиця</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => switchViewMode('kanban')}
-              title="Канбан дошка"
-              style={{
-                padding: '6px 12px',
-                borderRadius: 9,
-                border: 'none',
-                background: viewMode === 'kanban' ? '#7c3aed' : 'transparent',
-                color: viewMode === 'kanban' ? '#fff' : 'var(--text-muted)',
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                transition: 'all 0.2s'
-              }}
-            >
-              <LayoutGrid size={14} />
-              <span>Канбан</span>
-            </button>
-          </div>
-
-          {/* Filter Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 12,
-              border: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0 || isFiltersExpanded)
-                ? '1px solid #7c3aed' 
-                : '1px solid var(--border)',
-              background: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0) 
-                ? 'rgba(124, 58, 237, 0.15)' 
-                : 'rgba(255, 255, 255, 0.03)',
-              color: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0)
-                ? '#a78bfa'
-                : 'var(--text-main)',
-              fontSize: 12,
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              whiteSpace: 'nowrap',
-              flexShrink: 0
-            }}
-          >
-            <Filter size={14} />
-            <span>Фільтри</span>
-            {(selectedSources.length + selectedPayments.length + selectedStatuses.length) > 0 && (
-              <span style={{ 
-                background: '#7c3aed', color: '#fff', fontSize: 10, fontWeight: 900, 
-                padding: '1px 6px', borderRadius: 8 
-              }}>
-                {selectedSources.length + selectedPayments.length + selectedStatuses.length}
+      {/* Sleek Combined Top Toolbar Header */}
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: isMobile ? 10 : '10px 16px', display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 10 }}>
+          
+          {/* Title & Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2dd4bf' }}>
+              <Coins size={18} />
+            </div>
+            <h1 style={{ fontSize: 18, fontWeight: 950, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              Кабінет Продажів
+              <span style={{ fontSize: 11, fontWeight: 900, background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 8 }}>
+                {filteredSales.length}
               </span>
-            )}
-            {isFiltersExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
+            </h1>
+          </div>
 
-          {/* Reset Filters Button */}
-          {(selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0 || searchQuery) && (
+          {/* Search, Controls & Action Button Row */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
+            
+            {/* Search Input */}
+            <div style={{ flex: isMobile ? '1 1 100%' : '0 1 240px', minWidth: 160, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: '6px 12px' }}>
+              <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+              <input 
+                type="text" 
+                placeholder="Пошук клієнта чи телефону..." 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 12, outline: 'none', width: '100%' }} 
+              />
+              {searchQuery && (
+                <X size={14} style={{ cursor: 'pointer', color: 'var(--text-muted)', flexShrink: 0 }} onClick={() => setSearchQuery('')} />
+              )}
+            </div>
+
+            {/* View Switcher Buttons */}
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 3, gap: 3, flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={() => switchViewMode('table')}
+                title="Табличний вигляд"
+                style={{
+                  padding: '5px 10px', borderRadius: 7, border: 'none',
+                  background: viewMode === 'table' ? '#7c3aed' : 'transparent',
+                  color: viewMode === 'table' ? '#fff' : 'var(--text-muted)',
+                  fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s'
+                }}
+              >
+                <List size={14} />
+                <span>Таблиця</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => switchViewMode('kanban')}
+                title="Канбан дошка"
+                style={{
+                  padding: '5px 10px', borderRadius: 7, border: 'none',
+                  background: viewMode === 'kanban' ? '#7c3aed' : 'transparent',
+                  color: viewMode === 'kanban' ? '#fff' : 'var(--text-muted)',
+                  fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s'
+                }}
+              >
+                <LayoutGrid size={14} />
+                <span>Канбан</span>
+              </button>
+            </div>
+
+            {/* Filter Toggle Button */}
             <button
               type="button"
-              onClick={() => {
-                setSelectedSources([]);
-                setSelectedPayments([]);
-                setSelectedStatuses([]);
-                setSearchQuery('');
-              }}
+              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
               style={{
-                padding: '8px 10px',
-                borderRadius: 12,
-                border: '1px solid rgba(239, 68, 68, 0.2)',
-                background: 'rgba(239, 68, 68, 0.08)',
-                color: '#ef4444',
-                fontSize: 11,
-                fontWeight: 800,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                flexShrink: 0
+                padding: '6px 12px', borderRadius: 10,
+                border: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0 || isFiltersExpanded) ? '1px solid #7c3aed' : '1px solid var(--border)',
+                background: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0) ? 'rgba(124, 58, 237, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                color: (selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0) ? '#a78bfa' : 'var(--text-main)',
+                fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap', flexShrink: 0
               }}
             >
-              Скинути
+              <Filter size={14} />
+              <span>Фільтри</span>
+              {(selectedSources.length + selectedPayments.length + selectedStatuses.length) > 0 && (
+                <span style={{ background: '#7c3aed', color: '#fff', fontSize: 10, fontWeight: 900, padding: '1px 6px', borderRadius: 6 }}>
+                  {selectedSources.length + selectedPayments.length + selectedStatuses.length}
+                </span>
+              )}
+              {isFiltersExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
-          )}
+
+            {/* Reset Filters Button */}
+            {(selectedSources.length > 0 || selectedPayments.length > 0 || selectedStatuses.length > 0 || searchQuery) && (
+              <button
+                type="button"
+                onClick={() => { setSelectedSources([]); setSelectedPayments([]); setSelectedStatuses([]); setSearchQuery(''); }}
+                style={{ padding: '6px 10px', borderRadius: 10, border: '1px solid rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444', fontSize: 11, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                Скинути
+              </button>
+            )}
+
+            {/* Add Order Button */}
+            <button 
+              type="button"
+              onClick={(e) => { e?.preventDefault(); resetForm(); setShowAddForm(true); }}
+              style={{ 
+                padding: '7px 16px', borderRadius: 10, border: 'none',
+                background: 'linear-gradient(135deg, #2dd4bf, #3b82f6)', color: '#fff',
+                fontWeight: 850, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                boxShadow: '0 4px 14px rgba(45,212,191,0.25)', flexShrink: 0
+              }}
+            >
+              <Plus size={15} /> ДОДАТИ ПРОДАЖ
+            </button>
+
+          </div>
         </div>
 
         {/* Collapsible Filters Content */}
@@ -1271,7 +1226,8 @@ export default function SalesDashboard({ showToast }) {
       </div>
 
       {/* Sales Content Container (Table or Kanban) */}
-      {viewMode === 'kanban' ? (
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', width: '100%', overflow: 'hidden' }}>
+        {viewMode === 'kanban' ? (
         <OrderKanbanBoard 
           orders={filteredSales}
           onUpdateOrderStatus={handleUpdateOrderStatus}
@@ -1503,10 +1459,10 @@ export default function SalesDashboard({ showToast }) {
           )}
         </div>
       ) : (
-        <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
+        <div style={{ background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border)', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto', overflowY: 'auto', flex: 1 }}>
+            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#0f172a' }}>
                 <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
                   <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДАТА</th>
                   <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДЖЕРЕЛО</th>
@@ -1650,6 +1606,7 @@ export default function SalesDashboard({ showToast }) {
           </div>
         </div>
       )}
+      </div>
 
       {/* Add / Edit Form Modal */}
       <AnimatePresence>

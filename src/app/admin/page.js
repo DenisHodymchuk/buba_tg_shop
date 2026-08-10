@@ -1558,7 +1558,7 @@ export default function AdminPanel() {
           </header>
         )}
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '12px' : '40px' }}>
+        <div style={{ flex: 1, overflowY: activeTab === 'sales_cabinet' ? 'hidden' : 'auto', padding: isMobile ? '12px' : activeTab === 'sales_cabinet' ? '16px 20px' : '40px' }}>
           {!supabase && (
             <div style={{ marginBottom: 24, padding: 16, background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', borderRadius: 12, color: '#ef4444', fontSize: 13, fontWeight: 700 }}>
               ⚠️ З'єднання з Supabase не встановлено. Перевірте наявність та правильність файлу .env.local
