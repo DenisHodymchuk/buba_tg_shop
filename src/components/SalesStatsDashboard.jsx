@@ -37,6 +37,7 @@ export default function SalesStatsDashboard({ showToast }) {
   const [periodType, setPeriodType] = useState('month'); // 'week' | 'month' | 'quarter'
   const [timeFilter, setTimeFilter] = useState('all'); // 'all' | '30days' | '7days' | 'thisMonth' | 'thisYear'
   const [isMobile, setIsMobile] = useState(false);
+  const [showAllSources, setShowAllSources] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -399,56 +400,123 @@ export default function SalesStatsDashboard({ showToast }) {
       </div>
 
       {/* Platform Breakdown */}
-      <div style={{ background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border)', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 20, border: '1px solid var(--border)', padding: 20, display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <TrendingUp size={20} style={{ color: '#3b82f6' }} />
             <h2 style={{ fontSize: 16, fontWeight: 900, color: '#fff', margin: 0 }}>Розподіл за Джерелами Замовлень</h2>
           </div>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>Канали продажів</span>
+          
+          <button 
+            type="button"
+            onClick={() => setShowAllSources(!showAllSources)}
+            style={{ 
+              background: showAllSources ? 'rgba(124, 58, 237, 0.15)' : 'rgba(255,255,255,0.03)', 
+              border: showAllSources ? '1px solid #7c3aed' : '1px solid var(--border)', 
+              color: showAllSources ? '#a78bfa' : 'var(--text-muted)', 
+              fontSize: 11, fontWeight: 800, padding: '6px 12px', borderRadius: 10, cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            {showAllSources ? 'Приховати неактивні (0 ₴)' : 'Показати всі 9 джерел'}
+          </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-          {PLATFORMS.map(p => {
-            const sum = stats.sourceSums[p.key] || 0;
-            const count = stats.sourceCounts[p.key] || 0;
-            const percent = stats.totalRevenue > 0 ? Math.round((sum / stats.totalRevenue) * 100) : 0;
+        {/* Stacked Multi-Color Distribution Bar */}
+        {stats.totalRevenue > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ height: 14, width: '100%', background: 'rgba(0,0,0,0.3)', borderRadius: 8, display: 'flex', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {PLATFORMS.map(p => {
+                const sum = stats.sourceSums[p.key] || 0;
+                if (sum <= 0) return null;
+                const percent = (sum / stats.totalRevenue) * 100;
+                return (
+                  <div 
+                    key={p.key} 
+                    title={`${p.label}: ${sum.toLocaleString('uk-UA')} ₴ (${Math.round(percent)}%)`}
+                    style={{ 
+                      width: `${percent}%`, 
+                      background: p.color, 
+                      height: '100%', 
+                      transition: 'width 0.4s ease',
+                      borderRight: '1px solid rgba(0,0,0,0.3)'
+                    }} 
+                  />
+                );
+              })}
+            </div>
 
-            return (
-              <div 
-                key={p.key} 
-                style={{ 
-                  background: 'rgba(255,255,255,0.02)', 
-                  border: '1px solid rgba(255,255,255,0.05)', 
-                  borderRadius: 14, 
-                  padding: 14, 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: 8 
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color, boxShadow: `0 0 8px ${p.color}` }} />
-                    <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{p.label}</span>
+            {/* Quick Legend Tags */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 2 }}>
+              {PLATFORMS.filter(p => (stats.sourceSums[p.key] || 0) > 0)
+                .sort((a, b) => (stats.sourceSums[b.key] || 0) - (stats.sourceSums[a.key] || 0))
+                .map(p => {
+                  const sum = stats.sourceSums[p.key] || 0;
+                  const percent = Math.round((sum / stats.totalRevenue) * 100);
+                  return (
+                    <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#e2e8f0' }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, boxShadow: `0 0 6px ${p.color}` }} />
+                      <span>{p.label}:</span>
+                      <strong style={{ color: p.color }}>{percent}%</strong>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {/* Source Cards Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(210px, 1fr))', gap: 12 }}>
+          {PLATFORMS
+            .filter(p => showAllSources || (stats.sourceSums[p.key] || 0) > 0 || (stats.sourceCounts[p.key] || 0) > 0)
+            .sort((a, b) => (stats.sourceSums[b.key] || 0) - (stats.sourceSums[a.key] || 0))
+            .map(p => {
+              const sum = stats.sourceSums[p.key] || 0;
+              const count = stats.sourceCounts[p.key] || 0;
+              const percent = stats.totalRevenue > 0 ? Math.round((sum / stats.totalRevenue) * 100) : 0;
+              const isActive = sum > 0 || count > 0;
+
+              return (
+                <div 
+                  key={p.key} 
+                  style={{ 
+                    background: isActive ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)', 
+                    border: isActive ? `1px solid ${p.color}35` : '1px solid rgba(255,255,255,0.04)', 
+                    borderRadius: 14, 
+                    padding: 14, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: 8,
+                    opacity: isActive ? 1 : 0.4,
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color, boxShadow: isActive ? `0 0 8px ${p.color}` : 'none' }} />
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{p.label}</span>
+                    </div>
+                    {isActive ? (
+                      <span style={{ fontSize: 11, fontWeight: 900, color: p.color, background: `${p.color}18`, padding: '2px 8px', borderRadius: 8 }}>
+                        {percent}%
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)' }}>0%</span>
+                    )}
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 900, color: p.color, background: `${p.color}15`, padding: '2px 6px', borderRadius: 6 }}>
-                    {percent}%
-                  </span>
-                </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <div style={{ fontSize: 18, fontWeight: 950, color: '#fff' }}>{sum.toLocaleString('uk-UA')} ₴</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>{count} прод.</div>
-                </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <div style={{ fontSize: 18, fontWeight: 950, color: isActive ? '#fff' : 'var(--text-muted)' }}>{sum.toLocaleString('uk-UA')} ₴</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>{count} прод.</div>
+                  </div>
 
-                {/* Progress bar */}
-                <div style={{ width: '100%', height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ width: `${percent}%`, height: '100%', background: p.color, borderRadius: 2, transition: 'width 0.3s' }} />
+                  {/* Progress bar */}
+                  <div style={{ width: '100%', height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ width: `${percent}%`, height: '100%', background: p.color, borderRadius: 2, transition: 'width 0.3s' }} />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
 
