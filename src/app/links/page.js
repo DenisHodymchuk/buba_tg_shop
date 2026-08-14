@@ -410,68 +410,12 @@ export default function LinksPage() {
           })}
         </div>
 
-        {/* Кнопки дій внизу (Share & QR) */}
-        <div style={{
-          display: 'flex',
-          justify: 'center',
-          alignItems: 'center',
-          gap: '12px',
-          marginTop: '32px',
-          marginBottom: '8px'
-        }}>
-          <button
-            onClick={() => setShowQr(true)}
-            title="Показати QR-код"
-            style={{
-              height: '42px',
-              padding: '0 18px',
-              borderRadius: '14px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#fff',
-              display: 'flex', alignItems: 'center', gap: '8px',
-              fontSize: '13px', fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              backdropFilter: 'blur(10px)'
-            }}
-            className="hover:bg-white/[0.1] hover:scale-105 active:scale-95"
-          >
-            <QrCode size={18} style={{ color: '#a78bfa' }} />
-            <span>QR-код</span>
-          </button>
-
-          <button
-            onClick={handleCopyLink}
-            title="Копіювати посилання"
-            style={{
-              height: '42px',
-              padding: '0 22px',
-              borderRadius: '14px',
-              background: copied 
-                ? 'linear-gradient(135deg, #10b981, #059669)' 
-                : 'linear-gradient(135deg, #7c3aed, #ec4899)',
-              border: 'none',
-              color: '#fff',
-              display: 'flex', alignItems: 'center', gap: '8px',
-              fontSize: '13px', fontWeight: 800,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: '0 6px 20px rgba(124, 58, 237, 0.35)'
-            }}
-            className="hover:scale-105 active:scale-95"
-          >
-            {copied ? <Check size={18} /> : <Share2 size={18} />}
-            <span>{copied ? 'Скопійовано!' : 'Поділитись'}</span>
-          </button>
-        </div>
-
         {/* Футер сторінки */}
         <div style={{
-          marginTop: '24px',
+          marginTop: '40px',
           textAlign: 'center',
           borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-          paddingTop: '20px',
+          paddingTop: '24px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
