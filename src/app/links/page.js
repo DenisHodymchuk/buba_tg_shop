@@ -219,41 +219,27 @@ export default function LinksPage() {
           {/* Анімований логотип бренду */}
           <div style={{ position: 'relative', marginBottom: '16px' }}>
             <div style={{
-              position: 'absolute', inset: '-6px',
-              borderRadius: '28px',
+              position: 'absolute', inset: '-4px',
+              borderRadius: '24px',
               background: 'linear-gradient(135deg, #7c3aed, #ec4899, #f97316)',
-              opacity: 0.6,
+              opacity: 0.5,
               filter: 'blur(12px)',
               animation: 'cosmicPulse 3s ease-in-out infinite'
             }} />
             
             <div style={{
-              width: '92px', height: '92px',
-              borderRadius: '26px',
-              background: '#0a0a1a',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 10px 30px rgba(124, 58, 237, 0.4)',
-              border: '2px solid rgba(255, 255, 255, 0.2)',
-              position: 'relative',
+              width: '90px', height: '90px',
+              borderRadius: '22px',
               overflow: 'hidden',
-              padding: '6px'
+              position: 'relative',
+              boxShadow: '0 10px 30px rgba(124, 58, 237, 0.35)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
               <img 
                 src="/images/buba-logo.png" 
                 alt="BUBA STORE Logo" 
-                style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '20px' }} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
               />
-            </div>
-
-            <div style={{
-              position: 'absolute', bottom: '-4px', right: '-4px',
-              background: 'linear-gradient(135deg, #10b981, #059669)',
-              borderRadius: '50%',
-              padding: '4px',
-              border: '2px solid #0a0a1a',
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }} title="Офіційна сторінка">
-              <ShieldCheck size={14} style={{ color: '#fff' }} />
             </div>
           </div>
 

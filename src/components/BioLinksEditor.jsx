@@ -430,15 +430,12 @@ export default function BioLinksEditor() {
         }}>
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
             <div style={{
-              width: '68px', height: '68px', borderRadius: '20px',
-              background: '#0a0a1a',
+              width: '68px', height: '68px', borderRadius: '18px',
               margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 8px 20px rgba(124, 58, 237, 0.4)',
-              border: '2px solid rgba(255,255,255,0.2)',
-              overflow: 'hidden',
-              padding: '4px'
+              overflow: 'hidden'
             }}>
-              <img src="/images/buba-logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '16px' }} />
+              <img src="/images/buba-logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#fff', margin: 0 }}>BUBA STORE</h3>
             <span style={{ fontSize: '11px', color: '#a78bfa', fontWeight: 700 }}>ПЕРЕДПЕРЕГЛЯД /LINKS</span>
