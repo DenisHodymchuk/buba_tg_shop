@@ -203,77 +203,6 @@ export default function LinksPage() {
 
       <div style={{ width: '100%', maxWidth: '480px', zIndex: 1, position: 'relative' }}>
         
-        {/* Кнопки дій зверху (Share & QR) */}
-        <div style={{
-          display: 'flex',
-          justify: 'space-between',
-          alignItems: 'center',
-          marginBottom: '28px'
-        }}>
-          <Link 
-            href="/"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 14px',
-              borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              color: '#a1a1c5',
-              fontSize: '13px',
-              fontWeight: 600,
-              textDecoration: 'none',
-              backdropFilter: 'blur(10px)',
-              transition: 'all 0.2s'
-            }}
-          >
-            <Box size={14} style={{ color: '#a78bfa' }} />
-            <span>BUBA STORE</span>
-          </Link>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => setShowQr(true)}
-              title="Показати QR-код"
-              style={{
-                width: '38px', height: '38px',
-                borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              <QrCode size={18} />
-            </button>
-
-            <button
-              onClick={handleCopyLink}
-              title="Копіювати посилання"
-              style={{
-                height: '38px',
-                padding: '0 14px',
-                borderRadius: '12px',
-                background: copied 
-                  ? 'linear-gradient(135deg, #10b981, #059669)' 
-                  : 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                color: '#fff',
-                display: 'flex', alignItems: 'center', gap: '6px',
-                fontSize: '13px', fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              {copied ? <Check size={16} /> : <Share2 size={16} />}
-              <span>{copied ? 'Скопійовано!' : 'Поділитись'}</span>
-            </button>
-          </div>
-        </div>
-
         {/* Профіль / Брендова шапка */}
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
@@ -287,7 +216,7 @@ export default function LinksPage() {
             alignItems: 'center'
           }}
         >
-          {/* Анімована іконка / Логотип */}
+          {/* Анімований логотип бренду */}
           <div style={{ position: 'relative', marginBottom: '16px' }}>
             <div style={{
               position: 'absolute', inset: '-6px',
@@ -299,15 +228,21 @@ export default function LinksPage() {
             }} />
             
             <div style={{
-              width: '88px', height: '88px',
-              borderRadius: '24px',
-              background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              width: '92px', height: '92px',
+              borderRadius: '26px',
+              background: '#0a0a1a',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 10px 30px rgba(124, 58, 237, 0.4)',
               border: '2px solid rgba(255, 255, 255, 0.2)',
-              position: 'relative'
+              position: 'relative',
+              overflow: 'hidden',
+              padding: '6px'
             }}>
-              <Box size={44} style={{ color: '#ffffff' }} />
+              <img 
+                src="/images/buba-logo.png" 
+                alt="BUBA STORE Logo" 
+                style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '20px' }} 
+              />
             </div>
 
             <div style={{
@@ -475,12 +410,68 @@ export default function LinksPage() {
           })}
         </div>
 
+        {/* Кнопки дій внизу (Share & QR) */}
+        <div style={{
+          display: 'flex',
+          justify: 'center',
+          alignItems: 'center',
+          gap: '12px',
+          marginTop: '32px',
+          marginBottom: '8px'
+        }}>
+          <button
+            onClick={() => setShowQr(true)}
+            title="Показати QR-код"
+            style={{
+              height: '42px',
+              padding: '0 18px',
+              borderRadius: '14px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#fff',
+              display: 'flex', alignItems: 'center', gap: '8px',
+              fontSize: '13px', fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              backdropFilter: 'blur(10px)'
+            }}
+            className="hover:bg-white/[0.1] hover:scale-105 active:scale-95"
+          >
+            <QrCode size={18} style={{ color: '#a78bfa' }} />
+            <span>QR-код</span>
+          </button>
+
+          <button
+            onClick={handleCopyLink}
+            title="Копіювати посилання"
+            style={{
+              height: '42px',
+              padding: '0 22px',
+              borderRadius: '14px',
+              background: copied 
+                ? 'linear-gradient(135deg, #10b981, #059669)' 
+                : 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              border: 'none',
+              color: '#fff',
+              display: 'flex', alignItems: 'center', gap: '8px',
+              fontSize: '13px', fontWeight: 800,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: '0 6px 20px rgba(124, 58, 237, 0.35)'
+            }}
+            className="hover:scale-105 active:scale-95"
+          >
+            {copied ? <Check size={18} /> : <Share2 size={18} />}
+            <span>{copied ? 'Скопійовано!' : 'Поділитись'}</span>
+          </button>
+        </div>
+
         {/* Футер сторінки */}
         <div style={{
-          marginTop: '40px',
+          marginTop: '24px',
           textAlign: 'center',
           borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-          paddingTop: '24px',
+          paddingTop: '20px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
