@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { 
   Box, Share2, Copy, Check, QrCode, X, Sparkles, 
-  ShoppingBag, Layers, MessageCircle, ExternalLink, ArrowRight,
+  ShoppingBag, Layers, MessageCircle, ExternalLink, ArrowRight, ArrowUpRight,
   ShieldCheck, Heart, Globe, Flame, Star
 } from 'lucide-react';
 
