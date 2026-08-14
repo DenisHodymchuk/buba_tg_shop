@@ -6,7 +6,7 @@ import { renderLinkIcon, DEFAULT_SOCIAL_LINKS } from '@/app/links/page';
 import { 
   Plus, Edit3, Trash2, ArrowUp, ArrowDown, Save, CheckCircle, 
   ExternalLink, Globe, Sparkles, Move, RefreshCw, Link as LinkIcon,
-  Layers, ShoppingBag, MessageCircle, Flame, Star
+  Layers, ShoppingBag, MessageCircle, Flame, Star, Eye, EyeOff
 } from 'lucide-react';
 
 const ICON_OPTIONS = [
@@ -46,6 +46,7 @@ export default function BioLinksEditor() {
     iconType: 'general',
     isInternal: false,
     featured: false,
+    hidden: false,
     colorGradient: 'from-purple-600 via-pink-600 to-amber-500'
   });
 
@@ -95,6 +96,16 @@ export default function BioLinksEditor() {
     setSaving(false);
   }
 
+  function handleToggleHidden(index) {
+    const updated = [...links];
+    updated[index] = {
+      ...updated[index],
+      hidden: !updated[index].hidden
+    };
+    setLinks(updated);
+    saveLinks(updated);
+  }
+
   function handleOpenAdd() {
     setEditingIndex(null);
     setFormData({
@@ -105,6 +116,7 @@ export default function BioLinksEditor() {
       iconType: 'general',
       isInternal: false,
       featured: false,
+      hidden: false,
       colorGradient: 'from-purple-600 via-pink-600 to-amber-500'
     });
     setShowModal(true);
@@ -121,6 +133,7 @@ export default function BioLinksEditor() {
       iconType: item.iconType || 'general',
       isInternal: item.isInternal || false,
       featured: item.featured || false,
+      hidden: item.hidden || false,
       colorGradient: item.colorGradient || 'from-purple-600 via-pink-600 to-amber-500'
     });
     setShowModal(true);
@@ -278,8 +291,10 @@ export default function BioLinksEditor() {
                 padding: '16px',
                 borderRadius: '18px',
                 background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                gap: '12px'
+                border: item.hidden ? '1px dashed rgba(239,68,68,0.3)' : '1px solid var(--border)',
+                opacity: item.hidden ? 0.6 : 1,
+                gap: '12px',
+                transition: 'all 0.2s'
               }}
             >
               {/* Іконка та тексти */}
@@ -293,13 +308,18 @@ export default function BioLinksEditor() {
                 </div>
 
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.title}
                     </span>
                     {item.badge && (
                       <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '6px', background: 'rgba(124, 58, 237, 0.2)', color: '#c084fc' }}>
                         {item.badge}
+                      </span>
+                    )}
+                    {item.hidden && (
+                      <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171' }}>
+                        Приховано
                       </span>
                     )}
                   </div>
@@ -309,9 +329,27 @@ export default function BioLinksEditor() {
                 </div>
               </div>
 
-              {/* Дії (Up, Down, Edit, Delete) */}
+              {/* Дії (Toggle, Up, Down, Edit, Delete) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <button
+                  type="button"
+                  onClick={() => handleToggleHidden(index)}
+                  style={{
+                    padding: '6px 10px', borderRadius: '8px', border: 'none',
+                    background: item.hidden ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                    color: item.hidden ? '#ef4444' : '#10b981',
+                    cursor: 'pointer', fontSize: '11px', fontWeight: 800,
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    transition: 'all 0.2s'
+                  }}
+                  title={item.hidden ? "Натисніть, щоб показати на сайті" : "Натисніть, щоб приховати з сайту"}
+                >
+                  {item.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                  <span>{item.hidden ? 'Сховано' : 'Видиме'}</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => handleMove(index, -1)}
                   disabled={index === 0}
                   style={{
@@ -546,14 +584,14 @@ export default function BioLinksEditor() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', gap: '16px', marginTop: '4px' }}>
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '4px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#fff' }}>
                 <input
                   type="checkbox"
                   checked={formData.isInternal}
                   onChange={(e) => setFormData({ ...formData, isInternal: e.target.checked })}
                 />
-                <span>Внутрішнє посилання сайту</span>
+                <span>Внутрішнє посилання</span>
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#fff' }}>
@@ -562,7 +600,16 @@ export default function BioLinksEditor() {
                   checked={formData.featured}
                   onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
                 />
-                <span>Виділена картка (Glow)</span>
+                <span>Сяйво (Glow)</span>
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#f87171' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.hidden}
+                  onChange={(e) => setFormData({ ...formData, hidden: e.target.checked })}
+                />
+                <span>Тимчасово приховати</span>
               </label>
             </div>
 

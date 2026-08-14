@@ -366,7 +366,7 @@ export default function LinksPage() {
 
         {/* Список посилань */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {links.map((item, index) => {
+          {links.filter(item => !item.hidden).map((item, index) => {
             const isInternal = item.isInternal;
             const LinkWrapper = isInternal ? Link : 'a';
             const linkProps = isInternal 
