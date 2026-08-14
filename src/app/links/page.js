@@ -325,12 +325,6 @@ export default function LinksPage() {
                   }}
                   className="group hover:border-purple-500/50 hover:bg-white/[0.08] hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  {/* Ліва колірна смужка */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 0, left: 0, bottom: 0, width: '4px',
-                  }} className={`bg-gradient-to-b ${item.colorGradient || 'from-purple-600 to-pink-600'}`} />
-
                   {/* Основний вміст картки */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1, flex: 1, minWidth: 0 }}>
                     {/* Іконка */}
