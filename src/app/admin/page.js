@@ -1584,61 +1584,85 @@ export default function AdminPanel() {
             );
 
             if (menuSearch && filteredItems.length === 0) return null;
-            const isOpen = menuSearch ? true : openGroups[group.id];
+            const isOpen = menuSearch ? true : openGroups[group.id] !== false;
 
             return (
               <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <button
-                  onClick={() => setOpenGroups(prev => ({ ...prev, [group.id]: !prev[group.id] }))}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpenGroups(prev => ({
+                      ...prev,
+                      [group.id]: prev[group.id] === false ? true : false
+                    }));
+                  }}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    background: 'transparent', border: 'none', color: 'var(--text-muted)',
+                    width: '100%', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
+                    borderRadius: 10, color: 'var(--text-muted)',
                     fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em',
-                    padding: '6px 8px', cursor: 'pointer', textAlign: 'left'
+                    padding: '8px 10px', cursor: 'pointer', textAlign: 'left',
+                    transition: 'all 0.2s'
                   }}
+                  className="hover:bg-white/[0.06] hover:text-white"
                 >
                   <span>{group.title}</span>
-                  {!menuSearch && (isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />)}
+                  {!menuSearch && (
+                    <motion.span animate={{ rotate: isOpen ? 0 : -90 }} transition={{ duration: 0.2 }}>
+                      <ChevronDown size={14} />
+                    </motion.span>
+                  )}
                 </button>
 
-                {isOpen && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 4 }}>
-                    {filteredItems.map(item => {
-                      const active = activeTab === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
-                          style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '9px 12px', borderRadius: 12,
-                            background: active 
-                              ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2))' 
-                              : 'transparent',
-                            border: active ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid transparent',
-                            color: active ? '#ffffff' : 'var(--text-muted)',
-                            fontSize: 13, fontWeight: active ? 800 : 600,
-                            cursor: 'pointer', transition: 'all 0.2s'
-                          }}
-                          className="hover:bg-white/[0.04] hover:text-white"
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{ color: active ? '#a78bfa' : 'inherit' }}>{item.icon}</span>
-                            <span>{item.label}</span>
-                          </div>
-                          {item.badge && (
-                            <span style={{
-                              fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 6,
-                              background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff'
-                            }}>
-                              {item.badge}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 4, overflow: 'hidden' }}
+                    >
+                      {filteredItems.map(item => {
+                        const active = activeTab === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              padding: '9px 12px', borderRadius: 12,
+                              background: active 
+                                ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2))' 
+                                : 'transparent',
+                              border: active ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid transparent',
+                              color: active ? '#ffffff' : 'var(--text-muted)',
+                              fontSize: 13, fontWeight: active ? 800 : 600,
+                              cursor: 'pointer', transition: 'all 0.2s'
+                            }}
+                            className="hover:bg-white/[0.04] hover:text-white"
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <span style={{ color: active ? '#a78bfa' : 'inherit' }}>{item.icon}</span>
+                              <span>{item.label}</span>
+                            </div>
+                            {item.badge && (
+                              <span style={{
+                                fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 6,
+                                background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff'
+                              }}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
