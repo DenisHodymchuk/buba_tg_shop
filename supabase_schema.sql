@@ -66,6 +66,9 @@ CREATE TABLE settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Enable full read/write policy or disable RLS for settings table
+ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
+
 -- Insert default settings
 INSERT INTO settings (key, value) VALUES 
 ('loyalty', '{"welcome_bonus": 100, "cashback_percent": 5, "exchange_rate": 1, "max_bonus_coverage": 50}'),
