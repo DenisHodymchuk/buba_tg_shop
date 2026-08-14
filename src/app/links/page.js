@@ -10,6 +10,8 @@ import {
   ShieldCheck, Heart, Globe, Flame, Star
 } from 'lucide-react';
 
+import InAppBrowserGuide from '@/components/InAppBrowserGuide';
+
 export const DEFAULT_SOCIAL_LINKS = [
   {
     id: 'store',
@@ -203,6 +205,9 @@ export default function LinksPage() {
 
       <div style={{ width: '100%', maxWidth: '480px', zIndex: 1, position: 'relative' }}>
         
+        {/* Автоматична підказка для вбудованих браузерів (TikTok/Instagram) */}
+        <InAppBrowserGuide />
+
         {/* Профіль / Брендова шапка */}
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
