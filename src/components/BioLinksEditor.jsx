@@ -488,7 +488,7 @@ export default function BioLinksEditor() {
                     {item.subtitle && <div style={{ fontSize: '10px', color: '#94a3b8' }}>{item.subtitle}</div>}
                   </div>
                 </div>
-                <ExternalLink size={14} style={{ color: '#64748b' }} />
+                <ArrowUpRight size={16} style={{ color: '#64748b', flexShrink: 0 }} />
               </div>
             ))}
           </div>

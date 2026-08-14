@@ -332,7 +332,7 @@ export default function LinksPage() {
                   }} className={`bg-gradient-to-b ${item.colorGradient || 'from-purple-600 to-pink-600'}`} />
 
                   {/* Основний вміст картки */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1, flex: 1, minWidth: 0 }}>
                     {/* Іконка */}
                     <div style={{
                       width: '46px', height: '46px',
@@ -346,8 +346,8 @@ export default function LinksPage() {
                     </div>
 
                     {/* Текстова частина */}
-                    <div style={{ textAlign: 'left' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{
                           fontSize: '15px',
                           fontWeight: 800,
@@ -398,14 +398,16 @@ export default function LinksPage() {
                     </div>
                   </div>
 
-                  {/* Стрілка переходу */}
+                  {/* Стрілка переходу (однакова для всіх карт та притиснута до правого краю) */}
                   <div style={{
                     color: '#64748b',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all 0.2s',
-                    zIndex: 1
+                    zIndex: 1,
+                    marginLeft: '12px',
+                    flexShrink: 0
                   }} className="group-hover:text-white group-hover:translate-x-1">
-                    {isInternal ? <ArrowRight size={18} /> : <ExternalLink size={18} />}
+                    <ArrowUpRight size={20} />
                   </div>
                 </LinkWrapper>
               </motion.div>
