@@ -3,97 +3,122 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
 import { 
   Box, Share2, Copy, Check, QrCode, X, Sparkles, 
   ShoppingBag, Layers, MessageCircle, ExternalLink, ArrowRight,
-  ShieldCheck, Heart
+  ShieldCheck, Heart, Globe, Flame, Star
 } from 'lucide-react';
 
-// ==========================================
-// НАЛАШТУВАННЯ ПОСИЛАНЬ (ШАБЛОНИ ДЛЯ ЗАПОВНЕННЯ)
-// Замініть '#' на ваші реальні посилання
-// ==========================================
-const SOCIAL_LINKS = [
+export const DEFAULT_SOCIAL_LINKS = [
   {
     id: 'store',
+    iconType: 'store',
     title: 'Онлайн-Магазин 3D Виробів',
     subtitle: 'Переглянути повний каталог товарів',
-    url: '/', // Головна сторінка сайту
+    url: '/',
     badge: 'Каталог',
     isInternal: true,
     featured: true,
-    icon: (props) => <ShoppingBag {...props} />,
     colorGradient: 'from-purple-600 via-pink-600 to-amber-500',
     borderGlow: 'rgba(124, 58, 237, 0.4)',
   },
   {
     id: 'telegram_channel',
+    iconType: 'telegram',
     title: 'Telegram Канал',
     subtitle: 'Ексклюзивні новинки, знижки та анонси',
-    url: 'https://t.me/your_telegram_channel', // Вкажіть посилання на свій Telegram канал
+    url: 'https://t.me/your_telegram_channel',
     badge: 'Новини',
-    icon: (props) => (
-      <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.69-.52.36-1 .54-1.43.53-.48-.01-1.4-.27-2.09-.49-.84-.28-1.51-.43-1.45-.91.03-.25.38-.51 1.07-.78 4.2-1.83 7-3.04 8.4-3.63 4-.17 4.84.97 4.78 1.95z"/>
-      </svg>
-    ),
+    isInternal: false,
     colorGradient: 'from-sky-500 to-blue-600',
     borderGlow: 'rgba(56, 189, 248, 0.4)',
   },
   {
     id: 'tiktok',
+    iconType: 'tiktok',
     title: 'TikTok Профіль',
     subtitle: 'Відеопроцес 3D друку та готові вироби',
-    url: 'https://www.tiktok.com/@your_tiktok_username', // Вкажіть посилання на ваш TikTok
+    url: 'https://www.tiktok.com/@your_tiktok_username',
     badge: 'Тренди',
-    icon: (props) => (
-      <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .56.04.83.1v-3.6a6.45 6.45 0 0 0-1-.08 6.4 6.4 0 1 0 6.46 6.4V9a8.28 8.28 0 0 0 4.82 1.56V7a4.84 4.84 0 0 1-1-.31z"/>
-      </svg>
-    ),
+    isInternal: false,
     colorGradient: 'from-cyan-500 via-slate-900 to-rose-500',
     borderGlow: 'rgba(6, 182, 212, 0.4)',
   },
   {
     id: 'instagram',
+    iconType: 'instagram',
     title: 'Instagram',
     subtitle: 'Фото, портфоліо робіт та сторіз',
-    url: 'https://instagram.com/your_instagram_username', // Вкажіть посилання на ваш Instagram
+    url: 'https://instagram.com/your_instagram_username',
     badge: 'Фото',
-    icon: (props) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-      </svg>
-    ),
+    isInternal: false,
     colorGradient: 'from-amber-500 via-rose-500 to-purple-600',
     borderGlow: 'rgba(244, 63, 94, 0.4)',
   },
   {
     id: 'custom_modeling',
+    iconType: 'custom_modeling',
     title: 'Замовити 3D Моделювання',
     subtitle: 'Розрахунок вартості за вашою моделлю або ідеєю',
     url: '/custom-modeling',
     badge: 'Послуга',
     isInternal: true,
-    icon: (props) => <Layers {...props} />,
     colorGradient: 'from-purple-600 to-indigo-600',
     borderGlow: 'rgba(147, 51, 234, 0.4)',
   },
   {
     id: 'telegram_manager',
+    iconType: 'manager',
     title: 'Написати Менеджеру',
     subtitle: 'Консультація та відповіді на будь-які питання',
-    url: 'https://t.me/your_manager_username', // Посилання на менеджера в Telegram
+    url: 'https://t.me/your_manager_username',
     badge: '24/7',
-    icon: (props) => <MessageCircle {...props} />,
+    isInternal: false,
     colorGradient: 'from-emerald-500 to-teal-700',
     borderGlow: 'rgba(16, 185, 129, 0.4)',
   }
 ];
 
+export function renderLinkIcon(iconType, props = { size: 22 }) {
+  switch (iconType) {
+    case 'store':
+      return <ShoppingBag {...props} />;
+    case 'telegram':
+      return (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={props.size} height={props.size}>
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.69-.52.36-1 .54-1.43.53-.48-.01-1.4-.27-2.09-.49-.84-.28-1.51-.43-1.45-.91.03-.25.38-.51 1.07-.78 4.2-1.83 7-3.04 8.4-3.63 4-.17 4.84.97 4.78 1.95z"/>
+        </svg>
+      );
+    case 'tiktok':
+      return (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={props.size} height={props.size}>
+          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .56.04.83.1v-3.6a6.45 6.45 0 0 0-1-.08 6.4 6.4 0 1 0 6.46 6.4V9a8.28 8.28 0 0 0 4.82 1.56V7a4.84 4.84 0 0 1-1-.31z"/>
+        </svg>
+      );
+    case 'instagram':
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width={props.size} height={props.size}>
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+        </svg>
+      );
+    case 'custom_modeling':
+      return <Layers {...props} />;
+    case 'manager':
+      return <MessageCircle {...props} />;
+    case 'flame':
+      return <Flame {...props} />;
+    case 'star':
+      return <Star {...props} />;
+    default:
+      return <Globe {...props} />;
+  }
+}
+
 export default function LinksPage() {
+  const [links, setLinks] = useState(DEFAULT_SOCIAL_LINKS);
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [pageUrl, setPageUrl] = useState('');
@@ -101,7 +126,34 @@ export default function LinksPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setPageUrl(window.location.href);
+      // Спробуємо спочатку завантажити з локального сховища для швидкого рендеру
+      const cached = localStorage.getItem('buba_bio_links');
+      if (cached) {
+        try { setLinks(JSON.parse(cached)); } catch (e) {}
+      }
     }
+
+    // Завантаження з Supabase settings
+    async function loadLinksFromDB() {
+      if (!supabase) return;
+      try {
+        const { data, error } = await supabase
+          .from('settings')
+          .select('value')
+          .eq('key', 'bio_links')
+          .single();
+
+        if (data && data.value && Array.isArray(data.value) && data.value.length > 0) {
+          setLinks(data.value);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('buba_bio_links', JSON.stringify(data.value));
+          }
+        }
+      } catch (err) {
+        console.log('Using default bio links:', err?.message);
+      }
+    }
+    loadLinksFromDB();
   }, []);
 
   const handleCopyLink = () => {
@@ -314,19 +366,19 @@ export default function LinksPage() {
 
         {/* Список посилань */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {SOCIAL_LINKS.map((item, index) => {
+          {links.map((item, index) => {
             const isInternal = item.isInternal;
             const LinkWrapper = isInternal ? Link : 'a';
             const linkProps = isInternal 
-              ? { href: item.url } 
-              : { href: item.url, target: '_blank', rel: 'noopener noreferrer' };
+              ? { href: item.url || '/' } 
+              : { href: item.url || '#', target: '_blank', rel: 'noopener noreferrer' };
 
             return (
               <motion.div
-                key={item.id}
+                key={item.id || index}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.06 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
               >
                 <LinkWrapper
                   {...linkProps}
@@ -343,7 +395,7 @@ export default function LinksPage() {
                     overflow: 'hidden',
                     backdropFilter: 'blur(12px)',
                     transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: item.featured ? `0 8px 24px ${item.borderGlow}` : '0 4px 15px rgba(0,0,0,0.2)'
+                    boxShadow: item.featured ? `0 8px 24px ${item.borderGlow || 'rgba(124,58,237,0.3)'}` : '0 4px 15px rgba(0,0,0,0.2)'
                   }}
                   className="group hover:border-purple-500/50 hover:bg-white/[0.08] hover:scale-[1.02] active:scale-[0.98]"
                 >
@@ -351,7 +403,7 @@ export default function LinksPage() {
                   <div style={{
                     position: 'absolute',
                     top: 0, left: 0, bottom: 0, width: '4px',
-                  }} className={`bg-gradient-to-b ${item.colorGradient}`} />
+                  }} className={`bg-gradient-to-b ${item.colorGradient || 'from-purple-600 to-pink-600'}`} />
 
                   {/* Основний вміст картки */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
@@ -363,8 +415,8 @@ export default function LinksPage() {
                       color: '#ffffff',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                       flexShrink: 0
-                    }} className={`bg-gradient-to-br ${item.colorGradient}`}>
-                      {item.icon({ size: 22 })}
+                    }} className={`bg-gradient-to-br ${item.colorGradient || 'from-purple-600 to-pink-600'}`}>
+                      {renderLinkIcon(item.iconType, { size: 22 })}
                     </div>
 
                     {/* Текстова частина */}
@@ -394,15 +446,17 @@ export default function LinksPage() {
                         )}
                       </div>
 
-                      <span style={{
-                        fontSize: '12px',
-                        color: '#94a3b8',
-                        marginTop: '3px',
-                        display: 'block',
-                        lineHeight: 1.3
-                      }}>
-                        {item.subtitle}
-                      </span>
+                      {item.subtitle && (
+                        <span style={{
+                          fontSize: '12px',
+                          color: '#94a3b8',
+                          marginTop: '3px',
+                          display: 'block',
+                          lineHeight: 1.3
+                        }}>
+                          {item.subtitle}
+                        </span>
+                      )}
                     </div>
                   </div>
 

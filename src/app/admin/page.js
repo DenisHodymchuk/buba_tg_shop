@@ -17,6 +17,7 @@ import SalesStatsDashboard from '@/components/SalesStatsDashboard';
 import ShippingCabinet from '@/components/ShippingCabinet';
 import ProductionCabinet from '@/components/ProductionCabinet';
 import LampStudio from '@/components/LampStudio';
+import BioLinksEditor from '@/components/BioLinksEditor';
 
 
 const scrollbarHide = `
@@ -101,6 +102,14 @@ export default function AdminPanel() {
   const [orderFilterTemplates, setOrderFilterTemplates] = useState([]);
   const [showOrderTemplatesDropdown, setShowOrderTemplatesDropdown] = useState(false);
   const [newOrderTemplateName, setNewOrderTemplateName] = useState('');
+  const [menuSearch, setMenuSearch] = useState('');
+  const [openGroups, setOpenGroups] = useState({
+    analytics: true,
+    catalog: true,
+    production_group: true,
+    marketing_clients: true,
+    system: true
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1505,20 +1514,134 @@ export default function AdminPanel() {
             </button>
           )}
         </div>
-        <nav style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <SidebarBtn active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Package size={18} />} label="Товари" />
-          <SidebarBtn active={activeTab === 'sales_cabinet'} onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }} icon={<Coins size={18} />} label="Продажі" />
-          <SidebarBtn active={activeTab === 'sales_stats'} onClick={() => { setActiveTab('sales_stats'); setIsSidebarOpen(false); }} icon={<BarChart3 size={18} />} label="Статистика продажів" />
-          <SidebarBtn active={activeTab === 'shipping_list'} onClick={() => { setActiveTab('shipping_list'); setIsSidebarOpen(false); }} icon={<Truck size={18} />} label="Відправки" />
-          <SidebarBtn active={activeTab === 'production'} onClick={() => { setActiveTab('production'); setIsSidebarOpen(false); }} icon={<Hammer size={18} />} label="Виготовлення" />
-          <SidebarBtn active={activeTab === 'lamp_studio'} onClick={() => { setActiveTab('lamp_studio'); setIsSidebarOpen(false); }} icon={<Box size={18} />} label="Студія Виробництва" />
-          <SidebarBtn active={activeTab === 'calculator'} onClick={() => { setActiveTab('calculator'); setIsSidebarOpen(false); }} icon={<Calculator size={18} />} label="Калькулятор" />
-          <SidebarBtn active={activeTab === 'inventory'} onClick={() => { setActiveTab('inventory'); setIsSidebarOpen(false); }} icon={<Box size={18} />} label="Склад (Облік)" />
-          <SidebarBtn active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<User size={18} />} label="Клієнти" />
-          <SidebarBtn active={activeTab === 'reviews'} onClick={() => { setActiveTab('reviews'); setIsSidebarOpen(false); }} icon={<MessageSquare size={18} />} label="Відгуки" />
-          <SidebarBtn active={activeTab === 'broadcast'} onClick={() => { setActiveTab('broadcast'); setIsSidebarOpen(false); }} icon={<Send size={18} />} label="Розсилка" />
-          <SidebarBtn active={activeTab === 'marketing'} onClick={() => { setActiveTab('marketing'); setIsSidebarOpen(false); }} icon={<Megaphone size={18} />} label="Кабінет Реклами" />
-          <SidebarBtn active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }} icon={<Settings size={18} />} label="Налаштування" />
+        {/* Пошук по меню */}
+        <div style={{ padding: '0 16px 16px' }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              placeholder="Пошук по меню..."
+              value={menuSearch}
+              onChange={(e) => setMenuSearch(e.target.value)}
+              style={{
+                width: '100%', background: 'var(--bg-main)', border: '1px solid var(--border)',
+                borderRadius: 12, padding: '8px 12px 8px 34px', fontSize: 12, color: 'var(--text-main)', outline: 'none'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Структуроване категоріальне меню */}
+        <nav className="hide-scrollbar" style={{ flex: 1, padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
+          {[
+            {
+              id: 'analytics',
+              title: '📊 Продажі & Аналітика',
+              items: [
+                { id: 'sales_cabinet', label: 'Продажі', icon: <Coins size={16} /> },
+                { id: 'sales_stats', label: 'Статистика продажів', icon: <BarChart3 size={16} /> },
+                { id: 'marketing', label: 'Кабінет Реклами', icon: <Megaphone size={16} /> },
+              ]
+            },
+            {
+              id: 'catalog',
+              title: '📦 Каталог & Склад',
+              items: [
+                { id: 'products', label: 'Товари', icon: <Package size={16} /> },
+                { id: 'inventory', label: 'Склад (Облік)', icon: <Box size={16} /> },
+                { id: 'calculator', label: 'Калькулятор', icon: <Calculator size={16} /> },
+              ]
+            },
+            {
+              id: 'production_group',
+              title: '🏭 Виробництво & Логістика',
+              items: [
+                { id: 'production', label: 'Виготовлення', icon: <Hammer size={16} /> },
+                { id: 'lamp_studio', label: 'Студія Виробництва', icon: <Lightbulb size={16} /> },
+                { id: 'shipping_list', label: 'Відправки', icon: <Truck size={16} /> },
+              ]
+            },
+            {
+              id: 'marketing_clients',
+              title: '📣 Маркетинг & Клієнти',
+              items: [
+                { id: 'links_editor', label: 'Мультипосилання', icon: <Globe size={16} />, badge: 'NEW' },
+                { id: 'users', label: 'Клієнти', icon: <User size={16} /> },
+                { id: 'reviews', label: 'Відгуки', icon: <MessageSquare size={16} /> },
+                { id: 'broadcast', label: 'Розсилка', icon: <Send size={16} /> },
+              ]
+            },
+            {
+              id: 'system',
+              title: '⚙️ Система',
+              items: [
+                { id: 'settings', label: 'Налаштування', icon: <Settings size={16} /> },
+              ]
+            }
+          ].map(group => {
+            const filteredItems = group.items.filter(item => 
+              item.label.toLowerCase().includes(menuSearch.toLowerCase())
+            );
+
+            if (menuSearch && filteredItems.length === 0) return null;
+            const isOpen = menuSearch ? true : openGroups[group.id];
+
+            return (
+              <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <button
+                  onClick={() => setOpenGroups(prev => ({ ...prev, [group.id]: !prev[group.id] }))}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: 'transparent', border: 'none', color: 'var(--text-muted)',
+                    fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em',
+                    padding: '6px 8px', cursor: 'pointer', textAlign: 'left'
+                  }}
+                >
+                  <span>{group.title}</span>
+                  {!menuSearch && (isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />)}
+                </button>
+
+                {isOpen && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingLeft: 4 }}>
+                    {filteredItems.map(item => {
+                      const active = activeTab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '9px 12px', borderRadius: 12,
+                            background: active 
+                              ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2))' 
+                              : 'transparent',
+                            border: active ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid transparent',
+                            color: active ? '#ffffff' : 'var(--text-muted)',
+                            fontSize: 13, fontWeight: active ? 800 : 600,
+                            cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                          className="hover:bg-white/[0.04] hover:text-white"
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ color: active ? '#a78bfa' : 'inherit' }}>{item.icon}</span>
+                            <span>{item.label}</span>
+                          </div>
+                          {item.badge && (
+                            <span style={{
+                              fontSize: 9, fontWeight: 900, padding: '2px 6px', borderRadius: 6,
+                              background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff'
+                            }}>
+                              {item.badge}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         <div style={{ padding: 24, borderTop: '1px solid var(--border)' }}>
@@ -2847,6 +2970,8 @@ export default function AdminPanel() {
                 </div>
               </div>
             </div>
+          ) : activeTab === 'links_editor' ? (
+            <BioLinksEditor />
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#4a4a6a' }}>
               Тут будуть налаштування магазину
