@@ -224,11 +224,11 @@ export default function LinksPage() {
           {/* Анімований логотип бренду */}
           <div style={{ position: 'relative', marginBottom: '16px' }}>
             <div style={{
-              position: 'absolute', inset: '-4px',
-              borderRadius: '24px',
-              background: 'linear-gradient(135deg, #7c3aed, #ec4899, #f97316)',
-              opacity: 0.5,
-              filter: 'blur(12px)',
+              position: 'absolute', inset: '-6px',
+              borderRadius: '26px',
+              background: 'linear-gradient(135deg, #5b21b6, #7c3aed, #a855f7, #6366f1)',
+              opacity: 0.65,
+              filter: 'blur(14px)',
               animation: 'cosmicPulse 3s ease-in-out infinite'
             }} />
             
@@ -237,7 +237,7 @@ export default function LinksPage() {
               borderRadius: '22px',
               overflow: 'hidden',
               position: 'relative',
-              boxShadow: '0 10px 30px rgba(124, 58, 237, 0.35)',
+              boxShadow: '0 10px 35px rgba(124, 58, 237, 0.6)',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
               <img 
