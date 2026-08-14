@@ -83,39 +83,44 @@ export const DEFAULT_SOCIAL_LINKS = [
 ];
 
 export function renderLinkIcon(iconType, props = { size: 22 }) {
+  const size = props.size || 22;
   switch (iconType) {
     case 'store':
-      return <ShoppingBag {...props} />;
+      return <ShoppingBag {...props} size={size} />;
     case 'telegram':
       return (
-        <svg viewBox="0 0 24 24" fill="currentColor" width={props.size} height={props.size}>
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.69-.52.36-1 .54-1.43.53-.48-.01-1.4-.27-2.09-.49-.84-.28-1.51-.43-1.45-.91.03-.25.38-.51 1.07-.78 4.2-1.83 7-3.04 8.4-3.63 4-.17 4.84.97 4.78 1.95z"/>
         </svg>
       );
     case 'tiktok':
       return (
-        <svg viewBox="0 0 24 24" fill="currentColor" width={props.size} height={props.size}>
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .56.04.83.1v-3.6a6.45 6.45 0 0 0-1-.08 6.4 6.4 0 1 0 6.46 6.4V9a8.28 8.28 0 0 0 4.82 1.56V7a4.84 4.84 0 0 1-1-.31z"/>
         </svg>
       );
     case 'instagram':
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width={props.size} height={props.size}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width={size} height={size}>
           <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
           <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+          <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"></circle>
         </svg>
       );
     case 'custom_modeling':
-      return <Layers {...props} />;
+      return <Box {...props} size={size} />;
     case 'manager':
-      return <MessageCircle {...props} />;
+      return (
+        <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.69-.52.36-1 .54-1.43.53-.48-.01-1.4-.27-2.09-.49-.84-.28-1.51-.43-1.45-.91.03-.25.38-.51 1.07-.78 4.2-1.83 7-3.04 8.4-3.63 4-.17 4.84.97 4.78 1.95z"/>
+        </svg>
+      );
     case 'flame':
-      return <Flame {...props} />;
+      return <Flame {...props} size={size} />;
     case 'star':
-      return <Star {...props} />;
+      return <Star {...props} size={size} />;
     default:
-      return <Globe {...props} />;
+      return <Sparkles {...props} size={size} />;
   }
 }
 
