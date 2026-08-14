@@ -353,15 +353,27 @@ export default function LinksPage() {
                         </span>
                         {item.badge && (
                           <span style={{
-                            fontSize: '10px',
-                            fontWeight: 800,
-                            padding: '2px 7px',
-                            borderRadius: '6px',
-                            background: 'rgba(255, 255, 255, 0.08)',
-                            color: '#a78bfa',
+                            fontSize: '9.5px',
+                            fontWeight: 900,
+                            padding: '3px 9px',
+                            borderRadius: '100px',
+                            background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(236, 72, 153, 0.2))',
+                            border: '1px solid rgba(192, 132, 252, 0.35)',
+                            color: '#f3e8ff',
                             textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
+                            letterSpacing: '0.06em',
+                            boxShadow: '0 2px 10px rgba(124, 58, 237, 0.25)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            backdropFilter: 'blur(8px)',
+                            whiteSpace: 'nowrap'
                           }}>
+                            <span style={{
+                              width: '4px', height: '4px', borderRadius: '50%',
+                              background: '#e879f9',
+                              boxShadow: '0 0 6px #e879f9'
+                            }} />
                             {item.badge}
                           </span>
                         )}

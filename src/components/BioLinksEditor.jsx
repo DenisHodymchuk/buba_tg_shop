@@ -327,7 +327,21 @@ export default function BioLinksEditor() {
                       {item.title}
                     </span>
                     {item.badge && (
-                      <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '6px', background: 'rgba(124, 58, 237, 0.2)', color: '#c084fc' }}>
+                      <span style={{
+                        fontSize: '9.5px',
+                        fontWeight: 900,
+                        padding: '2px 8px',
+                        borderRadius: '100px',
+                        background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(236, 72, 153, 0.2))',
+                        border: '1px solid rgba(192, 132, 252, 0.35)',
+                        color: '#f3e8ff',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#e879f9' }} />
                         {item.badge}
                       </span>
                     )}
@@ -463,7 +477,14 @@ export default function BioLinksEditor() {
                     {renderLinkIcon(item.iconType, { size: 16 })}
                   </div>
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{item.title}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>{item.title}</div>
+                      {item.badge && (
+                        <span style={{ fontSize: '8px', fontWeight: 900, padding: '1px 5px', borderRadius: '100px', background: 'rgba(192, 132, 252, 0.2)', border: '1px solid rgba(192, 132, 252, 0.4)', color: '#f3e8ff' }}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
                     {item.subtitle && <div style={{ fontSize: '10px', color: '#94a3b8' }}>{item.subtitle}</div>}
                   </div>
                 </div>
