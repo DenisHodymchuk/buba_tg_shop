@@ -6,7 +6,7 @@ import { renderLinkIcon, DEFAULT_SOCIAL_LINKS } from '@/app/links/page';
 import { 
   Plus, Edit3, Trash2, ArrowUp, ArrowDown, Save, CheckCircle, 
   ExternalLink, Globe, Sparkles, Move, RefreshCw, Link as LinkIcon,
-  Layers, ShoppingBag, MessageCircle, Flame, Star, Eye, EyeOff
+  Layers, ShoppingBag, MessageCircle, Flame, Star, Eye, EyeOff, ArrowUpRight
 } from 'lucide-react';
 
 const ICON_OPTIONS = [
