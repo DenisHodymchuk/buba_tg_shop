@@ -141,10 +141,17 @@ export default function LinksPage() {
 
       // Трекінг перегляду сторінки
       const trackPageView = async () => {
-        if (!supabase) return;
-        if (sessionStorage.getItem('buba_links_page_view_tracked')) return;
+        if (!supabase) {
+          console.warn('⚠️ Supabase client is not initialized in trackPageView');
+          return;
+        }
+        if (sessionStorage.getItem('buba_links_page_view_tracked')) {
+          console.log('ℹ️ Page view tracking skipped: already tracked in this session');
+          return;
+        }
         
         try {
+          console.log('🚀 Attempting to track page view...');
           let referrer = 'direct';
           const urlParams = new URLSearchParams(window.location.search);
           const utmSource = urlParams.get('utm_source') || urlParams.get('ref') || urlParams.get('source');
@@ -183,7 +190,10 @@ export default function LinksPage() {
             device_type: deviceType
           });
           
-          if (!error) {
+          if (error) {
+            console.error('❌ Supabase page view track error:', error);
+          } else {
+            console.log('✅ Page view successfully tracked in database!');
             sessionStorage.setItem('buba_links_page_view_tracked', 'true');
           }
         } catch (err) {
@@ -218,13 +228,22 @@ export default function LinksPage() {
   }, []);
 
   const handleLinkClick = async (item) => {
-    if (!supabase) return;
+    if (!supabase) {
+      console.warn('⚠️ Supabase client is not initialized in handleLinkClick');
+      return;
+    }
     try {
-      await supabase.from('bio_links_clicks').insert({
+      console.log('🚀 Attempting to track link click for:', item.title);
+      const { error } = await supabase.from('bio_links_clicks').insert({
         link_id: item.id || 'unknown',
         link_title: item.title || 'Untitled',
         url: item.url || ''
       });
+      if (error) {
+        console.error('❌ Supabase click track error:', error);
+      } else {
+        console.log('✅ Click successfully tracked in database!');
+      }
     } catch (err) {
       console.error('Error tracking link click:', err);
     }
