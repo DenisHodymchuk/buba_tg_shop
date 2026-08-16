@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { renderLinkIcon, DEFAULT_SOCIAL_LINKS } from '@/app/links/page';
 import { 
   Plus, Edit3, Trash2, ArrowUp, ArrowDown, Save, CheckCircle, 
   ExternalLink, Globe, Sparkles, Move, RefreshCw, Link as LinkIcon,
-  Layers, ShoppingBag, MessageCircle, Flame, Star, Eye, EyeOff, ArrowUpRight
+  Layers, ShoppingBag, MessageCircle, Flame, Star, Eye, EyeOff, ArrowUpRight,
+  BarChart3, Smartphone, Monitor, Tablet, MousePointerClick, Calendar, TrendingUp
 } from 'lucide-react';
 
 const ICON_OPTIONS = [
@@ -38,6 +39,12 @@ export default function BioLinksEditor() {
   const [showModal, setShowModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
 
+  // Analytics State
+  const [activeSubTab, setActiveSubTab] = useState('editor'); // 'editor' | 'analytics'
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [viewsData, setViewsData] = useState([]);
+  const [clicksData, setClicksData] = useState([]);
+
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
@@ -53,6 +60,110 @@ export default function BioLinksEditor() {
   useEffect(() => {
     loadLinks();
   }, []);
+
+  async function loadAnalytics() {
+    if (!supabase) return;
+    setAnalyticsLoading(true);
+    try {
+      const { data: views, error: viewsError } = await supabase
+        .from('bio_links_views')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const { data: clicks, error: clicksError } = await supabase
+        .from('bio_links_clicks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (viewsError) throw viewsError;
+      if (clicksError) throw clicksError;
+
+      setViewsData(views || []);
+      setClicksData(clicks || []);
+    } catch (e) {
+      console.error('Error loading analytics:', e);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (activeSubTab === 'analytics') {
+      loadAnalytics();
+    }
+  }, [activeSubTab]);
+
+  // Analytics calculations
+  const totalViews = viewsData.length;
+  const totalClicks = clicksData.length;
+  const clickThroughRate = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0';
+
+  const clicksByLinkId = useMemo(() => {
+    const counts = {};
+    clicksData.forEach(click => {
+      const id = click.link_id;
+      const title = click.link_title || id;
+      if (!counts[id]) {
+        counts[id] = { id, title, count: 0, url: click.url };
+      }
+      counts[id].count += 1;
+    });
+    return Object.values(counts).sort((a, b) => b.count - a.count);
+  }, [clicksData]);
+
+  const referrersBreakdown = useMemo(() => {
+    const counts = {};
+    viewsData.forEach(view => {
+      const ref = view.referrer || 'direct';
+      counts[ref] = (counts[ref] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [viewsData]);
+
+  const devicesBreakdown = useMemo(() => {
+    const counts = { mobile: 0, tablet: 0, desktop: 0 };
+    viewsData.forEach(view => {
+      const device = view.device_type || 'desktop';
+      if (counts[device] !== undefined) {
+        counts[device] += 1;
+      } else {
+        counts.desktop += 1;
+      }
+    });
+    return Object.entries(counts).map(([name, count]) => ({ name, count }));
+  }, [viewsData]);
+
+  const viewsOverTime = useMemo(() => {
+    const groups = {};
+    const now = new Date();
+    // Pre-fill last 7 days
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(now.getDate() - i);
+      const dayStr = date.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' });
+      groups[dayStr] = { date: dayStr, views: 0, clicks: 0 };
+    }
+
+    viewsData.forEach(view => {
+      const date = new Date(view.created_at);
+      const dayStr = date.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' });
+      if (groups[dayStr]) {
+        groups[dayStr].views += 1;
+      }
+    });
+
+    clicksData.forEach(click => {
+      const date = new Date(click.created_at);
+      const dayStr = date.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' });
+      if (groups[dayStr]) {
+        groups[dayStr].clicks += 1;
+      }
+    });
+
+    return Object.values(groups);
+  }, [viewsData, clicksData]);
 
   async function loadLinks() {
     if (!supabase) return;
@@ -275,12 +386,458 @@ export default function BioLinksEditor() {
         </div>
       </div>
 
-      {/* Основний вміст: Список посилань ліворуч + Прев'ю праворуч */}
+      {/* Sub-Tabs Navigation */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '24px'
+        display: 'flex',
+        background: 'rgba(0, 0, 0, 0.2)',
+        padding: '4px',
+        borderRadius: '12px',
+        border: '1px solid var(--border)',
+        alignSelf: 'flex-start',
+        gap: '4px'
       }}>
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('editor')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            fontSize: '13px',
+            fontWeight: 800,
+            cursor: 'pointer',
+            background: activeSubTab === 'editor' ? 'linear-gradient(135deg, #7c3aed, #ec4899)' : 'transparent',
+            color: activeSubTab === 'editor' ? '#fff' : 'var(--text-muted)',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <Globe size={15} />
+          <span>Керування посиланнями</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('analytics')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            fontSize: '13px',
+            fontWeight: 800,
+            cursor: 'pointer',
+            background: activeSubTab === 'analytics' ? 'linear-gradient(135deg, #7c3aed, #ec4899)' : 'transparent',
+            color: activeSubTab === 'analytics' ? '#fff' : 'var(--text-muted)',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <BarChart3 size={15} />
+          <span>Аналітика та кліки</span>
+        </button>
+      </div>
+
+      {activeSubTab === 'analytics' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Analytics Header / Controls */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'var(--bg-card)',
+            padding: '20px 24px',
+            borderRadius: '20px',
+            border: '1px solid var(--border)'
+          }}>
+            <div>
+              <h2 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TrendingUp size={20} style={{ color: '#c084fc' }} /> Статистика відвідувань сторінки посилань
+              </h2>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                Аналіз переглядів та кліків по кнопках за останній час
+              </p>
+            </div>
+
+            <button
+              onClick={loadAnalytics}
+              disabled={analyticsLoading}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '12px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-main)',
+                fontSize: '12px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s'
+              }}
+            >
+              <RefreshCw size={14} style={{ animation: analyticsLoading ? 'spin 1s linear infinite' : 'none' }} />
+              <span>{analyticsLoading ? 'Оновлюється...' : 'Оновити дані'}</span>
+            </button>
+          </div>
+
+          {analyticsLoading && viewsData.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: '12px', color: '#c084fc' }}>
+              <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite' }} />
+              <span style={{ fontSize: '13px', fontWeight: 700 }}>Завантаження статистики...</span>
+            </div>
+          ) : (
+            <>
+              {/* KPI Cards Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '16px'
+              }}>
+                {/* Views Card */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(10, 25, 47, 0.3))',
+                  borderRadius: '20px',
+                  border: '1px solid var(--border)',
+                  padding: '20px',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Перегляди сторінки (Views)
+                    </span>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(124,58,237,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc' }}>
+                      <Monitor size={16} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 950, color: '#fff' }}>
+                    {totalViews.toLocaleString('uk-UA')}
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#6b6b8a', marginTop: '6px', margin: 0, fontWeight: 700 }}>
+                    Загальна кількість завантажень сторінки
+                  </p>
+                </div>
+
+                {/* Clicks Card */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(10, 25, 47, 0.3))',
+                  borderRadius: '20px',
+                  border: '1px solid var(--border)',
+                  padding: '20px',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Переходи за лінками (Clicks)
+                    </span>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(236,72,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f472b6' }}>
+                      <MousePointerClick size={16} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 950, color: '#f472b6' }}>
+                    {totalClicks.toLocaleString('uk-UA')}
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#6b6b8a', marginTop: '6px', margin: 0, fontWeight: 700 }}>
+                    Кліки по кнопках соцмереж / посилань
+                  </p>
+                </div>
+
+                {/* CTR Card */}
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(10, 25, 47, 0.3))',
+                  borderRadius: '20px',
+                  border: '1px solid var(--border)',
+                  padding: '20px',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Конверсія сторінки (CTR)
+                    </span>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
+                      <TrendingUp size={16} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 950, color: '#34d399' }}>
+                    {clickThroughRate}%
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#6b6b8a', marginTop: '6px', margin: 0, fontWeight: 700 }}>
+                    Співвідношення кліків до переглядів
+                  </p>
+                </div>
+              </div>
+
+              {/* Views Over Time - Trend Visualizer */}
+              <div style={{
+                background: 'var(--bg-card)',
+                borderRadius: '20px',
+                border: '1px solid var(--border)',
+                padding: '20px 24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Calendar size={18} style={{ color: '#7c3aed' }} />
+                  <h3 style={{ fontSize: '14px', fontWeight: 900, color: '#fff', margin: 0 }}>Динаміка за останні 7 днів</h3>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-end',
+                  height: '140px',
+                  paddingTop: '20px',
+                  borderBottom: '1px solid rgba(255,255,255,0.08)',
+                  gap: '8px'
+                }}>
+                  {viewsOverTime.map((day, idx) => {
+                    const maxVal = Math.max(...viewsOverTime.map(d => d.views), 1);
+                    const viewHeight = (day.views / maxVal) * 100;
+                    const clickHeight = (day.clicks / maxVal) * 100;
+
+                    return (
+                      <div key={idx} style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px',
+                        height: '100%',
+                        justifyContent: 'flex-end'
+                      }}>
+                        {/* Bars Container */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'flex-end',
+                          gap: '3px',
+                          height: '100%',
+                          width: '100%',
+                          justifyContent: 'center'
+                        }}>
+                          {/* Views bar */}
+                          <div
+                            title={`Перегляди (${day.date}): ${day.views}`}
+                            style={{
+                              width: '12px',
+                              height: `${viewHeight}%`,
+                              minHeight: day.views > 0 ? '4px' : '0px',
+                              background: 'linear-gradient(to top, #7c3aed, #a78bfa)',
+                              borderRadius: '4px 4px 0 0',
+                              transition: 'height 0.3s ease'
+                            }}
+                          />
+                          {/* Clicks bar */}
+                          <div
+                            title={`Кліки (${day.date}): ${day.clicks}`}
+                            style={{
+                              width: '12px',
+                              height: `${clickHeight}%`,
+                              minHeight: day.clicks > 0 ? '4px' : '0px',
+                              background: 'linear-gradient(to top, #f472b6, #ec4899)',
+                              borderRadius: '4px 4px 0 0',
+                              transition: 'height 0.3s ease'
+                            }}
+                          />
+                        </div>
+
+                        {/* Label */}
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 800 }}>
+                          {day.date}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Legend */}
+                <div style={{ display: 'flex', gap: '16px', fontSize: '11px', fontWeight: 800 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a78bfa' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#a78bfa' }} />
+                    <span>Перегляди</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f472b6' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f472b6' }} />
+                    <span>Кліки</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Two-column layout for popular links, referrers & device details */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '20px'
+              }}>
+                {/* Popular Links clicks list */}
+                <div style={{
+                  background: 'var(--bg-card)',
+                  borderRadius: '20px',
+                  border: '1px solid var(--border)',
+                  padding: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px'
+                }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <MousePointerClick size={16} style={{ color: '#f472b6' }} /> Популярність посилань
+                  </h3>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {clicksByLinkId.length === 0 ? (
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Немає даних про кліки.</span>
+                    ) : (
+                      clicksByLinkId.map((linkClick, index) => {
+                        const maxClicks = Math.max(...clicksByLinkId.map(l => l.count), 1);
+                        const progressWidth = (linkClick.count / maxClicks) * 100;
+                        const matchLinkObj = links.find(l => l.id === linkClick.id);
+                        
+                        return (
+                          <div key={index} style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            background: 'rgba(255,255,255,0.01)',
+                            padding: '10px 14px',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(255,255,255,0.03)'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 900, color: '#f472b6', background: 'rgba(244,114,182,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                                  #{index + 1}
+                                </span>
+                                <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff' }}>
+                                  {linkClick.title}
+                                </span>
+                              </div>
+                              <span style={{ fontSize: '12px', fontWeight: 900, color: '#f472b6' }}>
+                                {linkClick.count} кліків
+                              </span>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div style={{ width: '100%', height: '5px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                              <div style={{
+                                width: `${progressWidth}%`,
+                                height: '100%',
+                                background: 'linear-gradient(to right, #7c3aed, #f472b6)',
+                                borderRadius: '3px'
+                              }} />
+                            </div>
+                            
+                            <span style={{ fontSize: '10px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {linkClick.url}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column: Referrers & Devices */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Traffic Sources */}
+                  <div style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '20px',
+                    border: '1px solid var(--border)',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Globe size={16} style={{ color: '#34d399' }} /> Джерела трафіку (Referrers)
+                    </h3>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {referrersBreakdown.length === 0 ? (
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Немає даних.</span>
+                      ) : (
+                        referrersBreakdown.map((ref, idx) => {
+                          const maxRefVal = Math.max(...referrersBreakdown.map(r => r.count), 1);
+                          const progressWidth = (ref.count / maxRefVal) * 100;
+                          
+                          return (
+                            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700 }}>
+                                <span style={{ color: '#e2e8f0', textTransform: 'capitalize' }}>{ref.name}</span>
+                                <span style={{ color: 'var(--text-muted)' }}>{ref.count} візитів ({Math.round(ref.count / totalViews * 100)}%)</span>
+                              </div>
+                              <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                                <div style={{ width: `${progressWidth}%`, height: '100%', background: '#34d399', borderRadius: '2px' }} />
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Device Types */}
+                  <div style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '20px',
+                    border: '1px solid var(--border)',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Smartphone size={16} style={{ color: '#c084fc' }} /> Типи пристроїв
+                    </h3>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', textAlign: 'center' }}>
+                      {devicesBreakdown.map((device, idx) => {
+                        const percent = totalViews > 0 ? Math.round((device.count / totalViews) * 100) : 0;
+                        const renderDeviceIcon = () => {
+                          if (device.name === 'mobile') return <Smartphone size={18} style={{ color: '#f472b6' }} />;
+                          if (device.name === 'tablet') return <Tablet size={18} style={{ color: '#3b82f6' }} />;
+                          return <Monitor size={18} style={{ color: '#34d399' }} />;
+                        };
+                        const deviceLabels = { mobile: 'Мобільні', tablet: 'Планшети', desktop: 'ПК' };
+
+                        return (
+                          <div key={idx} style={{
+                            background: 'rgba(255,255,255,0.02)',
+                            padding: '12px 8px',
+                            borderRadius: '14px',
+                            border: '1px solid rgba(255,255,255,0.03)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            {renderDeviceIcon()}
+                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#fff' }}>
+                              {deviceLabels[device.name] || device.name}
+                            </span>
+                            <span style={{ fontSize: '13px', fontWeight: 900, color: 'var(--text-muted)' }}>
+                              {percent}%
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '24px'
+        }}>
         
         {/* Ліва колонка: Список посилань */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -495,6 +1052,7 @@ export default function BioLinksEditor() {
         </div>
 
       </div>
+      )}
 
       {/* Модальне вікно створення/редагування посилання */}
       {showModal && (

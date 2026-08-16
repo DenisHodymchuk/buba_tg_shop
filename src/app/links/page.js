@@ -138,6 +138,60 @@ export default function LinksPage() {
       if (cached) {
         try { setLinks(JSON.parse(cached)); } catch (e) {}
       }
+
+      // Трекінг перегляду сторінки
+      const trackPageView = async () => {
+        if (!supabase) return;
+        if (sessionStorage.getItem('buba_links_page_view_tracked')) return;
+        
+        try {
+          let referrer = 'direct';
+          const urlParams = new URLSearchParams(window.location.search);
+          const utmSource = urlParams.get('utm_source') || urlParams.get('ref') || urlParams.get('source');
+          
+          if (utmSource) {
+            referrer = utmSource.toLowerCase();
+          } else if (document.referrer) {
+            const ref = document.referrer;
+            if (ref.includes('instagram.com')) referrer = 'instagram';
+            else if (ref.includes('t.co') || ref.includes('twitter.com')) referrer = 'twitter';
+            else if (ref.includes('facebook.com')) referrer = 'facebook';
+            else if (ref.includes('tiktok.com')) referrer = 'tiktok';
+            else if (ref.includes('youtube.com')) referrer = 'youtube';
+            else if (ref.includes('telegram') || ref.includes('tg') || ref.includes('android-app://org.telegram.messenger')) referrer = 'telegram';
+            else if (ref.includes('google.com')) referrer = 'google';
+            else {
+              try {
+                referrer = new URL(ref).hostname;
+              } catch (e) {
+                referrer = ref.substring(0, 100);
+              }
+            }
+          }
+
+          let deviceType = 'desktop';
+          const ua = navigator.userAgent;
+          if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+            deviceType = 'tablet';
+          } else if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/i.test(ua)) {
+            deviceType = 'mobile';
+          }
+
+          const { error } = await supabase.from('bio_links_views').insert({
+            referrer,
+            user_agent: ua.substring(0, 500),
+            device_type: deviceType
+          });
+          
+          if (!error) {
+            sessionStorage.setItem('buba_links_page_view_tracked', 'true');
+          }
+        } catch (err) {
+          console.error('Error tracking page view:', err);
+        }
+      };
+
+      trackPageView();
     }
 
     // Завантаження з Supabase settings
@@ -162,6 +216,19 @@ export default function LinksPage() {
     }
     loadLinksFromDB();
   }, []);
+
+  const handleLinkClick = async (item) => {
+    if (!supabase) return;
+    try {
+      await supabase.from('bio_links_clicks').insert({
+        link_id: item.id || 'unknown',
+        link_title: item.title || 'Untitled',
+        url: item.url || ''
+      });
+    } catch (err) {
+      console.error('Error tracking link click:', err);
+    }
+  };
 
   const handleCopyLink = () => {
     if (typeof window !== 'undefined') {
@@ -313,6 +380,7 @@ export default function LinksPage() {
               >
                 <LinkWrapper
                   {...linkProps}
+                  onClick={() => handleLinkClick(item)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
