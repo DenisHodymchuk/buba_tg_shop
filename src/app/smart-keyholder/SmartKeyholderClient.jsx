@@ -14,7 +14,8 @@ import {
   KeyRound,
   Layers,
   Award,
-  Cpu
+  Cpu,
+  CheckCircle2
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -31,6 +32,7 @@ export default function SmartKeyholderClient() {
       badge: '🔥 В наявності',
       price: '1 200 грн',
       priceRaw: '1 200 грн',
+      tags: ['⚡ Датчик руху', '🔋 Samsung 3000 мА·год', '🔌 Type-C'],
       tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник "Олені на Заході Сонця" за 1200 грн.')
     },
     {
@@ -41,6 +43,7 @@ export default function SmartKeyholderClient() {
       badge: '✨ В наявності',
       price: '1 200 грн',
       priceRaw: '1 200 грн',
+      tags: ['⚡ Датчик руху', '🔋 Samsung 3000 мА·год', '🔌 Type-C'],
       tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник "Нічне Озеро та Вірний Друг" за 1200 грн.')
     }
   ];
@@ -260,62 +263,79 @@ export default function SmartKeyholderClient() {
             Світло там, де воно дійсно потрібне. Більше жодної темряви у коридорі — м'яке контурне підсвічування автоматично спалахує при вашій появі та береже ваш час.
           </p>
 
-          {/* Product Cards Grid: Perfectly aligned equal-height cards */}
+          {/* Product Cards Grid: Ultra-refined equal-height cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
             gap: 28,
             marginTop: 20,
             alignItems: 'stretch'
           }}>
             {/* Standard Models */}
             {models.map((m) => (
-              <div
+              <motion.div
                 key={m.id}
+                whileHover={{ y: -6 }}
+                transition={{ duration: 0.25 }}
                 style={{
-                  background: 'rgba(15, 23, 42, 0.7)',
-                  borderRadius: '28px',
-                  border: '1px solid rgba(249, 115, 22, 0.25)',
+                  background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.85) 0%, rgba(9, 14, 26, 0.95) 100%)',
+                  borderRadius: '30px',
+                  border: '1px solid rgba(249, 115, 22, 0.3)',
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
                   height: '100%',
-                  boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
-                  backdropFilter: 'blur(12px)'
+                  boxShadow: '0 20px 45px -12px rgba(0, 0, 0, 0.6), 0 0 25px rgba(249, 115, 22, 0.08)',
+                  backdropFilter: 'blur(16px)'
                 }}
               >
-                {/* Image Container with Fixed Height */}
+                {/* Image Container */}
                 <div style={{ position: 'relative', height: '280px', width: '100%', overflow: 'hidden', background: '#090d16' }}>
                   <img
                     src={m.img}
                     alt={m.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover',
+                      transition: 'transform 0.5s ease'
+                    }}
                   />
+
+                  {/* Gradient Overlay for Smooth Photo Blend */}
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(to top, rgba(9, 14, 26, 1) 0%, rgba(9, 14, 26, 0.3) 40%, transparent 100%)'
+                  }} />
+
+                  {/* Badge Overlay */}
                   <div style={{
                     position: 'absolute',
                     top: 14,
                     left: 14,
                     background: 'rgba(3, 7, 18, 0.85)',
                     backdropFilter: 'blur(8px)',
-                    padding: '5px 12px',
+                    padding: '6px 14px',
                     borderRadius: '999px',
-                    border: '1px solid rgba(255,255,255,0.15)',
+                    border: '1px solid rgba(249, 115, 22, 0.4)',
                     fontSize: 11,
                     fontWeight: 700,
-                    color: '#fb923c'
+                    color: '#fb923c',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
                   }}>
                     {m.badge}
                   </div>
                 </div>
 
-                {/* Content Container (flexGrow: 1 to fill height) */}
-                <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                  {/* Title (fixed minHeight for 2-line alignment) */}
-                  <div style={{ minHeight: '58px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
+                {/* Content Container */}
+                <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', marginTop: '-12px', position: 'relative', zIndex: 2 }}>
+                  {/* Title (fixed minHeight) */}
+                  <div style={{ minHeight: '56px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
                     <h3 style={{ 
                       fontSize: 21, 
                       fontWeight: 800, 
-                      color: '#fff', 
+                      color: '#ffffff', 
                       margin: 0, 
                       lineHeight: 1.25,
                       fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
@@ -326,36 +346,57 @@ export default function SmartKeyholderClient() {
                   </div>
 
                   {/* Subtitle (fixed minHeight) */}
-                  <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 16 }}>
+                  <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 14 }}>
                     <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
                       {m.subtitle}
                     </p>
                   </div>
 
-                  {/* Price Box (fixed height) */}
+                  {/* Mini Spec Tags */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
+                    {m.tags.map((tag, i) => (
+                      <span key={i} style={{ 
+                        background: 'rgba(249, 115, 22, 0.12)', 
+                        border: '1px solid rgba(249, 115, 22, 0.25)', 
+                        color: '#fdba74', 
+                        padding: '4px 10px', 
+                        borderRadius: '10px', 
+                        fontSize: 11, 
+                        fontWeight: 600 
+                      }}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Price Box */}
                   <div style={{ 
-                    height: '52px',
+                    height: '54px',
                     display: 'flex', 
                     alignItems: 'center',
-                    gap: 8, 
+                    justifyContent: 'space-between',
                     marginBottom: 20,
-                    background: 'rgba(249, 115, 22, 0.1)',
-                    padding: '0 16px',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(249, 115, 22, 0.2)'
+                    background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.14) 0%, rgba(234, 179, 8, 0.08) 100%)',
+                    padding: '0 18px',
+                    borderRadius: '18px',
+                    border: '1px solid rgba(249, 115, 22, 0.3)'
                   }}>
                     <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>Ціна:</span>
-                    <span style={{ 
-                      fontSize: 22, 
-                      fontWeight: 800, 
-                      color: '#f97316',
-                      fontFamily: "'Outfit', sans-serif",
-                      letterSpacing: '-0.02em'
-                    }}>{m.price}</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                      <span style={{ 
+                        fontSize: 22, 
+                        fontWeight: 800, 
+                        color: '#f97316',
+                        fontFamily: "'Outfit', sans-serif",
+                        letterSpacing: '-0.02em'
+                      }}>{m.price}</span>
+                    </div>
                   </div>
 
                   {/* Button anchored to bottom */}
-                  <a
+                  <motion.a
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     href={`${telegramManagerUrl}?text=${m.tgText}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -372,29 +413,31 @@ export default function SmartKeyholderClient() {
                       fontSize: 15,
                       fontWeight: 700,
                       textDecoration: 'none',
-                      boxShadow: '0 8px 20px rgba(249, 115, 22, 0.35)',
-                      transition: 'transform 0.2s, boxShadow 0.2s'
+                      boxShadow: '0 10px 25px rgba(249, 115, 22, 0.35)',
+                      transition: 'box-shadow 0.2s'
                     }}
                   >
                     <Send size={16} />
                     <span>Замовити за {m.price}</span>
-                  </a>
+                  </motion.a>
                 </div>
-              </div>
+              </motion.div>
             ))}
 
             {/* Custom Unique Design Card */}
-            <div
+            <motion.div
+              whileHover={{ y: -6 }}
+              transition={{ duration: 0.25 }}
               style={{
-                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                borderRadius: '28px',
-                border: '1px solid rgba(168, 85, 247, 0.35)',
+                background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                borderRadius: '30px',
+                border: '1px solid rgba(168, 85, 247, 0.4)',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
                 height: '100%',
-                boxShadow: '0 20px 40px -10px rgba(168, 85, 247, 0.15)',
-                backdropFilter: 'blur(12px)'
+                boxShadow: '0 20px 45px -12px rgba(168, 85, 247, 0.2), 0 0 25px rgba(168, 85, 247, 0.1)',
+                backdropFilter: 'blur(16px)'
               }}
             >
               {/* Custom Image Banner with exact same height: 280px */}
@@ -403,7 +446,7 @@ export default function SmartKeyholderClient() {
                 height: '280px', 
                 width: '100%',
                 overflow: 'hidden', 
-                background: 'linear-gradient(135deg, #1e1b4b 0%, #311042 100%)',
+                background: 'linear-gradient(135deg, #1e1b4b 0%, #311042 50%, #4c1d95 100%)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -411,56 +454,72 @@ export default function SmartKeyholderClient() {
                 padding: '24px',
                 textAlign: 'center'
               }}>
+                {/* Glowing background orb behind icon */}
                 <div style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '20px',
-                  background: 'rgba(168, 85, 247, 0.2)',
-                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                  position: 'absolute',
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(192, 132, 252, 0.35) 0%, transparent 70%)',
+                  pointerEvents: 'none'
+                }} />
+
+                <div style={{
+                  width: 68,
+                  height: 68,
+                  borderRadius: '22px',
+                  background: 'rgba(168, 85, 247, 0.25)',
+                  border: '1px solid rgba(168, 85, 247, 0.5)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 12
+                  marginBottom: 14,
+                  boxShadow: '0 10px 25px rgba(168, 85, 247, 0.3)',
+                  position: 'relative',
+                  zIndex: 1
                 }}>
-                  <Palette size={32} style={{ color: '#c084fc' }} />
+                  <Palette size={34} style={{ color: '#e9d5ff' }} />
                 </div>
                 <h4 style={{ 
-                  fontSize: 19, 
+                  fontSize: 20, 
                   fontWeight: 800, 
                   color: '#fff', 
                   margin: '0 0 6px',
-                  fontFamily: "'Outfit', sans-serif" 
+                  fontFamily: "'Outfit', sans-serif",
+                  position: 'relative',
+                  zIndex: 1
                 }}>
                   Індивідуальний 3D-дизайн
                 </h4>
-                <p style={{ fontSize: 12, color: '#cbd5e1', margin: 0, lineHeight: 1.45, maxWidth: '240px', fontWeight: 400 }}>
+                <p style={{ fontSize: 12, color: '#cbd5e1', margin: 0, lineHeight: 1.45, maxWidth: '240px', fontWeight: 400, position: 'relative', zIndex: 1 }}>
                   Створимо унікальний малюнок за вашим фото, логотипом або ескізом
                 </p>
                 <div style={{
                   position: 'absolute',
                   top: 14,
                   left: 14,
-                  background: 'rgba(168, 85, 247, 0.25)',
+                  background: 'rgba(168, 85, 247, 0.3)',
                   backdropFilter: 'blur(8px)',
-                  padding: '5px 12px',
+                  padding: '6px 14px',
                   borderRadius: '999px',
-                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                  border: '1px solid rgba(168, 85, 247, 0.5)',
                   fontSize: 11,
                   fontWeight: 700,
-                  color: '#e9d5ff'
+                  color: '#e9d5ff',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
                 }}>
                   🎨 На замовлення
                 </div>
               </div>
 
-              {/* Content Container (flexGrow: 1) */}
-              <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                {/* Title (fixed minHeight: 58px) */}
-                <div style={{ minHeight: '58px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
+              {/* Content Container */}
+              <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', marginTop: '-12px', position: 'relative', zIndex: 2 }}>
+                {/* Title (fixed minHeight: 56px) */}
+                <div style={{ minHeight: '56px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
                   <h3 style={{ 
                     fontSize: 21, 
                     fontWeight: 800, 
-                    color: '#fff', 
+                    color: '#ffffff', 
                     margin: 0, 
                     lineHeight: 1.25,
                     fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
@@ -471,27 +530,44 @@ export default function SmartKeyholderClient() {
                 </div>
 
                 {/* Subtitle (fixed minHeight: 44px) */}
-                <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 16 }}>
+                <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 14 }}>
                   <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
                     Будь-який сюжет: тварини, авто, портрет, емблема чи напис
                   </p>
                 </div>
 
-                {/* Price Box (fixed height: 52px) */}
+                {/* Mini Spec Tags for Custom Design */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
+                  {['📸 За вашим фото', '✏️ 3D-макет', '⚡ Розумне світло'].map((tag, i) => (
+                    <span key={i} style={{ 
+                      background: 'rgba(168, 85, 247, 0.14)', 
+                      border: '1px solid rgba(168, 85, 247, 0.3)', 
+                      color: '#e9d5ff', 
+                      padding: '4px 10px', 
+                      borderRadius: '10px', 
+                      fontSize: 11, 
+                      fontWeight: 600 
+                    }}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Price Box */}
                 <div style={{ 
-                  height: '52px',
+                  height: '54px',
                   display: 'flex', 
                   alignItems: 'center',
-                  gap: 8, 
+                  justifyContent: 'space-between',
                   marginBottom: 20,
-                  background: 'rgba(168, 85, 247, 0.1)',
-                  padding: '0 16px',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(168, 85, 247, 0.25)'
+                  background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(147, 51, 234, 0.08) 100%)',
+                  padding: '0 18px',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(168, 85, 247, 0.35)'
                 }}>
                   <span style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600 }}>Ціна:</span>
                   <span style={{ 
-                    fontSize: 16, 
+                    fontSize: 15, 
                     fontWeight: 800, 
                     color: '#c084fc',
                     fontFamily: "'Outfit', sans-serif" 
@@ -499,7 +575,9 @@ export default function SmartKeyholderClient() {
                 </div>
 
                 {/* Button anchored to bottom */}
-                <a
+                <motion.a
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Хочу розробити індивідуальний дизайн розумної ключниці.')}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -516,15 +594,15 @@ export default function SmartKeyholderClient() {
                     fontSize: 15,
                     fontWeight: 700,
                     textDecoration: 'none',
-                    boxShadow: '0 8px 20px rgba(147, 51, 234, 0.35)',
-                    transition: 'transform 0.2s, boxShadow 0.2s'
+                    boxShadow: '0 10px 25px rgba(147, 51, 234, 0.35)',
+                    transition: 'box-shadow 0.2s'
                   }}
                 >
                   <Send size={16} />
                   <span>Обговорити дизайн ✈️</span>
-                </a>
+                </motion.a>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -636,7 +714,7 @@ export default function SmartKeyholderClient() {
         </div>
       </section>
 
-      {/* How to Order Steps (Updated with Official Payment & Delivery Steps) */}
+      {/* How to Order Steps */}
       <section style={{ padding: '40px 20px 60px', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h2 style={{ 
