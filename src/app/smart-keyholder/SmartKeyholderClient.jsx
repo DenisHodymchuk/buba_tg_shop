@@ -9,88 +9,32 @@ import {
   ShieldCheck, 
   Sparkles, 
   KeyRound, 
-  Eye, 
   CheckCircle2, 
-  HelpCircle, 
   Send, 
-  ChevronDown, 
-  ArrowRight,
-  Flame,
-  Award,
-  Clock,
-  Layers,
-  Heart,
-  Moon,
-  Sun
+  ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SmartKeyholderClient() {
-  const [selectedModel, setSelectedModel] = useState('deer'); // 'deer' | 'lake'
-  const [viewType, setViewType] = useState('night'); // 'night' | 'printer'
   const [openFaq, setOpenFaq] = useState(null);
-
   const telegramManagerUrl = "https://t.me/buba_lab_manager";
 
-  const models = {
-    deer: {
+  const models = [
+    {
       id: 'deer',
       title: 'Олені на Заході Сонця',
       subtitle: 'Тепле контурне світло вечірнього сонця у гірському лісі',
-      nightImg: '/images/smart-keyholder/deer-sunset-lamp.jpg',
-      printerImg: '/images/smart-keyholder/deer-sunset-printed.jpg',
+      img: '/images/smart-keyholder/deer-sunset-lamp.jpg',
       badge: '🔥 ХІТ ПРОДАЖІВ',
       tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник "Олені на Заході Сонця".')
     },
-    lake: {
+    {
       id: 'lake',
       title: 'Нічне Озеро та Вірний Друг',
       subtitle: 'Атмосферний зоряний пейзаж людини з собакою на березі',
-      nightImg: '/images/smart-keyholder/man-dog-lake-lamp.jpg',
-      printerImg: '/images/smart-keyholder/man-dog-printed.jpg',
+      img: '/images/smart-keyholder/man-dog-lake-lamp.jpg',
       badge: '✨ АВТОРСЬКИЙ ДИЗАЙН',
       tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник "Нічне Озеро та Вірний Друг".')
-    }
-  };
-
-  const currentModel = models[selectedModel];
-  const activeImage = viewType === 'night' ? currentModel.nightImg : currentModel.printerImg;
-
-  const features = [
-    {
-      icon: <Zap size={28} className="text-amber-400" />,
-      title: "Датчик Руху & Контурне Світло",
-      desc: "Миттєво реагує при наближенні на 2-3 метри. М'яко освітлює коридор і самостійно вимикається через 20 секунд.",
-      color: "from-amber-500/20 to-orange-500/10",
-      borderColor: "rgba(245, 158, 11, 0.25)"
-    },
-    {
-      icon: <BatteryCharging size={28} className="text-amber-400" />,
-      title: "Акумулятор Samsung 3000 мА·год",
-      desc: "Забезпечує до 7-10 днів повністю автономної роботи. Жодних дротів на стіні чи постійної заміни батарейок.",
-      color: "from-orange-500/20 to-red-500/10",
-      borderColor: "rgba(249, 115, 22, 0.25)"
-    },
-    {
-      icon: <Usb size={28} className="text-sky-400" />,
-      title: "Сучасний Роз'єм Type-C",
-      desc: "Швидке та зручне заряджання від звичайного зарядного пристрою смартфона або повербанка за 1.5 години.",
-      color: "from-sky-500/20 to-indigo-500/10",
-      borderColor: "rgba(56, 189, 248, 0.25)"
-    },
-    {
-      icon: <ShieldCheck size={28} className="text-emerald-400" />,
-      title: "Промислова Пожежна Безпека",
-      desc: "Вбудована плата захисту від короткого замикання, перегріву та перезаряджання для повної безпеки вашої оселі.",
-      color: "from-emerald-500/20 to-teal-500/10",
-      borderColor: "rgba(52, 211, 153, 0.25)"
-    },
-    {
-      icon: <KeyRound size={28} className="text-purple-400" />,
-      title: "Авторський 3D Друк & 5 Гачків",
-      desc: "Високоточний 3D-друк з міцного екологічного PETG пластику. 5 надійних гачків витримують будь-які в'язки ключів.",
-      color: "from-purple-500/20 to-pink-500/10",
-      borderColor: "rgba(192, 132, 252, 0.25)"
     }
   ];
 
@@ -105,7 +49,7 @@ export default function SmartKeyholderClient() {
     },
     {
       q: "Як відбувається підзарядка?",
-      a: "Світильник оснащений роз'ємом Type-C. Ви можете зарядити його від будь-якого блоку живлення телефону або навіть від павербанка прямо на стіні за 1.5 години."
+      a: "Світильник оснащений роз'ємом Type-C. Ви можете зарядити його від будь-якого блоку живлення телефону або від павербанка за 1.5 години."
     },
     {
       q: "Чи безпечно залишати у коридорі?",
@@ -126,7 +70,7 @@ export default function SmartKeyholderClient() {
       overflowX: 'hidden',
       paddingBottom: '90px'
     }}>
-      {/* Sticky Header */}
+      {/* Navigation Bar */}
       <nav style={{
         position: 'sticky',
         top: 0,
@@ -158,7 +102,7 @@ export default function SmartKeyholderClient() {
             </span>
 
             <a 
-              href={`${telegramManagerUrl}?text=${currentModel.tgText}`} 
+              href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Цікавить розумна ключниця-світильник.')}`} 
               target="_blank" 
               rel="noopener noreferrer"
               style={{
@@ -182,8 +126,8 @@ export default function SmartKeyholderClient() {
       </nav>
 
       {/* Hero Section */}
-      <section style={{ position: 'relative', padding: '40px 20px 60px', overflow: 'hidden' }}>
-        {/* Glow ambient background */}
+      <section style={{ position: 'relative', padding: '48px 20px 40px', overflow: 'hidden' }}>
+        {/* Glow background */}
         <div style={{ 
           position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)',
           width: '80vw', height: '500px',
@@ -192,7 +136,6 @@ export default function SmartKeyholderClient() {
         }} />
 
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          {/* Badge */}
           <div style={{ textAlign: 'center', marginBottom: 16 }}>
             <span style={{
               display: 'inline-flex',
@@ -211,9 +154,8 @@ export default function SmartKeyholderClient() {
             </span>
           </div>
 
-          {/* Main Title */}
           <h1 style={{ 
-            fontSize: 'clamp(32px, 5.5vw, 64px)', 
+            fontSize: 'clamp(32px, 5.5vw, 60px)', 
             fontWeight: 950, 
             textAlign: 'center',
             lineHeight: 1.1,
@@ -222,454 +164,124 @@ export default function SmartKeyholderClient() {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            Розумна Ключница-Світильник<br />З Датчиком Руху
+            Розумна Ключниця-Світильник<br />З Датчиком Руху
           </h1>
 
-          {/* Subtitle */}
           <p style={{
-            fontSize: 'clamp(16px, 2.2vw, 20px)',
+            fontSize: 'clamp(16px, 2vw, 19px)',
             color: '#d1d5db',
             textAlign: 'center',
-            maxWidth: 760,
-            margin: '0 auto 36px',
-            lineHeight: 1.6,
-            fontWeight: 400
+            maxWidth: 720,
+            margin: '0 auto 40px',
+            lineHeight: 1.6
           }}>
-            Світло там, де воно дійсно потрібне. Автоматично реагує на рух, позбавляє від темряви у передпокої та надійно зберігає ваші ключі.
+            Світло там, де воно дійсно потрібне. Більше жодної темряви у коридорі — м'яке контурне підсвічування автоматично спалахує при вашій появі та береже ваш час.
           </p>
 
-          {/* Interactive Model Selector Tabs */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            gap: 12, 
-            marginBottom: 30,
-            flexWrap: 'wrap'
-          }}>
-            {Object.values(models).map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setSelectedModel(m.id)}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: '16px',
-                  border: selectedModel === m.id ? '2px solid #f97316' : '1px solid rgba(255,255,255,0.1)',
-                  background: selectedModel === m.id ? 'rgba(249, 115, 22, 0.15)' : 'rgba(255,255,255,0.03)',
-                  color: selectedModel === m.id ? '#fff' : '#9ca3af',
-                  fontWeight: 800,
-                  fontSize: 14,
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  boxShadow: selectedModel === m.id ? '0 0 20px rgba(249, 115, 22, 0.3)' : 'none'
-                }}
-              >
-                <span>{m.id === 'deer' ? '🌄' : '🌌'}</span>
-                <span>{m.title}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Product Visual Container */}
+          {/* Clean Showcase Cards for Product Models */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: 32,
-            alignItems: 'center',
-            background: 'rgba(15, 23, 42, 0.6)',
-            borderRadius: '32px',
-            padding: '24px',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+            marginTop: 20
           }}>
-            {/* Left: Image Showcase with toggle */}
-            <div style={{ position: 'relative' }}>
-              <div style={{ 
-                position: 'relative', 
-                borderRadius: '24px', 
-                overflow: 'hidden', 
-                aspectRatio: '4/5',
-                background: '#090d16',
-                border: '1px solid rgba(249, 115, 22, 0.2)'
-              }}>
-                <AnimatePresence mode="wait">
-                  <motion.img 
-                    key={`${selectedModel}-${viewType}`}
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{ duration: 0.3 }}
-                    src={activeImage}
-                    alt={currentModel.title}
+            {models.map((m) => (
+              <div
+                key={m.id}
+                style={{
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  borderRadius: '32px',
+                  border: '1px solid rgba(249, 115, 22, 0.25)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+                  backdropFilter: 'blur(12px)',
+                  transition: 'transform 0.3s ease, boxShadow 0.3s ease'
+                }}
+              >
+                {/* Image */}
+                <div style={{ position: 'relative', aspectRatio: '4/5', overflow: 'hidden', background: '#090d16' }}>
+                  <img
+                    src={m.img}
+                    alt={m.title}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
-                </AnimatePresence>
-
-                {/* Badge Overlay */}
-                <div style={{
-                  position: 'absolute',
-                  top: 16,
-                  left: 16,
-                  background: 'rgba(3, 7, 18, 0.8)',
-                  backdropFilter: 'blur(8px)',
-                  padding: '6px 14px',
-                  borderRadius: '999px',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  fontSize: 12,
-                  fontWeight: 800,
-                  color: '#fb923c'
-                }}>
-                  {currentModel.badge}
-                </div>
-
-                {/* View Switcher Overlay */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: 16,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: 'rgba(3, 7, 18, 0.85)',
-                  backdropFilter: 'blur(12px)',
-                  padding: '4px',
-                  borderRadius: '999px',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  display: 'flex',
-                  gap: 4
-                }}>
-                  <button
-                    onClick={() => setViewType('night')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '999px',
-                      border: 'none',
-                      background: viewType === 'night' ? '#f97316' : 'transparent',
-                      color: viewType === 'night' ? '#fff' : '#9ca3af',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6
-                    }}
-                  >
-                    <Moon size={14} /> Вночі (Світло)
-                  </button>
-                  <button
-                    onClick={() => setViewType('printer')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '999px',
-                      border: 'none',
-                      background: viewType === 'printer' ? '#f97316' : 'transparent',
-                      color: viewType === 'printer' ? '#fff' : '#9ca3af',
-                      fontSize: 12,
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6
-                    }}
-                  >
-                    <Layers size={14} /> 3D Друк (Деталі)
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: Model Info & Quick Order */}
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ color: '#fb923c', fontSize: 13, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-                Модель: {currentModel.title}
-              </div>
-              <h2 style={{ fontSize: 28, fontWeight: 900, color: '#fff', margin: '0 0 12px', lineHeight: 1.2 }}>
-                {currentModel.subtitle}
-              </h2>
-
-              <ul style={{ listStyle: 'none', padding: 0, margin: '20px 0 28px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  "Автоматичний датчик руху (вимикання через 20с)",
-                  "Оригінальний акумулятор Samsung 3000 мА·год (до 7 днів)",
-                  "Живлення через роз'єм Type-C",
-                  "Промисловий пожежний захист від замикань",
-                  "5 міцних гачків для ключів та авторський 3D-дизайн"
-                ].map((item, idx) => (
-                  <li key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: '#e5e7eb' }}>
-                    <CheckCircle2 size={18} className="text-amber-400" style={{ color: '#f97316', flexShrink: 0 }} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* Order Button CTA */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <a
-                  href={`${telegramManagerUrl}?text=${currentModel.tgText}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 10,
-                    background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                    color: '#ffffff',
-                    padding: '18px 28px',
-                    borderRadius: '20px',
-                    fontSize: 18,
-                    fontWeight: 900,
-                    textDecoration: 'none',
-                    boxShadow: '0 12px 30px rgba(249, 115, 22, 0.4)',
-                    transition: 'transform 0.2s, boxShadow 0.2s',
-                    letterSpacing: '0.02em'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 16px 36px rgba(249, 115, 22, 0.5)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 12px 30px rgba(249, 115, 22, 0.4)';
-                  }}
-                >
-                  <Send size={22} />
-                  <span>ЗАМОВИТИ В TELEGRAM</span>
-                </a>
-                
-                <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', margin: 0 }}>
-                  ⚡ Безкоштовна консультація менеджера • Доставка Новою Поштою
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Features Grid Section */}
-      <section style={{ padding: '60px 20px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 900, margin: '0 0 12px', color: '#fff' }}>
-            Чому ця ключниця — ідеальний вибір?
-          </h2>
-          <p style={{ fontSize: 16, color: '#9ca3af', maxWidth: 600, margin: '0 auto' }}>
-            Інженерний підхід до кожного виробу: поєднання затишку, автономності та безпеки
-          </p>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: 24
-        }}>
-          {features.map((feat, i) => (
-            <motion.div
-              key={i}
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              style={{
-                background: `linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.4))`,
-                padding: '28px',
-                borderRadius: '24px',
-                border: `1px solid ${feat.borderColor}`,
-                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                width: '56px',
-                height: '56px',
-                borderRadius: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 20
-              }}>
-                {feat.icon}
-              </div>
-              <h3 style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 10 }}>
-                {feat.title}
-              </h3>
-              <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.7, margin: 0 }}>
-                {feat.desc}
-              </p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Before / After Practical Scenarios */}
-      <section style={{ 
-        padding: '60px 20px', 
-        background: 'linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.6) 50%, rgba(15, 23, 42, 0) 100%)' 
-      }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 44 }}>
-            <span style={{ color: '#f97316', fontSize: 12, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              КОМФОРТ КОЖНОГО ДНЯ
-            </span>
-            <h2 style={{ fontSize: 'clamp(26px, 3.8vw, 38px)', fontWeight: 900, color: '#fff', marginTop: 8 }}>
-              Як розумна ключниця змінює ваш коридор?
-            </h2>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: 24
-          }}>
-            {/* Without Lamp */}
-            <div style={{
-              background: 'rgba(239, 68, 68, 0.06)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '24px',
-              padding: '28px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#f87171', fontWeight: 800, fontSize: 18, marginBottom: 16 }}>
-                <span style={{ fontSize: 22 }}>❌</span> Без розумної ключниці
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, color: '#9ca3af', fontSize: 14 }}>
-                <li>• Пошук вимикача напомацки у повній темряві з пакетами у руках</li>
-                <li>• Різке яскраве верхнє світло бісить, коли треба просто забрати ключі вночі</li>
-                <li>• Ключі губляться по всій квартирі, створюючи хаос перед виходом</li>
-                <li>• Плутанина з дротами або потреба міняти батарейки щотижня</li>
-              </ul>
-            </div>
-
-            {/* With Lamp */}
-            <div style={{
-              background: 'rgba(249, 115, 22, 0.08)',
-              border: '1px solid rgba(249, 115, 22, 0.3)',
-              borderRadius: '24px',
-              padding: '28px',
-              boxShadow: '0 0 30px rgba(249, 115, 22, 0.15)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fb923c', fontWeight: 800, fontSize: 18, marginBottom: 16 }}>
-                <span style={{ fontSize: 22 }}>✅</span> З розумною ключницею BUBA
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12, color: '#e5e7eb', fontSize: 14 }}>
-                <li>• М'яке затишне світло вмикається самите, щойно ви заходите у двері</li>
-                <li>• Комфортне контурне підсвічування не засліплює та вимикається автоматично</li>
-                <li>• Всі ключі завжди на своєму місці на 5 міцних гачках</li>
-                <li>• До 14 днів роботи від 1 заряду Type-C без жодних дротів на стіні</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Models Gallery Section */}
-      <section style={{ padding: '60px 20px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 900, color: '#fff', marginBottom: 12 }}>
-            Оберіть свій авторський дизайн
-          </h2>
-          <p style={{ color: '#9ca3af', fontSize: 16 }}>
-            Кожен виріб виготовляється з високою деталізацією та проходить перевірку якості
-          </p>
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: 32
-        }}>
-          {Object.values(models).map((m) => (
-            <div 
-              key={m.id}
-              style={{
-                background: 'rgba(15, 23, 42, 0.7)',
-                borderRadius: '28px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column'
-              }}
-            >
-              <div style={{ aspectRatio: '1/1', position: 'relative', overflow: 'hidden' }}>
-                <img 
-                  src={m.nightImg} 
-                  alt={m.title} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                />
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, transparent 60%)'
-                }} />
-                <div style={{
-                  position: 'absolute',
-                  bottom: 16,
-                  left: 20,
-                  right: 20
-                }}>
-                  <h3 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0 }}>
-                    {m.title}
-                  </h3>
-                  <p style={{ fontSize: 13, color: '#fdba74', margin: '4px 0 0' }}>
-                    {m.subtitle}
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div style={{ marginBottom: 20 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12, color: '#9ca3af' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px', borderRadius: '12px' }}>
-                      <span style={{ display: 'block', color: '#6b7280', fontSize: 10, fontWeight: 700 }}>АКУМУЛЯТОР</span>
-                      <strong style={{ color: '#fff', fontSize: 13 }}>3000 мА·год</strong>
-                    </div>
-                    <div style={{ background: 'rgba(255,255,255,0.04)', padding: '10px', borderRadius: '12px' }}>
-                      <span style={{ display: 'block', color: '#6b7280', fontSize: 10, fontWeight: 700 }}>ЖИВЛЕННЯ</span>
-                      <strong style={{ color: '#fff', fontSize: 13 }}>Type-C</strong>
-                    </div>
+                  <div style={{
+                    position: 'absolute',
+                    top: 16,
+                    left: 16,
+                    background: 'rgba(3, 7, 18, 0.85)',
+                    backdropFilter: 'blur(8px)',
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: '#fb923c'
+                  }}>
+                    {m.badge}
                   </div>
                 </div>
 
-                <a
-                  href={`${telegramManagerUrl}?text=${m.tgText}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    background: 'rgba(249, 115, 22, 0.15)',
-                    border: '1px solid rgba(249, 115, 22, 0.4)',
-                    color: '#fb923c',
-                    padding: '14px 20px',
-                    borderRadius: '16px',
-                    fontWeight: 800,
-                    fontSize: 15,
-                    textDecoration: 'none',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#f97316';
-                    e.currentTarget.style.color = '#ffffff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(249, 115, 22, 0.15)';
-                    e.currentTarget.style.color = '#fb923c';
-                  }}
-                >
-                  <Send size={16} />
-                  <span>Замовити цей дизайн</span>
-                </a>
+                {/* Content */}
+                <div style={{ padding: '28px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <h3 style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: '0 0 8px' }}>
+                      {m.title}
+                    </h3>
+                    <p style={{ fontSize: 14, color: '#9ca3af', margin: '0 0 20px', lineHeight: 1.5 }}>
+                      {m.subtitle}
+                    </p>
+
+                    <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {[
+                        "Автоматичне підсвічування: реагує на рух і самостійно вимикається",
+                        "Акумулятор Samsung 3000 мА·год (до тижня автономної роботи)",
+                        "Зручне живлення через роз'єм Type-C",
+                        "Пожежна безпека промислового стандарту",
+                        "Стильний авторський вигляд та 5 міцних гачків"
+                      ].map((item, idx) => (
+                        <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: '#e5e7eb', lineHeight: 1.4 }}>
+                          <CheckCircle2 size={16} style={{ color: '#f97316', flexShrink: 0, marginTop: 2 }} />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <a
+                    href={`${telegramManagerUrl}?text=${m.tgText}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 10,
+                      background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                      color: '#ffffff',
+                      padding: '16px 24px',
+                      borderRadius: '20px',
+                      fontSize: 16,
+                      fontWeight: 900,
+                      textDecoration: 'none',
+                      boxShadow: '0 10px 25px rgba(249, 115, 22, 0.35)',
+                      transition: 'transform 0.2s, boxShadow 0.2s'
+                    }}
+                  >
+                    <Send size={18} />
+                    <span>ЗАМОВИТИ В TELEGRAM</span>
+                  </a>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Technical Specifications Section */}
-      <section style={{ padding: '60px 20px', maxWidth: 900, margin: '0 auto' }}>
+      <section style={{ padding: '40px 20px 60px', maxWidth: 900, margin: '0 auto' }}>
         <div style={{
           background: 'rgba(15, 23, 42, 0.6)',
           borderRadius: '32px',
@@ -681,16 +293,16 @@ export default function SmartKeyholderClient() {
             📋 Технічні характеристики
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
             {[
               { label: "Датчик руху", val: "Інфрачервоний (радіус 2-3м, 20с таймер)" },
-              { label: "Елемент живлення", val: "Samsung 18650 Li-ion 3000 мА·год" },
-              { label: "Автономна робота", val: "До 7–14 днів без підзаряджання" },
-              { label: "Роз'єм зарядки", val: "USB Type-C (5V)" },
-              { label: "Пожежна безпека", val: "BMS-плата із захистом від КЗ та перегріву" },
-              { label: "Матеріал корпусу", val: "PETG / PLA преміум 3D-друк" },
-              { label: "Кількість гачків", val: "5 надійних інтегрованих гачків" },
-              { label: "Тип кріплення", val: "Легкий монтаж на стіну (у комплекті)" }
+              { label: "Акумулятор", val: "Samsung 3000 мА·год (до 7 днів роботи)" },
+              { label: "Роз'єм живлення", val: "Сучасний роз'єм Type-C (5V)" },
+              { label: "Пожежна безпека", val: "Захист від замикань промислового стандарту" },
+              { label: "Авторський вигляд", val: "Високоточне виконання під будь-який інтер'єр" },
+              { label: "Гачки для ключів", val: "5 надійних інтегрованих гачків" },
+              { label: "Монтаж", val: "Швидке та просте кріплення на стіну" },
+              { label: "Гарантія", val: "Гарантія на електроніку та батарею" }
             ].map((spec, idx) => (
               <div key={idx} style={{
                 background: 'rgba(255,255,255,0.03)',
@@ -711,7 +323,7 @@ export default function SmartKeyholderClient() {
       </section>
 
       {/* How to Order Steps */}
-      <section style={{ padding: '60px 20px', maxWidth: 1000, margin: '0 auto' }}>
+      <section style={{ padding: '40px 20px 60px', maxWidth: 1000, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', fontWeight: 900, color: '#fff' }}>
             Простий процес замовлення
@@ -724,16 +336,15 @@ export default function SmartKeyholderClient() {
           gap: 20
         }}>
           {[
-            { step: "01", title: "Перехід в Telegram", desc: "Натискаєте кнопку замовлення — відкривається чат з нашим менеджером." },
-            { step: "02", title: "Уточнення деталей", desc: "Обираєте дизайн світильника та вказуєте дані для доставки." },
+            { step: "01", title: "Перехід в Telegram", desc: "Натискаєте кнопку замовлення — відкривається чат з менеджером." },
+            { step: "02", title: "Уточнення деталей", desc: "Обираєте модель світильника та дані для доставки." },
             { step: "03", title: "Швидка доставка", desc: "Відправляємо Новою Поштою. Оплата при отриманні або на картку." }
           ].map((s, idx) => (
             <div key={idx} style={{
               background: 'rgba(15, 23, 42, 0.5)',
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: '24px',
-              padding: '24px',
-              position: 'relative'
+              padding: '24px'
             }}>
               <div style={{ fontSize: 36, fontWeight: 950, color: '#f97316', opacity: 0.8, marginBottom: 12 }}>
                 {s.step}
@@ -750,10 +361,10 @@ export default function SmartKeyholderClient() {
       </section>
 
       {/* FAQ Section */}
-      <section style={{ padding: '60px 20px', maxWidth: 800, margin: '0 auto' }}>
+      <section style={{ padding: '40px 20px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', fontWeight: 900, color: '#fff' }}>
-            Популярні запитання (FAQ)
+            Часті запитання (FAQ)
           </h2>
         </div>
 
@@ -765,8 +376,7 @@ export default function SmartKeyholderClient() {
                 background: 'rgba(15, 23, 42, 0.6)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: '20px',
-                overflow: 'hidden',
-                transition: 'border-color 0.2s'
+                overflow: 'hidden'
               }}
             >
               <button
@@ -819,7 +429,7 @@ export default function SmartKeyholderClient() {
       </section>
 
       {/* Bottom CTA Banner */}
-      <section style={{ padding: '80px 20px 40px', textAlign: 'center' }}>
+      <section style={{ padding: '60px 20px 40px', textAlign: 'center' }}>
         <div style={{
           maxWidth: 900,
           margin: '0 auto',
@@ -829,15 +439,15 @@ export default function SmartKeyholderClient() {
           border: '1px solid rgba(249, 115, 22, 0.3)',
           boxShadow: '0 20px 50px rgba(249, 115, 22, 0.15)'
         }}>
-          <h2 style={{ fontSize: 'clamp(30px, 4.5vw, 44px)', fontWeight: 950, color: '#fff', margin: '0 0 16px' }}>
-            Готові додати затишку у свій дім?
+          <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 950, color: '#fff', margin: '0 0 16px' }}>
+            Бажаєте замовити чи маєте питання?
           </h2>
           <p style={{ fontSize: 16, color: '#d1d5db', maxWidth: 600, margin: '0 auto 32px' }}>
-            Зв'яжіться з нами в Telegram зараз для швидкого замовлення та відповіді на всі ваші запитання.
+            Напишіть нам у Telegram — менеджер відповість за кілька хвилин!
           </p>
 
           <a
-            href={`${telegramManagerUrl}?text=${currentModel.tgText}`}
+            href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник.')}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -848,14 +458,14 @@ export default function SmartKeyholderClient() {
               color: '#ffffff',
               padding: '20px 40px',
               borderRadius: '24px',
-              fontSize: 20,
+              fontSize: 19,
               fontWeight: 900,
               textDecoration: 'none',
               boxShadow: '0 15px 35px rgba(249, 115, 22, 0.4)',
               transition: 'transform 0.2s'
             }}
           >
-            <Send size={24} />
+            <Send size={22} />
             <span>НАПИСАТИ В TELEGRAM</span>
           </a>
         </div>
@@ -879,11 +489,11 @@ export default function SmartKeyholderClient() {
       }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 700 }}>РОЗУМНА КЛЮЧНИЦЯ</span>
-          <span style={{ fontSize: 14, color: '#fff', fontWeight: 900 }}>{currentModel.title}</span>
+          <span style={{ fontSize: 14, color: '#fff', fontWeight: 900 }}>З датчиком руху</span>
         </div>
 
         <a
-          href={`${telegramManagerUrl}?text=${currentModel.tgText}`}
+          href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник.')}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{
