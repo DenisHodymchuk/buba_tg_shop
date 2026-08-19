@@ -230,7 +230,7 @@ export default function SmartKeyholderClient() {
             Світло там, де воно дійсно потрібне. Більше жодної темряви у коридорі — м'яке контурне підсвічування автоматично спалахує при вашій появі та береже ваш час.
           </p>
 
-          {/* Product Cards Grid: Clean cards without redundant spec tags */}
+          {/* Product Cards Grid: Clean & elegant price layout */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
@@ -316,32 +316,32 @@ export default function SmartKeyholderClient() {
                   </div>
 
                   {/* Subtitle */}
-                  <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 18 }}>
+                  <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 20 }}>
                     <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
                       {m.subtitle}
                     </p>
                   </div>
 
-                  {/* Price Box */}
+                  {/* Elegant Price Display (Light & Clean) */}
                   <div style={{ 
-                    height: '50px',
                     display: 'flex', 
-                    alignItems: 'center',
+                    alignItems: 'baseline', 
                     justifyContent: 'space-between',
-                    marginBottom: 18,
-                    background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.14) 0%, rgba(234, 179, 8, 0.08) 100%)',
-                    padding: '0 16px',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(249, 115, 22, 0.3)'
+                    marginBottom: 20,
+                    padding: '12px 4px 0',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.08)'
                   }}>
-                    <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>Ціна:</span>
-                    <span style={{ 
-                      fontSize: 20, 
-                      fontWeight: 800, 
-                      color: '#f97316',
-                      fontFamily: "'Outfit', sans-serif",
-                      letterSpacing: '-0.02em'
-                    }}>{m.price}</span>
+                    <span style={{ fontSize: 13, color: '#9ca3af', fontWeight: 600 }}>Ціна виробу:</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                      <span style={{ 
+                        fontSize: 24, 
+                        fontWeight: 900, 
+                        color: '#f97316',
+                        fontFamily: "'Outfit', sans-serif",
+                        letterSpacing: '-0.02em'
+                      }}>1 200</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#fb923c', fontFamily: "'Outfit', sans-serif" }}>грн</span>
+                    </div>
                   </div>
 
                   {/* Clean "Замовити" button */}
@@ -479,27 +479,24 @@ export default function SmartKeyholderClient() {
                 </div>
 
                 {/* Subtitle */}
-                <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 18 }}>
+                <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 20 }}>
                   <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
                     Будь-який сюжет: тварини, авто, портрет, емблема чи напис
                   </p>
                 </div>
 
-                {/* Price Box */}
+                {/* Elegant Price Display */}
                 <div style={{ 
-                  height: '50px',
                   display: 'flex', 
-                  alignItems: 'center',
+                  alignItems: 'baseline', 
                   justifyContent: 'space-between',
-                  marginBottom: 18,
-                  background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(147, 51, 234, 0.08) 100%)',
-                  padding: '0 16px',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(168, 85, 247, 0.35)'
+                  marginBottom: 20,
+                  padding: '12px 4px 0',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)'
                 }}>
-                  <span style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600 }}>Ціна:</span>
+                  <span style={{ fontSize: 13, color: '#cbd5e1', fontWeight: 600 }}>Ціна виробу:</span>
                   <span style={{ 
-                    fontSize: 14, 
+                    fontSize: 15, 
                     fontWeight: 800, 
                     color: '#c084fc',
                     fontFamily: "'Outfit', sans-serif" 
