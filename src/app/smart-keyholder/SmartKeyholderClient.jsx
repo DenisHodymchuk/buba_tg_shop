@@ -14,8 +14,7 @@ import {
   KeyRound,
   Layers,
   Award,
-  Cpu,
-  CheckCircle2
+  Cpu
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -208,7 +207,7 @@ export default function SmartKeyholderClient() {
       </nav>
 
       {/* Hero Section */}
-      <section style={{ position: 'relative', padding: '52px 20px 44px', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', padding: '48px 20px 40px', overflow: 'hidden' }}>
         {/* Glow background */}
         <div style={{ 
           position: 'absolute', top: '-10%', left: '50%', transform: 'translateX(-50%)',
@@ -218,7 +217,7 @@ export default function SmartKeyholderClient() {
         }} />
 
         <div style={{ maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          <div style={{ textAlign: 'center', marginBottom: 18 }}>
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -237,12 +236,12 @@ export default function SmartKeyholderClient() {
           </div>
 
           <h1 style={{ 
-            fontSize: 'clamp(34px, 5.8vw, 62px)', 
+            fontSize: 'clamp(28px, 4.8vw, 52px)', 
             fontWeight: 800, 
             textAlign: 'center',
-            lineHeight: 1.12,
+            lineHeight: 1.15,
             letterSpacing: '-0.02em',
-            margin: '0 0 18px',
+            margin: '0 0 16px',
             fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
             background: 'linear-gradient(180deg, #ffffff 40%, #fdba74 100%)',
             WebkitBackgroundClip: 'text',
@@ -252,21 +251,21 @@ export default function SmartKeyholderClient() {
           </h1>
 
           <p style={{
-            fontSize: 'clamp(16px, 2.1vw, 19px)',
+            fontSize: 'clamp(15px, 1.9vw, 18px)',
             color: '#d1d5db',
             textAlign: 'center',
             maxWidth: 720,
-            margin: '0 auto 44px',
+            margin: '0 auto 36px',
             lineHeight: 1.6,
             fontWeight: 400
           }}>
             Світло там, де воно дійсно потрібне. Більше жодної темряви у коридорі — м'яке контурне підсвічування автоматично спалахує при вашій появі та береже ваш час.
           </p>
 
-          {/* Product Cards Grid: Ultra-refined equal-height cards */}
+          {/* Product Cards Grid: Full uncropped photos, perfect typography, clean "Замовити" button */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
             gap: 28,
             marginTop: 20,
             alignItems: 'stretch'
@@ -289,25 +288,29 @@ export default function SmartKeyholderClient() {
                   backdropFilter: 'blur(16px)'
                 }}
               >
-                {/* Image Container */}
-                <div style={{ position: 'relative', height: '280px', width: '100%', overflow: 'hidden', background: '#090d16' }}>
+                {/* Image Container with Contain to avoid cropping */}
+                <div style={{ 
+                  position: 'relative', 
+                  height: '290px', 
+                  width: '100%', 
+                  overflow: 'hidden', 
+                  background: '#050811',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '12px'
+                }}>
                   <img
                     src={m.img}
                     alt={m.title}
                     style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      objectFit: 'cover',
-                      transition: 'transform 0.5s ease'
+                      maxHeight: '100%', 
+                      maxWidth: '100%', 
+                      objectFit: 'contain',
+                      borderRadius: '18px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
                     }}
                   />
-
-                  {/* Gradient Overlay for Smooth Photo Blend */}
-                  <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(to top, rgba(9, 14, 26, 1) 0%, rgba(9, 14, 26, 0.3) 40%, transparent 100%)'
-                  }} />
 
                   {/* Badge Overlay */}
                   <div style={{
@@ -316,7 +319,7 @@ export default function SmartKeyholderClient() {
                     left: 14,
                     background: 'rgba(3, 7, 18, 0.85)',
                     backdropFilter: 'blur(8px)',
-                    padding: '6px 14px',
+                    padding: '5px 12px',
                     borderRadius: '999px',
                     border: '1px solid rgba(249, 115, 22, 0.4)',
                     fontSize: 11,
@@ -329,25 +332,24 @@ export default function SmartKeyholderClient() {
                 </div>
 
                 {/* Content Container */}
-                <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', marginTop: '-12px', position: 'relative', zIndex: 2 }}>
-                  {/* Title (fixed minHeight) */}
-                  <div style={{ minHeight: '56px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
+                <div style={{ padding: '22px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                  {/* Title (compact font size so it fits neatly) */}
+                  <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
                     <h3 style={{ 
-                      fontSize: 21, 
+                      fontSize: 17, 
                       fontWeight: 800, 
                       color: '#ffffff', 
                       margin: 0, 
-                      lineHeight: 1.25,
-                      fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-                      letterSpacing: '-0.01em'
+                      lineHeight: 1.3,
+                      fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif"
                     }}>
                       {m.title}
                     </h3>
                   </div>
 
-                  {/* Subtitle (fixed minHeight) */}
-                  <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 14 }}>
-                    <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
+                  {/* Subtitle */}
+                  <div style={{ minHeight: '38px', display: 'flex', alignItems: 'flex-start', marginBottom: 14 }}>
+                    <p style={{ fontSize: 12.5, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
                       {m.subtitle}
                     </p>
                   </div>
@@ -359,8 +361,8 @@ export default function SmartKeyholderClient() {
                         background: 'rgba(249, 115, 22, 0.12)', 
                         border: '1px solid rgba(249, 115, 22, 0.25)', 
                         color: '#fdba74', 
-                        padding: '4px 10px', 
-                        borderRadius: '10px', 
+                        padding: '3px 8px', 
+                        borderRadius: '8px', 
                         fontSize: 11, 
                         fontWeight: 600 
                       }}>
@@ -371,29 +373,27 @@ export default function SmartKeyholderClient() {
 
                   {/* Price Box */}
                   <div style={{ 
-                    height: '54px',
+                    height: '50px',
                     display: 'flex', 
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    marginBottom: 20,
+                    marginBottom: 18,
                     background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.14) 0%, rgba(234, 179, 8, 0.08) 100%)',
-                    padding: '0 18px',
-                    borderRadius: '18px',
+                    padding: '0 16px',
+                    borderRadius: '16px',
                     border: '1px solid rgba(249, 115, 22, 0.3)'
                   }}>
                     <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>Ціна:</span>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                      <span style={{ 
-                        fontSize: 22, 
-                        fontWeight: 800, 
-                        color: '#f97316',
-                        fontFamily: "'Outfit', sans-serif",
-                        letterSpacing: '-0.02em'
-                      }}>{m.price}</span>
-                    </div>
+                    <span style={{ 
+                      fontSize: 20, 
+                      fontWeight: 800, 
+                      color: '#f97316',
+                      fontFamily: "'Outfit', sans-serif",
+                      letterSpacing: '-0.02em'
+                    }}>{m.price}</span>
                   </div>
 
-                  {/* Button anchored to bottom */}
+                  {/* Clean "Замовити" button */}
                   <motion.a
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -408,17 +408,17 @@ export default function SmartKeyholderClient() {
                       gap: 8,
                       background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                       color: '#ffffff',
-                      height: '52px',
-                      borderRadius: '18px',
+                      height: '50px',
+                      borderRadius: '16px',
                       fontSize: 15,
                       fontWeight: 700,
                       textDecoration: 'none',
-                      boxShadow: '0 10px 25px rgba(249, 115, 22, 0.35)',
+                      boxShadow: '0 8px 22px rgba(249, 115, 22, 0.35)',
                       transition: 'box-shadow 0.2s'
                     }}
                   >
                     <Send size={16} />
-                    <span>Замовити за {m.price}</span>
+                    <span>Замовити</span>
                   </motion.a>
                 </div>
               </motion.div>
@@ -440,10 +440,10 @@ export default function SmartKeyholderClient() {
                 backdropFilter: 'blur(16px)'
               }}
             >
-              {/* Custom Image Banner with exact same height: 280px */}
+              {/* Custom Image Banner with exact same height: 290px */}
               <div style={{ 
                 position: 'relative', 
-                height: '280px', 
+                height: '290px', 
                 width: '100%',
                 overflow: 'hidden', 
                 background: 'linear-gradient(135deg, #1e1b4b 0%, #311042 50%, #4c1d95 100%)',
@@ -451,7 +451,7 @@ export default function SmartKeyholderClient() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '24px',
+                padding: '20px',
                 textAlign: 'center'
               }}>
                 {/* Glowing background orb behind icon */}
@@ -465,23 +465,23 @@ export default function SmartKeyholderClient() {
                 }} />
 
                 <div style={{
-                  width: 68,
-                  height: 68,
-                  borderRadius: '22px',
+                  width: 60,
+                  height: 60,
+                  borderRadius: '20px',
                   background: 'rgba(168, 85, 247, 0.25)',
                   border: '1px solid rgba(168, 85, 247, 0.5)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 14,
+                  marginBottom: 12,
                   boxShadow: '0 10px 25px rgba(168, 85, 247, 0.3)',
                   position: 'relative',
                   zIndex: 1
                 }}>
-                  <Palette size={34} style={{ color: '#e9d5ff' }} />
+                  <Palette size={30} style={{ color: '#e9d5ff' }} />
                 </div>
                 <h4 style={{ 
-                  fontSize: 20, 
+                  fontSize: 18, 
                   fontWeight: 800, 
                   color: '#fff', 
                   margin: '0 0 6px',
@@ -500,7 +500,7 @@ export default function SmartKeyholderClient() {
                   left: 14,
                   background: 'rgba(168, 85, 247, 0.3)',
                   backdropFilter: 'blur(8px)',
-                  padding: '6px 14px',
+                  padding: '5px 12px',
                   borderRadius: '999px',
                   border: '1px solid rgba(168, 85, 247, 0.5)',
                   fontSize: 11,
@@ -513,38 +513,37 @@ export default function SmartKeyholderClient() {
               </div>
 
               {/* Content Container */}
-              <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', marginTop: '-12px', position: 'relative', zIndex: 2 }}>
-                {/* Title (fixed minHeight: 56px) */}
-                <div style={{ minHeight: '56px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
+              <div style={{ padding: '22px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                {/* Title (compact font size) */}
+                <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
                   <h3 style={{ 
-                    fontSize: 21, 
+                    fontSize: 17, 
                     fontWeight: 800, 
                     color: '#ffffff', 
                     margin: 0, 
-                    lineHeight: 1.25,
-                    fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-                    letterSpacing: '-0.01em'
+                    lineHeight: 1.3,
+                    fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif"
                   }}>
                     Свій власний малюнок
                   </h3>
                 </div>
 
-                {/* Subtitle (fixed minHeight: 44px) */}
-                <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 14 }}>
-                  <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
+                {/* Subtitle */}
+                <div style={{ minHeight: '38px', display: 'flex', alignItems: 'flex-start', marginBottom: 14 }}>
+                  <p style={{ fontSize: 12.5, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
                     Будь-який сюжет: тварини, авто, портрет, емблема чи напис
                   </p>
                 </div>
 
-                {/* Mini Spec Tags for Custom Design */}
+                {/* Mini Spec Tags */}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
                   {['📸 За вашим фото', '✏️ 3D-макет', '⚡ Розумне світло'].map((tag, i) => (
                     <span key={i} style={{ 
                       background: 'rgba(168, 85, 247, 0.14)', 
                       border: '1px solid rgba(168, 85, 247, 0.3)', 
                       color: '#e9d5ff', 
-                      padding: '4px 10px', 
-                      borderRadius: '10px', 
+                      padding: '3px 8px', 
+                      borderRadius: '8px', 
                       fontSize: 11, 
                       fontWeight: 600 
                     }}>
@@ -555,19 +554,19 @@ export default function SmartKeyholderClient() {
 
                 {/* Price Box */}
                 <div style={{ 
-                  height: '54px',
+                  height: '50px',
                   display: 'flex', 
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  marginBottom: 20,
+                  marginBottom: 18,
                   background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(147, 51, 234, 0.08) 100%)',
-                  padding: '0 18px',
-                  borderRadius: '18px',
+                  padding: '0 16px',
+                  borderRadius: '16px',
                   border: '1px solid rgba(168, 85, 247, 0.35)'
                 }}>
                   <span style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600 }}>Ціна:</span>
                   <span style={{ 
-                    fontSize: 15, 
+                    fontSize: 14, 
                     fontWeight: 800, 
                     color: '#c084fc',
                     fontFamily: "'Outfit', sans-serif" 
@@ -589,12 +588,12 @@ export default function SmartKeyholderClient() {
                     gap: 8,
                     background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)',
                     color: '#ffffff',
-                    height: '52px',
-                    borderRadius: '18px',
+                    height: '50px',
+                    borderRadius: '16px',
                     fontSize: 15,
                     fontWeight: 700,
                     textDecoration: 'none',
-                    boxShadow: '0 10px 25px rgba(147, 51, 234, 0.35)',
+                    boxShadow: '0 8px 22px rgba(147, 51, 234, 0.35)',
                     transition: 'box-shadow 0.2s'
                   }}
                 >
@@ -636,7 +635,7 @@ export default function SmartKeyholderClient() {
             </div>
 
             <h2 style={{ 
-              fontSize: 'clamp(26px, 3.5vw, 36px)', 
+              fontSize: 'clamp(24px, 3.2vw, 34px)', 
               fontWeight: 800, 
               color: '#fff', 
               margin: '0 0 8px', 
@@ -718,7 +717,7 @@ export default function SmartKeyholderClient() {
       <section style={{ padding: '40px 20px 60px', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h2 style={{ 
-            fontSize: 'clamp(26px, 3.5vw, 36px)', 
+            fontSize: 'clamp(24px, 3.2vw, 34px)', 
             fontWeight: 800, 
             color: '#fff',
             fontFamily: "'Outfit', sans-serif",
@@ -770,7 +769,7 @@ export default function SmartKeyholderClient() {
       <section style={{ padding: '40px 20px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h2 style={{ 
-            fontSize: 'clamp(26px, 3.5vw, 36px)', 
+            fontSize: 'clamp(24px, 3.2vw, 34px)', 
             fontWeight: 800, 
             color: '#fff',
             fontFamily: "'Outfit', sans-serif",
@@ -853,7 +852,7 @@ export default function SmartKeyholderClient() {
           boxShadow: '0 20px 50px rgba(249, 115, 22, 0.15)'
         }}>
           <h2 style={{ 
-            fontSize: 'clamp(28px, 4.5vw, 42px)', 
+            fontSize: 'clamp(26px, 4vw, 38px)', 
             fontWeight: 800, 
             color: '#fff', 
             margin: '0 0 16px',
