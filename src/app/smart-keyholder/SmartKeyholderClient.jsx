@@ -20,7 +20,7 @@ export default function SmartKeyholderClient() {
       title: 'Олені на Заході Сонця',
       subtitle: 'Тепле контурне світло вечірнього сонця у гірському лісі',
       img: '/images/smart-keyholder/deer-sunset-lamp.jpg',
-      badge: '🔥 В НАЯВНОСТІ',
+      badge: '🔥 В наявності',
       price: '1 200 грн',
       priceRaw: '1 200 грн',
       tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник "Олені на Заході Сонця" за 1200 грн.')
@@ -30,7 +30,7 @@ export default function SmartKeyholderClient() {
       title: 'Нічне Озеро та Вірний Друг',
       subtitle: 'Атмосферний зоряний пейзаж людини з собакою на березі',
       img: '/images/smart-keyholder/man-dog-lake-lamp.jpg',
-      badge: '✨ В НАЯВНОСТІ',
+      badge: '✨ В наявності',
       price: '1 200 грн',
       priceRaw: '1 200 грн',
       tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник "Нічне Озеро та Вірний Друг" за 1200 грн.')
@@ -88,7 +88,7 @@ export default function SmartKeyholderClient() {
             display: 'flex', alignItems: 'center', gap: 8, color: '#9ca3af', textDecoration: 'none',
             fontSize: 13, fontWeight: 700, transition: 'color 0.2s'
           }}>
-            <ChevronLeft size={18} /> НАЗАД В МАГАЗИН
+            <ChevronLeft size={18} /> Назад в магазин
           </Link>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -98,10 +98,9 @@ export default function SmartKeyholderClient() {
               padding: '4px 12px',
               borderRadius: '999px',
               fontSize: 11,
-              fontWeight: 900,
-              letterSpacing: '0.05em'
+              fontWeight: 800
             }}>
-              BUBA LIGHT 💡
+              Buba Light 💡
             </span>
 
             <a 
@@ -150,24 +149,23 @@ export default function SmartKeyholderClient() {
               padding: '6px 16px',
               borderRadius: '999px',
               fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: '0.05em'
+              fontWeight: 700
             }}>
-              <Sparkles size={14} /> ТЕПЛЕ СВІТЛО ТА ПОРЯДОК У КОРИДОРІ
+              <Sparkles size={14} /> Тепле світло та порядок у коридорі
             </span>
           </div>
 
           <h1 style={{ 
             fontSize: 'clamp(32px, 5.5vw, 60px)', 
-            fontWeight: 950, 
+            fontWeight: 900, 
             textAlign: 'center',
-            lineHeight: 1.1,
+            lineHeight: 1.15,
             margin: '0 0 16px',
             background: 'linear-gradient(180deg, #ffffff 30%, #fdba74 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            Розумна Ключниця-Світильник<br />З Датчиком Руху
+            Розумна ключниця-світильник<br />з датчиком руху
           </h1>
 
           <p style={{
@@ -222,7 +220,7 @@ export default function SmartKeyholderClient() {
                     borderRadius: '999px',
                     border: '1px solid rgba(255,255,255,0.15)',
                     fontSize: 11,
-                    fontWeight: 800,
+                    fontWeight: 700,
                     color: '#fb923c'
                   }}>
                     {m.badge}
@@ -233,7 +231,7 @@ export default function SmartKeyholderClient() {
                 <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                   {/* Title (fixed minHeight for 2-line alignment) */}
                   <div style={{ minHeight: '58px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
-                    <h3 style={{ fontSize: 21, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.25 }}>
+                    <h3 style={{ fontSize: 21, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.25 }}>
                       {m.title}
                     </h3>
                   </div>
@@ -257,8 +255,8 @@ export default function SmartKeyholderClient() {
                     borderRadius: '16px',
                     border: '1px solid rgba(249, 115, 22, 0.2)'
                   }}>
-                    <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>ЦІНА:</span>
-                    <span style={{ fontSize: 22, fontWeight: 950, color: '#f97316' }}>{m.price}</span>
+                    <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>Ціна:</span>
+                    <span style={{ fontSize: 22, fontWeight: 900, color: '#f97316' }}>{m.price}</span>
                   </div>
 
                   {/* Button anchored to bottom */}
@@ -277,14 +275,14 @@ export default function SmartKeyholderClient() {
                       height: '52px',
                       borderRadius: '18px',
                       fontSize: 15,
-                      fontWeight: 900,
+                      fontWeight: 800,
                       textDecoration: 'none',
                       boxShadow: '0 8px 20px rgba(249, 115, 22, 0.35)',
                       transition: 'transform 0.2s, boxShadow 0.2s'
                     }}
                   >
                     <Send size={16} />
-                    <span>ЗАМОВИТИ ЗА {m.price}</span>
+                    <span>Замовити за {m.price}</span>
                   </a>
                 </div>
               </div>
@@ -331,8 +329,8 @@ export default function SmartKeyholderClient() {
                 }}>
                   <Palette size={32} style={{ color: '#c084fc' }} />
                 </div>
-                <h4 style={{ fontSize: 19, fontWeight: 900, color: '#fff', margin: '0 0 6px' }}>
-                  Індивідуальний 3D-Дизайн
+                <h4 style={{ fontSize: 19, fontWeight: 800, color: '#fff', margin: '0 0 6px' }}>
+                  Індивідуальний 3D-дизайн
                 </h4>
                 <p style={{ fontSize: 12, color: '#cbd5e1', margin: 0, lineHeight: 1.45, maxWidth: '240px' }}>
                   Створимо унікальний малюнок за вашим фото, логотипом або ескізом
@@ -347,10 +345,10 @@ export default function SmartKeyholderClient() {
                   borderRadius: '999px',
                   border: '1px solid rgba(168, 85, 247, 0.4)',
                   fontSize: 11,
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: '#e9d5ff'
                 }}>
-                  🎨 НА ЗАМОВЛЕННЯ
+                  🎨 На замовлення
                 </div>
               </div>
 
@@ -358,7 +356,7 @@ export default function SmartKeyholderClient() {
               <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                 {/* Title (fixed minHeight: 58px) */}
                 <div style={{ minHeight: '58px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
-                  <h3 style={{ fontSize: 21, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.25 }}>
+                  <h3 style={{ fontSize: 21, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.25 }}>
                     Свій власний малюнок
                   </h3>
                 </div>
@@ -382,8 +380,8 @@ export default function SmartKeyholderClient() {
                   borderRadius: '16px',
                   border: '1px solid rgba(168, 85, 247, 0.25)'
                 }}>
-                  <span style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600 }}>ЦІНА:</span>
-                  <span style={{ fontSize: 16, fontWeight: 900, color: '#c084fc' }}>За домовленістю</span>
+                  <span style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600 }}>Ціна:</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: '#c084fc' }}>За домовленістю</span>
                 </div>
 
                 {/* Button anchored to bottom */}
@@ -402,14 +400,14 @@ export default function SmartKeyholderClient() {
                     height: '52px',
                     borderRadius: '18px',
                     fontSize: 15,
-                    fontWeight: 900,
+                    fontWeight: 800,
                     textDecoration: 'none',
                     boxShadow: '0 8px 20px rgba(147, 51, 234, 0.35)',
                     transition: 'transform 0.2s, boxShadow 0.2s'
                   }}
                 >
                   <Send size={16} />
-                  <span>ОБГОВОРИТИ ДИЗАЙН ✈️</span>
+                  <span>Обговорити дизайн ✈️</span>
                 </a>
               </div>
             </div>
@@ -426,7 +424,7 @@ export default function SmartKeyholderClient() {
           padding: '36px 28px',
           backdropFilter: 'blur(16px)'
         }}>
-          <h2 style={{ fontSize: 26, fontWeight: 900, color: '#fff', marginBottom: 8, textAlign: 'center' }}>
+          <h2 style={{ fontSize: 26, fontWeight: 800, color: '#fff', marginBottom: 8, textAlign: 'center' }}>
             📋 Технічні характеристики
           </h2>
           <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14, margin: '0 0 24px' }}>
@@ -450,10 +448,10 @@ export default function SmartKeyholderClient() {
                 borderRadius: '16px',
                 border: '1px solid rgba(255,255,255,0.04)'
               }}>
-                <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>
+                <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>
                   {spec.label}
                 </span>
-                <strong style={{ fontSize: 14, color: '#e5e7eb', fontWeight: 700 }}>
+                <strong style={{ fontSize: 14, color: '#e5e7eb', fontWeight: 600 }}>
                   {spec.val}
                 </strong>
               </div>
@@ -465,7 +463,7 @@ export default function SmartKeyholderClient() {
       {/* How to Order Steps */}
       <section style={{ padding: '40px 20px 60px', maxWidth: 1000, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', fontWeight: 900, color: '#fff' }}>
+          <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', fontWeight: 800, color: '#fff' }}>
             Простий процес замовлення
           </h2>
         </div>
@@ -486,7 +484,7 @@ export default function SmartKeyholderClient() {
               borderRadius: '24px',
               padding: '24px'
             }}>
-              <div style={{ fontSize: 36, fontWeight: 950, color: '#f97316', opacity: 0.8, marginBottom: 12 }}>
+              <div style={{ fontSize: 36, fontWeight: 900, color: '#f97316', opacity: 0.8, marginBottom: 12 }}>
                 {s.step}
               </div>
               <h3 style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 8 }}>
@@ -503,7 +501,7 @@ export default function SmartKeyholderClient() {
       {/* FAQ Section */}
       <section style={{ padding: '40px 20px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', fontWeight: 900, color: '#fff' }}>
+          <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', fontWeight: 800, color: '#fff' }}>
             Часті запитання (FAQ)
           </h2>
         </div>
@@ -579,7 +577,7 @@ export default function SmartKeyholderClient() {
           border: '1px solid rgba(249, 115, 22, 0.3)',
           boxShadow: '0 20px 50px rgba(249, 115, 22, 0.15)'
         }}>
-          <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 950, color: '#fff', margin: '0 0 16px' }}>
+          <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 900, color: '#fff', margin: '0 0 16px' }}>
             Бажаєте замовити чи маєте питання?
           </h2>
           <p style={{ fontSize: 16, color: '#d1d5db', maxWidth: 600, margin: '0 auto 32px' }}>
@@ -598,15 +596,15 @@ export default function SmartKeyholderClient() {
               color: '#ffffff',
               padding: '20px 40px',
               borderRadius: '24px',
-              fontSize: 19,
-              fontWeight: 900,
+              fontSize: 18,
+              fontWeight: 800,
               textDecoration: 'none',
               boxShadow: '0 15px 35px rgba(249, 115, 22, 0.4)',
               transition: 'transform 0.2s'
             }}
           >
-            <Send size={22} />
-            <span>НАПИСАТИ В TELEGRAM</span>
+            <Send size={20} />
+            <span>Написати в Telegram</span>
           </a>
         </div>
       </section>
@@ -628,8 +626,8 @@ export default function SmartKeyholderClient() {
         maxWidth: '100vw'
       }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 700 }}>РОЗУМНА КЛЮЧНИЦЯ</span>
-          <span style={{ fontSize: 14, color: '#f97316', fontWeight: 900 }}>1 200 грн</span>
+          <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>Розумна ключниця</span>
+          <span style={{ fontSize: 14, color: '#f97316', fontWeight: 800 }}>1 200 грн</span>
         </div>
 
         <a
@@ -645,7 +643,7 @@ export default function SmartKeyholderClient() {
             padding: '12px 22px',
             borderRadius: '999px',
             fontSize: 14,
-            fontWeight: 900,
+            fontWeight: 800,
             textDecoration: 'none',
             boxShadow: '0 6px 20px rgba(249, 115, 22, 0.4)'
           }}
