@@ -6,7 +6,15 @@ import {
   Sparkles, 
   Send, 
   ChevronDown,
-  Palette
+  Palette,
+  Zap,
+  BatteryCharging,
+  Usb,
+  ShieldCheck,
+  KeyRound,
+  Layers,
+  Award,
+  Cpu
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -34,6 +42,73 @@ export default function SmartKeyholderClient() {
       price: '1 200 грн',
       priceRaw: '1 200 грн',
       tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник "Нічне Озеро та Вірний Друг" за 1200 грн.')
+    }
+  ];
+
+  const specs = [
+    {
+      icon: <Zap size={22} style={{ color: '#f97316' }} />,
+      label: "Датчик руху",
+      val: "Інфрачервоний (радіус 2-3м, 20с таймер)",
+      accent: "#f97316",
+      bgGlow: "rgba(249, 115, 22, 0.08)",
+      borderGlow: "rgba(249, 115, 22, 0.25)"
+    },
+    {
+      icon: <BatteryCharging size={22} style={{ color: '#10b981' }} />,
+      label: "Акумулятор Samsung",
+      val: "3000 мА·год (до 7 днів роботи)",
+      accent: "#10b981",
+      bgGlow: "rgba(16, 185, 129, 0.08)",
+      borderGlow: "rgba(16, 185, 129, 0.25)"
+    },
+    {
+      icon: <Usb size={22} style={{ color: '#38bdf8' }} />,
+      label: "Роз'єм живлення",
+      val: "Сучасний роз'єм Type-C (5V)",
+      accent: "#38bdf8",
+      bgGlow: "rgba(56, 189, 248, 0.08)",
+      borderGlow: "rgba(56, 189, 248, 0.25)"
+    },
+    {
+      icon: <ShieldCheck size={22} style={{ color: '#ef4444' }} />,
+      label: "Пожежна безпека",
+      val: "Захист від замикань промислового стандарту",
+      accent: "#ef4444",
+      bgGlow: "rgba(239, 68, 68, 0.08)",
+      borderGlow: "rgba(239, 68, 68, 0.25)"
+    },
+    {
+      icon: <Sparkles size={22} style={{ color: '#c084fc' }} />,
+      label: "Авторський вигляд",
+      val: "Високоточний 3D-друк з PETG пластику",
+      accent: "#c084fc",
+      bgGlow: "rgba(192, 132, 252, 0.08)",
+      borderGlow: "rgba(192, 132, 252, 0.25)"
+    },
+    {
+      icon: <KeyRound size={22} style={{ color: '#eab308' }} />,
+      label: "Гачки для ключів",
+      val: "5 надійних інтегрованих гачків",
+      accent: "#eab308",
+      bgGlow: "rgba(234, 179, 8, 0.08)",
+      borderGlow: "rgba(234, 179, 8, 0.25)"
+    },
+    {
+      icon: <Layers size={22} style={{ color: '#60a5fa' }} />,
+      label: "Монтаж на стіну",
+      val: "Швидке та просте кріплення у комплекті",
+      accent: "#60a5fa",
+      bgGlow: "rgba(96, 165, 250, 0.08)",
+      borderGlow: "rgba(96, 165, 250, 0.25)"
+    },
+    {
+      icon: <Award size={22} style={{ color: '#f59e0b' }} />,
+      label: "Гарантія якості",
+      val: "12 місяців на електроніку та батарею",
+      accent: "#f59e0b",
+      bgGlow: "rgba(245, 158, 11, 0.08)",
+      borderGlow: "rgba(245, 158, 11, 0.25)"
     }
   ];
 
@@ -454,54 +529,108 @@ export default function SmartKeyholderClient() {
         </div>
       </section>
 
-      {/* Shared Technical Specifications Section */}
-      <section style={{ padding: '40px 20px 60px', maxWidth: 900, margin: '0 auto' }}>
+      {/* Upgraded High-Tech Specifications Grid */}
+      <section style={{ padding: '50px 20px 70px', maxWidth: 1050, margin: '0 auto' }}>
         <div style={{
-          background: 'rgba(15, 23, 42, 0.6)',
-          borderRadius: '32px',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          padding: '36px 28px',
-          backdropFilter: 'blur(16px)'
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(30, 41, 59, 0.45) 100%)',
+          borderRadius: '36px',
+          border: '1px solid rgba(249, 115, 22, 0.2)',
+          padding: '44px 32px',
+          backdropFilter: 'blur(20px)',
+          boxShadow: '0 25px 60px -15px rgba(0,0,0,0.5)',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
-          <h2 style={{ 
-            fontSize: 26, 
-            fontWeight: 800, 
-            color: '#fff', 
-            marginBottom: 8, 
-            textAlign: 'center',
-            fontFamily: "'Outfit', sans-serif",
-            letterSpacing: '-0.01em'
-          }}>
-            📋 Технічні характеристики
-          </h2>
-          <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14, margin: '0 0 24px', fontWeight: 400 }}>
-            Всі ключниці оснащені надійною преміальною електронікою:
-          </p>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              width: 52, 
+              height: 52, 
+              borderRadius: '18px', 
+              background: 'rgba(249, 115, 22, 0.15)', 
+              border: '1px solid rgba(249, 115, 22, 0.3)',
+              marginBottom: 14 
+            }}>
+              <Cpu size={26} style={{ color: '#f97316' }} />
+            </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
-            {[
-              { label: "Датчик руху", val: "Інфрачервоний (радіус 2-3м, 20с таймер)" },
-              { label: "Акумулятор", val: "Samsung 3000 мА·год (до 7 днів роботи)" },
-              { label: "Роз'єм живлення", val: "Сучасний роз'єм Type-C (5V)" },
-              { label: "Пожежна безпека", val: "Захист від замикань промислового стандарту" },
-              { label: "Авторський вигляд", val: "Високоточний 3D-друк з PETG пластику" },
-              { label: "Гачки для ключів", val: "5 надійних інтегрованих гачків" },
-              { label: "Монтаж", val: "Швидке та просте кріплення на стіну у комплекті" },
-              { label: "Гарантія", val: "12 місяців на електроніку та батарею" }
-            ].map((spec, idx) => (
-              <div key={idx} style={{
-                background: 'rgba(255,255,255,0.03)',
-                padding: '16px',
-                borderRadius: '16px',
-                border: '1px solid rgba(255,255,255,0.04)'
-              }}>
-                <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 4, letterSpacing: '0.02em' }}>
-                  {spec.label}
-                </span>
-                <strong style={{ fontSize: 14, color: '#e5e7eb', fontWeight: 600 }}>
-                  {spec.val}
+            <h2 style={{ 
+              fontSize: 'clamp(26px, 3.5vw, 36px)', 
+              fontWeight: 800, 
+              color: '#fff', 
+              margin: '0 0 8px', 
+              fontFamily: "'Outfit', sans-serif",
+              letterSpacing: '-0.01em'
+            }}>
+              Технічні характеристики
+            </h2>
+            <p style={{ color: '#9ca3af', fontSize: 14, margin: 0, fontWeight: 400 }}>
+              Кожен виріб оснащений преміальною та безпечною електронікою
+            </p>
+          </div>
+
+          {/* Cards Grid */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
+            gap: 20 
+          }}>
+            {specs.map((item, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{ y: -4, scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  background: item.bgGlow,
+                  border: `1px solid ${item.borderGlow}`,
+                  padding: '20px',
+                  borderRadius: '22px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: '14px',
+                    background: 'rgba(3, 7, 18, 0.6)',
+                    border: `1px solid ${item.borderGlow}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {item.icon}
+                  </div>
+
+                  <span style={{ 
+                    fontSize: 12, 
+                    color: item.accent, 
+                    fontWeight: 700, 
+                    fontFamily: "'Outfit', sans-serif",
+                    letterSpacing: '0.02em'
+                  }}>
+                    {item.label}
+                  </span>
+                </div>
+
+                <strong style={{ 
+                  fontSize: 14, 
+                  color: '#f3f4f6', 
+                  fontWeight: 600, 
+                  lineHeight: 1.45,
+                  fontFamily: "'Plus Jakarta Sans', sans-serif" 
+                }}>
+                  {item.val}
                 </strong>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
