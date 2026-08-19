@@ -13,8 +13,7 @@ import {
   ShieldCheck,
   KeyRound,
   Layers,
-  Cpu,
-  CheckCircle2
+  Cpu
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -31,7 +30,6 @@ export default function SmartKeyholderClient() {
       badge: '🔥 В наявності',
       price: '1 200 грн',
       priceRaw: '1 200 грн',
-      tags: ['⚡ Датчик руху', '🔋 Samsung 3000 мА·год', '🔌 Type-C'],
       tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник "Олені на Заході Сонця" за 1200 грн.')
     },
     {
@@ -42,7 +40,6 @@ export default function SmartKeyholderClient() {
       badge: '✨ В наявності',
       price: '1 200 грн',
       priceRaw: '1 200 грн',
-      tags: ['⚡ Датчик руху', '🔋 Samsung 3000 мА·год', '🔌 Type-C'],
       tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник "Нічне Озеро та Вірний Друг" за 1200 грн.')
     }
   ];
@@ -233,7 +230,7 @@ export default function SmartKeyholderClient() {
             Світло там, де воно дійсно потрібне. Більше жодної темряви у коридорі — м'яке контурне підсвічування автоматично спалахує при вашій появі та береже ваш час.
           </p>
 
-          {/* Product Cards Grid */}
+          {/* Product Cards Grid: Clean cards without redundant spec tags */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
@@ -259,7 +256,7 @@ export default function SmartKeyholderClient() {
                   backdropFilter: 'blur(16px)'
                 }}
               >
-                {/* Image Container with Contain */}
+                {/* Image Container */}
                 <div style={{ 
                   position: 'relative', 
                   height: '290px', 
@@ -319,27 +316,10 @@ export default function SmartKeyholderClient() {
                   </div>
 
                   {/* Subtitle */}
-                  <div style={{ minHeight: '38px', display: 'flex', alignItems: 'flex-start', marginBottom: 14 }}>
-                    <p style={{ fontSize: 12.5, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
+                  <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 18 }}>
+                    <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
                       {m.subtitle}
                     </p>
-                  </div>
-
-                  {/* Mini Spec Tags */}
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
-                    {m.tags.map((tag, i) => (
-                      <span key={i} style={{ 
-                        background: 'rgba(249, 115, 22, 0.12)', 
-                        border: '1px solid rgba(249, 115, 22, 0.25)', 
-                        color: '#fdba74', 
-                        padding: '3px 8px', 
-                        borderRadius: '8px', 
-                        fontSize: 11, 
-                        fontWeight: 600 
-                      }}>
-                        {tag}
-                      </span>
-                    ))}
                   </div>
 
                   {/* Price Box */}
@@ -499,27 +479,10 @@ export default function SmartKeyholderClient() {
                 </div>
 
                 {/* Subtitle */}
-                <div style={{ minHeight: '38px', display: 'flex', alignItems: 'flex-start', marginBottom: 14 }}>
-                  <p style={{ fontSize: 12.5, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
+                <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 18 }}>
+                  <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45, fontWeight: 400 }}>
                     Будь-який сюжет: тварини, авто, портрет, емблема чи напис
                   </p>
-                </div>
-
-                {/* Mini Spec Tags */}
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
-                  {['📸 За вашим фото', '✏️ 3D-макет', '⚡ Розумне світло'].map((tag, i) => (
-                    <span key={i} style={{ 
-                      background: 'rgba(168, 85, 247, 0.14)', 
-                      border: '1px solid rgba(168, 85, 247, 0.3)', 
-                      color: '#e9d5ff', 
-                      padding: '3px 8px', 
-                      borderRadius: '8px', 
-                      fontSize: 11, 
-                      fontWeight: 600 
-                    }}>
-                      {tag}
-                    </span>
-                  ))}
                 </div>
 
                 {/* Price Box */}
