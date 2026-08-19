@@ -135,7 +135,7 @@ export default function SmartKeyholderClient() {
     },
     {
       q: "Як оформити замовлення та яка доставка?",
-      a: "Натисніть кнопку замовлення у Telegram. Менеджер уточнить модель, адресу та відправить замовлення Новою Поштою (є післяплата або оплата на картку)."
+      a: "Натисніть кнопку замовлення у Telegram. Менеджер уточнить модель або малюнок, виставить рахунок за офіційними реквізитами (працюємо офіційно) та відправить замовлення Новою Поштою."
     }
   ];
 
@@ -636,8 +636,8 @@ export default function SmartKeyholderClient() {
         </div>
       </section>
 
-      {/* How to Order Steps */}
-      <section style={{ padding: '40px 20px 60px', maxWidth: 1000, margin: '0 auto' }}>
+      {/* How to Order Steps (Updated with Official Payment & Delivery Steps) */}
+      <section style={{ padding: '40px 20px 60px', maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h2 style={{ 
             fontSize: 'clamp(26px, 3.5vw, 36px)', 
@@ -652,13 +652,14 @@ export default function SmartKeyholderClient() {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: 20
         }}>
           {[
             { step: "01", title: "Перехід в Telegram", desc: "Натискаєте кнопку замовлення — відкривається чат з менеджером." },
-            { step: "02", title: "Уточнення деталей", desc: "Обираєте готову модель за 1200 грн або надсилаєте свій малюнок." },
-            { step: "03", title: "Швидка доставка", desc: "Відправляємо Новою Поштою. Оплата при отриманні або на картку." }
+            { step: "02", title: "Уточнення деталей", desc: "Обираєте бажану модель або надсилаєте малюнок для індивідуального дизайну." },
+            { step: "03", title: "Офіційна оплата", desc: "Оплата за офіційними реквізитами (працюємо офіційно ФОП, надаємо чек)." },
+            { step: "04", title: "Швидка доставка", desc: "Відправляємо вашу ключницю Новою Поштою у найкоротші терміни." }
           ].map((s, idx) => (
             <div key={idx} style={{
               background: 'rgba(15, 23, 42, 0.5)',
@@ -676,7 +677,7 @@ export default function SmartKeyholderClient() {
               }}>
                 {s.step}
               </div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 8, fontFamily: "'Outfit', sans-serif" }}>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: '#fff', marginBottom: 8, fontFamily: "'Outfit', sans-serif" }}>
                 {s.title}
               </h3>
               <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.6, fontWeight: 400 }}>
