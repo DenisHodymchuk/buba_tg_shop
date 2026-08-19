@@ -13,8 +13,8 @@ import {
   ShieldCheck,
   KeyRound,
   Layers,
-  Award,
-  Cpu
+  Cpu,
+  CheckCircle2
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -49,68 +49,39 @@ export default function SmartKeyholderClient() {
 
   const specs = [
     {
-      icon: <Zap size={22} style={{ color: '#f97316' }} />,
+      icon: <Zap size={20} style={{ color: '#f97316' }} />,
       label: "Датчик руху",
-      val: "Інфрачервоний (радіус 2-3м, 20с таймер)",
-      accent: "#f97316",
-      bgGlow: "rgba(249, 115, 22, 0.08)",
-      borderGlow: "rgba(249, 115, 22, 0.25)"
+      val: "Інфрачервоний сенсор (радіус 2-3м, автовимикання через 20с)"
     },
     {
-      icon: <BatteryCharging size={22} style={{ color: '#10b981' }} />,
+      icon: <BatteryCharging size={20} style={{ color: '#10b981' }} />,
       label: "Акумулятор Samsung",
-      val: "3000 мА·год (до 7 днів роботи)",
-      accent: "#10b981",
-      bgGlow: "rgba(16, 185, 129, 0.08)",
-      borderGlow: "rgba(16, 185, 129, 0.25)"
+      val: "3000 мА·год (до 7–14 днів автономної роботи)"
     },
     {
-      icon: <Usb size={22} style={{ color: '#38bdf8' }} />,
+      icon: <Usb size={20} style={{ color: '#38bdf8' }} />,
       label: "Роз'єм живлення",
-      val: "Сучасний роз'єм Type-C (5V)",
-      accent: "#38bdf8",
-      bgGlow: "rgba(56, 189, 248, 0.08)",
-      borderGlow: "rgba(56, 189, 248, 0.25)"
+      val: "Сучасний порт Type-C (зарядка за 1.5 години)"
     },
     {
-      icon: <ShieldCheck size={22} style={{ color: '#ef4444' }} />,
+      icon: <ShieldCheck size={20} style={{ color: '#ef4444' }} />,
       label: "Пожежна безпека",
-      val: "Захист від замикань промислового стандарту",
-      accent: "#ef4444",
-      bgGlow: "rgba(239, 68, 68, 0.08)",
-      borderGlow: "rgba(239, 68, 68, 0.25)"
+      val: "Захист від короткого замикання та перегріву"
     },
     {
-      icon: <Sparkles size={22} style={{ color: '#c084fc' }} />,
-      label: "Авторський вигляд",
-      val: "Високоточний 3D-друк з PETG пластику",
-      accent: "#c084fc",
-      bgGlow: "rgba(192, 132, 252, 0.08)",
-      borderGlow: "rgba(192, 132, 252, 0.25)"
+      icon: <Sparkles size={20} style={{ color: '#c084fc' }} />,
+      label: "Авторський 3D-друк",
+      val: "Високоточне виконання з екологічного PETG пластику"
     },
     {
-      icon: <KeyRound size={22} style={{ color: '#eab308' }} />,
+      icon: <KeyRound size={20} style={{ color: '#eab308' }} />,
       label: "Гачки для ключів",
-      val: "5 надійних інтегрованих гачків",
-      accent: "#eab308",
-      bgGlow: "rgba(234, 179, 8, 0.08)",
-      borderGlow: "rgba(234, 179, 8, 0.25)"
+      val: "5 надійних інтегрованих гачків для будь-яких в'язок"
     },
     {
-      icon: <Layers size={22} style={{ color: '#60a5fa' }} />,
+      icon: <Layers size={20} style={{ color: '#60a5fa' }} />,
       label: "Монтаж на стіну",
-      val: "Швидке та просте кріплення у комплекті",
-      accent: "#60a5fa",
-      bgGlow: "rgba(96, 165, 250, 0.08)",
-      borderGlow: "rgba(96, 165, 250, 0.25)"
-    },
-    {
-      icon: <Award size={22} style={{ color: '#f59e0b' }} />,
-      label: "Гарантія якості",
-      val: "12 місяців на електроніку та батарею",
-      accent: "#f59e0b",
-      bgGlow: "rgba(245, 158, 11, 0.08)",
-      borderGlow: "rgba(245, 158, 11, 0.25)"
+      val: "Швидке та зручне кріплення в комплекті (без свердління)"
     }
   ];
 
@@ -262,7 +233,7 @@ export default function SmartKeyholderClient() {
             Світло там, де воно дійсно потрібне. Більше жодної темряви у коридорі — м'яке контурне підсвічування автоматично спалахує при вашій появі та береже ваш час.
           </p>
 
-          {/* Product Cards Grid: Full uncropped photos, perfect typography, clean "Замовити" button */}
+          {/* Product Cards Grid */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
@@ -288,7 +259,7 @@ export default function SmartKeyholderClient() {
                   backdropFilter: 'blur(16px)'
                 }}
               >
-                {/* Image Container with Contain to avoid cropping */}
+                {/* Image Container with Contain */}
                 <div style={{ 
                   position: 'relative', 
                   height: '290px', 
@@ -333,7 +304,7 @@ export default function SmartKeyholderClient() {
 
                 {/* Content Container */}
                 <div style={{ padding: '22px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                  {/* Title (compact font size so it fits neatly) */}
+                  {/* Title */}
                   <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
                     <h3 style={{ 
                       fontSize: 17, 
@@ -440,7 +411,7 @@ export default function SmartKeyholderClient() {
                 backdropFilter: 'blur(16px)'
               }}
             >
-              {/* Custom Image Banner with exact same height: 290px */}
+              {/* Custom Image Banner */}
               <div style={{ 
                 position: 'relative', 
                 height: '290px', 
@@ -454,7 +425,6 @@ export default function SmartKeyholderClient() {
                 padding: '20px',
                 textAlign: 'center'
               }}>
-                {/* Glowing background orb behind icon */}
                 <div style={{
                   position: 'absolute',
                   width: 120,
@@ -514,7 +484,7 @@ export default function SmartKeyholderClient() {
 
               {/* Content Container */}
               <div style={{ padding: '22px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                {/* Title (compact font size) */}
+                {/* Title */}
                 <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
                   <h3 style={{ 
                     fontSize: 17, 
@@ -606,108 +576,101 @@ export default function SmartKeyholderClient() {
         </div>
       </section>
 
-      {/* Upgraded High-Tech Specifications Grid */}
-      <section style={{ padding: '50px 20px 70px', maxWidth: 1050, margin: '0 auto' }}>
+      {/* Elegant 7-Item Technical Specifications Sheet */}
+      <section style={{ padding: '50px 20px 70px', maxWidth: 950, margin: '0 auto' }}>
         <div style={{
-          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(30, 41, 59, 0.45) 100%)',
-          borderRadius: '36px',
-          border: '1px solid rgba(249, 115, 22, 0.2)',
-          padding: '44px 32px',
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(20, 29, 47, 0.6) 100%)',
+          borderRadius: '32px',
+          border: '1px solid rgba(249, 115, 22, 0.22)',
+          padding: '40px 28px',
           backdropFilter: 'blur(20px)',
           boxShadow: '0 25px 60px -15px rgba(0,0,0,0.5)',
-          position: 'relative',
-          overflow: 'hidden'
+          position: 'relative'
         }}>
           {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <div style={{ 
               display: 'inline-flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              width: 52, 
-              height: 52, 
-              borderRadius: '18px', 
+              width: 48, 
+              height: 48, 
+              borderRadius: '16px', 
               background: 'rgba(249, 115, 22, 0.15)', 
               border: '1px solid rgba(249, 115, 22, 0.3)',
-              marginBottom: 14 
+              marginBottom: 12 
             }}>
-              <Cpu size={26} style={{ color: '#f97316' }} />
+              <Cpu size={24} style={{ color: '#f97316' }} />
             </div>
 
             <h2 style={{ 
-              fontSize: 'clamp(24px, 3.2vw, 34px)', 
+              fontSize: 'clamp(24px, 3.2vw, 32px)', 
               fontWeight: 800, 
-              color: '#fff', 
-              margin: '0 0 8px', 
+              color: '#ffffff', 
+              margin: '0 0 6px', 
               fontFamily: "'Outfit', sans-serif",
               letterSpacing: '-0.01em'
             }}>
               Технічні характеристики
             </h2>
-            <p style={{ color: '#9ca3af', fontSize: 14, margin: 0, fontWeight: 400 }}>
-              Кожен виріб оснащений преміальною та безпечною електронікою
+            <p style={{ color: '#9ca3af', fontSize: 13.5, margin: 0, fontWeight: 400 }}>
+              Кожен виріб оснащений надійною електронікою та виконаний з преміальних матеріалів
             </p>
           </div>
 
-          {/* Cards Grid */}
+          {/* Clean Specification Rows Grid */}
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
-            gap: 20 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+            gap: 16 
           }}>
             {specs.map((item, idx) => (
-              <motion.div
+              <div
                 key={idx}
-                whileHover={{ y: -4, scale: 1.02 }}
-                transition={{ duration: 0.2 }}
                 style={{
-                  background: item.bgGlow,
-                  border: `1px solid ${item.borderGlow}`,
-                  padding: '20px',
-                  borderRadius: '22px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  padding: '16px 20px',
+                  borderRadius: '18px',
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                  backdropFilter: 'blur(8px)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+                  alignItems: 'center',
+                  gap: 14,
+                  transition: 'background 0.2s, border-color 0.2s'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: '14px',
-                    background: 'rgba(3, 7, 18, 0.6)',
-                    border: `1px solid ${item.borderGlow}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}>
-                    {item.icon}
-                  </div>
+                <div style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '12px',
+                  background: 'rgba(249, 115, 22, 0.1)',
+                  border: '1px solid rgba(249, 115, 22, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  {item.icon}
+                </div>
 
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <span style={{ 
                     fontSize: 12, 
-                    color: item.accent, 
-                    fontWeight: 700, 
-                    fontFamily: "'Outfit', sans-serif",
-                    letterSpacing: '0.02em'
+                    color: '#9ca3af', 
+                    fontWeight: 600, 
+                    fontFamily: "'Outfit', sans-serif" 
                   }}>
                     {item.label}
                   </span>
+                  <span style={{ 
+                    fontSize: 13.5, 
+                    color: '#f3f4f6', 
+                    fontWeight: 700, 
+                    lineHeight: 1.35 
+                  }}>
+                    {item.val}
+                  </span>
                 </div>
-
-                <strong style={{ 
-                  fontSize: 14, 
-                  color: '#f3f4f6', 
-                  fontWeight: 600, 
-                  lineHeight: 1.45,
-                  fontFamily: "'Plus Jakarta Sans', sans-serif" 
-                }}>
-                  {item.val}
-                </strong>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
