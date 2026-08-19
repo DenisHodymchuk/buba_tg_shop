@@ -6,8 +6,7 @@ import {
   Sparkles, 
   Send, 
   ChevronDown,
-  Palette,
-  Check
+  Palette
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -23,7 +22,8 @@ export default function SmartKeyholderClient() {
       img: '/images/smart-keyholder/deer-sunset-lamp.jpg',
       badge: '🔥 В НАЯВНОСТІ',
       price: '1 200 грн',
-      tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник "Олені на Заході Сонця" за 1200 грн.')
+      priceRaw: '1 200 грн',
+      tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник "Олені на Заході Сонця" за 1200 грн.')
     },
     {
       id: 'lake',
@@ -32,7 +32,8 @@ export default function SmartKeyholderClient() {
       img: '/images/smart-keyholder/man-dog-lake-lamp.jpg',
       badge: '✨ В НАЯВНОСТІ',
       price: '1 200 грн',
-      tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник "Нічне Озеро та Вірний Друг" за 1200 грн.')
+      priceRaw: '1 200 грн',
+      tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник "Нічне Озеро та Вірний Друг" за 1200 грн.')
     }
   ];
 
@@ -180,12 +181,13 @@ export default function SmartKeyholderClient() {
             Світло там, де воно дійсно потрібне. Більше жодної темряви у коридорі — м'яке контурне підсвічування автоматично спалахує при вашій появі та береже ваш час.
           </p>
 
-          {/* Product Cards Grid (Standard 1200 UAH models + Custom order card) */}
+          {/* Product Cards Grid: Perfectly aligned equal-height cards */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
             gap: 28,
-            marginTop: 20
+            marginTop: 20,
+            alignItems: 'stretch'
           }}>
             {/* Standard Models */}
             {models.map((m) => (
@@ -198,12 +200,13 @@ export default function SmartKeyholderClient() {
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
+                  height: '100%',
                   boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
                   backdropFilter: 'blur(12px)'
                 }}
               >
-                {/* Image Container */}
-                <div style={{ position: 'relative', aspectRatio: '4/4.5', overflow: 'hidden', background: '#090d16' }}>
+                {/* Image Container with Fixed Height */}
+                <div style={{ position: 'relative', height: '280px', width: '100%', overflow: 'hidden', background: '#090d16' }}>
                   <img
                     src={m.img}
                     alt={m.title}
@@ -226,43 +229,52 @@ export default function SmartKeyholderClient() {
                   </div>
                 </div>
 
-                {/* Content */}
-                <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <h3 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 6px' }}>
+                {/* Content Container (flexGrow: 1 to fill height) */}
+                <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                  {/* Title (fixed minHeight for 2-line alignment) */}
+                  <div style={{ minHeight: '58px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
+                    <h3 style={{ fontSize: 21, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.25 }}>
                       {m.title}
                     </h3>
-                    <p style={{ fontSize: 13, color: '#9ca3af', margin: '0 0 16px', lineHeight: 1.5 }}>
-                      {m.subtitle}
-                    </p>
-
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'baseline', 
-                      gap: 8, 
-                      marginBottom: 20,
-                      background: 'rgba(249, 115, 22, 0.1)',
-                      padding: '10px 16px',
-                      borderRadius: '16px',
-                      border: '1px solid rgba(249, 115, 22, 0.2)'
-                    }}>
-                      <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>ЦІНА:</span>
-                      <span style={{ fontSize: 24, fontWeight: 950, color: '#f97316' }}>{m.price}</span>
-                    </div>
                   </div>
 
+                  {/* Subtitle (fixed minHeight) */}
+                  <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 16 }}>
+                    <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45 }}>
+                      {m.subtitle}
+                    </p>
+                  </div>
+
+                  {/* Price Box (fixed height) */}
+                  <div style={{ 
+                    height: '52px',
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 8, 
+                    marginBottom: 20,
+                    background: 'rgba(249, 115, 22, 0.1)',
+                    padding: '0 16px',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(249, 115, 22, 0.2)'
+                  }}>
+                    <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>ЦІНА:</span>
+                    <span style={{ fontSize: 22, fontWeight: 950, color: '#f97316' }}>{m.price}</span>
+                  </div>
+
+                  {/* Button anchored to bottom */}
                   <a
                     href={`${telegramManagerUrl}?text=${m.tgText}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
+                      marginTop: 'auto',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: 8,
                       background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                       color: '#ffffff',
-                      padding: '14px 20px',
+                      height: '52px',
                       borderRadius: '18px',
                       fontSize: 15,
                       fontWeight: 900,
@@ -287,15 +299,16 @@ export default function SmartKeyholderClient() {
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
+                height: '100%',
                 boxShadow: '0 20px 40px -10px rgba(168, 85, 247, 0.15)',
-                backdropFilter: 'blur(12px)',
-                position: 'relative'
+                backdropFilter: 'blur(12px)'
               }}
             >
-              {/* Custom Image Banner */}
+              {/* Custom Image Banner with exact same height: 280px */}
               <div style={{ 
                 position: 'relative', 
-                aspectRatio: '4/4.5', 
+                height: '280px', 
+                width: '100%',
                 overflow: 'hidden', 
                 background: 'linear-gradient(135deg, #1e1b4b 0%, #311042 100%)',
                 display: 'flex',
@@ -306,23 +319,23 @@ export default function SmartKeyholderClient() {
                 textAlign: 'center'
               }}>
                 <div style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: '24px',
+                  width: 64,
+                  height: 64,
+                  borderRadius: '20px',
                   background: 'rgba(168, 85, 247, 0.2)',
                   border: '1px solid rgba(168, 85, 247, 0.4)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 16
+                  marginBottom: 12
                 }}>
-                  <Palette size={36} className="text-purple-400" style={{ color: '#c084fc' }} />
+                  <Palette size={32} style={{ color: '#c084fc' }} />
                 </div>
-                <h4 style={{ fontSize: 20, fontWeight: 900, color: '#fff', margin: '0 0 8px' }}>
+                <h4 style={{ fontSize: 19, fontWeight: 900, color: '#fff', margin: '0 0 6px' }}>
                   Індивідуальний 3D-Дизайн
                 </h4>
-                <p style={{ fontSize: 13, color: '#cbd5e1', margin: 0, lineHeight: 1.5 }}>
-                  Створимо унікальний силует чи малюнок за вашим фото, логотипом або побажанням
+                <p style={{ fontSize: 12, color: '#cbd5e1', margin: 0, lineHeight: 1.45, maxWidth: '240px' }}>
+                  Створимо унікальний малюнок за вашим фото, логотипом або ескізом
                 </p>
                 <div style={{
                   position: 'absolute',
@@ -341,43 +354,52 @@ export default function SmartKeyholderClient() {
                 </div>
               </div>
 
-              {/* Content */}
-              <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
-                  <h3 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 6px' }}>
+              {/* Content Container (flexGrow: 1) */}
+              <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                {/* Title (fixed minHeight: 58px) */}
+                <div style={{ minHeight: '58px', display: 'flex', alignItems: 'flex-start', marginBottom: 4 }}>
+                  <h3 style={{ fontSize: 21, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.25 }}>
                     Свій власний малюнок
                   </h3>
-                  <p style={{ fontSize: 13, color: '#9ca3af', margin: '0 0 16px', lineHeight: 1.5 }}>
-                    Будь-який сюжет: тварини, авто, портрет, емблема чи напис
-                  </p>
-
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'baseline', 
-                    gap: 8, 
-                    marginBottom: 20,
-                    background: 'rgba(168, 85, 247, 0.1)',
-                    padding: '10px 16px',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(168, 85, 247, 0.25)'
-                  }}>
-                    <span style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600 }}>ЦІНА:</span>
-                    <span style={{ fontSize: 18, fontWeight: 900, color: '#c084fc' }}>Обговорюється індивідуально</span>
-                  </div>
                 </div>
 
+                {/* Subtitle (fixed minHeight: 44px) */}
+                <div style={{ minHeight: '44px', display: 'flex', alignItems: 'flex-start', marginBottom: 16 }}>
+                  <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, lineHeight: 1.45 }}>
+                    Будь-який сюжет: тварини, авто, портрет, емблема чи напис
+                  </p>
+                </div>
+
+                {/* Price Box (fixed height: 52px) */}
+                <div style={{ 
+                  height: '52px',
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: 8, 
+                  marginBottom: 20,
+                  background: 'rgba(168, 85, 247, 0.1)',
+                  padding: '0 16px',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(168, 85, 247, 0.25)'
+                }}>
+                  <span style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600 }}>ЦІНА:</span>
+                  <span style={{ fontSize: 16, fontWeight: 900, color: '#c084fc' }}>За домовленістю</span>
+                </div>
+
+                {/* Button anchored to bottom */}
                 <a
                   href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Хочу розробити індивідуальний дизайн розумної ключниці.')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
+                    marginTop: 'auto',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 8,
                     background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)',
                     color: '#ffffff',
-                    padding: '14px 20px',
+                    height: '52px',
                     borderRadius: '18px',
                     fontSize: 15,
                     fontWeight: 900,
@@ -611,7 +633,7 @@ export default function SmartKeyholderClient() {
         </div>
 
         <a
-          href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник.')}`}
+          href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник.')}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{
