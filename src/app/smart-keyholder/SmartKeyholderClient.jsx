@@ -3,15 +3,11 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, 
-  Zap, 
-  BatteryCharging, 
-  Usb, 
-  ShieldCheck, 
   Sparkles, 
-  KeyRound, 
-  CheckCircle2, 
   Send, 
-  ChevronDown
+  ChevronDown,
+  Palette,
+  Check
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -25,16 +21,18 @@ export default function SmartKeyholderClient() {
       title: 'Олені на Заході Сонця',
       subtitle: 'Тепле контурне світло вечірнього сонця у гірському лісі',
       img: '/images/smart-keyholder/deer-sunset-lamp.jpg',
-      badge: '🔥 ХІТ ПРОДАЖІВ',
-      tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник "Олені на Заході Сонця".')
+      badge: '🔥 В НАЯВНОСТІ',
+      price: '1 200 грн',
+      tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник "Олені на Заході Сонця" за 1200 грн.')
     },
     {
       id: 'lake',
       title: 'Нічне Озеро та Вірний Друг',
       subtitle: 'Атмосферний зоряний пейзаж людини з собакою на березі',
       img: '/images/smart-keyholder/man-dog-lake-lamp.jpg',
-      badge: '✨ АВТОРСЬКИЙ ДИЗАЙН',
-      tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник "Нічне Озеро та Вірний Друг".')
+      badge: '✨ В НАЯВНОСТІ',
+      price: '1 200 грн',
+      tgText: encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник "Нічне Озеро та Вірний Друг" за 1200 грн.')
     }
   ];
 
@@ -52,12 +50,16 @@ export default function SmartKeyholderClient() {
       a: "Світильник оснащений роз'ємом Type-C. Ви можете зарядити його від будь-якого блоку живлення телефону або від павербанка за 1.5 години."
     },
     {
+      q: "Як створити свій індивідуальний дизайн?",
+      a: "Натисніть кнопку 'Обговорити свій дизайн'. Ви можете надіслати фото, картинку чи просто описати вашу ідею. Ми розробимо 3D-макет та узгодимо вартість і терміни."
+    },
+    {
       q: "Чи безпечно залишати у коридорі?",
       a: "Абсолютно. Пристрій має вбудовану систему захисту від короткого замикання, перенапруги та контролер пожежної безпеки промислового стандарту."
     },
     {
       q: "Як оформити замовлення та яка доставка?",
-      a: "Натисніть кнопку 'Замовити в Telegram'. Менеджер з'ясує потрібний дизайн, адресу та відправить замовлення Новою Поштою (є післяплата або оплата на картку)."
+      a: "Натисніть кнопку замовлення у Telegram. Менеджер уточнить модель, адресу та відправить замовлення Новою Поштою (є післяплата або оплата на картку)."
     }
   ];
 
@@ -178,30 +180,30 @@ export default function SmartKeyholderClient() {
             Світло там, де воно дійсно потрібне. Більше жодної темряви у коридорі — м'яке контурне підсвічування автоматично спалахує при вашій появі та береже ваш час.
           </p>
 
-          {/* Clean Showcase Cards for Product Models */}
+          {/* Product Cards Grid (Standard 1200 UAH models + Custom order card) */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: 32,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 28,
             marginTop: 20
           }}>
+            {/* Standard Models */}
             {models.map((m) => (
               <div
                 key={m.id}
                 style={{
                   background: 'rgba(15, 23, 42, 0.7)',
-                  borderRadius: '32px',
+                  borderRadius: '28px',
                   border: '1px solid rgba(249, 115, 22, 0.25)',
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
                   boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
-                  backdropFilter: 'blur(12px)',
-                  transition: 'transform 0.3s ease, boxShadow 0.3s ease'
+                  backdropFilter: 'blur(12px)'
                 }}
               >
-                {/* Image */}
-                <div style={{ position: 'relative', aspectRatio: '4/5', overflow: 'hidden', background: '#090d16' }}>
+                {/* Image Container */}
+                <div style={{ position: 'relative', aspectRatio: '4/4.5', overflow: 'hidden', background: '#090d16' }}>
                   <img
                     src={m.img}
                     alt={m.title}
@@ -209,14 +211,14 @@ export default function SmartKeyholderClient() {
                   />
                   <div style={{
                     position: 'absolute',
-                    top: 16,
-                    left: 16,
+                    top: 14,
+                    left: 14,
                     background: 'rgba(3, 7, 18, 0.85)',
                     backdropFilter: 'blur(8px)',
-                    padding: '6px 14px',
+                    padding: '5px 12px',
                     borderRadius: '999px',
                     border: '1px solid rgba(255,255,255,0.15)',
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: 800,
                     color: '#fb923c'
                   }}>
@@ -225,29 +227,28 @@ export default function SmartKeyholderClient() {
                 </div>
 
                 {/* Content */}
-                <div style={{ padding: '28px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    <h3 style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: '0 0 8px' }}>
+                    <h3 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 6px' }}>
                       {m.title}
                     </h3>
-                    <p style={{ fontSize: 14, color: '#9ca3af', margin: '0 0 20px', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: 13, color: '#9ca3af', margin: '0 0 16px', lineHeight: 1.5 }}>
                       {m.subtitle}
                     </p>
 
-                    <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {[
-                        "Автоматичне підсвічування: реагує на рух і самостійно вимикається",
-                        "Акумулятор Samsung 3000 мА·год (до тижня автономної роботи)",
-                        "Зручне живлення через роз'єм Type-C",
-                        "Пожежна безпека промислового стандарту",
-                        "Стильний авторський вигляд та 5 міцних гачків"
-                      ].map((item, idx) => (
-                        <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: '#e5e7eb', lineHeight: 1.4 }}>
-                          <CheckCircle2 size={16} style={{ color: '#f97316', flexShrink: 0, marginTop: 2 }} />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'baseline', 
+                      gap: 8, 
+                      marginBottom: 20,
+                      background: 'rgba(249, 115, 22, 0.1)',
+                      padding: '10px 16px',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(249, 115, 22, 0.2)'
+                    }}>
+                      <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>ЦІНА:</span>
+                      <span style={{ fontSize: 24, fontWeight: 950, color: '#f97316' }}>{m.price}</span>
+                    </div>
                   </div>
 
                   <a
@@ -258,29 +259,143 @@ export default function SmartKeyholderClient() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: 10,
+                      gap: 8,
                       background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                       color: '#ffffff',
-                      padding: '16px 24px',
-                      borderRadius: '20px',
-                      fontSize: 16,
+                      padding: '14px 20px',
+                      borderRadius: '18px',
+                      fontSize: 15,
                       fontWeight: 900,
                       textDecoration: 'none',
-                      boxShadow: '0 10px 25px rgba(249, 115, 22, 0.35)',
+                      boxShadow: '0 8px 20px rgba(249, 115, 22, 0.35)',
                       transition: 'transform 0.2s, boxShadow 0.2s'
                     }}
                   >
-                    <Send size={18} />
-                    <span>ЗАМОВИТИ В TELEGRAM</span>
+                    <Send size={16} />
+                    <span>ЗАМОВИТИ ЗА {m.price}</span>
                   </a>
                 </div>
               </div>
             ))}
+
+            {/* Custom Unique Design Card */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+                borderRadius: '28px',
+                border: '1px solid rgba(168, 85, 247, 0.35)',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 20px 40px -10px rgba(168, 85, 247, 0.15)',
+                backdropFilter: 'blur(12px)',
+                position: 'relative'
+              }}
+            >
+              {/* Custom Image Banner */}
+              <div style={{ 
+                position: 'relative', 
+                aspectRatio: '4/4.5', 
+                overflow: 'hidden', 
+                background: 'linear-gradient(135deg, #1e1b4b 0%, #311042 100%)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: '24px',
+                  background: 'rgba(168, 85, 247, 0.2)',
+                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 16
+                }}>
+                  <Palette size={36} className="text-purple-400" style={{ color: '#c084fc' }} />
+                </div>
+                <h4 style={{ fontSize: 20, fontWeight: 900, color: '#fff', margin: '0 0 8px' }}>
+                  Індивідуальний 3D-Дизайн
+                </h4>
+                <p style={{ fontSize: 13, color: '#cbd5e1', margin: 0, lineHeight: 1.5 }}>
+                  Створимо унікальний силует чи малюнок за вашим фото, логотипом або побажанням
+                </p>
+                <div style={{
+                  position: 'absolute',
+                  top: 14,
+                  left: 14,
+                  background: 'rgba(168, 85, 247, 0.25)',
+                  backdropFilter: 'blur(8px)',
+                  padding: '5px 12px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: '#e9d5ff'
+                }}>
+                  🎨 НА ЗАМОВЛЕННЯ
+                </div>
+              </div>
+
+              {/* Content */}
+              <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h3 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: '0 0 6px' }}>
+                    Свій власний малюнок
+                  </h3>
+                  <p style={{ fontSize: 13, color: '#9ca3af', margin: '0 0 16px', lineHeight: 1.5 }}>
+                    Будь-який сюжет: тварини, авто, портрет, емблема чи напис
+                  </p>
+
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'baseline', 
+                    gap: 8, 
+                    marginBottom: 20,
+                    background: 'rgba(168, 85, 247, 0.1)',
+                    padding: '10px 16px',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(168, 85, 247, 0.25)'
+                  }}>
+                    <span style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600 }}>ЦІНА:</span>
+                    <span style={{ fontSize: 18, fontWeight: 900, color: '#c084fc' }}>Обговорюється індивідуально</span>
+                  </div>
+                </div>
+
+                <a
+                  href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Хочу розробити індивідуальний дизайн розумної ключниці.')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)',
+                    color: '#ffffff',
+                    padding: '14px 20px',
+                    borderRadius: '18px',
+                    fontSize: 15,
+                    fontWeight: 900,
+                    textDecoration: 'none',
+                    boxShadow: '0 8px 20px rgba(147, 51, 234, 0.35)',
+                    transition: 'transform 0.2s, boxShadow 0.2s'
+                  }}
+                >
+                  <Send size={16} />
+                  <span>ОБГОВОРИТИ ДИЗАЙН ✈️</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Technical Specifications Section */}
+      {/* Shared Technical Specifications Section */}
       <section style={{ padding: '40px 20px 60px', maxWidth: 900, margin: '0 auto' }}>
         <div style={{
           background: 'rgba(15, 23, 42, 0.6)',
@@ -289,9 +404,12 @@ export default function SmartKeyholderClient() {
           padding: '36px 28px',
           backdropFilter: 'blur(16px)'
         }}>
-          <h2 style={{ fontSize: 26, fontWeight: 900, color: '#fff', marginBottom: 24, textAlign: 'center' }}>
+          <h2 style={{ fontSize: 26, fontWeight: 900, color: '#fff', marginBottom: 8, textAlign: 'center' }}>
             📋 Технічні характеристики
           </h2>
+          <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 14, margin: '0 0 24px' }}>
+            Всі ключниці оснащені надійною преміальною електронікою:
+          </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
             {[
@@ -299,10 +417,10 @@ export default function SmartKeyholderClient() {
               { label: "Акумулятор", val: "Samsung 3000 мА·год (до 7 днів роботи)" },
               { label: "Роз'єм живлення", val: "Сучасний роз'єм Type-C (5V)" },
               { label: "Пожежна безпека", val: "Захист від замикань промислового стандарту" },
-              { label: "Авторський вигляд", val: "Високоточне виконання під будь-який інтер'єр" },
+              { label: "Авторський вигляд", val: "Високоточний 3D-друк з PETG пластику" },
               { label: "Гачки для ключів", val: "5 надійних інтегрованих гачків" },
-              { label: "Монтаж", val: "Швидке та просте кріплення на стіну" },
-              { label: "Гарантія", val: "Гарантія на електроніку та батарею" }
+              { label: "Монтаж", val: "Швидке та просте кріплення на стіну у комплекті" },
+              { label: "Гарантія", val: "12 місяців на електроніку та батарею" }
             ].map((spec, idx) => (
               <div key={idx} style={{
                 background: 'rgba(255,255,255,0.03)',
@@ -337,7 +455,7 @@ export default function SmartKeyholderClient() {
         }}>
           {[
             { step: "01", title: "Перехід в Telegram", desc: "Натискаєте кнопку замовлення — відкривається чат з менеджером." },
-            { step: "02", title: "Уточнення деталей", desc: "Обираєте модель світильника та дані для доставки." },
+            { step: "02", title: "Уточнення деталей", desc: "Обираєте готову модель за 1200 грн або надсилаєте свій малюнок." },
             { step: "03", title: "Швидка доставка", desc: "Відправляємо Новою Поштою. Оплата при отриманні або на картку." }
           ].map((s, idx) => (
             <div key={idx} style={{
@@ -447,7 +565,7 @@ export default function SmartKeyholderClient() {
           </p>
 
           <a
-            href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Хочу замовити розумну ключницю-світильник.')}`}
+            href={`${telegramManagerUrl}?text=${encodeURIComponent('Доброго дня! Хочу замовити розумну ключницу-світильник.')}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -471,7 +589,7 @@ export default function SmartKeyholderClient() {
         </div>
       </section>
 
-      {/* Floating Bottom Bar for Mobile / Ad Conversion */}
+      {/* Floating Bottom Bar for Mobile */}
       <div style={{
         position: 'fixed',
         bottom: 0,
@@ -489,7 +607,7 @@ export default function SmartKeyholderClient() {
       }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 700 }}>РОЗУМНА КЛЮЧНИЦЯ</span>
-          <span style={{ fontSize: 14, color: '#fff', fontWeight: 900 }}>З датчиком руху</span>
+          <span style={{ fontSize: 14, color: '#f97316', fontWeight: 900 }}>1 200 грн</span>
         </div>
 
         <a
