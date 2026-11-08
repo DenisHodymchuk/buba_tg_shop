@@ -18,6 +18,7 @@ import ShippingCabinet from '@/components/ShippingCabinet';
 import ProductionCabinet from '@/components/ProductionCabinet';
 import LampStudio from '@/components/LampStudio';
 import BioLinksEditor from '@/components/BioLinksEditor';
+import DropshippingAdmin from '@/components/DropshippingAdmin';
 
 
 const scrollbarHide = `
@@ -1549,6 +1550,7 @@ export default function AdminPanel() {
               title: '📦 Каталог & Склад',
               items: [
                 { id: 'products', label: 'Товари', icon: <Package size={16} /> },
+                { id: 'dropshipping', label: 'Дропшипінг', icon: <ShoppingBag size={16} />, badge: 'NEW' },
                 { id: 'inventory', label: 'Склад (Облік)', icon: <Box size={16} /> },
                 { id: 'calculator', label: 'Калькулятор', icon: <Calculator size={16} /> },
               ]
@@ -2751,6 +2753,8 @@ export default function AdminPanel() {
             <SalesStatsDashboard showToast={showToast} />
           ) : activeTab === 'inventory' ? (
             <InventoryDashboard showToast={showToast} />
+          ) : activeTab === 'dropshipping' ? (
+            <DropshippingAdmin showToast={showToast} storeProducts={products} />
           ) : activeTab === 'reviews' ? (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
