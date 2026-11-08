@@ -326,6 +326,7 @@ export default function AdminPanel() {
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [triggerAddSale, setTriggerAddSale] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setNotification({ message, type });
@@ -1690,6 +1691,95 @@ export default function AdminPanel() {
         </div>
       </aside>
 
+      {isMobile && (
+        <nav style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 990,
+          background: 'rgba(6, 15, 32, 0.96)', backdropFilter: 'blur(16px)',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)',
+          padding: '8px 6px calc(8px + env(safe-area-inset-bottom, 0px))',
+          boxShadow: '0 -10px 30px rgba(0,0,0,0.5)'
+        }}>
+          <button
+            onClick={() => { setActiveTab('sales_cabinet'); setIsSidebarOpen(false); }}
+            style={{
+              background: 'none', border: 'none', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer',
+              color: activeTab === 'sales_cabinet' ? '#3b82f6' : '#6b6b8a'
+            }}
+          >
+            <Coins size={19} />
+            <span style={{ fontSize: 10, fontWeight: 900 }}>Продажі</span>
+          </button>
+
+          <button
+            onClick={() => { setActiveTab('production'); setIsSidebarOpen(false); }}
+            style={{
+              background: 'none', border: 'none', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer',
+              color: activeTab === 'production' ? '#a855f7' : '#6b6b8a', position: 'relative'
+            }}
+          >
+            <Hammer size={19} />
+            <span style={{ fontSize: 10, fontWeight: 900 }}>Друк</span>
+          </button>
+
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <button
+              onClick={() => {
+                setActiveTab('sales_cabinet');
+                setIsSidebarOpen(false);
+                setTriggerAddSale(true);
+              }}
+              style={{
+                width: 46, height: 46, borderRadius: 16,
+                background: 'linear-gradient(135deg, #22c55e, #10b981)',
+                border: '2px solid rgba(255,255,255,0.2)', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 6px 20px rgba(34,197,94,0.4)', cursor: 'pointer',
+                transform: 'translateY(-6px)'
+              }}
+              title="Додати продаж"
+            >
+              <Plus size={24} />
+            </button>
+          </div>
+
+          <button
+            onClick={() => { setActiveTab('shipping_list'); setIsSidebarOpen(false); }}
+            style={{
+              background: 'none', border: 'none', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer',
+              color: activeTab === 'shipping_list' ? '#06b6d4' : '#6b6b8a', position: 'relative'
+            }}
+          >
+            <div style={{ position: 'relative', display: 'inline-flex' }}>
+              <Truck size={19} />
+              {orders.filter(o => o.status === 'shipping').length > 0 && (
+                <span style={{
+                  position: 'absolute', top: -6, right: -10, background: '#06b6d4', color: '#020b18',
+                  fontSize: 9, fontWeight: 950, borderRadius: 99, padding: '1px 5px', minWidth: 16, textAlign: 'center'
+                }}>
+                  {orders.filter(o => o.status === 'shipping').length}
+                </span>
+              )}
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 900 }}>Відправки</span>
+          </button>
+
+          <button
+            onClick={() => setIsSidebarOpen(prev => !prev)}
+            style={{
+              background: 'none', border: 'none', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer',
+              color: isSidebarOpen ? '#fff' : '#6b6b8a'
+            }}
+          >
+            <Menu size={19} />
+            <span style={{ fontSize: 10, fontWeight: 900 }}>Меню</span>
+          </button>
+        </nav>
+      )}
       <main style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {['products', 'sales', 'users'].includes(activeTab) && (
           <header className="admin-main-header" style={{ height: 80, display: isMobile ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', background: 'var(--bg-header)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)', zIndex: 40 }}>
@@ -1705,7 +1795,7 @@ export default function AdminPanel() {
           </header>
         )}
 
-        <div style={{ flex: 1, overflowY: activeTab === 'sales_cabinet' ? 'hidden' : 'auto', padding: isMobile ? '12px' : activeTab === 'sales_cabinet' ? '16px 20px' : '40px' }}>
+        <div style={{ flex: 1, overflowY: (activeTab === 'sales_cabinet' && !isMobile) ? 'hidden' : 'auto', padding: isMobile ? '12px 12px 92px 12px' : activeTab === 'sales_cabinet' ? '16px 20px' : '40px' }}>
           {!supabase && (
             <div style={{ marginBottom: 24, padding: 16, background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', borderRadius: 12, color: '#ef4444', fontSize: 13, fontWeight: 700 }}>
               ⚠️ З'єднання з Supabase не встановлено. Перевірте наявність та правильність файлу .env.local
@@ -2656,7 +2746,7 @@ export default function AdminPanel() {
           ) : activeTab === 'production' ? (
             <ProductionCabinet orders={orders} setOrders={setOrders} showToast={showToast} isMobile={isMobile} />
           ) : activeTab === 'sales_cabinet' ? (
-            <SalesDashboard showToast={showToast} />
+            <SalesDashboard showToast={showToast} externalOpenAdd={triggerAddSale} onClearExternalOpenAdd={() => setTriggerAddSale(false)} onOrdersChanged={() => fetchOrders()} />
           ) : activeTab === 'sales_stats' ? (
             <SalesStatsDashboard showToast={showToast} />
           ) : activeTab === 'inventory' ? (
@@ -3811,7 +3901,7 @@ export default function AdminPanel() {
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: 20, x: '-50%' }}
             style={{
-              position: 'fixed', bottom: 40, left: '50%',
+              position: 'fixed', bottom: isMobile ? 84 : 40, left: '50%',
               padding: '16px 24px', borderRadius: 20,
               background: notification.type === 'error' ? 'rgba(239,68,68,0.9)' : 'rgba(124,58,237,0.9)',
               color: '#fff', fontWeight: 800, fontSize: 14,

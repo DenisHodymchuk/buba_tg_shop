@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req) {
   try {
-    const { tg_id, order_number, status, total_amount } = await req.json();
+    const { tg_id, order_number, status, total_amount, ttn } = await req.json();
     const token = process.env.TELEGRAM_BOT_TOKEN;
 
     if (!token || !tg_id) {
@@ -11,6 +11,7 @@ export async function POST(req) {
 
     const statusIcons = {
       'new': '🆕 Нове',
+      'preparing': '📋 В підготовці',
       'printing': '🖨️ Друкується',
       'painting': '🎨 Розфарбовується',
       'shipping': '📦 Готово до відправки',
@@ -21,6 +22,7 @@ export async function POST(req) {
 
     const statusMessages = {
       'new': 'Ваше замовлення прийнято! Дякуємо! ✨',
+      'preparing': 'Ваше замовлення готується до виготовлення! 🛠️',
       'printing': 'Ваші 3D вироби вже на принтері! Скоро вони будуть готові. 🔥',
       'painting': 'Ваше замовлення зараз розфарбовується майстром! 🎨',
       'shipping': 'Ваше замовлення виготовлено та готове до відправки! 📦',
@@ -29,8 +31,10 @@ export async function POST(req) {
       'cancelled': 'На жаль, замовлення було скасовано. Якщо у вас є питання — пишіть нам.'
     };
 
-    const message = `📦 *ОНОВЛЕННЯ ЗАМОВЛЕННЯ*\n\n` +
-                    `Статус: *${statusIcons[status] || status}*\n\n` +
+    const ttnBlock = ttn ? `\n\n🔢 *Номер ТТН:* \`${ttn}\`` : '';
+
+    const message = `📦 *ОНОВЛЕННЯ ЗАМОВЛЕННЯ${order_number ? ` (${order_number})` : ''}*\n\n` +
+                    `Статус: *${statusIcons[status] || status}*${ttnBlock}\n\n` +
                     `${statusMessages[status] || 'Статус вашого замовлення було змінено.'}`;
 
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {

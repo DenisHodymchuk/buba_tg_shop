@@ -1,12 +1,13 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Plus, Settings, Trash2, Edit3, MoveLeft, MoveRight, 
+  Plus, Settings, Trash2, Edit3, 
   Clock, Printer, Truck, Send, CheckCircle2, XCircle, Palette,
-  Coins, User, Phone, ShoppingBag, AlertCircle, ArrowUpRight,
-  Sparkles, Layers, ChevronRight, ChevronLeft, Eye, Tag, DollarSign, ExternalLink
+  Coins, User, Phone, ShoppingBag, AlertCircle,
+  Layers, ChevronRight, ChevronLeft, Copy, Star, MapPin, MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getColorMeta } from '@/lib/orderHelpers';
 
 // Default columns setup
 export const DEFAULT_KANBAN_COLUMNS = [
@@ -17,8 +18,8 @@ export const DEFAULT_KANBAN_COLUMNS = [
     color: '#3b82f6',
     bg: 'rgba(59, 130, 246, 0.08)',
     borderColor: 'rgba(59, 130, 246, 0.25)',
-    autoPaymentStatus: null, // 'paid', 'partially_paid', 'pending', etc.
-    wipLimit: 0, // 0 = no limit
+    autoPaymentStatus: null,
+    wipLimit: 0,
     icon: 'Clock'
   },
   {
@@ -72,7 +73,7 @@ export const DEFAULT_KANBAN_COLUMNS = [
     color: '#10b981',
     bg: 'rgba(16, 185, 129, 0.08)',
     borderColor: 'rgba(16, 185, 129, 0.25)',
-    autoPaymentStatus: 'paid', // Auto mark paid on completion if set
+    autoPaymentStatus: 'paid',
     wipLimit: 0,
     icon: 'CheckCircle2'
   },
@@ -104,9 +105,9 @@ const SOURCE_LABELS = {
   website: { label: 'Сайт', color: '#3b82f6' },
   instagram: { label: 'Instagram', color: '#e1306c' },
   telegram: { label: 'Telegram', color: '#0088cc' },
-  olx: { label: 'OLX', color: '#ff5656' },
+  olx: { label: 'OLX', color: '#23e5db' },
   facebook: { label: 'Facebook', color: '#1877f2' },
-  tiktok: { label: 'TikTok', color: '#00f2fe' },
+  tiktok: { label: 'TikTok', color: '#ff0050' },
   threads: { label: 'Threads', color: '#a855f7' },
   offline: { label: 'Офлайн', color: '#10b981' },
   other: { label: 'Інше', color: '#64748b' }
@@ -121,6 +122,7 @@ export default function OrderKanbanBoard({
   orders = [], 
   onUpdateOrderStatus, 
   onEditOrder,
+  onDuplicateOrder,
   onViewOrder,
   onAddOrder,
   showToast 
@@ -130,17 +132,26 @@ export default function OrderKanbanBoard({
   const [dragOverColumnId, setDragOverColumnId] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [editingColumn, setEditingColumn] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeMobileColId, setActiveMobileColId] = useState(null);
   const boardRef = useRef(null);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const scrollBoard = (direction) => {
     if (boardRef.current) {
-      boardRef.current.scrollBy({ left: direction * 350, behavior: 'smooth' });
+      boardRef.current.scrollBy({ left: direction * 340, behavior: 'smooth' });
     }
   };
 
   useEffect(() => {
     const boardEl = boardRef.current;
-    if (!boardEl) return;
+    if (!boardEl || isMobile) return;
 
     const handleWheelNative = (e) => {
       if (e.deltaY === 0) return;
@@ -148,7 +159,6 @@ export default function OrderKanbanBoard({
       let target = e.target;
       let cardsListEl = null;
 
-      // Шукаємо чи знаходиться курсор у контейнері карток колонки
       while (target && target !== boardEl && target !== document.body) {
         if (target.getAttribute && target.getAttribute('data-kanban-cards-list') === 'true') {
           cardsListEl = target;
@@ -158,11 +168,9 @@ export default function OrderKanbanBoard({
       }
 
       if (cardsListEl) {
-        // Якщо наведений на колонку з картками — скролиться ТІЛЬКИ вона (і не рухається ні сторінка, ні дошка)
         e.preventDefault();
         cardsListEl.scrollTop += e.deltaY;
       } else {
-        // Якщо наведений на назви колонок / шапку дошки — скролиться ТІЛЬКИ Канбан дошка по горизонталі
         e.preventDefault();
         boardEl.scrollLeft += e.deltaY * 1.5;
       }
@@ -172,21 +180,23 @@ export default function OrderKanbanBoard({
     return () => {
       boardEl.removeEventListener('wheel', handleWheelNative);
     };
-  }, []);
+  }, [isMobile]);
 
   // Load columns configuration from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('buba_kanban_columns');
+      let loadedCols = DEFAULT_KANBAN_COLUMNS;
       if (saved) {
         try {
-          setColumns(JSON.parse(saved));
+          loadedCols = JSON.parse(saved);
         } catch (e) {
           console.error("Failed to parse kanban columns", e);
-          setColumns(DEFAULT_KANBAN_COLUMNS);
         }
-      } else {
-        setColumns(DEFAULT_KANBAN_COLUMNS);
+      }
+      setColumns(loadedCols);
+      if (loadedCols.length > 0) {
+        setActiveMobileColId(loadedCols[0].id);
       }
     }
   }, []);
@@ -198,7 +208,6 @@ export default function OrderKanbanBoard({
     }
   };
 
-  // Auto-scroll animation ref
   const autoScrollAnimationRef = useRef(null);
 
   const stopAutoScroll = () => {
@@ -209,9 +218,7 @@ export default function OrderKanbanBoard({
   };
 
   useEffect(() => {
-    return () => {
-      stopAutoScroll();
-    };
+    return () => stopAutoScroll();
   }, []);
 
   const autoScrollBoard = (e) => {
@@ -227,9 +234,7 @@ export default function OrderKanbanBoard({
       const speed = Math.round(intensity * maxSpeed);
       if (!autoScrollAnimationRef.current) {
         const step = () => {
-          if (boardRef.current) {
-            boardRef.current.scrollLeft += speed;
-          }
+          if (boardRef.current) boardRef.current.scrollLeft += speed;
           autoScrollAnimationRef.current = requestAnimationFrame(step);
         };
         autoScrollAnimationRef.current = requestAnimationFrame(step);
@@ -239,9 +244,7 @@ export default function OrderKanbanBoard({
       const speed = Math.round(intensity * maxSpeed);
       if (!autoScrollAnimationRef.current) {
         const step = () => {
-          if (boardRef.current) {
-            boardRef.current.scrollLeft -= speed;
-          }
+          if (boardRef.current) boardRef.current.scrollLeft -= speed;
           autoScrollAnimationRef.current = requestAnimationFrame(step);
         };
         autoScrollAnimationRef.current = requestAnimationFrame(step);
@@ -258,7 +261,6 @@ export default function OrderKanbanBoard({
     }
   };
 
-  // Drag & Drop handlers
   const handleDragStart = (e, orderId) => {
     setDraggedOrderId(orderId);
     e.dataTransfer.setData('text/plain', orderId);
@@ -291,26 +293,11 @@ export default function OrderKanbanBoard({
     }
   };
 
-  const handleDrop = async (e, targetColumn) => {
-    e.preventDefault();
-    stopAutoScroll();
-    setDragOverColumnId(null);
-    const orderId = e.dataTransfer.getData('text/plain') || draggedOrderId;
-    setDraggedOrderId(null);
-
-    if (!orderId) return;
-
-    const order = orders.find(o => String(o.id) === String(orderId));
-    if (!order) return;
-
-    // Check if moving to same status
+  const moveOrderToColumn = async (order, targetColumn) => {
+    if (!order || !targetColumn) return;
     if (order.status === targetColumn.status) return;
 
-    // Additional auto-actions configured for the target column
-    const updates = {
-      status: targetColumn.status
-    };
-
+    const updates = { status: targetColumn.status };
     if (targetColumn.autoPaymentStatus) {
       updates.payment_status = targetColumn.autoPaymentStatus;
     }
@@ -318,7 +305,7 @@ export default function OrderKanbanBoard({
     try {
       await onUpdateOrderStatus(order.id, updates);
       showToast?.(
-        `Замовлення ${order.order_number || ''} переміщено в "${targetColumn.title}"`,
+        `Замовлення ${order.order_number || ''} → "${targetColumn.title}"`,
         "success"
       );
     } catch (err) {
@@ -327,7 +314,20 @@ export default function OrderKanbanBoard({
     }
   };
 
-  // Column management actions
+  const handleDrop = async (e, targetColumn) => {
+    e.preventDefault();
+    stopAutoScroll();
+    setDragOverColumnId(null);
+    const orderId = e.dataTransfer.getData('text/plain') || draggedOrderId;
+    setDraggedOrderId(null);
+
+    if (!orderId) return;
+    const order = orders.find(o => String(o.id) === String(orderId));
+    if (!order) return;
+
+    await moveOrderToColumn(order, targetColumn);
+  };
+
   const handleAddColumn = () => {
     const newCol = {
       id: 'col_' + Date.now(),
@@ -372,43 +372,48 @@ export default function OrderKanbanBoard({
     saveColumns(updated);
   };
 
+  const visibleColumns = isMobile && activeMobileColId
+    ? columns.filter(c => c.id === activeMobileColId)
+    : columns;
+
   return (
     <div style={{ width: '100%', height: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {/* Sub Toolbar Row (Scroll & Config) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+      {/* Sub Toolbar Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, gap: 8, flexWrap: 'wrap' }}>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Layers size={14} style={{ color: '#a78bfa' }} />
           <span>Канбан дошка</span>
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {/* Scroll Navigation Buttons */}
-          <div style={{ display: 'flex', gap: 3, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 8, padding: 2 }}>
-            <button
-              type="button"
-              onClick={() => scrollBoard(-1)}
-              title="Прокрутити ліворуч"
-              style={{
-                padding: '4px 8px', borderRadius: 6, border: 'none',
-                background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollBoard(1)}
-              title="Прокрутити праворуч"
-              style={{
-                padding: '4px 8px', borderRadius: 6, border: 'none',
-                background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
+          {!isMobile && (
+            <div style={{ display: 'flex', gap: 3, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 8, padding: 2 }}>
+              <button
+                type="button"
+                onClick={() => scrollBoard(-1)}
+                title="Прокрутити ліворуч"
+                style={{
+                  padding: '4px 8px', borderRadius: 6, border: 'none',
+                  background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollBoard(1)}
+                title="Прокрутити праворуч"
+                style={{
+                  padding: '4px 8px', borderRadius: 6, border: 'none',
+                  background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          )}
 
           <button
             type="button"
@@ -424,15 +429,61 @@ export default function OrderKanbanBoard({
               display: 'flex',
               alignItems: 'center',
               gap: 5,
-              cursor: 'pointer',
-              transition: 'all 0.2s'
+              cursor: 'pointer'
             }}
           >
             <Settings size={13} style={{ color: '#a78bfa' }} />
-            Налаштувати колонки
+            Колонки
           </button>
         </div>
       </div>
+
+      {/* Mobile Column Switcher Tabs */}
+      {isMobile && (
+        <div 
+          className="hide-scrollbar"
+          style={{ 
+            display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, flexShrink: 0 
+          }}
+        >
+          {columns.map(col => {
+            const count = orders.filter(o => o.status === col.status).length;
+            const active = activeMobileColId === col.id;
+            return (
+              <button
+                key={col.id}
+                type="button"
+                onClick={() => setActiveMobileColId(col.id)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 12,
+                  border: active ? `1px solid ${col.color}` : '1px solid var(--border)',
+                  background: active ? `${col.color}22` : 'rgba(255,255,255,0.03)',
+                  color: active ? '#fff' : 'var(--text-muted)',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer',
+                  flexShrink: 0
+                }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: col.color }} />
+                <span>{col.title}</span>
+                <span style={{
+                  padding: '1px 6px', borderRadius: 8, fontSize: 10, fontWeight: 900,
+                  background: active ? col.color : 'rgba(255,255,255,0.08)',
+                  color: active ? '#fff' : 'var(--text-muted)'
+                }}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Kanban Board Container */}
       <div 
@@ -441,9 +492,10 @@ export default function OrderKanbanBoard({
         onDragLeave={() => stopAutoScroll()}
         style={{ 
           display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row',
           gap: 14, 
-          overflowX: 'auto', 
-          overflowY: 'hidden',
+          overflowX: isMobile ? 'hidden' : 'auto', 
+          overflowY: isMobile ? 'visible' : 'hidden',
           flex: 1,
           minHeight: 0,
           paddingBottom: 8,
@@ -452,9 +504,20 @@ export default function OrderKanbanBoard({
           scrollbarColor: '#7c3aed rgba(15, 23, 42, 0.6)'
         }}
       >
-        {columns.map((col, index) => {
-          // Filter orders matching column status
-          const colOrders = orders.filter(o => o.status === col.status);
+        {visibleColumns.map((col) => {
+          const colIndex = columns.findIndex(c => c.id === col.id);
+          const prevCol = colIndex > 0 ? columns[colIndex - 1] : null;
+          const nextCol = colIndex < columns.length - 1 ? columns[colIndex + 1] : null;
+
+          const colOrders = orders
+            .filter(o => o.status === col.status)
+            .sort((a, b) => {
+              const aPrio = a.shipping_details?.is_priority ? 1 : 0;
+              const bPrio = b.shipping_details?.is_priority ? 1 : 0;
+              if (aPrio !== bPrio) return bPrio - aPrio;
+              return new Date(b.created_at) - new Date(a.created_at);
+            });
+
           const colTotalSum = colOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
           const isOverLimit = col.wipLimit > 0 && colOrders.length > col.wipLimit;
           const isDropTarget = dragOverColumnId === col.id;
@@ -466,10 +529,10 @@ export default function OrderKanbanBoard({
               onDragLeave={(e) => handleDragLeave(e, col.id)}
               onDrop={(e) => handleDrop(e, col)}
               style={{
-                flex: '0 0 310px',
-                minWidth: 310,
-                maxWidth: 330,
-                height: '100%',
+                flex: isMobile ? '1 1 auto' : '0 0 320px',
+                minWidth: isMobile ? '100%' : 320,
+                maxWidth: isMobile ? '100%' : 340,
+                height: isMobile ? 'auto' : '100%',
                 background: isDropTarget ? `${col.color}15` : 'rgba(15, 23, 42, 0.45)',
                 border: isDropTarget ? `2px dashed ${col.color}` : `1px solid ${col.borderColor || 'var(--border)'}`,
                 borderRadius: 16,
@@ -481,23 +544,23 @@ export default function OrderKanbanBoard({
             >
               {/* Column Header */}
               <div style={{
-                padding: '14px 16px',
+                padding: '12px 16px',
                 borderBottom: `1px solid ${col.borderColor || 'var(--border)'}`,
                 background: col.bg || 'rgba(255,255,255,0.02)',
-                borderTopLeftRadius: 18,
-                borderTopRightRadius: 18,
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 8
+                gap: 6
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ 
-                      width: 12, height: 12, borderRadius: '50%', 
+                      width: 10, height: 10, borderRadius: '50%', 
                       background: col.color, 
                       boxShadow: `0 0 8px ${col.color}` 
                     }} />
-                    <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#fff' }}>
+                    <h4 style={{ margin: 0, fontSize: 13, fontWeight: 850, color: '#fff' }}>
                       {col.title}
                     </h4>
                   </div>
@@ -507,41 +570,28 @@ export default function OrderKanbanBoard({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (onAddOrder) {
-                          onAddOrder(col.status);
-                        }
+                        onAddOrder?.(col.status);
                       }}
                       title={`Додати продаж у "${col.title}"`}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: 24,
-                        height: 24,
-                        borderRadius: 7,
+                        width: 26,
+                        height: 26,
+                        borderRadius: 8,
                         border: '1px solid var(--border)',
                         background: 'rgba(255,255,255,0.06)',
                         color: 'var(--text-main)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = col.color;
-                        e.currentTarget.style.borderColor = col.color;
-                        e.currentTarget.style.color = '#fff';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                        e.currentTarget.style.borderColor = 'var(--border)';
-                        e.currentTarget.style.color = 'var(--text-main)';
+                        cursor: 'pointer'
                       }}
                     >
                       <Plus size={14} />
                     </button>
                     <span style={{ 
-                      padding: '2px 8px', borderRadius: 12, 
+                      padding: '2px 8px', borderRadius: 10, 
                       background: col.color + '22', color: col.color, 
-                      fontSize: 12, fontWeight: 800 
+                      fontSize: 11, fontWeight: 900 
                     }}>
                       {colOrders.length}
                       {col.wipLimit > 0 && ` / ${col.wipLimit}`}
@@ -550,8 +600,8 @@ export default function OrderKanbanBoard({
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: 'var(--text-muted)' }}>
-                  <span>Сума коштів:</span>
-                  <span style={{ fontWeight: 700, color: '#e2e8f0' }}>
+                  <span>Сума в колонці:</span>
+                  <span style={{ fontWeight: 800, color: '#2dd4bf' }}>
                     {colTotalSum.toLocaleString('uk-UA')} ₴
                   </span>
                 </div>
@@ -561,7 +611,7 @@ export default function OrderKanbanBoard({
                     fontSize: 10, color: '#ef4444', fontWeight: 700, 
                     display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 
                   }}>
-                    <AlertCircle size={12} /> Превищено WIP ліміт колонки!
+                    <AlertCircle size={12} /> Перевищено WIP ліміт колонки!
                   </div>
                 )}
               </div>
@@ -575,16 +625,15 @@ export default function OrderKanbanBoard({
                   flexDirection: 'column',
                   gap: 10,
                   flex: 1,
-                  minHeight: 0,
-                  overflowY: 'auto'
+                  minHeight: isMobile ? 160 : 0,
+                  overflowY: isMobile ? 'visible' : 'auto'
                 }}
               >
                 {colOrders.length === 0 ? (
                   <div 
                     onClick={() => onAddOrder?.(col.status)}
-                    title={`Додати продаж у "${col.title}"`}
                     style={{
-                      height: 120,
+                      height: 110,
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -594,22 +643,11 @@ export default function OrderKanbanBoard({
                       color: 'rgba(255,255,255,0.4)',
                       fontSize: 12,
                       gap: 6,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = col.color;
-                      e.currentTarget.style.color = col.color;
-                      e.currentTarget.style.background = `${col.color}08`;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                      e.currentTarget.style.color = 'rgba(255,255,255,0.4)';
-                      e.currentTarget.style.background = 'transparent';
+                      cursor: 'pointer'
                     }}
                   >
                     <Plus size={18} />
-                    <span>Немає замовлень</span>
+                    <span>Додати замовлення сюди</span>
                   </div>
                 ) : (
                   colOrders.map(order => (
@@ -617,9 +655,14 @@ export default function OrderKanbanBoard({
                       key={order.id} 
                       order={order}
                       columnColor={col.color}
+                      prevCol={prevCol}
+                      nextCol={nextCol}
+                      onMovePrev={prevCol ? () => moveOrderToColumn(order, prevCol) : null}
+                      onMoveNext={nextCol ? () => moveOrderToColumn(order, nextCol) : null}
                       onDragStart={(e) => handleDragStart(e, order.id)}
                       onDragEnd={handleDragEnd}
                       onEditOrder={() => onEditOrder?.(order)}
+                      onDuplicateOrder={() => onDuplicateOrder?.(order)}
                       onViewOrder={() => onViewOrder?.(order)}
                     />
                   ))
@@ -711,23 +754,23 @@ export default function OrderKanbanBoard({
                 ))}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 24, borderTop: '1px solid var(--border)', paddingTop: 16, flexWrap: 'wrap' }}>
                 <button
                   onClick={handleResetColumns}
-                  style={{ padding: '8px 14px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 10, cursor: 'pointer', fontSize: 13 }}
+                  style={{ padding: '8px 14px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 10, cursor: 'pointer', fontSize: 12 }}
                 >
                   Скинути до стандартних
                 </button>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button
                     onClick={handleAddColumn}
-                    style={{ padding: '8px 14px', background: 'rgba(124,58,237,0.2)', border: '1px solid #7c3aed', color: '#fff', borderRadius: 10, cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
+                    style={{ padding: '8px 14px', background: 'rgba(124,58,237,0.2)', border: '1px solid #7c3aed', color: '#fff', borderRadius: 10, cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
                   >
                     <Plus size={14} /> Додати колонку
                   </button>
                   <button
                     onClick={() => setIsConfigModalOpen(false)}
-                    style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', color: '#fff', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}
+                    style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', color: '#fff', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
                   >
                     Готово
                   </button>
@@ -864,14 +907,26 @@ export default function OrderKanbanBoard({
 }
 
 // Single Order Kanban Card Component
-function KanbanCard({ order, columnColor, onDragStart, onDragEnd, onEditOrder, onViewOrder }) {
+function KanbanCard({ 
+  order, 
+  columnColor, 
+  prevCol, 
+  nextCol, 
+  onMovePrev, 
+  onMoveNext, 
+  onDragStart, 
+  onDragEnd, 
+  onEditOrder, 
+  onDuplicateOrder 
+}) {
   const details = order.shipping_details || {};
   const firstName = details.firstName || details.first_name || order.customers?.first_name || '';
   const lastName = details.lastName || details.last_name || order.customers?.last_name || '';
   const combinedFullName = `${firstName} ${lastName}`.trim();
   const customerName = combinedFullName || details.fullName || details.name || details.recipientName || 'Гість';
-  const items = details.items || [];
+  const items = Array.isArray(details.items) ? details.items : [];
   const sourceInfo = SOURCE_LABELS[order.source] || SOURCE_LABELS.website;
+  const isPriority = !!details.is_priority;
 
   const getPaymentBadge = (status) => {
     switch(status) {
@@ -895,46 +950,39 @@ function KanbanCard({ order, columnColor, onDragStart, onDragEnd, onEditOrder, o
       onDragEnd={onDragEnd}
       onClick={onEditOrder}
       style={{
-        background: 'rgba(30, 41, 59, 0.75)',
+        background: 'rgba(30, 41, 59, 0.85)',
         backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        border: isPriority ? '1px solid rgba(251, 191, 36, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
         borderRadius: 14,
-        padding: 14,
+        padding: 13,
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
-        gap: 10,
+        gap: 9,
         position: 'relative',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+        boxShadow: isPriority ? '0 4px 16px rgba(251, 191, 36, 0.12)' : '0 4px 12px rgba(0, 0, 0, 0.25)',
         transition: 'transform 0.15s ease, box-shadow 0.15s ease'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = `0 8px 20px rgba(0, 0, 0, 0.35), 0 0 12px ${columnColor}20`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.25)';
       }}
     >
       {/* Header: Order Number & Badges */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ 
-          fontSize: 13, 
-          fontWeight: 900, 
-          color: '#fff', 
-          fontFamily: 'monospace',
-          letterSpacing: '0.03em'
-        }}>
-          #{order.order_number || String(order.id).slice(0, 8)}
-        </span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          {isPriority && <Star size={13} fill="#fbbf24" stroke="#fbbf24" />}
+          <span style={{ 
+            fontSize: 12, 
+            fontWeight: 900, 
+            color: '#fff', 
+            fontFamily: 'monospace'
+          }}>
+            {order.order_number ? order.order_number.replace(/^MAN-[A-Z]+-/, '#') : `#${String(order.id).slice(0, 8)}`}
+          </span>
+        </div>
 
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {/* Source Tag */}
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{
-            fontSize: 10,
-            fontWeight: 800,
-            padding: '2px 7px',
+            fontSize: 9,
+            fontWeight: 850,
+            padding: '2px 6px',
             borderRadius: 6,
             background: `${sourceInfo.color}20`,
             color: sourceInfo.color,
@@ -943,10 +991,9 @@ function KanbanCard({ order, columnColor, onDragStart, onDragEnd, onEditOrder, o
             {sourceInfo.label}
           </span>
 
-          {/* Payment Status Tag */}
           <span style={{
             fontSize: 9,
-            fontWeight: 800,
+            fontWeight: 850,
             padding: '2px 6px',
             borderRadius: 6,
             background: paymentBadge.bg,
@@ -957,80 +1004,170 @@ function KanbanCard({ order, columnColor, onDragStart, onDragEnd, onEditOrder, o
         </div>
       </div>
 
-      {/* Customer Info */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.06)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#94a3b8', flexShrink: 0
-        }}>
-          <User size={14} />
-        </div>
+      {/* Customer Info & City */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ overflow: 'hidden' }}>
-          <div style={{ fontSize: 13, fontWeight: 750, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {customerName || 'Без імені'}
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {customerName}
           </div>
           {details.phone && (
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
               <Phone size={10} /> {details.phone}
             </div>
           )}
         </div>
+        {details.city && (
+          <div style={{ fontSize: 10, fontWeight: 800, color: '#ec4899', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, background: 'rgba(236,72,153,0.1)', padding: '3px 7px', borderRadius: 6 }}>
+            <MapPin size={10} />
+            <span>{details.city}</span>
+          </div>
+        )}
       </div>
 
-      {/* Products preview */}
+      {/* Products with Per-Item Colors & Notes */}
       {items.length > 0 && (
         <div style={{
-          background: 'rgba(0,0,0,0.25)',
-          borderRadius: 8,
-          padding: '6px 8px',
+          background: 'rgba(0,0,0,0.28)',
+          borderRadius: 10,
+          padding: '8px 10px',
           fontSize: 11,
           color: '#cbd5e1',
           display: 'flex',
           flexDirection: 'column',
-          gap: 2
+          gap: 6,
+          border: '1px solid rgba(255,255,255,0.04)'
         }}>
-          <div style={{ fontWeight: 650, color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>
-            Товари ({items.length}):
-          </div>
-          <div style={{ 
-            whiteSpace: 'nowrap', 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis' 
-          }}>
-            {items.map(i => i.title || i.name).join(', ')}
-          </div>
+          {items.map((item, idx) => {
+            const itemColors = Array.isArray(item.colors) ? item.colors : (item.color ? [item.color] : []);
+            const itemNote = item.item_note || item.color_details || item.note || '';
+            return (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: idx < items.length - 1 ? 5 : 0, borderBottom: idx < items.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontWeight: 750, color: '#fff', fontSize: 11.5, lineHeight: 1.3 }}>
+                    • {item.title || item.name}
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 900, color: '#a78bfa', background: 'rgba(124,58,237,0.2)', padding: '1px 6px', borderRadius: 5, flexShrink: 0 }}>
+                    x{item.quantity || 1}
+                  </span>
+                </div>
+
+                {/* Color Badges */}
+                {itemColors.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 1 }}>
+                    {itemColors.map((colName, cIdx) => {
+                      const cMeta = getColorMeta(colName);
+                      return (
+                        <span key={cIdx} style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          fontSize: 9.5, fontWeight: 800, padding: '1px 6px', borderRadius: 5,
+                          background: 'rgba(255,255,255,0.06)', color: '#e2e8f0',
+                          border: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                          <span style={{
+                            width: 7, height: 7, borderRadius: '50%',
+                            background: cMeta.gradient || cMeta.hex,
+                            border: `1px solid ${cMeta.border || '#fff'}`
+                          }} />
+                          {cMeta.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Item specific note / color details */}
+                {itemNote && (
+                  <div style={{ fontSize: 10, color: '#38bdf8', fontWeight: 700, background: 'rgba(56,189,248,0.08)', padding: '2px 6px', borderRadius: 5, lineHeight: 1.3 }}>
+                    🎨 {itemNote}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Footer: Amount & Quick Action */}
+      {/* General Order Notes / Clarifications */}
+      {details.notes && (
+        <div style={{
+          padding: '6px 9px', borderRadius: 8,
+          background: 'rgba(245,158,11,0.1)', border: '1px dashed rgba(245,158,11,0.35)',
+          color: '#fbbf24', fontSize: 10.5, fontWeight: 750, lineHeight: 1.35
+        }}>
+          ⚠️ {details.notes}
+        </div>
+      )}
+
+      {/* Footer: Amount & Quick Actions */}
       <div style={{ 
         display: 'flex', 
-        justify: 'space-between', 
+        justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginTop: 4,
+        marginTop: 2,
         paddingTop: 8,
         borderTop: '1px solid rgba(255,255,255,0.06)'
       }}>
-        <div style={{ fontSize: 14, fontWeight: 900, color: '#22c55e' }}>
-          {Number(order.total || 0).toLocaleString('uk-UA')} ₴
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontSize: 14, fontWeight: 950, color: '#2dd4bf' }}>
+            {Number(order.total || 0).toLocaleString('uk-UA')} ₴
+          </div>
+          {details.is_cod && details.cod_amount > 0 && (
+            <div style={{ fontSize: 9.5, fontWeight: 800, color: '#f97316' }}>
+              Наложка: {details.cod_amount} ₴
+            </div>
+          )}
         </div>
 
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+          {onMovePrev && (
+            <button
+              type="button"
+              onClick={onMovePrev}
+              title={`Перемістити в "${prevCol?.title}"`}
+              style={{
+                padding: '5px 7px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 7, color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center'
+              }}
+            >
+              <ChevronLeft size={13} />
+            </button>
+          )}
+          {onMoveNext && (
+            <button
+              type="button"
+              onClick={onMoveNext}
+              title={`Перемістити в "${nextCol?.title}"`}
+              style={{
+                padding: '5px 8px', background: `${nextCol?.color || '#7c3aed'}22`, border: `1px solid ${nextCol?.color || '#7c3aed'}44`,
+                borderRadius: 7, color: nextCol?.color || '#a78bfa', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 800
+              }}
+            >
+              <ChevronRight size={13} />
+            </button>
+          )}
+          {onDuplicateOrder && (
+            <button
+              type="button"
+              onClick={onDuplicateOrder}
+              title="Дублювати замовлення"
+              style={{
+                padding: 5, background: 'rgba(124, 58, 237, 0.15)', border: 'none',
+                borderRadius: 7, color: '#a78bfa', cursor: 'pointer', display: 'flex', alignItems: 'center'
+              }}
+            >
+              <Copy size={12} />
+            </button>
+          )}
           <button
+            type="button"
             onClick={onEditOrder}
             title="Редагувати замовлення"
             style={{
-              padding: 5,
-              background: 'rgba(255,255,255,0.06)',
-              border: 'none',
-              borderRadius: 6,
-              color: '#a78bfa',
-              cursor: 'pointer'
+              padding: 5, background: 'rgba(255,255,255,0.06)', border: 'none',
+              borderRadius: 7, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center'
             }}
           >
-            <Edit3 size={13} />
+            <Edit3 size={12} />
           </button>
         </div>
       </div>
