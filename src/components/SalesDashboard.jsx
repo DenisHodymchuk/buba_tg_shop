@@ -239,18 +239,37 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
   // City search effect
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (npCityQuery.length >= 2 && npCityQuery !== formData.city) {
+      const q = npCityQuery.trim();
+      if (q.length >= 2 && (!formData.cityRef || q !== formData.city)) {
         setNpLoadingCities(true);
-        const data = await novaPoshta.getCities(npCityQuery);
-        setNpCities(data);
+        const data = await novaPoshta.getCities(q);
+        const citiesList = Array.isArray(data) ? data : [];
+        setNpCities(citiesList);
         setNpLoadingCities(false);
-        setNpShowCities(true);
-      } else {
+
+        if (q !== formData.city) {
+          setNpShowCities(true);
+        }
+
+        // Auto-bind cityRef if user typed an exact city name (e.g. "Київ") or edited an order without cityRef
+        if (!formData.cityRef && citiesList.length > 0) {
+          const exactCity = citiesList.find(
+            c => c.Description?.toLowerCase() === q.toLowerCase()
+          );
+          if (exactCity) {
+            setFormData(prev => ({
+              ...prev,
+              city: exactCity.Description,
+              cityRef: exactCity.Ref
+            }));
+          }
+        }
+      } else if (q.length < 2) {
         setNpCities([]);
       }
-    }, 350);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [npCityQuery, formData.city]);
+  }, [npCityQuery, formData.city, formData.cityRef]);
 
   // Warehouse fetch effect
   useEffect(() => {
@@ -271,6 +290,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
           if (exactMatch) {
             setFormData(prev => ({ ...prev, warehouse: exactMatch.Description }));
             setNpWarehouseQuery(exactMatch.Description);
+            setNpShowWarehouses(false);
           }
           setPendingWarehouseNumber('');
         }
@@ -283,10 +303,22 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
 
   const npFilteredWarehouses = useMemo(() => {
     if (!npWarehouses || !Array.isArray(npWarehouses)) return [];
-    if (!npWarehouseQuery || npWarehouseQuery === formData.warehouse) return npWarehouses;
-    return npWarehouses.filter(w => 
-      w && w.Description && String(w.Description).toLowerCase().includes(String(npWarehouseQuery).toLowerCase())
+    const q = String(npWarehouseQuery || '').trim().toLowerCase();
+    if (!q || (formData.warehouse && q === String(formData.warehouse).trim().toLowerCase())) {
+      return npWarehouses;
+    }
+    const filtered = npWarehouses.filter(w => 
+      w && (
+        (w.Description && String(w.Description).toLowerCase().includes(q)) ||
+        (w.Number && String(w.Number).toLowerCase().includes(q))
+      )
     );
+    // Prioritize exact warehouse number match (e.g. "118" -> №118 first)
+    return filtered.sort((a, b) => {
+      const aExact = String(a.Number) === q ? 0 : 1;
+      const bExact = String(b.Number) === q ? 0 : 1;
+      return aExact - bExact;
+    });
   }, [npWarehouses, npWarehouseQuery, formData.warehouse]);
 
   // Previous customers index for quick autofill
@@ -2533,11 +2565,13 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                         <input 
                           type="text" placeholder="Введіть місто..." value={npCityQuery} 
                           onChange={e => { 
-                            setNpCityQuery(e.target.value); 
-                            setFormData({ ...formData, city: e.target.value });
+                            const val = e.target.value;
+                            setNpCityQuery(val); 
+                            setFormData(prev => ({ ...prev, city: '', cityRef: '' }));
                             setNpShowCities(true); 
                           }}
                           onFocus={() => { if (npCities.length > 0) setNpShowCities(true); }}
+                          onBlur={() => setTimeout(() => setNpShowCities(false), 200)}
                           style={{ width: '100%', background: 'rgba(0,0,0,0.35)', border: npShowCities && npCities.length > 0 ? '1px solid #7c3aed' : '1px solid var(--border)', borderRadius: 10, padding: 10, color: '#fff', fontSize: 13, outline: 'none' }}
                         />
                         {npLoadingCities && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 10, bottom: 12, color: '#7c3aed' }} />}
@@ -2551,11 +2585,13 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                               {npCities.map(city => (
                                 <button
                                   key={city.Ref} type="button"
+                                  onMouseDown={e => e.preventDefault()}
                                   onClick={() => {
-                                    setFormData({ ...formData, city: city.Description, cityRef: city.Ref, warehouse: '' });
+                                    setFormData(prev => ({ ...prev, city: city.Description, cityRef: city.Ref, warehouse: '' }));
                                     setNpCityQuery(city.Description);
                                     setNpShowCities(false);
                                     setNpWarehouseQuery('');
+                                    setNpShowWarehouses(true);
                                   }}
                                   style={{ width: '100%', padding: '9px 12px', textAlign: 'left', background: 'transparent', border: 'none', color: '#fff', fontSize: 12.5, borderRadius: 8, cursor: 'pointer' }}
                                 >
@@ -2580,10 +2616,21 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                           value={npWarehouseQuery} 
                           onChange={e => { 
                             setNpWarehouseQuery(e.target.value); 
-                            setFormData({ ...formData, warehouse: e.target.value });
+                            setFormData(prev => ({ ...prev, warehouse: '' }));
                             setNpShowWarehouses(true); 
                           }}
-                          onFocus={() => { if (formData.cityRef) setNpShowWarehouses(true); }}
+                          onFocus={() => {
+                            setNpShowCities(false);
+                            if (formData.cityRef || npWarehouses.length > 0) {
+                              setNpShowWarehouses(true);
+                            } else if (npCities.length > 0) {
+                              const firstCity = npCities[0];
+                              setFormData(prev => ({ ...prev, city: firstCity.Description, cityRef: firstCity.Ref }));
+                              setNpCityQuery(firstCity.Description);
+                              setNpShowWarehouses(true);
+                            }
+                          }}
+                          onBlur={() => setTimeout(() => setNpShowWarehouses(false), 200)}
                           style={{ 
                             width: '100%', background: 'rgba(0,0,0,0.35)', 
                             border: npShowWarehouses && npFilteredWarehouses.length > 0 ? '1px solid #7c3aed' : '1px solid var(--border)', 
@@ -2601,8 +2648,9 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                               {npFilteredWarehouses.slice(0, 80).map(wh => (
                                 <button
                                   key={wh.Ref} type="button"
+                                  onMouseDown={e => e.preventDefault()}
                                   onClick={() => {
-                                    setFormData({ ...formData, warehouse: wh.Description });
+                                    setFormData(prev => ({ ...prev, warehouse: wh.Description }));
                                     setNpWarehouseQuery(wh.Description);
                                     setNpShowWarehouses(false);
                                   }}

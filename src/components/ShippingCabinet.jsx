@@ -74,18 +74,28 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
   useEffect(() => {
     if (!editingOrder) return;
     const timer = setTimeout(async () => {
-      if (npCityQuery.length >= 2 && npCityQuery !== editForm.city) {
+      const q = npCityQuery.trim();
+      if (q.length >= 2 && (!editForm.cityRef || q !== editForm.city)) {
         setNpLoadingCities(true);
-        const data = await novaPoshta.getCities(npCityQuery);
-        setNpCities(data);
+        const data = await novaPoshta.getCities(q);
+        const citiesList = Array.isArray(data) ? data : [];
+        setNpCities(citiesList);
         setNpLoadingCities(false);
-        setNpShowCities(true);
-      } else {
+        if (q !== editForm.city) {
+          setNpShowCities(true);
+        }
+        if (!editForm.cityRef && citiesList.length > 0) {
+          const exactCity = citiesList.find(c => c.Description?.toLowerCase() === q.toLowerCase());
+          if (exactCity) {
+            setEditForm(prev => ({ ...prev, city: exactCity.Description, cityRef: exactCity.Ref }));
+          }
+        }
+      } else if (q.length < 2) {
         setNpCities([]);
       }
-    }, 350);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [npCityQuery, editForm.city, editingOrder]);
+  }, [npCityQuery, editForm.city, editForm.cityRef, editingOrder]);
 
   useEffect(() => {
     if (!editingOrder) return;
@@ -93,7 +103,7 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
       if (editForm.cityRef) {
         setNpLoadingWarehouses(true);
         const data = await novaPoshta.getWarehouses(editForm.cityRef);
-        setNpWarehouses(data);
+        setNpWarehouses(data || []);
         setNpLoadingWarehouses(false);
       } else {
         setNpWarehouses([]);
@@ -104,10 +114,21 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
 
   const npFilteredWarehouses = useMemo(() => {
     if (!npWarehouses || !Array.isArray(npWarehouses)) return [];
-    if (!npWarehouseQuery || npWarehouseQuery === editForm.warehouse) return npWarehouses;
-    return npWarehouses.filter(w =>
-      w?.Description && String(w.Description).toLowerCase().includes(String(npWarehouseQuery).toLowerCase())
+    const q = String(npWarehouseQuery || '').trim().toLowerCase();
+    if (!q || (editForm.warehouse && q === String(editForm.warehouse).trim().toLowerCase())) {
+      return npWarehouses;
+    }
+    const filtered = npWarehouses.filter(w =>
+      w && (
+        (w.Description && String(w.Description).toLowerCase().includes(q)) ||
+        (w.Number && String(w.Number).toLowerCase().includes(q))
+      )
     );
+    return filtered.sort((a, b) => {
+      const aExact = String(a.Number) === q ? 0 : 1;
+      const bExact = String(b.Number) === q ? 0 : 1;
+      return aExact - bExact;
+    });
   }, [npWarehouses, npWarehouseQuery, editForm.warehouse]);
 
   const openEditModal = (order, e) => {
@@ -144,9 +165,9 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
         firstName: editForm.firstName.trim(),
         lastName: editForm.lastName.trim(),
         phone: editForm.phone.trim(),
-        city: editForm.shipping_method === 'pickup' ? 'Самовивіз' : editForm.city.trim(),
+        city: editForm.shipping_method === 'pickup' ? 'Самовивіз' : (editForm.city || npCityQuery).trim(),
         cityRef: editForm.shipping_method === 'nova_poshta' ? editForm.cityRef : '',
-        warehouse: editForm.shipping_method === 'pickup' ? '' : editForm.warehouse.trim(),
+        warehouse: editForm.shipping_method === 'pickup' ? '' : (editForm.warehouse || npWarehouseQuery).trim(),
         is_cod: editForm.is_cod,
         cod_amount: editForm.is_cod ? (parseFloat(editForm.cod_amount) || 0) : 0,
         notes: editForm.notes.trim()
@@ -1409,10 +1430,11 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                         value={npCityQuery}
                         onChange={(e) => {
                           setNpCityQuery(e.target.value);
-                          setEditForm({ ...editForm, city: e.target.value });
+                          setEditForm(prev => ({ ...prev, city: '', cityRef: '' }));
                           setNpShowCities(true);
                         }}
                         onFocus={() => { if (npCities.length > 0) setNpShowCities(true); }}
+                        onBlur={() => setTimeout(() => setNpShowCities(false), 200)}
                         style={{ width: '100%', padding: 10, borderRadius: 10, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', color: '#fff', fontSize: 13 }}
                       />
                       {npLoadingCities && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 12, bottom: 12, color: '#ec4899' }} />}
@@ -1422,11 +1444,13 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                             <button
                               key={c.Ref}
                               type="button"
+                              onMouseDown={e => e.preventDefault()}
                               onClick={() => {
-                                setEditForm({ ...editForm, city: c.Description, cityRef: c.Ref, warehouse: '' });
+                                setEditForm(prev => ({ ...prev, city: c.Description, cityRef: c.Ref, warehouse: '' }));
                                 setNpCityQuery(c.Description);
                                 setNpWarehouseQuery('');
                                 setNpShowCities(false);
+                                setNpShowWarehouses(true);
                               }}
                               style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'transparent', border: 'none', color: '#fff', fontSize: 12, cursor: 'pointer', borderRadius: 6 }}
                             >
@@ -1438,27 +1462,38 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                     </div>
 
                     <div style={{ position: 'relative' }}>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>ВІДДІЛЕННЯ / ПОШТОМАТ / АДРЕСА</label>
+                      <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>
+                        ВІДДІЛЕННЯ / ПОШТОМАТ / АДРЕСА
+                        {editForm.cityRef && !npLoadingWarehouses && npWarehouses.length > 0 && (
+                          <span style={{ color: '#f472b6', marginLeft: 6 }}>({npWarehouses.length})</span>
+                        )}
+                      </label>
                       <input
                         type="text"
                         placeholder="Введіть номер або адресу відділення..."
                         value={npWarehouseQuery}
                         onChange={(e) => {
                           setNpWarehouseQuery(e.target.value);
-                          setEditForm({ ...editForm, warehouse: e.target.value });
+                          setEditForm(prev => ({ ...prev, warehouse: '' }));
                           setNpShowWarehouses(true);
                         }}
-                        onFocus={() => { if (npWarehouses.length > 0) setNpShowWarehouses(true); }}
+                        onFocus={() => {
+                          setNpShowCities(false);
+                          if (editForm.cityRef || npWarehouses.length > 0) setNpShowWarehouses(true);
+                        }}
+                        onBlur={() => setTimeout(() => setNpShowWarehouses(false), 200)}
                         style={{ width: '100%', padding: 10, borderRadius: 10, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', color: '#fff', fontSize: 13 }}
                       />
+                      {npLoadingWarehouses && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 12, bottom: 12, color: '#ec4899' }} />}
                       {npShowWarehouses && npFilteredWarehouses.length > 0 && (
                         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 40, background: '#1e293b', borderRadius: 12, border: '1px solid rgba(236,72,153,0.4)', marginTop: 4, maxHeight: 180, overflowY: 'auto', padding: 4 }}>
                           {npFilteredWarehouses.slice(0, 60).map(wh => (
                             <button
                               key={wh.Ref}
                               type="button"
+                              onMouseDown={e => e.preventDefault()}
                               onClick={() => {
-                                setEditForm({ ...editForm, warehouse: wh.Description });
+                                setEditForm(prev => ({ ...prev, warehouse: wh.Description }));
                                 setNpWarehouseQuery(wh.Description);
                                 setNpShowWarehouses(false);
                               }}
