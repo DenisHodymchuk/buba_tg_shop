@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const DEFAULT_DROPSHIPPING_DATA = {
   headerTitle: 'BUBA SHOP • Дропшипінг Каталог',
   headerSubtitle: 'Актуальний каталог 3D-друкованих іграшок та аксесуарів. Завантажуйте живі фото у високій якості, копіюйте готові описи та заробляйте разом з нами!',
-  contactTelegram: 'https://t.me/buba_shop_manager',
+  contactTelegram: 'https://t.me/ande_3d_manager',
   contactLabel: 'Написати менеджеру в Telegram',
   termsNote: '⚡ Відправка щодня Новою Поштою та Укрпоштою • Можливий друк у будь-яких кольорах під замовлення клієнта',
   categories: ['Дракони', 'Тваринки', 'Брелоки', 'Антистрес', 'Підставки та Декор'],
@@ -34,6 +34,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
   // Add / Edit Product Modal
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const [makerworldUrl, setMakerworldUrl] = useState('');
   const [isParsingMw, setIsParsingMw] = useState(false);
   const [parsedCostHint, setParsedCostHint] = useState('');
@@ -137,6 +138,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
 
   const openAddModal = () => {
     setEditingItem(null);
+    setIsDuplicating(false);
     setMakerworldUrl('');
     setParsedCostHint('');
     setManualImageUrl('');
@@ -159,6 +161,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
 
   const openEditModal = (item) => {
     setEditingItem(item);
+    setIsDuplicating(false);
     setMakerworldUrl(item.makerworldUrl || '');
     setParsedCostHint('');
     setManualImageUrl('');
@@ -177,6 +180,30 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
       makerworldUrl: item.makerworldUrl || ''
     });
     setShowFormModal(true);
+  };
+
+  const handleDuplicate = (item) => {
+    setEditingItem(null);
+    setIsDuplicating(true);
+    setMakerworldUrl(item.makerworldUrl || '');
+    setParsedCostHint('');
+    setManualImageUrl('');
+    setFormData({
+      name: item.name || '',
+      category: item.category || catalog.categories[0] || 'Дракони',
+      dropPrice: item.dropPrice !== undefined ? String(item.dropPrice) : '',
+      rrpPrice: item.rrpPrice !== undefined && item.rrpPrice !== '' ? String(item.rrpPrice) : '',
+      description: item.description || '',
+      images: Array.isArray(item.images) ? [...item.images] : [],
+      sku: `DRP-${Math.floor(1000 + Math.random() * 9000)}`,
+      weight: item.weight || '',
+      colorsNote: item.colorsNote || '',
+      inStock: item.inStock !== false,
+      hidden: false,
+      makerworldUrl: item.makerworldUrl || ''
+    });
+    setShowFormModal(true);
+    showToast?.('Дані скопійовано! Внесіть зміни (назву, розмір, ціну тощо) та збережіть.', 'info');
   };
 
   // Parse from MakerWorld URL
@@ -822,18 +849,32 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                     </p>
                   )}
 
-                  <div style={{ marginTop: 'auto', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 8 }}>
+                  <div style={{ marginTop: 'auto', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       onClick={() => openEditModal(item)}
                       style={{
-                        flex: 1, padding: '8px 12px', borderRadius: 10,
+                        flex: 1, minWidth: 95, padding: '8px 10px', borderRadius: 10,
                         background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)',
-                        color: '#60a5fa', fontSize: 12, fontWeight: 850, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                        color: '#60a5fa', fontSize: 11.5, fontWeight: 850, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5
                       }}
                     >
-                      <Edit3 size={14} /> Редагувати
+                      <Edit3 size={13} /> Редагувати
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDuplicate(item)}
+                      title="Створити копію та змінити дані"
+                      style={{
+                        flex: 1, minWidth: 95, padding: '8px 10px', borderRadius: 10,
+                        background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)',
+                        color: '#c084fc', fontSize: 11.5, fontWeight: 850, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5
+                      }}
+                    >
+                      <Copy size={13} /> Дублювати
                     </button>
 
                     <button
@@ -841,12 +882,12 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                       onClick={() => handleToggleVisibility(item)}
                       title={item.hidden ? 'Показати у каталозі' : 'Приховати з каталогу'}
                       style={{
-                        padding: '8px 10px', borderRadius: 10,
+                        padding: '8px 9px', borderRadius: 10,
                         background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
                         color: item.hidden ? '#f59e0b' : '#94a3b8', cursor: 'pointer'
                       }}
                     >
-                      {item.hidden ? <EyeOff size={15} /> : <Eye size={15} />}
+                      {item.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
 
                     <button
@@ -854,12 +895,12 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                       onClick={() => handleDeleteItem(item.id)}
                       title="Видалити"
                       style={{
-                        padding: '8px 10px', borderRadius: 10,
+                        padding: '8px 9px', borderRadius: 10,
                         background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)',
                         color: '#ef4444', cursor: 'pointer'
                       }}
                     >
-                      <Trash2 size={15} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
@@ -903,7 +944,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                 background: 'rgba(255,255,255,0.02)'
               }}>
                 <h2 style={{ fontSize: 17, fontWeight: 950, color: '#fff', margin: 0 }}>
-                  {editingItem ? '✏️ Редагувати товар дропшипінгу' : '➕ Додати товар у Дропшипінг'}
+                  {editingItem ? '✏️ Редагувати товар дропшипінгу' : (isDuplicating ? '📋 Дублювати товар (створити як новий)' : '➕ Додати товар у Дропшипінг')}
                 </h2>
                 <button
                   type="button"
@@ -1255,7 +1296,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                     color: '#020b18', fontSize: 13, fontWeight: 950, cursor: 'pointer'
                   }}
                 >
-                  {saving ? 'Збереження...' : (editingItem ? 'Зберегти зміни' : 'Додати в каталог')}
+                  {saving ? 'Збереження...' : (editingItem ? 'Зберегти зміни' : (isDuplicating ? 'Створити як новий товар' : 'Додати в каталог'))}
                 </button>
               </div>
             </motion.div>
