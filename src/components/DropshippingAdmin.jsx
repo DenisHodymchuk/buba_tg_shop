@@ -234,26 +234,14 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
       // Deduplicate images while keeping existing ones if any
       const combinedImages = Array.from(new Set([...allParsedImages, ...formData.images]));
 
-      // Separate public description from admin cost calculation notes
-      let cleanDesc = data.description || '';
-      let costHint = '';
-      if (cleanDesc.includes('|||ADMIN_NOTES|||')) {
-        const parts = cleanDesc.split('|||ADMIN_NOTES|||');
-        cleanDesc = (parts[0] || '').trim();
-        costHint = (parts[1] || '').trim();
-      }
-
-      setParsedCostHint(costHint);
+      // Додаємо тільки знайдені фотографії, не зачіпаючи назву, опис чи інші поля
       setFormData(prev => ({
         ...prev,
-        name: data.name || prev.name,
-        description: cleanDesc || prev.description,
         images: combinedImages,
-        weight: data.weight || prev.weight,
         makerworldUrl: url
       }));
 
-      showToast?.(`Імпортовано з MakerWorld! Знайдено ${allParsedImages.length} фото ✨`, 'success');
+      showToast?.(`Спарсено ${allParsedImages.length} фото з MakerWorld! 📷✨`, 'success');
     } catch (err) {
       console.error('MakerWorld parse error:', err);
       showToast?.(`Помилка парсингу: ${err.message}`, 'error');
@@ -964,7 +952,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                   borderRadius: 16, padding: 14, display: 'flex', flexDirection: 'column', gap: 8
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 900, color: '#34d399', textTransform: 'uppercase' }}>
-                    <Sparkles size={14} /> 1. Швидкий імпорт фото та опису з MakerWorld
+                    <Sparkles size={14} /> 1. Швидкий імпорт фото з MakerWorld (парсяться тільки фото)
                   </div>
                   <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 8 }}>
                     <input
@@ -989,7 +977,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                       }}
                     >
                       {isParsingMw ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-                      {isParsingMw ? 'Парсимо...' : '⚡ Спарсити з MakerWorld'}
+                      {isParsingMw ? 'Завантажуємо...' : '⚡ Спарсити тільки фото'}
                     </button>
                   </div>
                   {parsedCostHint && (
