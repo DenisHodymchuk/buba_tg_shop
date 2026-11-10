@@ -902,7 +902,6 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
       <AnimatePresence>
         {showFormModal && (
           <div
-            onClick={() => setShowFormModal(false)}
             style={{
               position: 'fixed', inset: 0, zIndex: 1100,
               background: 'rgba(2,11,24,0.85)', backdropFilter: 'blur(12px)',
@@ -1296,7 +1295,6 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
       <AnimatePresence>
         {showSettingsModal && (
           <div
-            onClick={() => setShowSettingsModal(false)}
             style={{
               position: 'fixed', inset: 0, zIndex: 1100,
               background: 'rgba(2,11,24,0.85)', backdropFilter: 'blur(12px)',
@@ -1387,7 +1385,6 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
       <AnimatePresence>
         {showImportStoreModal && (
           <div
-            onClick={() => setShowImportStoreModal(false)}
             style={{
               position: 'fixed', inset: 0, zIndex: 1100,
               background: 'rgba(2,11,24,0.85)', backdropFilter: 'blur(12px)',

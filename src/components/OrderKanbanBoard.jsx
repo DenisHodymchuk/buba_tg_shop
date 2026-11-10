@@ -14,6 +14,7 @@ export const DEFAULT_KANBAN_COLUMNS = [
   {
     id: 'col_new',
     title: 'Нові замовлення',
+    subtitle: 'Всі нові замовлення',
     status: 'new',
     color: '#3b82f6',
     bg: 'rgba(59, 130, 246, 0.08)',
@@ -24,7 +25,8 @@ export const DEFAULT_KANBAN_COLUMNS = [
   },
   {
     id: 'col_printing',
-    title: 'У виготовленні / Друк',
+    title: 'Друк',
+    subtitle: 'Безпосередньо друкуються на принтері',
     status: 'printing',
     color: '#8b5cf6',
     bg: 'rgba(139, 92, 246, 0.08)',
@@ -35,7 +37,8 @@ export const DEFAULT_KANBAN_COLUMNS = [
   },
   {
     id: 'col_painting',
-    title: 'Розфарбовується',
+    title: 'Склейка/розфарбування',
+    subtitle: 'Очікує склейки або в процесі',
     status: 'painting',
     color: '#f59e0b',
     bg: 'rgba(245, 158, 11, 0.08)',
@@ -45,8 +48,21 @@ export const DEFAULT_KANBAN_COLUMNS = [
     icon: 'Palette'
   },
   {
+    id: 'col_preparing',
+    title: 'Пакування',
+    subtitle: 'Фігурки склеєні, очікують на пакування',
+    status: 'preparing',
+    color: '#a855f7',
+    bg: 'rgba(168, 85, 247, 0.08)',
+    borderColor: 'rgba(168, 85, 247, 0.25)',
+    autoPaymentStatus: null,
+    wipLimit: 0,
+    icon: 'Layers'
+  },
+  {
     id: 'col_shipping',
-    title: 'Готово до відправки',
+    title: 'Готово до відправлення',
+    subtitle: 'Спаковані посилки',
     status: 'shipping',
     color: '#ec4899',
     bg: 'rgba(236, 72, 153, 0.08)',
@@ -57,7 +73,8 @@ export const DEFAULT_KANBAN_COLUMNS = [
   },
   {
     id: 'col_shipped',
-    title: 'Відправлено поштою',
+    title: 'В дорозі',
+    subtitle: 'Відправлено поштою',
     status: 'shipped',
     color: '#06b6d4',
     bg: 'rgba(6, 182, 212, 0.08)',
@@ -69,6 +86,7 @@ export const DEFAULT_KANBAN_COLUMNS = [
   {
     id: 'col_completed',
     title: 'Виконано',
+    subtitle: 'Замовлення отримано',
     status: 'completed',
     color: '#10b981',
     bg: 'rgba(16, 185, 129, 0.08)',
@@ -80,6 +98,7 @@ export const DEFAULT_KANBAN_COLUMNS = [
   {
     id: 'col_cancelled',
     title: 'Скасовано',
+    subtitle: 'Скасовані замовлення',
     status: 'cancelled',
     color: '#ef4444',
     bg: 'rgba(239, 68, 68, 0.08)',
@@ -91,12 +110,12 @@ export const DEFAULT_KANBAN_COLUMNS = [
 ];
 
 const AVAILABLE_STATUSES = [
-  { value: 'new', label: 'Нове' },
-  { value: 'preparing', label: 'В підготовці' },
-  { value: 'printing', label: 'Друкується / Виготовляється' },
-  { value: 'painting', label: 'Розфарбовується' },
-  { value: 'shipping', label: 'Готово до відправки' },
-  { value: 'shipped', label: 'Відправлено поштою' },
+  { value: 'new', label: 'Нові замовлення' },
+  { value: 'printing', label: 'Друк' },
+  { value: 'painting', label: 'Склейка/розфарбування' },
+  { value: 'preparing', label: 'Пакування' },
+  { value: 'shipping', label: 'Готово до відправлення' },
+  { value: 'shipped', label: 'В дорозі' },
   { value: 'completed', label: 'Виконано' },
   { value: 'cancelled', label: 'Скасовано' }
 ];
@@ -185,7 +204,7 @@ export default function OrderKanbanBoard({
   // Load columns configuration from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('buba_kanban_columns');
+      const saved = localStorage.getItem('buba_kanban_columns_v3');
       let loadedCols = DEFAULT_KANBAN_COLUMNS;
       if (saved) {
         try {
@@ -204,7 +223,7 @@ export default function OrderKanbanBoard({
   const saveColumns = (newCols) => {
     setColumns(newCols);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('buba_kanban_columns', JSON.stringify(newCols));
+      localStorage.setItem('buba_kanban_columns_v3', JSON.stringify(newCols));
     }
   };
 
@@ -948,7 +967,10 @@ function KanbanCard({
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      onClick={onEditOrder}
+      onClick={(e) => {
+        if (typeof window !== 'undefined' && window.getSelection()?.toString().length > 0) return;
+        onEditOrder?.(e);
+      }}
       style={{
         background: 'rgba(30, 41, 59, 0.85)',
         backdropFilter: 'blur(10px)',

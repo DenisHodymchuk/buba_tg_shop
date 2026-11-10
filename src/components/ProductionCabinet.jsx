@@ -11,17 +11,17 @@ import { getColorMeta } from '@/lib/orderHelpers';
 
 // Meta definitions for order statuses
 const STATUS_META = {
-  new: { label: 'Нові', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
-  preparing: { label: 'В підготовці', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', icon: ClipboardList },
-  printing: { label: 'Друкується', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
-  painting: { label: 'Розфарбовується', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: Palette },
-  shipping: { label: 'Готово до відправки', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
-  shipped: { label: 'Відправлені', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send }
+  new: { label: 'Нові замовлення', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
+  printing: { label: 'Друк', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', icon: Printer },
+  painting: { label: 'Склейка/розфарбування', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: Palette },
+  preparing: { label: 'Пакування', color: '#a855f7', bg: 'rgba(168,85,247,0.1)', icon: ClipboardList },
+  shipping: { label: 'Готово до відправлення', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+  shipped: { label: 'В дорозі', color: '#06b6d4', bg: 'rgba(6,182,212,0.1)', icon: Send }
 };
 
 export default function ProductionCabinet({ orders, setOrders, showToast, isMobile }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState(['new', 'preparing', 'printing', 'painting', 'shipping']);
+  const [selectedStatuses, setSelectedStatuses] = useState(['new', 'printing', 'painting', 'preparing', 'shipping']);
   const [expandedProductNames, setExpandedProductNames] = useState([]);
 
   // Aggregate items from active orders
@@ -264,6 +264,7 @@ export default function ProductionCabinet({ orders, setOrders, showToast, isMobi
   };
 
   const toggleProductExpand = (productName) => {
+    if (typeof window !== 'undefined' && window.getSelection()?.toString().length > 0) return;
     setExpandedProductNames(prev => 
       prev.includes(productName) 
         ? prev.filter(name => name !== productName) 

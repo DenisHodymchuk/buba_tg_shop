@@ -6,7 +6,7 @@ import {
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
   Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone, Menu,
-  Clock, ClipboardList, Printer, Truck, XCircle, ChevronDown, ChevronUp, Hammer, Lightbulb
+  Clock, ClipboardList, Printer, Truck, XCircle, ChevronDown, ChevronUp, Hammer, Lightbulb, Palette
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
@@ -295,6 +295,7 @@ export default function AdminPanel() {
   };
 
   const toggleOrderExpand = (id) => {
+    if (typeof window !== 'undefined' && window.getSelection()?.toString().length > 0) return;
     setExpandedOrderIds(prev => 
       prev.includes(id) ? prev.filter(oid => oid !== id) : [...prev, id]
     );
@@ -1490,7 +1491,7 @@ export default function AdminPanel() {
       {/* Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          onClick={() => setIsSidebarOpen(false)}
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setIsSidebarOpen(false); }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000 }}
         />
       )}
@@ -1952,11 +1953,12 @@ export default function AdminPanel() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {[
                       { val: 'Всі', label: 'ВСІ', color: '#6b6b8a', bg: 'rgba(255,255,255,0.03)', icon: null },
-                      { val: 'new', label: 'НОВІ', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
-                      { val: 'preparing', label: 'ПІДГОТОВКА', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
-                      { val: 'printing', label: 'ДРУК', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
-                      { val: 'shipping', label: 'ОЧІКУЄ НА ВІДПРАВКУ', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
-                      { val: 'shipped', label: 'ВІДПРАВЛЕНО ПОШТОЮ', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send },
+                      { val: 'new', label: 'НОВІ ЗАМОВЛЕННЯ', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
+                      { val: 'printing', label: 'ДРУК', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', icon: Printer },
+                      { val: 'painting', label: 'СКЛЕЙКА/РОЗФАРБУВАННЯ', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: Palette },
+                      { val: 'preparing', label: 'ПАКУВАННЯ', color: '#a855f7', bg: 'rgba(168,85,247,0.1)', icon: ClipboardList },
+                      { val: 'shipping', label: 'ГОТОВО ДО ВІДПРАВЛЕННЯ', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+                      { val: 'shipped', label: 'В ДОРОЗІ', color: '#06b6d4', bg: 'rgba(6,182,212,0.1)', icon: Send },
                       { val: 'completed', label: 'ВИКОНАНО', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', icon: CheckCircle2 },
                       { val: 'cancelled', label: 'СКАСОВАНО', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
                     ].map(item => {
@@ -2110,11 +2112,12 @@ export default function AdminPanel() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'flex-end', minWidth: 160 }}>
                             {(() => {
                               const statusMeta = {
-                                new: { label: 'Нове', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
-                                preparing: { label: 'Підготовка', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: ClipboardList },
-                                printing: { label: 'Друк', color: '#7c3aed', bg: 'rgba(124,58,237,0.1)', icon: Printer },
-                                shipping: { label: 'Очікує на відправку', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
-                                shipped: { label: 'Пошта', color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: Send },
+                                new: { label: 'Нові замовлення', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
+                                printing: { label: 'Друк', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', icon: Printer },
+                                painting: { label: 'Склейка/розфарбування', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: Palette },
+                                preparing: { label: 'Пакування', color: '#a855f7', bg: 'rgba(168,85,247,0.1)', icon: ClipboardList },
+                                shipping: { label: 'Готово до відправлення', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
+                                shipped: { label: 'В дорозі', color: '#06b6d4', bg: 'rgba(6,182,212,0.1)', icon: Send },
                                 completed: { label: 'Виконано', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', icon: CheckCircle2 },
                                 cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: XCircle }
                               };
@@ -2279,10 +2282,12 @@ export default function AdminPanel() {
 
                             {/* Actions and Status Transitions */}
                             <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                              <StatusBtn label="Підготовка" active={order.status === 'preparing'} color="#f59e0b" icon={<ClipboardList size={12} />} onClick={() => updateOrderStatus(order.id, 'preparing')} />
-                              <StatusBtn label="Друкується" active={order.status === 'printing'} color="#7c3aed" icon={<Printer size={12} />} onClick={() => updateOrderStatus(order.id, 'printing')} />
-                              <StatusBtn label="Очікує на відправку" active={order.status === 'shipping'} color="#ec4899" icon={<Truck size={12} />} onClick={() => updateOrderStatus(order.id, 'shipping')} />
-                              <StatusBtn label="Відправлено поштою" active={order.status === 'shipped'} color="#10b981" icon={<Send size={12} />} onClick={() => updateOrderStatus(order.id, 'shipped')} />
+                              <StatusBtn label="Нові замовлення" active={order.status === 'new'} color="#3b82f6" icon={<Clock size={12} />} onClick={() => updateOrderStatus(order.id, 'new')} />
+                              <StatusBtn label="Друк" active={order.status === 'printing'} color="#8b5cf6" icon={<Printer size={12} />} onClick={() => updateOrderStatus(order.id, 'printing')} />
+                              <StatusBtn label="Склейка/розфарбування" active={order.status === 'painting'} color="#f59e0b" icon={<Palette size={12} />} onClick={() => updateOrderStatus(order.id, 'painting')} />
+                              <StatusBtn label="Пакування" active={order.status === 'preparing'} color="#a855f7" icon={<ClipboardList size={12} />} onClick={() => updateOrderStatus(order.id, 'preparing')} />
+                              <StatusBtn label="Готово до відправлення" active={order.status === 'shipping'} color="#ec4899" icon={<Truck size={12} />} onClick={() => updateOrderStatus(order.id, 'shipping')} />
+                              <StatusBtn label="В дорозі" active={order.status === 'shipped'} color="#06b6d4" icon={<Send size={12} />} onClick={() => updateOrderStatus(order.id, 'shipped')} />
                               <StatusBtn label="Виконано" active={order.status === 'completed'} color="#22c55e" icon={<CheckCircle2 size={12} />} onClick={() => updateOrderStatus(order.id, 'completed')} />
                               
                               <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
@@ -3102,13 +3107,18 @@ export default function AdminPanel() {
       <AnimatePresence>
         {showForm && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <div onClick={closeModal} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }} />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} 
               className="hide-scrollbar"
               style={{ position: 'relative', width: '100%', maxWidth: 500, background: '#0a192f', borderRadius: 32, border: '1px solid rgba(255,255,255,0.1)', padding: 32, maxHeight: '90vh', overflowY: 'auto' }}
             >
-              <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 24 }}>{editingId ? 'Редагувати товар' : 'Новий товар'}</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', margin: 0 }}>{editingId ? 'Редагувати товар' : 'Новий товар'}</h2>
+                <button type="button" onClick={closeModal} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', borderRadius: 10, padding: 8, cursor: 'pointer', display: 'flex' }}>
+                  <X size={20} />
+                </button>
+              </div>
               
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {/* Simplified Gallery Management */}
@@ -3499,7 +3509,6 @@ export default function AdminPanel() {
         {individualMessageModal.open && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <div 
-              onClick={() => setIndividualMessageModal({ ...individualMessageModal, open: false })}
               style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}
             />
             <motion.div 
@@ -3738,7 +3747,6 @@ export default function AdminPanel() {
       {bonusModal.open && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div 
-            onClick={() => setBonusModal({ ...bonusModal, open: false })}
             style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}
           />
           <div style={{ 

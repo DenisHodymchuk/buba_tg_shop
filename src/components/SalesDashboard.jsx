@@ -107,12 +107,12 @@ function ThemeSelect({ label, value, options, onChange, displayValue, placeholde
 }
 
 const STATUS_META = {
-  new: { label: 'Нове', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: Clock },
-  preparing: { label: 'Підготовка', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: ClipboardList },
-  printing: { label: 'Друкується', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)', icon: Printer },
-  painting: { label: 'Розфарбовується', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: Palette },
-  shipping: { label: 'Готово до відправки', color: '#ec4899', bg: 'rgba(236,72,153,0.12)', icon: Truck },
-  shipped: { label: 'Відправлено поштою', color: '#10b981', bg: 'rgba(16,185,129,0.12)', icon: Send },
+  new: { label: 'Нові замовлення', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: Clock },
+  printing: { label: 'Друк', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: Printer },
+  painting: { label: 'Склейка/розфарбування', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: Palette },
+  preparing: { label: 'Пакування', color: '#a855f7', bg: 'rgba(168,85,247,0.12)', icon: ClipboardList },
+  shipping: { label: 'Готово до відправлення', color: '#ec4899', bg: 'rgba(236,72,153,0.12)', icon: Truck },
+  shipped: { label: 'В дорозі', color: '#06b6d4', bg: 'rgba(6,182,212,0.12)', icon: Send },
   completed: { label: 'Виконано', color: '#22c55e', bg: 'rgba(34,197,94,0.12)', icon: CheckCircle2 },
   cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', icon: XCircle }
 };
@@ -536,6 +536,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
   };
 
   const toggleExpandSale = (id) => {
+    if (typeof window !== 'undefined' && window.getSelection()?.toString().length > 0) return;
     setExpandedSalesIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
@@ -1871,7 +1872,6 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
       <AnimatePresence>
         {showAddForm && (
           <div 
-            onClick={() => setShowAddForm(false)}
             style={{ 
               position: 'fixed', 
               inset: 0, 

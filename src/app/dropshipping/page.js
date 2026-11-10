@@ -638,7 +638,7 @@ export default function DropshippingPage() {
       <AnimatePresence>
         {selectedItem && (
           <div
-            onClick={() => setSelectedItem(null)}
+            onMouseDown={(e) => { if (e.target === e.currentTarget) setSelectedItem(null); }}
             style={{
               position: 'fixed', inset: 0, zIndex: 200,
               background: 'rgba(2, 8, 18, 0.9)', backdropFilter: 'blur(14px)',

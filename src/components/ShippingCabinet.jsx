@@ -24,12 +24,12 @@ const PLATFORM_META = {
 };
 
 const STATUS_META = {
-  new: { label: 'Нове', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: Clock },
-  preparing: { label: 'Підготовка', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: ClipboardList },
-  printing: { label: 'Друкується', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)', icon: Printer },
-  painting: { label: 'Розфарбовується', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: Palette },
-  shipping: { label: 'Готово до відправки', color: '#ec4899', bg: 'rgba(236,72,153,0.15)', icon: Truck },
-  shipped: { label: 'Відправлено поштою', color: '#10b981', bg: 'rgba(16,185,129,0.15)', icon: Send },
+  new: { label: 'Нові замовлення', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: Clock },
+  printing: { label: 'Друк', color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', icon: Printer },
+  painting: { label: 'Склейка/розфарбування', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: Palette },
+  preparing: { label: 'Пакування', color: '#a855f7', bg: 'rgba(168,85,247,0.15)', icon: ClipboardList },
+  shipping: { label: 'Готово до відправлення', color: '#ec4899', bg: 'rgba(236,72,153,0.15)', icon: Truck },
+  shipped: { label: 'В дорозі', color: '#06b6d4', bg: 'rgba(6,182,212,0.15)', icon: Send },
   completed: { label: 'Виконано', color: '#22c55e', bg: 'rgba(34,197,94,0.12)', icon: CheckCircle2 },
   cancelled: { label: 'Скасовано', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', icon: XCircle }
 };
@@ -198,6 +198,7 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
   };
 
   const toggleExpand = (orderId) => {
+    if (typeof window !== 'undefined' && window.getSelection()?.toString().length > 0) return;
     setExpandedOrderIds(prev => 
       prev.includes(orderId) 
         ? prev.filter(id => id !== orderId) 
@@ -207,13 +208,16 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
 
   // Stage counts
   const stageCounts = useMemo(() => {
-    const counts = { ready: 0, in_work: 0, shipped: 0, all_active: 0, completed: 0 };
+    const counts = { ready: 0, packing: 0, in_work: 0, shipped: 0, all_active: 0, completed: 0 };
     orders.forEach(o => {
       if (o.status === 'cancelled') return;
       if (o.status === 'shipping') {
         counts.ready++;
         counts.all_active++;
-      } else if (['new', 'preparing', 'printing', 'painting'].includes(o.status)) {
+      } else if (o.status === 'preparing') {
+        counts.packing++;
+        counts.all_active++;
+      } else if (['new', 'printing', 'painting'].includes(o.status)) {
         counts.in_work++;
         counts.all_active++;
       } else if (o.status === 'shipped') {
@@ -232,14 +236,16 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
       let matchesStage = false;
       if (stageTab === 'ready') {
         matchesStage = order.status === 'shipping';
+      } else if (stageTab === 'packing') {
+        matchesStage = order.status === 'preparing';
       } else if (stageTab === 'in_work') {
-        matchesStage = ['new', 'preparing', 'printing', 'painting'].includes(order.status);
+        matchesStage = ['new', 'printing', 'painting'].includes(order.status);
       } else if (stageTab === 'shipped') {
         matchesStage = order.status === 'shipped';
       } else if (stageTab === 'completed') {
         matchesStage = order.status === 'completed';
       } else {
-        // all_active: ready + in_work
+        // all_active: ready + packing + in_work
         matchesStage = order.status !== 'completed' && order.status !== 'shipped';
       }
 
@@ -517,11 +523,12 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
         style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}
       >
         {[
-          { id: 'all_active', label: 'Всі до відправки', count: stageCounts.all_active, color: '#a78bfa' },
-          { id: 'ready', label: '🔥 Готові пакувати', count: stageCounts.ready, color: '#ec4899' },
-          { id: 'in_work', label: '🔨 В роботі', count: stageCounts.in_work, color: '#3b82f6' },
-          { id: 'shipped', label: '🚀 В дорозі (ТТН)', count: stageCounts.shipped, color: '#10b981' },
-          { id: 'completed', label: '✅ Отримані', count: stageCounts.completed, color: '#22c55e' }
+          { id: 'all_active', label: 'Всі активні', count: stageCounts.all_active, color: '#a78bfa' },
+          { id: 'ready', label: '📦 Готово до відправлення', count: stageCounts.ready, color: '#ec4899' },
+          { id: 'packing', label: '🎁 Пакування', count: stageCounts.packing, color: '#a855f7' },
+          { id: 'in_work', label: '🔨 Друк / Склейка', count: stageCounts.in_work, color: '#3b82f6' },
+          { id: 'shipped', label: '🚀 В дорозі', count: stageCounts.shipped, color: '#06b6d4' },
+          { id: 'completed', label: '✅ Виконано', count: stageCounts.completed, color: '#22c55e' }
         ].map(tab => {
           const active = stageTab === tab.id;
           return (
@@ -1249,11 +1256,11 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                             onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'printing'); }}
                             disabled={statusChangingId === order.id}
                             style={{ 
-                              padding: '8px 12px', borderRadius: 10, background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.25)', 
+                              padding: '8px 12px', borderRadius: 10, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', 
                               color: '#a78bfa', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
                             }}
                           >
-                            <Printer size={12} /> Друкується
+                            <Printer size={12} /> Друк
                           </button>
                         )}
 
@@ -1266,7 +1273,20 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                               color: '#fbbf24', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
                             }}
                           >
-                            <Palette size={12} /> Фарбується
+                            <Palette size={12} /> Склейка/розфарбування
+                          </button>
+                        )}
+
+                        {order.status !== 'preparing' && order.status !== 'completed' && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'preparing'); }}
+                            disabled={statusChangingId === order.id}
+                            style={{ 
+                              padding: '8px 12px', borderRadius: 10, background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.3)', 
+                              color: '#c084fc', fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
+                            }}
+                          >
+                            <ClipboardList size={12} /> Пакування
                           </button>
                         )}
 
@@ -1279,7 +1299,7 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                               color: '#f472b6', fontSize: 11, fontWeight: 850, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
                             }}
                           >
-                            <Truck size={12} /> Готово до відправки
+                            <Truck size={12} /> Готово до відправлення
                           </button>
                         )}
 
@@ -1288,11 +1308,11 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                             onClick={(e) => { e.stopPropagation(); updateStatus(order.id, 'shipped'); }}
                             disabled={statusChangingId === order.id}
                             style={{ 
-                              padding: '8px 12px', borderRadius: 10, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', 
-                              color: '#34d399', fontSize: 11, fontWeight: 850, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
+                              padding: '8px 12px', borderRadius: 10, background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.3)', 
+                              color: '#22d3ee', fontSize: 11, fontWeight: 850, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
                             }}
                           >
-                            <Send size={12} /> Відправлено поштою
+                            <Send size={12} /> В дорозі
                           </button>
                         )}
 
@@ -1305,7 +1325,7 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
                               color: '#22c55e', fontSize: 11, fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, marginLeft: 'auto'
                             }}
                           >
-                            <CheckCircle2 size={13} /> Отримано / Виконано ✅
+                            <CheckCircle2 size={13} /> Виконано ✅
                           </button>
                         )}
 
@@ -1326,7 +1346,6 @@ export default function ShippingCabinet({ orders, setOrders, showToast, isMobile
       <AnimatePresence>
         {editingOrder && (
           <div
-            onClick={() => setEditingOrder(null)}
             style={{
               position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 1100,
               display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center',
