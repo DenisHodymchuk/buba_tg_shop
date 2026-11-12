@@ -2662,7 +2662,7 @@ export default function AdminPanel() {
           ) : activeTab === 'sales_stats' ? (
             <SalesStatsDashboard supabase={supabase} showToast={showToast} isMobile={isMobile} />
           ) : activeTab === 'inventory' ? (
-            <InventoryDashboard showToast={showToast} />
+            <InventoryDashboard showToast={showToast} isMobile={isMobile} />
           ) : activeTab === 'dropshipping' ? (
             <DropshippingAdmin showToast={showToast} storeProducts={products} />
           ) : activeTab === 'reviews' ? (
@@ -2828,12 +2828,8 @@ export default function AdminPanel() {
               <LampStudio />
             </div>
           ) : activeTab === 'calculator' ? (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="dusk-glass" style={{ padding: isMobile ? 14 : 20 }}>
-                <h1 className="dusk-heading" style={{ fontSize: isMobile ? 20 : 22 }}>Калькулятор собівартості</h1>
-                <p className="dusk-subheading" style={{ marginTop: 2 }}>Розрахунок витрат на 3D-друк з урахуванням пластику, амортизації та електроенергії</p>
-              </div>
-              <CalculatorComp />
+            <div style={{ width: '100%' }}>
+              <CalculatorComp isMobile={isMobile} />
             </div>
           ) : activeTab === 'marketing' ? (
             <div style={{ width: '100%' }}>

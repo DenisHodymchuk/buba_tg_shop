@@ -25,14 +25,15 @@ const QUICK_MATERIAL_TEMPLATES = [
   { name: 'Пластик PLA Базовий (котушка 1 кг)', category: 'filament', unit: 'шт.', min_quantity: 3, cost_unit: 580 }
 ];
 
-export default function InventoryDashboard({ showToast }) {
+export default function InventoryDashboard({ showToast, isMobile: isMobileProp }) {
   const [items, setItems] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all'); // 'all' | category id | 'low_stock'
   const [viewTab, setViewTab] = useState('stock'); // 'stock' | 'history'
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileState, setIsMobileState] = useState(false);
+  const isMobile = isMobileProp !== undefined ? isMobileProp : isMobileState;
 
   // Add / Edit Material Modal
   const [showMaterialModal, setShowMaterialModal] = useState(false);
@@ -60,7 +61,7 @@ export default function InventoryDashboard({ showToast }) {
   });
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobileState(window.innerWidth < 768);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -334,21 +335,48 @@ export default function InventoryDashboard({ showToast }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 16, width: '100%' }}>
       {/* Dusk Glass Header & Command Bar */}
-      <div className="dusk-glass" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
-          <div>
-            <h1 className="dusk-heading" style={{ fontSize: isMobile ? 20 : 22 }}>
-              Склад матеріалів та пакування
-            </h1>
-            <p className="dusk-subheading" style={{ marginTop: 2 }}>
-              Прийом коробок, цукерок, пластику й фурнітури та автоматичне списання у продажах
-            </p>
+      <div className="dusk-glass" style={{ padding: isMobile ? '10px 12px' : 20, display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 16 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <div>
+              <h1 className="dusk-heading" style={{ fontSize: isMobile ? 16 : 22, margin: 0 }}>
+                {isMobile ? 'Склад матеріалів' : 'Склад матеріалів та пакування'}
+              </h1>
+              {!isMobile && (
+                <p className="dusk-subheading" style={{ marginTop: 2 }}>
+                  Прийом коробок, цукерок, пластику й фурнітури та автоматичне списання у продажах
+                </p>
+              )}
+            </div>
+
+            {isMobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <button
+                  type="button"
+                  onClick={fetchWarehouse}
+                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                  style={{ height: 30, width: 30, padding: 0, justifyContent: 'center' }}
+                  title="Оновити склад"
+                >
+                  <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+                </button>
+                <button
+                  type="button"
+                  onClick={openCreateModal}
+                  className="dusk-btn dusk-btn--primary dusk-btn--sm"
+                  style={{ height: 30, padding: '0 10px', fontSize: 12 }}
+                >
+                  <Plus size={14} />
+                  <span>Додати</span>
+                </button>
+              </div>
+            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', minWidth: isMobile ? '100%' : 240 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', width: isMobile ? '100%' : 'auto' }}>
+            <div style={{ position: 'relative', flex: isMobile ? '1 1 100%' : '0 0 auto', minWidth: isMobile ? 0 : 240 }}>
               <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
               <input
                 type="text"
@@ -356,7 +384,7 @@ export default function InventoryDashboard({ showToast }) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="dusk-input"
-                style={{ paddingLeft: 32, paddingRight: searchQuery ? 28 : 12, height: 34, fontSize: 12.5, borderRadius: 999 }}
+                style={{ width: '100%', paddingLeft: 32, paddingRight: searchQuery ? 28 : 12, height: isMobile ? 32 : 34, fontSize: 12.5, borderRadius: 999 }}
               />
               {searchQuery && (
                 <button
@@ -369,25 +397,29 @@ export default function InventoryDashboard({ showToast }) {
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={fetchWarehouse}
-              className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-              style={{ height: 34, padding: '0 10px' }}
-              title="Оновити склад"
-            >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            </button>
+            {!isMobile && (
+              <>
+                <button
+                  type="button"
+                  onClick={fetchWarehouse}
+                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                  style={{ height: 34, padding: '0 10px' }}
+                  title="Оновити склад"
+                >
+                  <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                </button>
 
-            <button
-              type="button"
-              onClick={openCreateModal}
-              className="dusk-btn dusk-btn--primary"
-              style={{ height: 34 }}
-            >
-              <Plus size={15} />
-              <span>Прийняти новий матеріал</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={openCreateModal}
+                  className="dusk-btn dusk-btn--primary"
+                  style={{ height: 34 }}
+                >
+                  <Plus size={15} />
+                  <span>Прийняти новий матеріал</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -402,46 +434,56 @@ export default function InventoryDashboard({ showToast }) {
             borderRadius: 10
           }}
         >
-          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
-            <span className="dusk-tally__label">Позицій на складі</span>
-            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22 }}>
-              {stats.totalItems} <span className="dusk-currency">найм.</span>
+          <div className="dusk-tally__cell" style={{ padding: isMobile ? '7px 10px' : '12px 16px' }}>
+            <span className="dusk-tally__label" style={isMobile ? { fontSize: 10.5 } : undefined}>Позицій</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 15 : 22 }}>
+              {stats.totalItems} <span className="dusk-currency" style={isMobile ? { fontSize: 11 } : undefined}>найм. · {stats.totalUnits} од.</span>
             </div>
-            <span className="dusk-tally__sub">Загалом: {stats.totalUnits} од.</span>
+            {!isMobile && <span className="dusk-tally__sub">Загалом: {stats.totalUnits} од.</span>}
           </div>
 
-          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
-            <span className="dusk-tally__label">Вартість запасів</span>
-            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: 'var(--color-accent)' }}>
+          <div className="dusk-tally__cell" style={{ padding: isMobile ? '7px 10px' : '12px 16px' }}>
+            <span className="dusk-tally__label" style={isMobile ? { fontSize: 10.5 } : undefined}>Вартість запасів</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 15 : 22, color: 'var(--color-accent)' }}>
               {stats.totalStockValue.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
             </div>
-            <span className="dusk-tally__sub">За закупівельною собівартістю</span>
+            {!isMobile && <span className="dusk-tally__sub">За закупівельною собівартістю</span>}
           </div>
 
-          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
-            <span className="dusk-tally__label">Закінчуються</span>
-            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: stats.lowStockCount > 0 ? 'var(--color-accent-2)' : 'var(--color-ink)' }}>
+          <div className="dusk-tally__cell" style={{ padding: isMobile ? '7px 10px' : '12px 16px' }}>
+            <span className="dusk-tally__label" style={isMobile ? { fontSize: 10.5 } : undefined}>Закінчуються</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 15 : 22, color: stats.lowStockCount > 0 ? 'var(--color-accent-2)' : 'var(--color-ink)' }}>
               {stats.lowStockCount} <span className="dusk-currency">поз.</span>
             </div>
-            <span className="dusk-tally__sub">Нижче мінімального залишку</span>
+            {!isMobile && <span className="dusk-tally__sub">Нижче мінімального залишку</span>}
           </div>
 
-          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
-            <span className="dusk-tally__label">Списано у продажі</span>
-            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22 }}>
+          <div className="dusk-tally__cell" style={{ padding: isMobile ? '7px 10px' : '12px 16px' }}>
+            <span className="dusk-tally__label" style={isMobile ? { fontSize: 10.5 } : undefined}>Списано</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 15 : 22 }}>
               {stats.totalWrittenOffCost.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
             </div>
-            <span className="dusk-tally__sub">Усього списано: {stats.totalWrittenOffUnits} од.</span>
+            {!isMobile && <span className="dusk-tally__sub">Усього списано: {stats.totalWrittenOffUnits} од.</span>}
           </div>
         </div>
 
         {/* View Switcher + Category Pipeline Strip */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: isMobile ? 8 : 12, flexWrap: 'wrap' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            flexWrap: isMobile ? 'nowrap' : 'wrap',
+            overflowX: isMobile ? 'auto' : 'visible',
+            width: isMobile ? '100%' : 'auto',
+            paddingBottom: isMobile ? 2 : 0,
+            scrollbarWidth: 'none'
+          }}>
             <button
               type="button"
               onClick={() => setCategoryFilter('all')}
               className={`dusk-facet-pill ${categoryFilter === 'all' ? 'active' : ''}`}
+              style={isMobile ? { flexShrink: 0, padding: '4px 10px', fontSize: 11.5 } : undefined}
             >
               Усі ({items.length})
             </button>
@@ -453,6 +495,7 @@ export default function InventoryDashboard({ showToast }) {
                   type="button"
                   onClick={() => setCategoryFilter(cat.id)}
                   className={`dusk-facet-pill ${categoryFilter === cat.id ? 'active' : ''}`}
+                  style={isMobile ? { flexShrink: 0, padding: '4px 10px', fontSize: 11.5 } : undefined}
                 >
                   <span>{cat.label.split(' (')[0]}</span>
                   <span className="dusk-num" style={{ opacity: 0.7 }}>{count}</span>
@@ -464,6 +507,7 @@ export default function InventoryDashboard({ showToast }) {
                 type="button"
                 onClick={() => setCategoryFilter('low_stock')}
                 className={`dusk-facet-pill ${categoryFilter === 'low_stock' ? 'active-apricot' : ''}`}
+                style={isMobile ? { flexShrink: 0, padding: '4px 10px', fontSize: 11.5 } : undefined}
               >
                 <span className="dusk-dot dusk-dot--apricot" style={{ width: 6, height: 6 }} />
                 <span>Закінчуються ({stats.lowStockCount})</span>
@@ -471,27 +515,58 @@ export default function InventoryDashboard({ showToast }) {
             )}
           </div>
 
-          <div className="dusk-segmented">
-            <button
-              type="button"
-              onClick={() => setViewTab('stock')}
-              className={`dusk-segmented__item ${viewTab === 'stock' ? 'active' : ''}`}
-            >
-              <Layers size={13} style={{ marginRight: 5 }} />
-              Запаси ({items.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewTab('history')}
-              className={`dusk-segmented__item ${viewTab === 'history' ? 'active' : ''}`}
-            >
-              <History size={13} style={{ marginRight: 5 }} />
-              Історія руху ({logs.length})
-            </button>
+          <div className="dusk-segmented" style={isMobile ? { width: '100%', display: 'flex' } : undefined}>
+            {[
+              { id: 'stock', label: `Запаси (${items.length})`, Icon: Layers },
+              { id: 'history', label: `Історія руху (${logs.length})`, Icon: History }
+            ].map(({ id, label, Icon }) => {
+              const isActive = viewTab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setViewTab(id)}
+                  className={`dusk-segmented__item ${isActive ? 'active' : ''}`}
+                  style={{
+                    position: 'relative',
+                    background: 'transparent',
+                    boxShadow: 'none',
+                    ...(isMobile ? { flex: 1, justifyContent: 'center', height: 30, fontSize: 12 } : {})
+                  }}
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="inventoryViewTabSlider"
+                      transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        borderRadius: 7,
+                        background: 'var(--color-paper-3)',
+                        boxShadow: 'inset 0 0 0 1px var(--color-accent-border)',
+                        zIndex: 0
+                      }}
+                    />
+                  )}
+                  <span style={{ position: 'relative', zIndex: 1, display: 'inline-flex', alignItems: 'center' }}>
+                    <Icon size={13} style={{ marginRight: 5 }} />
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
 
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={viewTab}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
       {/* ================= VIEW 1: WAREHOUSE STOCK ITEMS ================= */}
       {viewTab === 'stock' ? (
         <div className="dusk-panel" style={{ overflow: 'hidden' }}>
@@ -507,6 +582,142 @@ export default function InventoryDashboard({ showToast }) {
               <button type="button" onClick={openCreateModal} className="dusk-btn dusk-btn--primary dusk-btn--sm">
                 <Plus size={14} /> Додати матеріал
               </button>
+            </div>
+          ) : isMobile ? (
+            <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {filteredItems.map(item => {
+                const qty = Number(item.quantity) || 0;
+                const minQty = Number(item.min_quantity) || 0;
+                const isLow = qty <= minQty && qty > 0;
+                const isEmpty = qty <= 0;
+                const costUnit = Number(item.cost_unit) || 0;
+                const totalVal = Math.round(qty * costUnit);
+
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: 12,
+                      borderRadius: 12,
+                      background: 'var(--color-paper-2)',
+                      border: isEmpty
+                        ? '1px solid var(--color-danger-border)'
+                        : isLow
+                          ? '1px solid var(--color-accent-2-border)'
+                          : '1px solid var(--color-rule)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 10
+                    }}
+                  >
+                    {/* Header: Icon + Name + Qty */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <div style={{
+                          width: 34, height: 34, borderRadius: 9,
+                          background: isEmpty
+                            ? 'var(--color-danger-soft)'
+                            : isLow
+                              ? 'var(--color-accent-2-soft)'
+                              : 'var(--color-accent-soft)',
+                          border: isEmpty
+                            ? '1px solid var(--color-danger-border)'
+                            : isLow
+                              ? '1px solid var(--color-accent-2-border)'
+                              : '1px solid var(--color-accent-border)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: isEmpty ? 'var(--color-danger)' : isLow ? 'var(--color-accent-2)' : 'var(--color-accent)',
+                          flexShrink: 0
+                        }}>
+                          <Package size={16} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', lineHeight: 1.3 }}>
+                            {item.name}
+                          </div>
+                          <div style={{ fontSize: 11.5, color: 'var(--color-muted)', marginTop: 2 }}>
+                            Мін. норма: {minQty} {item.unit || 'шт.'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div className="dusk-num" style={{
+                          fontSize: 17,
+                          fontWeight: 700,
+                          color: isEmpty ? 'var(--color-danger)' : isLow ? 'var(--color-accent-2)' : 'var(--color-ink)'
+                        }}>
+                          {qty} <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--color-muted)' }}>{item.unit || 'шт.'}</span>
+                        </div>
+                        {(isLow || isEmpty) && (
+                          <span className={`dusk-badge ${isEmpty ? 'dusk-badge--danger' : 'dusk-badge--apricot'}`} style={{ fontSize: 10, padding: '1px 7px', marginTop: 2 }}>
+                            {isEmpty ? 'Немає' : 'Мало'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Meta: Category + Quick Sale toggle */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingTop: 6, borderTop: '1px solid var(--color-rule)' }}>
+                      <span className="dusk-badge dusk-badge--neutral" style={{ fontSize: 10.5, padding: '2px 8px' }}>
+                        {getCategoryLabel(item.category).split(' (')[0]}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleQuickSale(item)}
+                        className={`dusk-facet-pill ${item.quick_sale !== false ? 'active' : ''}`}
+                        style={{ padding: '2px 8px', fontSize: 10.5 }}
+                      >
+                        <span className={`dusk-dot ${item.quick_sale !== false ? 'dusk-dot--periwinkle' : 'dusk-dot--muted'}`} style={{ width: 5, height: 5 }} />
+                        <span>{item.quick_sale !== false ? 'У продажах' : 'Приховано'}</span>
+                      </button>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenStockAction(item, 'in')}
+                        className="dusk-btn dusk-btn--primary dusk-btn--sm"
+                        style={{ flex: 1, height: 32, justifyContent: 'center', fontSize: 12 }}
+                      >
+                        <Plus size={13} />
+                        <span>Прийняти</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenStockAction(item, 'out')}
+                        className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                        style={{ flex: 1, height: 32, justifyContent: 'center', fontSize: 12 }}
+                      >
+                        <Minus size={13} />
+                        <span>Списати</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(item)}
+                        className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                        style={{ height: 32, width: 32, padding: 0, justifyContent: 'center' }}
+                        title="Редагувати"
+                      >
+                        <Edit3 size={13} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMaterial(item)}
+                        className="dusk-btn dusk-btn--danger dusk-btn--sm"
+                        style={{ height: 32, width: 32, padding: 0, justifyContent: 'center' }}
+                        title="Видалити"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -669,6 +880,60 @@ export default function InventoryDashboard({ showToast }) {
             <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
               Історія руху матеріалів порожня. Прийміть матеріали на склад або спишіть їх у замовленні.
             </div>
+          ) : isMobile ? (
+            <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {filteredLogs.map(log => {
+                const isIn = log.type === 'in' || log.type === 'sale_return';
+                return (
+                  <div
+                    key={log.id}
+                    style={{
+                      padding: 12,
+                      borderRadius: 12,
+                      background: 'var(--color-paper-2)',
+                      border: '1px solid var(--color-rule)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 6
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                      <span className={`dusk-badge ${isIn ? 'dusk-badge--periwinkle' : 'dusk-badge--apricot'}`} style={{ fontSize: 11, padding: '2px 8px' }}>
+                        {isIn ? <ArrowDownLeft size={11} /> : <ArrowUpRight size={11} />}
+                        <span>
+                          {log.type === 'in' ? 'Прихід' : log.type === 'sale_out' ? 'У продаж' : log.type === 'sale_return' ? 'Повернення' : 'Списання'}
+                        </span>
+                      </span>
+                      <span className="dusk-mono" style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                        {log.created_at ? new Date(log.created_at).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+                      <span style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--color-ink)' }}>
+                        {log.item_name}
+                      </span>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <span className="dusk-num" style={{ fontWeight: 700, fontSize: 14, color: isIn ? 'var(--color-accent)' : 'var(--color-accent-2)' }}>
+                          {isIn ? '+' : '−'}{log.quantity} <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>{log.unit || 'шт.'}</span>
+                        </span>
+                        {log.total_cost ? (
+                          <div className="dusk-num" style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                            {log.total_cost} ₴
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {log.note && (
+                      <div style={{ fontSize: 12, color: 'var(--color-ink-2)', paddingTop: 4, borderTop: '1px solid var(--color-rule)' }}>
+                        {log.note}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table className="dusk-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -719,6 +984,8 @@ export default function InventoryDashboard({ showToast }) {
           )}
         </div>
       )}
+        </motion.div>
+      </AnimatePresence>
 
       {/* ================= MODAL 1: RECEIVE (+Прийняти) OR WRITE-OFF (-Списати) ================= */}
       <AnimatePresence>

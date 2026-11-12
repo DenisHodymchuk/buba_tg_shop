@@ -118,7 +118,7 @@ const getColorStyle = (colorName) => {
   return { background: `hsl(${hue}, 70%, 45%)` };
 };
 
-export default function Calculator() {
+export default function Calculator({ isMobile: isMobileProp }) {
   const [calculations, setCalculations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -139,7 +139,9 @@ export default function Calculator() {
   const [editingMaterialId, setEditingMaterialId] = useState(null);
   const [notification, setNotification] = useState(null);
   const [catalogs, setCatalogs] = useState({ manufacturers: [], types: [], colors: [] });
-  const [isMobile, setIsMobile] = useState(false);
+  const [mobileTab, setMobileTab] = useState('params');
+  const [isMobileState, setIsMobileState] = useState(false);
+  const isMobile = isMobileProp !== undefined ? isMobileProp : isMobileState;
   const [deleteConfirmMaterial, setDeleteConfirmMaterial] = useState(null);
   const [printersList, setPrintersList] = useState([]);
   const [showAddPrinterForm, setShowAddPrinterForm] = useState(false);
@@ -203,7 +205,7 @@ export default function Calculator() {
   }, [filteredMaterials, showAllMaterials]);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobileState(window.innerWidth < 768);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -624,443 +626,523 @@ export default function Calculator() {
   );
 
   return (
-    <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', width: '100%' }}>
-      {/* LEFT: CALCULATION FORM */}
-      <div style={{ flex: '1 1 600px', minWidth: 0 }}>
-        <div style={{ 
-          background: 'var(--bg-card)', borderRadius: 32, border: '1px solid var(--border)',
-          padding: 32, backdropFilter: 'blur(10px)', boxSizing: 'border-box', width: '100%'
-        }}>
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 16, marginBottom: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ 
-                width: 48, height: 48, borderRadius: 16, background: 'var(--color-accent-soft)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)'
-              }}>
-                <CalcIcon size={24} />
-              </div>
-              <div>
-                <h2 style={{ fontSize: 24, fontWeight: 950, color: 'var(--text-main)', margin: 0 }}>Smart Calc 3.0</h2>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Точний розрахунок собівартості</p>
-              </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 20, width: '100%' }}>
+      {/* ================= UNIFIED DUSK COMMAND HEADER ================= */}
+      <div className="dusk-glass" style={{ padding: isMobile ? '12px 14px' : '16px 20px', display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: isMobile ? 36 : 42,
+              height: isMobile ? 36 : 42,
+              borderRadius: 12,
+              background: 'var(--color-accent-soft)',
+              border: '1px solid var(--color-accent-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-accent)',
+              flexShrink: 0
+            }}>
+              <CalcIcon size={isMobile ? 18 : 20} />
             </div>
-            
-            <div style={{ display: 'flex', gap: 12, width: isMobile ? '100%' : 'auto' }}>
-              <button 
-                onClick={resetForm}
-                style={{ 
-                  flex: isMobile ? 1 : 'none',
-                  padding: '12px 20px', borderRadius: 14, border: '1px solid var(--border)',
-                  background: 'transparent', color: 'var(--text-muted)',
-                  fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-                }}
-              >
-                <Plus size={18} /> НОВИЙ
-              </button>
-              <button 
-                onClick={handleSave}
-                disabled={saving}
-                style={{ 
-                  flex: isMobile ? 1 : 'none',
-                  padding: '12px 24px', borderRadius: 14, border: 'none',
-                  background: 'var(--color-accent)', color: 'var(--text-main)',
-                  fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  boxShadow: '0 8px 16px var(--color-accent-soft)', opacity: saving ? 0.7 : 1
-                }}
-              >
-                {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                {formData.id ? 'ОНОВИТИ' : 'ЗБЕРЕГТИ'}
-              </button>
-            </div>
-          </div>
-
-          {/* Image Upload Section */}
-          <div style={{ marginBottom: 24, padding: 20, background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px solid var(--border)' }}>
-            <label style={{ display: 'block', fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 12 }}>Фото виробу</label>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-              {formData.image_url ? (
-                <div style={{ position: 'relative', width: 120, height: 120, borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border)' }}>
-                  <img src={formData.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <button 
-                    onClick={() => setFormData({...formData, image_url: ''})}
-                    style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: '50%', background: 'var(--color-danger-soft)', border: 'none', color: '#fff', cursor: 'pointer' }}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ) : (
-                <label style={{ 
-                  width: 120, height: 120, borderRadius: 16, border: '2px dashed var(--border)', 
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-                  cursor: 'pointer', gap: 8, color: 'var(--text-muted)', transition: 'all 0.2s'
-                }}>
-                  <Upload size={24} />
-                  <span style={{ fontSize: 10, fontWeight: 800 }}>ДОДАТИ ФОТО</span>
-                  <input type="file" hidden accept="image/*" onChange={async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    try {
-                      const fileExt = file.name.split('.').pop();
-                      const fileName = `calc-${Math.random()}.${fileExt}`;
-                      const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
-                      if (uploadError) throw uploadError;
-                      const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
-                      setFormData({...formData, image_url: publicUrl});
-                      showToast('Фото завантажено!');
-                    } catch (err) {
-                      showToast('Помилка завантаження: ' + err.message, 'error');
-                    }
-                  }} />
-                </label>
+            <div>
+              <h1 className="dusk-heading" style={{ fontSize: isMobile ? 17 : 21, margin: 0 }}>
+                Калькулятор друку
+              </h1>
+              {!isMobile && (
+                <p className="dusk-subheading" style={{ marginTop: 2 }}>
+                  Розрахунок собівартості 3D-друку: пластик, амортизація, електроенергія та маржа
+                </p>
               )}
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Це фото буде бачити клієнт на сторінці пропозиції та в замовленні. Використовуйте якісне фото готового виробу або 3D-моделі.</p>
-              </div>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
-            {/* Model Info */}
-            <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Назва розрахунку</label>
-                <input 
-                  type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                  style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Назва моделі</label>
-                <input 
-                  type="text" value={formData.model_name} onChange={e => setFormData({...formData, model_name: e.target.value})}
-                  placeholder="напр. Dragon_Articulated_v2"
-                  style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
-                />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+              style={{ height: isMobile ? 32 : 34, padding: isMobile ? '0 10px' : '0 14px', fontSize: 12 }}
+            >
+              <Plus size={14} />
+              <span>Новий</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="dusk-btn dusk-btn--primary dusk-btn--sm"
+              style={{ height: isMobile ? 32 : 34, padding: isMobile ? '0 12px' : '0 16px', fontSize: 12, opacity: saving ? 0.7 : 1 }}
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              <span>{formData.id ? 'Оновити' : 'Зберегти'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Live Summary Strip + Segmented Tabs */}
+        {isMobile && (
+          <>
+            <div
+              onClick={() => setMobileTab('result')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                padding: '8px 12px',
+                borderRadius: 10,
+                background: 'var(--color-paper-2)',
+                border: '1px solid var(--color-rule)',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <div>
+                  <div style={{ fontSize: 10, color: 'var(--color-muted)', textTransform: 'uppercase' }}>Собівартість</div>
+                  <div className="dusk-num" style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-accent)' }}>{results.prime} ₴</div>
+                </div>
+                <span className="dusk-badge dusk-badge--neutral dusk-num" style={{ fontSize: 11 }}>
+                  {results.totalWeight} г · {formData.time_h} год
+                </span>
               </div>
             </div>
 
-            {/* Core Stats */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Вага моделі (г)</label>
-              <div style={{ position: 'relative' }}>
-                <input 
-                  type="number" value={formData.weight_g} onChange={e => setFormData({...formData, weight_g: e.target.value})}
-                  style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
-                />
-                <Package size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <div className="dusk-segmented" style={{ width: '100%', display: 'flex' }}>
+              {[
+                { id: 'params', label: 'Параметри' },
+                { id: 'result', label: 'Результат' },
+                { id: 'saved', label: `Збережені (${calculations.length})` }
+              ].map(({ id, label }) => {
+                const isActive = mobileTab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setMobileTab(id)}
+                    className={`dusk-segmented__item ${isActive ? 'active' : ''}`}
+                    style={{ flex: 1, justifyContent: 'center', height: 30, fontSize: 12, position: 'relative', background: 'transparent', boxShadow: 'none' }}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="calcMobileTabSlider"
+                        transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: 7,
+                          background: 'var(--color-paper-3)',
+                          boxShadow: 'inset 0 0 0 1px var(--color-accent-border)',
+                          zIndex: 0
+                        }}
+                      />
+                    )}
+                    <span style={{ position: 'relative', zIndex: 1 }}>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ================= MAIN WORKSPACE GRID ================= */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1.45fr) minmax(350px, 1fr)',
+        gap: isMobile ? 12 : 20,
+        alignItems: 'start',
+        width: '100%'
+      }}>
+        {/* LEFT COLUMN: PARAMETERS */}
+        {(!isMobile || mobileTab === 'params') && (
+          <motion.div
+            key="calc-params"
+            initial={isMobile ? { opacity: 0, y: 6 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 16 }}
+          >
+            {/* CARD 1: PHOTO, MODEL & CORE STATS */}
+            <div className="dusk-panel" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+                {formData.image_url ? (
+                  <div style={{ position: 'relative', width: 72, height: 72, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--color-rule)', flexShrink: 0 }}>
+                    <img src={formData.image_url} alt="Фото виробу" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image_url: '' })}
+                      style={{
+                        position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%',
+                        background: 'var(--color-paper)', border: '1px solid var(--color-rule)',
+                        color: 'var(--color-danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                ) : (
+                  <label style={{
+                    width: 72, height: 72, borderRadius: 12, border: '1.5px dashed var(--color-rule)',
+                    background: 'var(--color-paper-2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', gap: 4, color: 'var(--color-muted)', flexShrink: 0, transition: 'border-color 120ms ease-out'
+                  }}>
+                    <Upload size={18} />
+                    <span style={{ fontSize: 9.5, fontWeight: 600 }}>ФОТО</span>
+                    <input type="file" hidden accept="image/*" onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      try {
+                        const fileExt = file.name.split('.').pop();
+                        const fileName = `calc-${Math.random()}.${fileExt}`;
+                        const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
+                        if (uploadError) throw uploadError;
+                        const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+                        setFormData({ ...formData, image_url: publicUrl });
+                        showToast('Фото завантажено!');
+                      } catch (err) {
+                        showToast('Помилка завантаження: ' + err.message, 'error');
+                      }
+                    }} />
+                  </label>
+                )}
+
+                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, minWidth: 0 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)' }}>Назва розрахунку</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                      className="dusk-input"
+                      style={{ height: 36, fontSize: 13 }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)' }}>Назва моделі</label>
+                    <input
+                      type="text"
+                      value={formData.model_name}
+                      onChange={e => setFormData({ ...formData, model_name: e.target.value })}
+                      placeholder="напр. Dragon_Articulated_v2"
+                      className="dusk-input"
+                      style={{ height: 36, fontSize: 13 }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)' }}>Вага моделі (г)</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="number"
+                      value={formData.weight_g}
+                      onChange={e => setFormData({ ...formData, weight_g: e.target.value })}
+                      className="dusk-input dusk-num"
+                      style={{ height: 38, paddingRight: 34, fontSize: 14, fontWeight: 600 }}
+                    />
+                    <Package size={15} style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)' }}>Час друку (год)</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="number"
+                      value={formData.time_h}
+                      onChange={e => setFormData({ ...formData, time_h: e.target.value })}
+                      className="dusk-input dusk-num"
+                      style={{ height: 38, paddingRight: 34, fontSize: 14, fontWeight: 600 }}
+                    />
+                    <Clock size={15} style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Час друку (год)</label>
-              <div style={{ position: 'relative' }}>
-                <input 
-                  type="number" value={formData.time_h} onChange={e => setFormData({...formData, time_h: e.target.value})}
-                  style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
-                />
-                <Clock size={16} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              </div>
-            </div>
-
-            {/* Material Presets */}
-            <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <label style={{ fontSize: 11, fontWeight: 950, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* CARD 2: MATERIAL LIBRARY */}
+            <div className="dusk-panel" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Sparkles size={14} /> Бібліотека матеріалів
                 </label>
-                <button 
+                <button
+                  type="button"
                   onClick={() => setShowMaterialForm(!showMaterialForm)}
-                  style={{ 
-                    background: showMaterialForm ? 'var(--color-danger-soft)' : 'var(--color-accent-soft)', 
-                    color: showMaterialForm ? 'var(--color-danger)' : 'var(--color-accent)', 
-                    border: showMaterialForm ? '1px solid var(--color-danger-soft)' : '1px solid var(--color-accent-soft)', 
-                    padding: '6px 14px', borderRadius: 10, fontSize: 11, fontWeight: 800, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s'
-                  }}
+                  className={`dusk-btn dusk-btn--sm ${showMaterialForm ? 'dusk-btn--danger' : 'dusk-btn--ghost'}`}
+                  style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
                 >
-                  <Plus size={14} style={{ transform: showMaterialForm ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s' }} />
-                  {showMaterialForm ? 'Сховати форму' : 'Додати новий'}
+                  <Plus size={13} style={{ transform: showMaterialForm ? 'rotate(45deg)' : 'none', transition: 'transform 150ms ease' }} />
+                  <span>{showMaterialForm ? 'Сховати' : 'Додати матеріал'}</span>
                 </button>
               </div>
 
-              {showMaterialForm && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                  style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 16, border: '1px solid var(--color-accent-border)', marginBottom: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12 }}
-                >
-                  <div style={{ gridColumn: '1/-1' }}>
-                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Назва (автоматично)</label>
-                    <input disabled value={newMaterial.name} style={{ width: '100%', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-muted)', fontSize: 12 }} />
-                  </div>
-                  <ModernSelect 
-                    label="Тип пластику"
-                    value={newMaterial.type}
-                    options={catalogs.types}
-                    onChange={(val) => setNewMaterial({...newMaterial, type: val})}
-                    onAdd={(val) => addToCatalog('m_plastic_types', val)}
-                  />
-                  <ModernSelect 
-                    label="Виробник"
-                    value={newMaterial.manufacturer}
-                    options={catalogs.manufacturers}
-                    onChange={(val) => setNewMaterial({...newMaterial, manufacturer: val})}
-                    onAdd={(val) => addToCatalog('m_manufacturers', val)}
-                  />
-                  <ModernSelect 
-                    label="Колір"
-                    value={newMaterial.color}
-                    options={catalogs.colors}
-                    onChange={(val) => setNewMaterial({...newMaterial, color: val})}
-                    onAdd={(val) => addToCatalog('m_colors', val)}
-                  />
-                  <div>
-                    <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна грн/кг</label>
-                    <input type="number" value={newMaterial.cost_per_kg} onChange={e => setNewMaterial({...newMaterial, cost_per_kg: e.target.value})} style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', fontSize: 12 }} />
-                  </div>
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-                    <button 
-                      onClick={async () => {
-                        try {
-                          await handleSaveToLibrary();
-                          showToast(editingMaterialId ? 'Матеріал оновлено!' : 'Матеріал збережено в бібліотеку!');
-                        } catch (err) {
-                          showToast('Помилка збереження!', 'error');
-                        }
-                      }} 
-                      style={{ 
-                        padding: '12px 24px', background: 'var(--color-accent)', 
-                        border: 'none', borderRadius: 100, color: '#fff', fontWeight: 900, fontSize: 12, 
-                        cursor: 'pointer', boxShadow: '0 10px 20px var(--color-accent-soft)',
-                        textTransform: 'uppercase', letterSpacing: '0.05em'
+              <AnimatePresence initial={false}>
+                {showMaterialForm && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div
+                      style={{
+                        background: 'var(--color-paper-2)',
+                        padding: 14,
+                        borderRadius: 12,
+                        border: '1px solid var(--color-accent-border)',
+                        display: 'grid',
+                        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
+                        gap: 10
                       }}
                     >
-                      {editingMaterialId ? 'Оновити в бібліотеці' : 'Зберегти в бібліотеку'}
-                    </button>
-                    {editingMaterialId && (
-                      <button 
-                        onClick={() => { setEditingMaterialId(null); setShowMaterialForm(false); setNewMaterial({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 }); }} 
-                        style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', padding: 8, fontSize: 11, cursor: 'pointer', fontWeight: 700 }}
-                      >
-                        СКАСУВАТИ РЕДАГУВАННЯ
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Search and Filters Panel */}
-              {materialsLibrary.length > 0 && (
-                <div style={{ 
-                  background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', 
-                  padding: 16, borderRadius: 20, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 14 
-                }}>
-                  {/* Text Search */}
-                  <div style={{ position: 'relative', width: '100%' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Шукати матеріал за назвою, виробником, типом..." 
-                      value={materialSearchQuery} 
-                      onChange={e => setMaterialSearchQuery(e.target.value)}
-                      style={{ 
-                        width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', 
-                        borderRadius: 12, padding: '10px 14px 10px 38px', color: 'var(--text-main)', 
-                        fontSize: 12, outline: 'none', boxSizing: 'border-box' 
-                      }}
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ fontSize: 10.5, color: 'var(--color-muted)', marginBottom: 4, display: 'block' }}>Назва (автоматично)</label>
+                      <input disabled value={newMaterial.name} className="dusk-input" style={{ height: 34, fontSize: 12, opacity: 0.7 }} />
+                    </div>
+                    <ModernSelect
+                      label="Тип пластику"
+                      value={newMaterial.type}
+                      options={catalogs.types}
+                      onChange={(val) => setNewMaterial({ ...newMaterial, type: val })}
+                      onAdd={(val) => addToCatalog('m_plastic_types', val)}
                     />
-                    <Search size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <ModernSelect
+                      label="Виробник"
+                      value={newMaterial.manufacturer}
+                      options={catalogs.manufacturers}
+                      onChange={(val) => setNewMaterial({ ...newMaterial, manufacturer: val })}
+                      onAdd={(val) => addToCatalog('m_manufacturers', val)}
+                    />
+                    <ModernSelect
+                      label="Колір"
+                      value={newMaterial.color}
+                      options={catalogs.colors}
+                      onChange={(val) => setNewMaterial({ ...newMaterial, color: val })}
+                      onAdd={(val) => addToCatalog('m_colors', val)}
+                    />
+                    <div>
+                      <label style={{ fontSize: 10, color: 'var(--color-muted)', marginBottom: 4, display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>Ціна грн/кг</label>
+                      <input
+                        type="number"
+                        value={newMaterial.cost_per_kg}
+                        onChange={e => setNewMaterial({ ...newMaterial, cost_per_kg: e.target.value })}
+                        className="dusk-input dusk-num"
+                        style={{ height: 34, fontSize: 12 }}
+                      />
+                    </div>
+                    <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 8, marginTop: 4 }}>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await handleSaveToLibrary();
+                            showToast(editingMaterialId ? 'Матеріал оновлено!' : 'Матеріал збережено в бібліотеку!');
+                          } catch (err) {
+                            showToast('Помилка збереження!', 'error');
+                          }
+                        }}
+                        className="dusk-btn dusk-btn--primary dusk-btn--sm"
+                        style={{ flex: 1, height: 34, justifyContent: 'center' }}
+                      >
+                        {editingMaterialId ? 'Оновити в бібліотеці' : 'Зберегти в бібліотеку'}
+                      </button>
+                      {editingMaterialId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingMaterialId(null);
+                            setShowMaterialForm(false);
+                            setNewMaterial({ name: '', type: 'PLA', manufacturer: '', color: '', cost_per_kg: 750 });
+                          }}
+                          className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                          style={{ height: 34 }}
+                        >
+                          Скасувати
+                        </button>
+                      )}
+                    </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Search & Filters */}
+              {materialsLibrary.length > 0 && (
+                <div style={{
+                  background: 'var(--color-paper-2)',
+                  border: '1px solid var(--color-rule)',
+                  padding: isMobile ? 10 : 14,
+                  borderRadius: 12,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10
+                }}>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+                    <input
+                      type="text"
+                      placeholder="Пошук матеріалу за назвою, виробником, типом…"
+                      value={materialSearchQuery}
+                      onChange={e => setMaterialSearchQuery(e.target.value)}
+                      className="dusk-input"
+                      style={{ height: 34, paddingLeft: 32, paddingRight: materialSearchQuery ? 28 : 12, fontSize: 12.5, borderRadius: 999 }}
+                    />
                     {materialSearchQuery && (
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => setMaterialSearchQuery('')}
-                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2 }}
+                        style={{ position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 2 }}
                       >
                         <X size={12} />
                       </button>
                     )}
                   </div>
 
-                  {/* Type Filters */}
+                  {/* Type + Manufacturer Pills */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Тип пластику</span>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: isMobile ? 'nowrap' : 'wrap', overflowX: isMobile ? 'auto' : 'visible', scrollbarWidth: 'none' }}>
                       {availableTypes.map(type => {
                         const count = getTypeCount(type);
                         const isSelected = selectedTypeFilter === type;
                         return (
                           <button
                             key={type}
+                            type="button"
                             onClick={() => setSelectedTypeFilter(type)}
-                            style={{
-                              whiteSpace: 'nowrap',
-                              padding: '6px 12px',
-                              borderRadius: 10,
-                              fontSize: 11,
-                              fontWeight: 800,
-                              border: isSelected ? '1px solid var(--color-accent)' : '1px solid var(--border)',
-                              background: isSelected ? 'var(--color-accent-soft)' : 'rgba(0,0,0,0.1)',
-                              color: isSelected ? 'var(--color-accent)' : 'var(--text-muted)',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
+                            className={`dusk-facet-pill ${isSelected ? 'active' : ''}`}
+                            style={{ flexShrink: 0, padding: '4px 10px', fontSize: 11.5 }}
                           >
-                            {type === 'All' ? 'Всі типи' : type} <span style={{ opacity: 0.5, fontSize: 9, marginLeft: 2 }}>({count})</span>
+                            <span>{type === 'All' ? 'Всі типи' : type}</span>
+                            <span className="dusk-num" style={{ opacity: 0.7 }}>{count}</span>
                           </button>
                         );
                       })}
                     </div>
-                  </div>
 
-                  {/* Manufacturer Filters */}
-                  {availableManufacturers.length > 1 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Виробник</span>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {availableManufacturers.length > 1 && (
+                      <div style={{ display: 'flex', gap: 6, flexWrap: isMobile ? 'nowrap' : 'wrap', overflowX: isMobile ? 'auto' : 'visible', scrollbarWidth: 'none' }}>
                         {availableManufacturers.map(man => {
                           const count = getManufacturerCount(man);
                           const isSelected = selectedManufacturerFilter === man;
                           return (
                             <button
                               key={man}
+                              type="button"
                               onClick={() => setSelectedManufacturerFilter(man)}
-                              style={{
-                                whiteSpace: 'nowrap',
-                                padding: '6px 12px',
-                                borderRadius: 10,
-                                fontSize: 11,
-                                fontWeight: 800,
-                                border: isSelected ? '1px solid var(--color-accent)' : '1px solid var(--border)',
-                                background: isSelected ? 'var(--color-accent-soft)' : 'rgba(0,0,0,0.1)',
-                                color: isSelected ? 'var(--color-accent)' : 'var(--text-muted)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
+                              className={`dusk-facet-pill ${isSelected ? 'active' : ''}`}
+                              style={{ flexShrink: 0, padding: '4px 10px', fontSize: 11.5 }}
                             >
-                              {man === 'All' ? 'Всі виробники' : man} <span style={{ opacity: 0.5, fontSize: 9, marginLeft: 2 }}>({count})</span>
+                              <span>{man === 'All' ? 'Всі виробники' : man}</span>
+                              <span className="dusk-num" style={{ opacity: 0.7 }}>{count}</span>
                             </button>
                           );
                         })}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
-                  {/* Color Filters */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <span style={{ fontSize: 9, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Колір пластику</span>
-                    <div 
-                      style={{ 
-                        display: 'flex', 
-                        gap: 8, 
-                        flexWrap: showAllColors ? 'wrap' : 'nowrap', 
-                        overflowX: showAllColors ? 'visible' : 'auto', 
-                        padding: '8px 4px', 
-                        alignItems: 'center' 
-                      }} 
-                      className="hide-scrollbar"
-                    >
-                      {visibleColors.map(color => {
-                        const isSelected = selectedColorFilter === color;
-                        const isAll = color === 'All';
-                        const colorStyle = getColorStyle(isAll ? '' : color);
-                        
-                        return (
-                          <button
-                            key={color}
-                            onClick={() => setSelectedColorFilter(color)}
-                            title={isAll ? 'Всі кольори' : color}
-                            style={{
-                              position: 'relative',
-                              flexShrink: 0,
-                              width: 28,
-                              height: 28,
-                              borderRadius: '50%',
-                              cursor: 'pointer',
-                              padding: 0,
-                              transition: 'all 0.2s',
-                              ...colorStyle,
-                              border: isSelected 
-                                ? '2px solid var(--color-accent)' 
-                                : (colorStyle.border || '1px solid rgba(255,255,255,0.1)'),
-                              transform: isSelected ? 'scale(1.15)' : 'none',
-                              boxShadow: isSelected 
-                                ? '0 0 10px var(--color-accent-soft)' 
-                                : 'none',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                          >
-                            {isAll && (
-                              <span style={{ fontSize: 8, fontWeight: 900, color: '#fff', textTransform: 'uppercase' }}>Всі</span>
-                            )}
-                            {isSelected && !isAll && (
-                              <CheckCircle2 size={12} style={{ color: colorStyle.color || '#fff', filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.5))' }} />
-                            )}
-                          </button>
-                        );
-                      })}
-                      {availableColors.length > 7 && (
+                  {/* Color Swatches */}
+                  <div style={{ display: 'flex', gap: 8, flexWrap: showAllColors ? 'wrap' : 'nowrap', overflowX: showAllColors ? 'visible' : 'auto', padding: '4px 2px', alignItems: 'center', scrollbarWidth: 'none' }}>
+                    {visibleColors.map(color => {
+                      const isSelected = selectedColorFilter === color;
+                      const isAll = color === 'All';
+                      const colorStyle = getColorStyle(isAll ? '' : color);
+                      return (
                         <button
-                          onClick={() => setShowAllColors(!showAllColors)}
+                          key={color}
+                          type="button"
+                          onClick={() => setSelectedColorFilter(color)}
+                          title={isAll ? 'Всі кольори' : color}
                           style={{
+                            position: 'relative',
                             flexShrink: 0,
-                            padding: '4px 10px',
-                            borderRadius: 10,
-                            fontSize: 10,
-                            fontWeight: 900,
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            color: 'var(--color-accent)',
+                            width: 26,
+                            height: 26,
+                            borderRadius: '50%',
                             cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            height: 28,
+                            padding: 0,
+                            transition: 'transform 120ms ease-out, border-color 120ms ease-out',
+                            ...colorStyle,
+                            border: isSelected ? '2px solid var(--color-accent)' : (colorStyle.border || '1px solid var(--color-rule)'),
+                            transform: isSelected ? 'scale(1.14)' : 'none',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
                           }}
                         >
-                          {showAllColors ? 'Сховати' : `+ ще ${availableColors.length - 7}`}
+                          {isAll && <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--color-ink)' }}>Всі</span>}
+                          {isSelected && !isAll && (
+                            <CheckCircle2 size={12} style={{ color: colorStyle.color || '#fff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))' }} />
+                          )}
                         </button>
-                      )}
-                    </div>
+                      );
+                    })}
+                    {availableColors.length > 7 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllColors(!showAllColors)}
+                        className="dusk-facet-pill"
+                        style={{ flexShrink: 0, height: 26, padding: '0 9px', fontSize: 11 }}
+                      >
+                        {showAllColors ? 'Сховати' : `+${availableColors.length - 7}`}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Multi-select Summary Banner */}
               {selectedMaterialIds.length > 0 && (
-                <div style={{ 
+                <div style={{
                   background: 'var(--color-accent-soft)',
-                  border: '1px solid var(--color-accent-soft)',
-                  padding: 16, borderRadius: 20, marginBottom: 16,
-                  display: 'flex', flexDirection: 'column', gap: 10
+                  border: '1px solid var(--color-accent-border)',
+                  padding: 12,
+                  borderRadius: 12,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <CheckCircle2 size={14} style={{ color: 'oklch(76% 0.14 155)' }} /> Вибрано {selectedMaterialIds.length} {selectedMaterialIds.length === 1 ? 'матеріал' : selectedMaterialIds.length < 5 ? 'матеріали' : 'матеріалів'}
+                    <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CheckCircle2 size={14} /> Вибрано {selectedMaterialIds.length} {selectedMaterialIds.length === 1 ? 'матеріал' : selectedMaterialIds.length < 5 ? 'матеріали' : 'матеріалів'}
                     </span>
-                    <button 
+                    <button
+                      type="button"
                       onClick={() => {
                         setSelectedMaterialIds([]);
                         setFormData(f => ({ ...f, plastic_type: 'PLA', plastic_cost_roll: 750 }));
                       }}
-                      style={{ background: 'none', border: 'none', color: 'var(--color-danger)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-danger)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
                     >
-                      Скинути вибір
+                      Скинути
                     </button>
                   </div>
-                  
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {materialsLibrary.filter(mat => selectedMaterialIds.includes(mat.id)).map(mat => (
-                      <div 
-                        key={mat.id} 
-                        style={{ 
-                          background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)',
-                          padding: '6px 12px', borderRadius: 10, fontSize: 11, display: 'flex', alignItems: 'center', gap: 8 
+                      <div
+                        key={mat.id}
+                        style={{
+                          background: 'var(--color-paper)',
+                          border: '1px solid var(--color-rule)',
+                          padding: '4px 8px',
+                          borderRadius: 8,
+                          fontSize: 11,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6
                         }}
                       >
-                        <div style={{ width: 10, height: 10, borderRadius: '50%', ...getColorStyle(mat.color) }} />
-                        <span style={{ fontWeight: 700, color: '#fff' }}>{mat.name}</span>
-                        <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>({mat.cost_per_kg} ₴)</span>
-                        <button 
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', ...getColorStyle(mat.color) }} />
+                        <span style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{mat.name}</span>
+                        <span className="dusk-num" style={{ color: 'var(--color-muted)', fontSize: 10.5 }}>({mat.cost_per_kg} ₴)</span>
+                        <button
+                          type="button"
                           onClick={(e) => { e.stopPropagation(); selectFromLibrary(mat); }}
                           style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
                         >
@@ -1069,18 +1151,10 @@ export default function Calculator() {
                       </div>
                     ))}
                   </div>
-                  
-                  <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, fontSize: 12 }}>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)' }}>Розрахункова ціна (середня): </span>
-                      <strong style={{ color: 'oklch(76% 0.14 155)', fontSize: 13 }}>{formData.plastic_cost_roll} ₴/кг</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)' }}>Тип для калькулятора: </span>
-                      <strong style={{ color: 'var(--color-accent)' }}>{formData.plastic_type}</strong>
-                    </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, fontSize: 11.5, paddingTop: 6, borderTop: '1px solid var(--color-accent-border)' }}>
+                    <span>Середня ціна: <strong className="dusk-num" style={{ color: 'var(--color-ink)' }}>{formData.plastic_cost_roll} ₴/кг</strong></span>
+                    <span>Тип: <strong style={{ color: 'var(--color-accent)' }}>{formData.plastic_type}</strong></span>
                   </div>
                 </div>
               )}
@@ -1088,155 +1162,95 @@ export default function Calculator() {
               {/* Grid of Materials */}
               {materialsLibrary.length > 0 ? (
                 <>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(170px, 1fr))', 
-                    gap: 12, 
-                    marginBottom: 16 
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(170px, 1fr))',
+                    gap: 10
                   }}>
                     {visibleMaterials.map(m => {
                       const isSelected = selectedMaterialIds.includes(m.id);
                       const colorStyle = getColorStyle(m.color);
-                      
                       return (
-                        <div 
-                          key={m.id} 
+                        <div
+                          key={m.id}
                           onClick={() => selectFromLibrary(m)}
-                          style={{ 
-                            position: 'relative',
-                            padding: '16px 14px', 
-                            borderRadius: 20, 
-                            border: isSelected ? '1px solid var(--color-accent)' : '1px solid var(--border)',
-                            background: isSelected ? 'var(--color-accent-soft)' : 'rgba(255,255,255,0.02)',
-                            boxShadow: isSelected ? '0 0 15px var(--color-accent-soft)' : 'none',
-                            cursor: 'pointer', 
-                            textAlign: 'left', 
-                            transition: 'all 0.2s ease-in-out',
-                            display: 'flex', 
+                          style={{
+                            padding: 12,
+                            borderRadius: 12,
+                            border: isSelected ? '1px solid var(--color-accent-border)' : '1px solid var(--color-rule)',
+                            background: isSelected ? 'var(--color-accent-soft)' : 'var(--color-paper-2)',
+                            cursor: 'pointer',
+                            transition: 'border-color 140ms ease-out, background-color 140ms ease-out',
+                            display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'space-between',
-                            gap: 12,
-                            overflow: 'hidden'
+                            gap: 8
                           }}
                         >
-                          {/* Color swatch & Selection indicator */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div 
-                              style={{ 
-                                width: 22, 
-                                height: 22, 
-                                borderRadius: '50%', 
+                            <div
+                              style={{
+                                width: 18,
+                                height: 18,
+                                borderRadius: '50%',
                                 ...colorStyle,
-                                border: colorStyle.border || '1px solid rgba(255,255,255,0.15)',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                                border: colorStyle.border || '1px solid var(--color-rule)',
                                 visibility: selectedColorFilter === 'All' ? 'visible' : 'hidden'
                               }}
                               title={`Колір: ${m.color || 'Не вказано'}`}
                             />
-                            <div 
-                              style={{ 
-                                width: 18, 
-                                height: 18, 
-                                borderRadius: 6, 
-                                border: isSelected ? 'none' : '2px solid var(--border)',
-                                background: isSelected ? 'var(--color-accent)' : 'transparent',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.2s'
-                              }}
-                            >
-                              {isSelected && <CheckCircle2 size={12} style={{ color: '#fff' }} />}
+                            <div style={{
+                              width: 17,
+                              height: 17,
+                              borderRadius: 5,
+                              border: isSelected ? 'none' : '1.5px solid var(--color-rule)',
+                              background: isSelected ? 'var(--color-accent)' : 'transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              {isSelected && <CheckCircle2 size={11} style={{ color: 'var(--color-accent-ink)' }} />}
                             </div>
                           </div>
 
-                          {/* Core Metadata */}
                           <div>
-                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
-                              <span style={{ 
-                                fontSize: 9, 
-                                fontWeight: 900, 
-                                background: 'var(--color-accent-soft)', 
-                                color: 'var(--color-accent)', 
-                                padding: '2px 6px', 
-                                borderRadius: 6,
-                                textTransform: 'uppercase'
-                              }}>
+                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 4 }}>
+                              <span className="dusk-badge dusk-badge--periwinkle" style={{ fontSize: 9.5, padding: '1px 6px' }}>
                                 {m.type || 'PLA'}
                               </span>
                               {m.manufacturer && (
-                                <span style={{ 
-                                  fontSize: 9, 
-                                  fontWeight: 800, 
-                                  background: 'rgba(255,255,255,0.05)', 
-                                  color: 'var(--text-muted)', 
-                                  padding: '2px 6px', 
-                                  borderRadius: 6 
-                                }}>
+                                <span className="dusk-badge dusk-badge--neutral" style={{ fontSize: 9.5, padding: '1px 6px' }}>
                                   {m.manufacturer}
                                 </span>
                               )}
                             </div>
-
-                            <div style={{ 
-                              fontWeight: 800, 
-                              fontSize: 12, 
-                              color: '#fff', 
-                              lineHeight: 1.3,
-                              marginBottom: 4,
-                              wordBreak: 'break-word'
-                            }}>
+                            <div style={{ fontWeight: 600, fontSize: 12.5, color: 'var(--color-ink)', lineHeight: 1.3, wordBreak: 'break-word' }}>
                               {m.name}
                             </div>
                           </div>
 
-                          {/* Price & Actions */}
-                          <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center',
-                            marginTop: 4,
-                            borderTop: '1px solid rgba(255,255,255,0.03)',
-                            paddingTop: 8
-                          }}>
-                            <span style={{ fontWeight: 900, fontSize: 13, color: 'oklch(76% 0.14 155)' }}>
-                              {m.cost_per_kg} ₴<span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)' }}>/кг</span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 6, borderTop: '1px solid var(--color-rule)' }}>
+                            <span className="dusk-num" style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-accent)' }}>
+                              {m.cost_per_kg} <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-muted)' }}>₴/кг</span>
                             </span>
-                            
                             <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
-                              <button 
-                                onClick={(e) => startEditMaterial(m, e)} 
-                                title="Редагувати матеріал"
-                                style={{ 
-                                  background: 'rgba(255,255,255,0.05)', 
-                                  border: 'none', 
-                                  padding: 6, 
-                                  borderRadius: 8, 
-                                  color: 'var(--text-muted)', 
-                                  cursor: 'pointer', 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'center'
-                                }}
+                              <button
+                                type="button"
+                                onClick={(e) => startEditMaterial(m, e)}
+                                className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                                style={{ width: 24, height: 24, padding: 0, justifyContent: 'center' }}
+                                title="Редагувати"
                               >
-                                <Pencil size={12} />
+                                <Pencil size={11} />
                               </button>
-                              <button 
-                                onClick={(e) => requestDeleteMaterial(m, e)} 
-                                title="Видалити матеріал"
-                                style={{ 
-                                  background: 'var(--color-danger-soft)', 
-                                  border: 'none', 
-                                  padding: 6, 
-                                  borderRadius: 8, 
-                                  color: 'var(--color-danger-soft)', 
-                                  cursor: 'pointer', 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'center'
-                                }}
+                              <button
+                                type="button"
+                                onClick={(e) => requestDeleteMaterial(m, e)}
+                                className="dusk-btn dusk-btn--danger dusk-btn--sm"
+                                style={{ width: 24, height: 24, padding: 0, justifyContent: 'center' }}
+                                title="Видалити"
                               >
-                                <Trash2 size={12} />
+                                <Trash2 size={11} />
                               </button>
                             </div>
                           </div>
@@ -1245,15 +1259,15 @@ export default function Calculator() {
                     })}
 
                     {filteredMaterials.length === 0 && (
-                      <div style={{ 
-                        gridColumn: '1 / -1', 
-                        textAlign: 'center', 
-                        padding: '40px 20px', 
-                        color: 'var(--text-muted)', 
-                        fontSize: 12,
-                        background: 'rgba(255,255,255,0.01)',
-                        border: '1px dashed var(--border)',
-                        borderRadius: 20
+                      <div style={{
+                        gridColumn: '1 / -1',
+                        textAlign: 'center',
+                        padding: '24px 16px',
+                        color: 'var(--color-muted)',
+                        fontSize: 12.5,
+                        background: 'var(--color-paper-2)',
+                        border: '1px dashed var(--color-rule)',
+                        borderRadius: 12
                       }}>
                         Матеріалів не знайдено за поточними фільтрами
                       </div>
@@ -1261,25 +1275,12 @@ export default function Calculator() {
                   </div>
 
                   {filteredMaterials.length > 6 && (
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
                       <button
+                        type="button"
                         onClick={() => setShowAllMaterials(!showAllMaterials)}
-                        style={{
-                          background: 'var(--color-accent-soft)',
-                          color: 'var(--color-accent)',
-                          border: '1px solid var(--color-accent-soft)',
-                          padding: '8px 20px',
-                          borderRadius: 12,
-                          fontSize: 12,
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-accent-soft)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-accent-soft)'}
+                        className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                        style={{ height: 30, fontSize: 12 }}
                       >
                         {showAllMaterials ? 'Сховати список' : `Показати ще ${filteredMaterials.length - 6}`}
                       </button>
@@ -1287,23 +1288,15 @@ export default function Calculator() {
                   )}
                 </>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 20, background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--border)', borderRadius: 20, textAlign: 'center', marginBottom: 16 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ваша бібліотека порожня. Використовуйте стандартні пресети:</span>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, background: 'var(--color-paper-2)', border: '1px dashed var(--color-rule)', borderRadius: 12, textAlign: 'center' }}>
+                  <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>Бібліотека порожня. Швидкі пресети:</span>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
                     {PRESETS.materials.map(m => (
-                      <button 
-                        key={m.name} 
-                        onClick={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            plastic_type: m.name,
-                            plastic_cost_roll: m.cost
-                          }));
-                        }}
-                        style={{ 
-                          padding: '8px 14px', borderRadius: 10, border: '1px solid var(--border)',
-                          background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: 11, fontWeight: 800, cursor: 'pointer'
-                        }}
+                      <button
+                        key={m.name}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, plastic_type: m.name, plastic_cost_roll: m.cost }))}
+                        className="dusk-facet-pill"
                       >
                         {m.name} ({m.cost} ₴)
                       </button>
@@ -1312,543 +1305,533 @@ export default function Calculator() {
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Тип пластику</label>
-                  <input 
-                    type="text" value={formData.plastic_type} onChange={e => setFormData({...formData, plastic_type: e.target.value})}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 4 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)' }}>Тип пластику</label>
+                  <input
+                    type="text"
+                    value={formData.plastic_type}
+                    onChange={e => setFormData({ ...formData, plastic_type: e.target.value })}
                     placeholder="напр. PLA"
-                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
+                    className="dusk-input"
+                    style={{ height: 36, fontSize: 13 }}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ціна за кг</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)' }}>Ціна за кг</label>
                   <div style={{ position: 'relative' }}>
-                    <input 
-                      type="number" value={formData.plastic_cost_roll} onChange={e => setFormData({...formData, plastic_cost_roll: e.target.value})}
-                      style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, color: 'var(--text-main)', outline: 'none' }}
+                    <input
+                      type="number"
+                      value={formData.plastic_cost_roll}
+                      onChange={e => setFormData({ ...formData, plastic_cost_roll: e.target.value })}
+                      className="dusk-input dusk-num"
+                      style={{ height: 36, paddingRight: 42, fontSize: 13, fontWeight: 600 }}
                     />
-                    <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>₴/кг</span>
+                    <span style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)', fontSize: 11.5 }}>₴/кг</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Printer Presets */}
-            <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: 12, gap: 10 }}>
-                <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase' }}>Обладнання та енергія</label>
+            {/* CARD 3: PRINTERS & ENERGY */}
+            <div className="dusk-panel" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: 8 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Zap size={14} /> Обладнання та енергія
+                </label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                   {printersList.map(p => (
-                    <div 
-                      key={p.id || p.name} 
-                      style={{ 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        gap: 6,
-                        fontSize: 9, 
-                        padding: '4px 8px', 
-                        borderRadius: 6, 
-                        background: 'var(--color-accent-soft)',
-                        color: 'var(--color-accent)', 
-                        border: '1px solid var(--color-accent-soft)', 
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        userSelect: 'none'
-                      }}
+                    <div
+                      key={p.id || p.name}
                       onClick={() => applyPrinterPreset(p)}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--color-accent-soft)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'var(--color-accent-soft)';
-                      }}
+                      className="dusk-facet-pill"
+                      style={{ padding: '3px 9px', fontSize: 11, cursor: 'pointer' }}
                     >
                       <span>{p.name}</span>
                       <button
+                        type="button"
                         onClick={(e) => deletePrinter(p.id || p.name, e)}
                         title="Видалити принтер"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 2,
-                          margin: 0,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--color-danger)',
-                          opacity: 0.6,
-                          borderRadius: 3,
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                        onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', color: 'var(--color-danger)' }}
                       >
-                        <X size={8} />
+                        <X size={11} />
                       </button>
                     </div>
                   ))}
-                  
-                  {/* Add Printer Trigger */}
                   <button
+                    type="button"
                     onClick={() => setShowAddPrinterForm(!showAddPrinterForm)}
-                    title="Додати новий принтер"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 9, 
-                      padding: '4px 8px', 
-                      borderRadius: 6, 
-                      background: 'rgba(74,222,128,0.1)',
-                      color: 'oklch(76% 0.14 155)', 
-                      border: '1px solid rgba(74,222,128,0.2)', 
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      fontWeight: 800
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(74,222,128,0.2)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(74,222,128,0.1)'}
+                    className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                    style={{ height: 26, padding: '0 8px', fontSize: 11 }}
                   >
-                    <Plus size={8} style={{ marginRight: 2 }} /> ДОДАТИ
+                    <Plus size={12} /> Додати
                   </button>
                 </div>
               </div>
 
-              {/* Add Printer Form */}
-              {showAddPrinterForm && (
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px dashed var(--color-accent-soft)',
-                  padding: 14,
-                  borderRadius: 16,
-                  marginTop: 4,
-                  marginBottom: 12,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10
-                }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', textTransform: 'uppercase' }}>Нове обладнання</span>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr', gap: 10 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Назва принтера</span>
-                      <input 
-                        type="text" 
-                        placeholder="Наприклад, Bambu Lab A1" 
-                        value={newPrinterData.name} 
-                        onChange={e => setNewPrinterData({...newPrinterData, name: e.target.value})}
-                        style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 8, color: 'var(--text-main)', fontSize: 11, outline: 'none' }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Потужність (Вт)</span>
-                      <input 
-                        type="number" 
-                        placeholder="150" 
-                        value={newPrinterData.wattage} 
-                        onChange={e => setNewPrinterData({...newPrinterData, wattage: e.target.value})}
-                        style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 8, color: 'var(--text-main)', fontSize: 11, outline: 'none' }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Знос (₴/год)</span>
-                      <input 
-                        type="number" 
-                        placeholder="5" 
-                        value={newPrinterData.wear} 
-                        onChange={e => setNewPrinterData({...newPrinterData, wear: e.target.value})}
-                        style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 8, color: 'var(--text-main)', fontSize: 11, outline: 'none' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-                    <button
-                      onClick={() => setShowAddPrinterForm(false)}
+              <AnimatePresence initial={false}>
+                {showAddPrinterForm && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <div
                       style={{
-                        padding: '6px 12px', borderRadius: 8, background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)', color: 'var(--text-muted)',
-                        fontSize: 10, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
+                        background: 'var(--color-paper-2)',
+                        border: '1px dashed var(--color-accent-border)',
+                        padding: 12,
+                        borderRadius: 12,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
                     >
-                      СКАСУВАТИ
-                    </button>
-                    <button
-                      onClick={handleAddPrinter}
-                      style={{
-                        padding: '6px 14px', borderRadius: 8, background: 'var(--color-accent-soft)',
-                        border: '1px solid var(--color-accent-soft)', color: 'var(--color-accent)',
-                        fontSize: 10, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-accent-soft)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-accent-soft)'; }}
-                    >
-                      ЗБЕРЕГТИ
-                    </button>
-                  </div>
-                </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Потужність (Вт)</span>
-                  <input 
-                    type="number" value={formData.printer_wattage} onChange={e => setFormData({...formData, printer_wattage: e.target.value})}
-                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: 'var(--text-main)', outline: 'none' }}
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr', gap: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="Назва принтера (напр. Bambu Lab A1)"
+                        value={newPrinterData.name}
+                        onChange={e => setNewPrinterData({ ...newPrinterData, name: e.target.value })}
+                        className="dusk-input"
+                        style={{ height: 34, fontSize: 12 }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Потужність (Вт)"
+                        value={newPrinterData.wattage}
+                        onChange={e => setNewPrinterData({ ...newPrinterData, wattage: e.target.value })}
+                        className="dusk-input dusk-num"
+                        style={{ height: 34, fontSize: 12 }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Знос (₴/год)"
+                        value={newPrinterData.wear}
+                        onChange={e => setNewPrinterData({ ...newPrinterData, wear: e.target.value })}
+                        className="dusk-input dusk-num"
+                        style={{ height: 34, fontSize: 12 }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                      <button type="button" onClick={() => setShowAddPrinterForm(false)} className="dusk-btn dusk-btn--ghost dusk-btn--sm" style={{ height: 28 }}>
+                        Скасувати
+                      </button>
+                      <button type="button" onClick={handleAddPrinter} className="dusk-btn dusk-btn--primary dusk-btn--sm" style={{ height: 28 }}>
+                        Зберегти
+                      </button>
+                    </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Потужність (Вт)</label>
+                  <input
+                    type="number"
+                    value={formData.printer_wattage}
+                    onChange={e => setFormData({ ...formData, printer_wattage: e.target.value })}
+                    className="dusk-input dusk-num"
+                    style={{ height: 36, fontSize: 13 }}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Знос (₴/год)</span>
-                  <input 
-                    type="number" value={formData.wear_cost_h} onChange={e => setFormData({...formData, wear_cost_h: e.target.value})}
-                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: 'var(--text-main)', outline: 'none' }}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Знос (₴/год)</label>
+                  <input
+                    type="number"
+                    value={formData.wear_cost_h}
+                    onChange={e => setFormData({ ...formData, wear_cost_h: e.target.value })}
+                    className="dusk-input dusk-num"
+                    style={{ height: 36, fontSize: 13 }}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Тариф (₴/кВт)</span>
-                  <input 
-                    type="number" value={formData.electricity_cost_kwh} onChange={e => setFormData({...formData, electricity_cost_kwh: e.target.value})}
-                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: 'var(--text-main)', outline: 'none' }}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Тариф (₴/кВт)</label>
+                  <input
+                    type="number"
+                    value={formData.electricity_cost_kwh}
+                    onChange={e => setFormData({ ...formData, electricity_cost_kwh: e.target.value })}
+                    className="dusk-input dusk-num"
+                    style={{ height: 36, fontSize: 13 }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* AMS Section */}
-            <div style={{ background: 'var(--color-accent-2-soft)', borderRadius: 20, padding: 20, border: '1px solid var(--color-accent-2-soft)' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: 'var(--color-accent-2)', textTransform: 'uppercase', marginBottom: 16 }}>
-                <Layers size={14} /> AMS / Multi-color
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: '#6b6b8a' }}>Замін кольору</span>
-                  <input 
-                    type="number" value={formData.ams_swaps} onChange={e => setFormData({...formData, ams_swaps: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', outline: 'none' }}
+            {/* CARD 4: AMS, MARGINS, LABOR & EXTRAS */}
+            <div className="dusk-panel" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
+                <div style={{ background: 'var(--color-accent-2-soft)', border: '1px solid var(--color-accent-2-border)', borderRadius: 12, padding: 12 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: 'var(--color-accent-2)', marginBottom: 10 }}>
+                    <Layers size={13} /> AMS / Multi-color
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Замін кольору</span>
+                      <input
+                        type="number"
+                        value={formData.ams_swaps}
+                        onChange={e => setFormData({ ...formData, ams_swaps: e.target.value })}
+                        className="dusk-input dusk-num"
+                        style={{ height: 34, fontSize: 13 }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Purge (г/заміна)</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData.purge_g}
+                        onChange={e => setFormData({ ...formData, purge_g: e.target.value })}
+                        className="dusk-input dusk-num"
+                        style={{ height: 34, fontSize: 13 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ background: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-border)', borderRadius: 12, padding: 12 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: 'var(--color-accent)', marginBottom: 10 }}>
+                    <TrendingUp size={13} /> Рентабельність
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Брак (%)</span>
+                      <input
+                        type="number"
+                        value={formData.failure_margin}
+                        onChange={e => setFormData({ ...formData, failure_margin: e.target.value })}
+                        className="dusk-input dusk-num"
+                        style={{ height: 34, fontSize: 13 }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Прибуток (%)</span>
+                      <input
+                        type="number"
+                        value={formData.profit_margin}
+                        onChange={e => setFormData({ ...formData, profit_margin: e.target.value })}
+                        className="dusk-input dusk-num"
+                        style={{ height: 34, fontSize: 13 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Робота (₴)</label>
+                  <input
+                    type="number"
+                    value={formData.labor_cost}
+                    onChange={e => setFormData({ ...formData, labor_cost: e.target.value })}
+                    className="dusk-input dusk-num"
+                    style={{ height: 36, fontSize: 13, fontWeight: 600 }}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: '#6b6b8a' }}>Purge (г/заміна)</span>
-                  <input 
-                    type="number" step="0.1" value={formData.purge_g} onChange={e => setFormData({...formData, purge_g: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', outline: 'none' }}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Дод. витрати (₴)</label>
+                  <input
+                    type="number"
+                    value={formData.additional_costs}
+                    onChange={e => setFormData({ ...formData, additional_costs: e.target.value })}
+                    className="dusk-input dusk-num"
+                    style={{ height: 36, fontSize: 13, fontWeight: 600 }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 11, color: 'var(--color-accent-2)' }}>Знижка (%)</label>
+                  <input
+                    type="number"
+                    value={formData.discount}
+                    onChange={e => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                    className="dusk-input dusk-num"
+                    style={{
+                      height: 36,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: 'var(--color-accent-2)',
+                      background: 'var(--color-accent-2-soft)',
+                      borderColor: 'var(--color-accent-2-border)'
+                    }}
                   />
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
 
-            {/* Margin Section */}
-            <div style={{ background: 'rgba(34,197,94,0.05)', borderRadius: 20, padding: 20, border: '1px solid rgba(34,197,94,0.1)' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: 'oklch(76% 0.14 155)', textTransform: 'uppercase', marginBottom: 16 }}>
-                <TrendingUp size={14} /> Рентабельність
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: '#6b6b8a' }}>Брак (%)</span>
-                  <input 
-                    type="number" value={formData.failure_margin} onChange={e => setFormData({...formData, failure_margin: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', outline: 'none' }}
+        {/* RIGHT COLUMN: RESULTS (STICKY ON DESKTOP) & SAVED */}
+        {(!isMobile || mobileTab === 'result' || mobileTab === 'saved') && (
+          <div style={{
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: isMobile ? 12 : 16,
+            position: isMobile ? 'static' : 'sticky',
+            top: 16
+          }}>
+            {/* Results Card */}
+            {(!isMobile || mobileTab === 'result') && (
+              <motion.div
+                key="calc-result"
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className="dusk-panel"
+                style={{ padding: isMobile ? 16 : 22, display: 'flex', flexDirection: 'column', gap: 14 }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 className="dusk-heading" style={{ fontSize: 16, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Sparkles size={16} style={{ color: 'var(--color-accent-2)' }} /> Результат розрахунку
+                  </h3>
+                  <span className="dusk-badge dusk-badge--neutral dusk-num" style={{ fontSize: 11 }}>
+                    {results.totalWeight} г · {formData.time_h} год
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--color-muted)' }}>Пластик {formData.ams_swaps > 0 && `(+AMS)`}</span>
+                    <span className="dusk-num" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{results.plastic} ₴</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--color-muted)' }}>Електроенергія</span>
+                    <span className="dusk-num" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{results.electricity} ₴</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--color-muted)' }}>Амортизація</span>
+                    <span className="dusk-num" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{results.wear} ₴</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--color-muted)' }}>Ризики (брак)</span>
+                    <span className="dusk-num" style={{ color: 'var(--color-danger)', fontWeight: 600 }}>+ {results.failure} ₴</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--color-muted)' }}>Дод. витрати</span>
+                    <span className="dusk-num" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>+ {results.extras} ₴</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--color-muted)' }}>Робота</span>
+                    <span className="dusk-num" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>+ {results.labor} ₴</span>
+                  </div>
+
+                  <div style={{ height: 1, background: 'var(--color-rule)', margin: '2px 0' }} />
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <ShieldCheck size={16} style={{ color: 'var(--color-accent)' }} />
+                      <span style={{ color: 'var(--color-ink)', fontWeight: 700, fontSize: 13 }}>СОБІВАРТІСТЬ</span>
+                    </div>
+                    <span className="dusk-num" style={{ color: 'var(--color-ink)', fontSize: 22, fontWeight: 700 }}>{results.prime} ₴</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Saved List */}
+            {(!isMobile || mobileTab === 'saved') && (
+              <motion.div
+                key="calc-saved"
+                initial={isMobile ? { opacity: 0, y: 6 } : false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className="dusk-panel"
+                style={{ padding: isMobile ? 14 : 18, display: 'flex', flexDirection: 'column', gap: 12 }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 className="dusk-heading" style={{ fontSize: 14, margin: 0 }}>
+                    Збережені ({calculations.length})
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={fetchCalculations}
+                    className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                    style={{ width: 28, height: 28, padding: 0, justifyContent: 'center' }}
+                    title="Оновити список"
+                  >
+                    <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+                  </button>
+                </div>
+
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <Search size={13} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+                  <input
+                    type="text"
+                    placeholder="Пошук розрахунків…"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="dusk-input"
+                    style={{ height: 34, paddingLeft: 32, fontSize: 12.5, borderRadius: 999 }}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 9, color: '#6b6b8a' }}>Прибуток (%)</span>
-                  <input 
-                    type="number" value={formData.profit_margin} onChange={e => setFormData({...formData, profit_margin: e.target.value})}
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, color: 'var(--text-main)', outline: 'none' }}
-                  />
-                </div>
-              </div>
-            </div>
 
-            {/* Labor, Extras & Discount Section */}
-            <div style={{ gridColumn: '1 / -1', background: 'var(--color-accent-soft)', borderRadius: 24, padding: 24, border: '1px solid var(--color-accent-soft)' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 20 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase' }}>Вартість роботи (грн)</label>
-                  <div style={{ position: 'relative' }}>
-                    <input 
-                      type="number" value={formData.labor_cost} onChange={e => setFormData({...formData, labor_cost: e.target.value})}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 14px', color: 'var(--text-main)', outline: 'none', fontSize: 13, fontWeight: 800 }}
-                    />
-                    <DollarSign size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent-soft)' }} />
-                  </div>
-                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: isMobile ? 'none' : 380, overflowY: isMobile ? 'visible' : 'auto' }} className="hide-scrollbar">
+                  <AnimatePresence>
+                    {filteredCalculations.map((calc) => (
+                      <motion.div
+                        key={calc.id}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                        style={{
+                          background: 'var(--color-paper-2)',
+                          padding: 12,
+                          borderRadius: 12,
+                          border: '1px solid var(--color-rule)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: 10
+                        }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {calc.name}
+                          </div>
+                          <div className="dusk-num" style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 2 }}>
+                            {calc.plastic_type} · {calc.weight_g}г · {calc.time_h}г
+                          </div>
+                        </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase' }}>Дод. витрати (пакет, брілок)</label>
-                  <div style={{ position: 'relative' }}>
-                    <input 
-                      type="number" value={formData.additional_costs} onChange={e => setFormData({...formData, additional_costs: e.target.value})}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 14px', color: 'var(--text-main)', outline: 'none', fontSize: 13, fontWeight: 800 }}
-                    />
-                    <Plus size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent-soft)' }} />
-                  </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                          <div className="dusk-num" style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-accent)', marginRight: 4 }}>
+                            {calc.suggested_price} ₴
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleShare(calc)}
+                            className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                            style={{ width: 28, height: 28, padding: 0, justifyContent: 'center' }}
+                            title="Поділитися з клієнтом"
+                          >
+                            <Share2 size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { startEditCalculation(calc); if (isMobile) setMobileTab('params'); }}
+                            className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                            style={{ width: 28, height: 28, padding: 0, justifyContent: 'center' }}
+                            title="Завантажити в калькулятор"
+                          >
+                            <CalcIcon size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(calc.id)}
+                            className="dusk-btn dusk-btn--danger dusk-btn--sm"
+                            style={{ width: 28, height: 28, padding: 0, justifyContent: 'center' }}
+                            title="Видалити"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                  {filteredCalculations.length === 0 && !loading && (
+                    <div style={{ textAlign: 'center', padding: 24, color: 'var(--color-muted)', fontSize: 12.5 }}>
+                      Нічого не знайдено
+                    </div>
+                  )}
+                  {loading && (
+                    <div style={{ textAlign: 'center', padding: 24 }}>
+                      <Loader2 size={22} className="animate-spin" style={{ color: 'var(--color-accent)', margin: '0 auto' }} />
+                    </div>
+                  )}
                 </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent-2)', textTransform: 'uppercase' }}>Знижка (%)</label>
-                  <div style={{ position: 'relative' }}>
-                    <input 
-                      type="number" value={formData.discount} onChange={e => setFormData({...formData, discount: parseFloat(e.target.value) || 0})}
-                      style={{ 
-                        width: '100%', background: 'var(--color-accent-2-soft)', border: '1px solid var(--color-accent-2-soft)', 
-                        borderRadius: 12, padding: '12px 14px', color: 'var(--color-accent-2)', outline: 'none', 
-                        fontSize: 13, fontWeight: 900, textAlign: 'center'
-                      }}
-                    />
-                    <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, fontWeight: 950 }}>%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+              </motion.div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* RIGHT: RESULTS & SAVED */}
-      <div style={{ flex: '1 1 400px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 32 }}>
-        {/* Results Card */}
-        <div style={{ 
-          background: 'var(--color-paper-2)', borderRadius: 32, padding: 32,
-          boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-          boxSizing: 'border-box', width: '100%'
-        }}>
-          <h3 style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-main)', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Sparkles size={20} style={{ color: '#f59e0b' }} /> Результат
-          </h3>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>Пластик {formData.ams_swaps > 0 && `(+AMS)`}</span>
-              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>{results.plastic} ₴</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>Електроенергія</span>
-              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>{results.electricity} ₴</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>Амортизація</span>
-              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>{results.wear} ₴</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>Ризики (брак)</span>
-              <span style={{ color: 'var(--color-danger)', fontWeight: 700 }}>+ {results.failure} ₴</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>Дод. витрати</span>
-              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>+ {results.extras} ₴</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>Робота</span>
-              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>+ {results.labor} ₴</span>
-            </div>
-
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '10px 0' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <ShieldCheck size={16} style={{ color: 'oklch(76% 0.14 155)' }} />
-                <span style={{ color: 'var(--text-main)', fontWeight: 900, fontSize: 14, letterSpacing: '0.05em' }}>СОБІВАРТІСТЬ</span>
-              </div>
-              <span style={{ color: 'oklch(76% 0.14 155)', fontSize: 24, fontWeight: 950 }}>{results.prime} ₴</span>
-            </div>
-
-
-            <div style={{ marginTop: 20, padding: 24, background: 'rgba(255,255,255,0.05)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: 8 }}>Рекомендована ціна</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontSize: 42, fontWeight: 950, color: 'var(--text-main)', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>{results.suggested}</span>
-                <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--color-accent)' }}>₴</span>
-              </div>
-              <p style={{ fontSize: 11, color: '#6b6b8a', margin: '12px 0 0 0', lineHeight: 1.5 }}>
-                Враховуючи роботу та {formData.profit_margin}% маржі.
-              </p>
-            </div>
-            
-            <button 
-              onClick={() => {
-                const text = `Собівартість: ${results.prime} ₴\nПластик: ${results.plastic} ₴ (${results.totalWeight}г)\nЧас: ${formData.time_h} год\nРекомендована ціна: ${results.suggested} ₴`;
-                navigator.clipboard.writeText(text);
-                showToast('Скопійовано для Admin Notes!');
-              }}
-              style={{ 
-                width: '100%', padding: 16, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
-                background: 'transparent', color: 'var(--text-main)', fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.2s'
-              }}
-            >
-              <Copy size={16} /> КОПІЮВАТИ В НОТАТКИ
-            </button>
-          </div>
-        </div>
-
-        {/* Saved List */}
-        <div style={{ background: 'rgba(255,255,255,0.01)', borderRadius: 32, padding: 24, border: '1px solid rgba(255,255,255,0.03)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h4 style={{ fontSize: 14, fontWeight: 900, color: '#fff', margin: 0 }}>Збережені ({calculations.length})</h4>
-            <button 
-              onClick={fetchCalculations}
-              style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: 8, borderRadius: 10, color: '#fff', cursor: 'pointer' }}
-            >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            </button>
-          </div>
-
-          <div style={{ position: 'relative', width: '100%', marginBottom: 20 }}>
-            <input 
-              type="text" placeholder="Пошук розрахунків..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 12px 10px 36px', color: 'var(--text-main)', fontSize: 12, outline: 'none', boxSizing: 'border-box' }}
-            />
-            <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 400, overflowY: 'auto' }} className="hide-scrollbar">
-            <AnimatePresence>
-              {filteredCalculations.map((calc) => (
-                <motion.div 
-                  key={calc.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
-                  style={{ 
-                    background: 'rgba(255,255,255,0.02)', padding: 16, borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{calc.name}</div>
-                    <div style={{ fontSize: 11, color: '#6b6b8a', marginTop: 4 }}>{calc.plastic_type} • {calc.weight_g}г • {calc.time_h}г</div>
-                  </div>
-                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 950, color: 'oklch(76% 0.14 155)' }}>{calc.suggested_price} ₴</div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ціна</div>
-                    </div>
-                    <button 
-                      onClick={() => handleShare(calc)}
-                      style={{ background: 'var(--color-accent-soft)', border: 'none', padding: 8, borderRadius: 10, color: 'var(--color-accent)', cursor: 'pointer' }}
-                      title="Поділитися з клієнтом"
-                    >
-                      <Share2 size={14} />
-                    </button>
-                    <button 
-                      onClick={() => startEditCalculation(calc)}
-                      style={{ background: 'var(--color-accent-soft)', border: 'none', padding: 8, borderRadius: 10, color: 'var(--color-accent)', cursor: 'pointer' }}
-                    >
-                      <CalcIcon size={14} />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(calc.id)}
-                      style={{ background: 'var(--color-danger-soft)', border: 'none', padding: 8, borderRadius: 10, color: 'var(--color-danger)', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            {filteredCalculations.length === 0 && !loading && (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 12 }}>
-                Нічого не знайдено
-              </div>
-            )}
-            {loading && (
-              <div style={{ textAlign: 'center', padding: 40 }}>
-                <Loader2 size={24} className="animate-spin" style={{ color: 'var(--color-accent)' }} />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
+      {/* TOAST NOTIFICATION */}
       <AnimatePresence>
         {notification && (
           <motion.div
-            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            initial={{ opacity: 0, y: 30, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: 20, x: '-50%' }}
             style={{
-              position: 'fixed', bottom: 40, left: '50%',
-              padding: '16px 24px', borderRadius: 20,
-              background: notification.type === 'error' ? 'var(--color-danger-soft)' : 'var(--color-accent-soft)',
-              color: '#fff', fontWeight: 800, fontSize: 14,
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-              backdropFilter: 'blur(10px)',
-              zIndex: 9999, display: 'flex', alignItems: 'center', gap: 12,
-              border: '1px solid rgba(255,255,255,0.1)'
+              position: 'fixed', bottom: 28, left: '50%',
+              padding: '12px 18px', borderRadius: 12,
+              background: notification.type === 'error' ? 'var(--color-danger-soft)' : 'var(--color-paper-3)',
+              color: notification.type === 'error' ? 'var(--color-danger)' : 'var(--color-ink)',
+              fontWeight: 600, fontSize: 13,
+              boxShadow: 'var(--shadow-card)',
+              backdropFilter: 'blur(12px)',
+              zIndex: 9999, display: 'flex', alignItems: 'center', gap: 10,
+              border: `1px solid ${notification.type === 'error' ? 'var(--color-danger-border)' : 'var(--color-accent-border)'}`
             }}
           >
-            {notification.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
+            {notification.type === 'error' ? <AlertCircle size={17} /> : <CheckCircle2 size={17} style={{ color: 'var(--color-accent)' }} />}
             {notification.message}
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* DELETE MATERIAL CONFIRM MODAL */}
       <AnimatePresence>
         {deleteConfirmMaterial && (
           <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(8px)',
+            position: 'fixed', inset: 0,
+            background: 'oklch(10% 0.015 268 / 0.80)', backdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             zIndex: 10000, padding: 16
           }} onClick={() => setDeleteConfirmMaterial(null)}>
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              transition={{ duration: 0.16, ease: 'easeOut' }}
+              className="dusk-panel"
               style={{
-                background: 'var(--color-paper-2)', border: '1px solid rgba(255, 255, 255, 0.08)',
-                padding: 28, borderRadius: 28, maxWidth: 400, width: '100%',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                display: 'flex', flexDirection: 'column', gap: 20
+                padding: 22, borderRadius: 16, maxWidth: 400, width: '100%',
+                display: 'flex', flexDirection: 'column', gap: 16
               }}
               onClick={(e) => e.stopPropagation()}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ 
-                  width: 42, height: 42, borderRadius: 12, background: 'var(--color-danger-soft)',
+                <div style={{
+                  width: 38, height: 38, borderRadius: 10, background: 'var(--color-danger-soft)',
+                  border: '1px solid var(--color-danger-border)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-danger)'
                 }}>
-                  <AlertCircle size={22} />
+                  <AlertCircle size={19} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 18, fontWeight: 900, color: '#fff', margin: 0 }}>Видалити матеріал?</h3>
-                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, textTransform: 'uppercase', fontWeight: 800 }}>Підтвердження дії</p>
+                  <h3 className="dusk-heading" style={{ fontSize: 16, margin: 0 }}>Видалити матеріал?</h3>
+                  <p style={{ fontSize: 11.5, color: 'var(--color-muted)', margin: '2px 0 0' }}>Підтвердження дії</p>
                 </div>
               </div>
 
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-                Ви впевнені, що хочете видалити матеріал <strong style={{ color: '#fff' }}>{deleteConfirmMaterial.name}</strong>? Це видалить його з вашої бібліотеки назавжди.
+              <div style={{ fontSize: 13, color: 'var(--color-ink-2)', lineHeight: 1.5 }}>
+                Ви впевнені, що хочете видалити матеріал <strong style={{ color: 'var(--color-ink)' }}>{deleteConfirmMaterial.name}</strong>? Це видалить його з бібліотеки назавжди.
               </div>
 
-              <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+              <div style={{ display: 'flex', gap: 10 }}>
                 <button
+                  type="button"
                   onClick={() => setDeleteConfirmMaterial(null)}
-                  style={{
-                    flex: 1, padding: '12px 18px', borderRadius: 14,
-                    background: 'rgba(255, 255, 255, 0.03)', color: 'var(--text-muted)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)', fontWeight: 800, fontSize: 13,
-                    cursor: 'pointer', transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; e.currentTarget.style.color = '#fff'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                  className="dusk-btn dusk-btn--ghost"
+                  style={{ flex: 1, justifyContent: 'center' }}
                 >
-                  СКАСУВАТИ
+                  Скасувати
                 </button>
                 <button
+                  type="button"
                   onClick={executeDeleteMaterial}
-                  style={{
-                    flex: 1, padding: '12px 18px', borderRadius: 14,
-                    background: 'linear-gradient(135deg, var(--color-danger), #dc2626)', color: '#fff',
-                    border: 'none', fontWeight: 800, fontSize: 13,
-                    cursor: 'pointer', transition: 'all 0.2s',
-                    boxShadow: '0 8px 16px var(--color-danger-soft)'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.1)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+                  className="dusk-btn dusk-btn--danger"
+                  style={{ flex: 1, justifyContent: 'center' }}
                 >
-                  ВИДАЛИТИ
+                  Видалити
                 </button>
               </div>
             </motion.div>

@@ -271,6 +271,24 @@ export default function OrderCalendar({
     return items[0]?.name || items[0]?.title || 'Замовлення';
   };
 
+  const getOrderItemsList = (order) => {
+    const items = Array.isArray(order.shipping_details?.items) ? order.shipping_details.items : [];
+    if (items.length === 0) return [{ name: 'Замовлення', qty: 1 }];
+    return items.map(it => ({
+      name: it?.name || it?.title || 'Фігурка',
+      qty: Number(it?.quantity) || 1
+    }));
+  };
+
+  const getMultiDayBadgeText = (order) => {
+    const total = order._spanTotalDays || 1;
+    if (total <= 1) return null;
+    const idx = order._spanDayIndex || 0;
+    if (idx === 0) return `1/${total}д →`;
+    if (idx === total - 1) return `← ${idx + 1}/${total}д`;
+    return `← ${idx + 1}/${total}д →`;
+  };
+
   const headerLabel = useMemo(() => {
     if (viewType === 'week' && calendarDays.length === 7) {
       return `${formatShortDateUa(calendarDays[0].key)} — ${formatShortDateUa(calendarDays[6].key)} · ${calendarDays[0].date.getFullYear()}`;
@@ -549,9 +567,9 @@ export default function OrderCalendar({
                             color: tone === 'full' ? 'var(--color-accent-2)' : 'var(--color-accent)',
                             border: `1px solid ${tone === 'full' ? 'var(--color-accent-2-border)' : 'var(--color-accent-border)'}`
                           }}
-                          title={`Активних замовлень: ${dayData.activeCount} із ${dailyCapacity}`}
+                          title={`Активних замовлень: ${dayData.activeCount} із ${dailyCapacity} · Фігурок: ${dayData.itemsCount} шт.`}
                         >
-                          {dayData.activeCount}/{dailyCapacity}
+                          {dayData.activeCount}/{dailyCapacity} · {dayData.itemsCount}шт
                         </span>
                       ) : (
                         !isPast && !isMobile && (
@@ -599,6 +617,11 @@ export default function OrderCalendar({
                         const isPriority = !!order.shipping_details?.is_priority;
                         const isOverdue = !isDone && isPast;
                         const itemsQty = getOrderItemsCount(order);
+                        const itemsList = getOrderItemsList(order);
+                        const isMultiDay = (order._spanTotalDays || 1) > 1;
+                        const multiDayBadge = getMultiDayBadgeText(order);
+                        const spanStartKey = order.shipping_details?.due_date || cell.key;
+                        const spanEndKey = isMultiDay ? addDaysToKey(spanStartKey, (order._spanTotalDays || 1) - 1) : spanStartKey;
 
                         return (
                           <div
@@ -613,15 +636,22 @@ export default function OrderCalendar({
                                 ? 'var(--color-accent-2-soft)'
                                 : isDone
                                   ? 'oklch(100% 0 0 / 0.02)'
-                                  : 'var(--color-paper)',
+                                  : isMultiDay
+                                    ? 'oklch(75% 0.08 265 / 0.07)'
+                                    : 'var(--color-paper)',
                               border: isOverdue
                                 ? '1px solid var(--color-accent-2-border)'
-                                : '1px solid var(--color-rule)',
+                                : isMultiDay
+                                  ? '1px solid var(--color-accent-border)'
+                                  : '1px solid var(--color-rule)',
+                              borderLeft: isMultiDay
+                                ? `3px solid ${isOverdue ? 'var(--color-accent-2)' : 'var(--color-accent)'}`
+                                : undefined,
                               cursor: 'grab',
                               opacity: isDone ? 0.55 : 1,
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: 2
+                              gap: 3
                             }}
                             title="Перетягніть на інший день або клікніть для редагування"
                           >
@@ -637,9 +667,21 @@ export default function OrderCalendar({
                               </span>
 
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-                                {order._spanTotalDays > 1 && (
-                                  <span className="dusk-num" style={{ fontSize: 9, fontWeight: 600, color: 'var(--color-accent)', background: 'var(--color-accent-soft)', padding: '0 4px', borderRadius: 4 }}>
-                                    {order._spanDayIndex + 1}/{order._spanTotalDays}д
+                                {multiDayBadge && (
+                                  <span
+                                    className="dusk-num"
+                                    style={{
+                                      fontSize: 9,
+                                      fontWeight: 600,
+                                      color: 'var(--color-accent)',
+                                      background: 'var(--color-accent-soft)',
+                                      border: '1px solid var(--color-accent-border)',
+                                      padding: '0 4px',
+                                      borderRadius: 4
+                                    }}
+                                    title={`Замовлення на ${order._spanTotalDays} дн.: ${formatShortDateUa(spanStartKey)} – ${formatShortDateUa(spanEndKey)}`}
+                                  >
+                                    {multiDayBadge}
                                   </span>
                                 )}
                                 <span className="dusk-num" style={{ fontSize: 10, color: 'var(--color-muted)' }}>
@@ -648,9 +690,36 @@ export default function OrderCalendar({
                               </span>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-                              <span style={{ fontSize: 10, color: 'var(--color-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {getFirstItemName(order)}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                              {itemsList.map((it, idx) => (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    fontSize: 10,
+                                    color: 'var(--color-muted)',
+                                    lineHeight: 1.25
+                                  }}
+                                  title={`${it.name} ×${it.qty}`}
+                                >
+                                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {itemsList.length > 1 ? `• ${it.name}` : it.name}
+                                  </span>
+                                  {(itemsList.length > 1 || it.qty > 1) && (
+                                    <span className="dusk-num" style={{ flexShrink: 0, fontSize: 9.5, color: 'var(--color-ink-2)' }}>
+                                      ×{it.qty}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                              <span className="dusk-num" style={{ fontSize: 9, color: isMultiDay ? 'var(--color-accent)' : 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {isMultiDay ? `${formatShortDateUa(spanStartKey)}–${formatShortDateUa(spanEndKey)}` : ''}
                               </span>
 
                               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
@@ -744,19 +813,39 @@ export default function OrderCalendar({
                   Цей день вільний
                 </div>
               ) : (
-                (workloadMap[selectedDayMobile]?.orders || []).map(order => (
-                  <div
-                    key={order.id}
-                    onClick={() => onEditOrder?.(order)}
-                    style={{
-                      padding: 10, borderRadius: 10, background: 'var(--color-paper-2)',
-                      border: '1px solid var(--color-rule)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>{getOrderDisplayTitle(order)}</div>
-                      <div style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>{getFirstItemName(order)} · ×{getOrderItemsCount(order)}</div>
-                    </div>
+                (workloadMap[selectedDayMobile]?.orders || []).map(order => {
+                  const itemsList = getOrderItemsList(order);
+                  const multiDayBadge = getMultiDayBadgeText(order);
+                  const isMultiDay = (order._spanTotalDays || 1) > 1;
+                  return (
+                    <div
+                      key={order.id}
+                      onClick={() => onEditOrder?.(order)}
+                      style={{
+                        padding: 10, borderRadius: 10,
+                        background: isMultiDay ? 'oklch(75% 0.08 265 / 0.07)' : 'var(--color-paper-2)',
+                        border: isMultiDay ? '1px solid var(--color-accent-border)' : '1px solid var(--color-rule)',
+                        borderLeft: isMultiDay ? '3px solid var(--color-accent)' : undefined,
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>{getOrderDisplayTitle(order)}</span>
+                          {multiDayBadge && (
+                            <span className="dusk-num" style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-accent)', background: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-border)', padding: '0 5px', borderRadius: 4 }}>
+                              {multiDayBadge}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 3 }}>
+                          {itemsList.map((it, idx) => (
+                            <div key={idx} style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                              {itemsList.length > 1 ? `• ${it.name}` : it.name} ×{it.qty}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
                       <button
                         type="button"
@@ -777,7 +866,8 @@ export default function OrderCalendar({
                       </button>
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
