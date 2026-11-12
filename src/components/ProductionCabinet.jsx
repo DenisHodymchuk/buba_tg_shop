@@ -25,6 +25,7 @@ export default function ProductionCabinet({ orders = [], setOrders, supabase, sh
   const [specFilter, setSpecFilter] = useState('all'); // 'all' | 'priority' | 'custom_colors' | 'pending_only'
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [openCommentKeys, setOpenCommentKeys] = useState({});
 
   const selectedOrder = useMemo(() => {
     if (!selectedOrderId) return null;
@@ -642,33 +643,38 @@ export default function ProductionCabinet({ orders = [], setOrders, supabase, sh
                 <AnimatePresence initial={false}>
                   {isExpanded && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.18 }}
+                      initial={isMobile ? { opacity: 0, y: -4 } : { opacity: 0, height: 0 }}
+                      animate={isMobile ? { opacity: 1, y: 0 } : { opacity: 1, height: 'auto' }}
+                      exit={isMobile ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                      transition={{ duration: 0.15 }}
                       style={{ overflow: 'hidden' }}
                     >
-                      <div style={{ borderTop: '1px solid var(--color-rule)', margin: '4px 0 10px 0' }} />
-                      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', marginBottom: 8 }}>
-                        Замовлення з цим виробом ({item.orders.length}) — клікніть на замовлення для перегляду деталей:
-                      </div>
+                      <div style={{ borderTop: '1px solid var(--color-rule)', margin: isMobile ? '2px 0 8px 0' : '4px 0 10px 0' }} />
+                      {!isMobile && (
+                        <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', marginBottom: 8 }}>
+                          Замовлення з цим виробом ({item.orders.length}) — клікніть на замовлення для перегляду деталей:
+                        </div>
+                      )}
                       
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 6 : 8 }}>
                         {item.orders.map((ord, idx) => {
                           const statusMeta = STATUS_META[ord.status] || STATUS_META.new;
+                          const hasComments = !!(ord.itemNote || ord.orderNotes);
+                          const commentKey = `${item.name}::${ord.orderId}::${ord.itemIdx}`;
+                          const isCommentOpen = !!openCommentKeys[commentKey];
                           return (
                             <div 
                               key={idx} 
                               style={{ 
                                 display: 'flex', flexDirection: 'column',
-                                background: 'var(--color-paper)', padding: '10px 14px', borderRadius: 10,
-                                fontSize: 12.5, gap: 8, border: '1px solid var(--color-rule)',
+                                background: 'var(--color-paper)', padding: isMobile ? '8px 10px' : '10px 14px', borderRadius: 10,
+                                fontSize: 12.5, gap: isMobile ? 6 : 8, border: '1px solid var(--color-rule)',
                                 opacity: ord.isManufactured ? 0.55 : 1,
                                 transition: 'opacity 0.16s ease, border-color 0.16s ease'
                               }}
                             >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 180 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
                                   <div 
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -692,15 +698,17 @@ export default function ProductionCabinet({ orders = [], setOrders, supabase, sh
                                     style={{
                                       display: 'inline-flex',
                                       alignItems: 'center',
-                                      gap: 8,
+                                      gap: isMobile ? 6 : 8,
                                       background: 'transparent',
                                       border: 'none',
-                                      padding: '2px 6px',
-                                      marginLeft: -6,
+                                      padding: '2px 4px',
+                                      marginLeft: -4,
                                       borderRadius: 6,
                                       cursor: 'pointer',
                                       color: 'var(--color-ink)',
                                       textAlign: 'left',
+                                      minWidth: 0,
+                                      flex: 1,
                                       transition: 'background-color 0.14s ease'
                                     }}
                                     onMouseEnter={(e) => { e.currentTarget.style.background = 'oklch(100% 0 0 / 0.05)'; }}
@@ -708,70 +716,102 @@ export default function ProductionCabinet({ orders = [], setOrders, supabase, sh
                                     title="Відкрити картку замовлення"
                                   >
                                     {ord.isPriority && <Star size={12} fill="var(--color-accent-2)" stroke="var(--color-accent-2)" style={{ flexShrink: 0 }} />}
-                                    <span className="dusk-mono" style={{ fontWeight: 600, color: 'var(--color-accent)', textDecoration: ord.isManufactured ? 'line-through' : 'underline', textUnderlineOffset: 3 }}>
+                                    <span className="dusk-mono" style={{ fontWeight: 600, fontSize: isMobile ? 11.5 : 12.5, color: 'var(--color-accent)', textDecoration: ord.isManufactured ? 'line-through' : 'underline', textUnderlineOffset: 3, flexShrink: 0 }}>
                                       {ord.orderNumber}
                                     </span>
-                                    <span style={{ color: 'var(--color-muted)' }}>—</span>
-                                    <span style={{ color: 'var(--color-ink)', fontWeight: 500, textDecoration: ord.isManufactured ? 'line-through' : 'none' }}>
+                                    {!isMobile && <span style={{ color: 'var(--color-muted)' }}>—</span>}
+                                    <span style={{ color: 'var(--color-ink)', fontWeight: 500, fontSize: isMobile ? 12.5 : 13, textDecoration: ord.isManufactured ? 'line-through' : 'none', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                       {ord.clientName}
                                     </span>
                                   </button>
                                 </div>
                                 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                  <span className="dusk-badge dusk-badge--periwinkle dusk-num" style={{ padding: '4px 9px', fontSize: 11.5 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 5 : 8, flexShrink: 0 }}>
+                                  {hasComments && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setOpenCommentKeys(prev => ({ ...prev, [commentKey]: !prev[commentKey] }));
+                                      }}
+                                      title={isCommentOpen ? 'Сховати коментар' : 'Показати коментар'}
+                                      style={{
+                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                        width: 22, height: 22, borderRadius: 6, cursor: 'pointer',
+                                        border: isCommentOpen ? '1px solid var(--color-accent-2-border)' : '1px solid var(--color-rule)',
+                                        background: isCommentOpen ? 'var(--color-accent-2-soft)' : 'var(--color-paper-2)',
+                                        color: 'var(--color-accent-2)'
+                                      }}
+                                    >
+                                      <MessageSquare size={12} />
+                                    </button>
+                                  )}
+
+                                  <span className="dusk-badge dusk-badge--periwinkle dusk-num" style={{ padding: isMobile ? '2px 7px' : '4px 9px', fontSize: isMobile ? 11 : 11.5 }}>
                                     ×{ord.quantity}
                                   </span>
                                   
-                                  <span className="dusk-badge dusk-badge--neutral" style={{ padding: '4px 10px', fontSize: 11.5 }}>
-                                    <span className="dusk-dot dusk-dot--apricot" style={{ width: 6, height: 6 }} />
+                                  <span className="dusk-badge dusk-badge--neutral" style={{ padding: isMobile ? '2px 7px' : '4px 10px', fontSize: isMobile ? 10.5 : 11.5 }}>
+                                    <span className="dusk-dot dusk-dot--apricot" style={{ width: 5, height: 5 }} />
                                     <span>{statusMeta.label}</span>
                                   </span>
 
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedOrderId(ord.orderId)}
-                                    className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                                    style={{ height: 26, padding: '0 9px', fontSize: 11.5 }}
-                                  >
-                                    <span>Замовлення</span>
-                                    <ExternalLink size={11} />
-                                  </button>
+                                  {!isMobile && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedOrderId(ord.orderId)}
+                                      className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                                      style={{ height: 26, padding: '0 9px', fontSize: 11.5 }}
+                                    >
+                                      <span>Замовлення</span>
+                                      <ExternalLink size={11} />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
 
-                              {/* Color Chips & Clarifications for this specific order item */}
-                              {(ord.colors.length > 0 || ord.itemNote || ord.orderNotes) && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 28 }}>
+                              {/* Color Chips & Toggleable Clarifications for this specific order item */}
+                              {(ord.colors.length > 0 || (hasComments && isCommentOpen)) && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 26 }}>
                                   {ord.colors.length > 0 && (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                                      <span style={{ fontSize: 11.5, color: 'var(--color-muted)', lineHeight: 1 }}>Кольори:</span>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
+                                      {!isMobile && <span style={{ fontSize: 11.5, color: 'var(--color-muted)', lineHeight: 1 }}>Кольори:</span>}
                                       {ord.colors.map((cName, cIdx) => {
                                         const cMeta = getColorMeta(cName);
                                         return (
                                           <span key={cIdx} style={{
                                             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                                            padding: '4px 9px', borderRadius: 999, fontSize: 11.5, fontWeight: 500, lineHeight: 1,
+                                            padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 500, lineHeight: 1,
                                             background: 'var(--color-paper-2)', color: 'var(--color-ink)',
                                             border: '1px solid var(--color-rule)'
                                           }}>
-                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: cMeta.gradient || cMeta.hex, border: cMeta.border ? `1px solid ${cMeta.border}` : '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }} />
+                                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: cMeta.gradient || cMeta.hex, border: cMeta.border ? `1px solid ${cMeta.border}` : '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }} />
                                             <span>{cMeta.label}</span>
                                           </span>
                                         );
                                       })}
                                     </div>
                                   )}
-                                  {ord.itemNote && (
-                                    <div className="dusk-apricot-strip">
-                                      <span>Уточнення по виробу:</span>
-                                      <strong style={{ color: 'var(--color-ink)' }}>{ord.itemNote}</strong>
+                                  {isCommentOpen && ord.itemNote && (
+                                    <div style={{
+                                      fontSize: 11.5, color: 'var(--color-ink)', fontWeight: 500,
+                                      background: 'var(--color-paper-2)', border: '1px solid var(--color-rule)',
+                                      borderLeft: '2px solid var(--color-accent-2)', borderRadius: 6,
+                                      padding: '4px 8px', lineHeight: 1.3
+                                    }}>
+                                      {!isMobile && <span style={{ color: 'var(--color-muted)', fontWeight: 400 }}>Виріб: </span>}
+                                      {ord.itemNote}
                                     </div>
                                   )}
-                                  {ord.orderNotes && (
-                                    <div className="dusk-apricot-strip">
-                                      <span>До замовлення:</span>
-                                      <strong style={{ color: 'var(--color-ink)' }}>{ord.orderNotes}</strong>
+                                  {isCommentOpen && ord.orderNotes && (
+                                    <div style={{
+                                      fontSize: 11.5, color: 'var(--color-ink-2)', fontWeight: 500,
+                                      background: 'var(--color-paper-2)', border: '1px solid var(--color-rule)',
+                                      borderLeft: '2px solid var(--color-accent-2)', borderRadius: 6,
+                                      padding: '4px 8px', lineHeight: 1.3
+                                    }}>
+                                      {!isMobile && <span style={{ color: 'var(--color-muted)', fontWeight: 400 }}>До замовлення: </span>}
+                                      {ord.orderNotes}
                                     </div>
                                   )}
                                 </div>

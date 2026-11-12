@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { novaPoshta } from '@/lib/novaposhta';
 import OrderKanbanBoard from '@/components/OrderKanbanBoard';
@@ -2418,23 +2419,25 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
         )}
       </div>
 
-      {/* Dusk Fast POS / CRM Add & Edit Sale Modal (2-Column Desktop Layout) */}
-      <AnimatePresence>
-        {showAddForm && (
-          <div 
-            onClick={() => setShowAddForm(false)}
-            style={{ 
-              position: 'fixed', 
-              inset: 0, 
-              background: 'oklch(10% 0.015 268 / 0.82)', 
-              backdropFilter: isMobile ? 'none' : 'blur(10px)',
-              zIndex: 1100, 
-              display: 'flex', 
-              alignItems: isMobile ? 'stretch' : 'center', 
-              justifyContent: 'center', 
-              padding: isMobile ? 0 : 20
-            }}
-          >
+      {/* Dusk Fast POS / CRM Add & Edit Sale Modal (Portaled above mobile header & bottom nav) */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showAddForm && (
+            <div 
+              onClick={() => setShowAddForm(false)}
+              className={`dusk-admin-scope ${document.querySelector('.dusk-admin-scope')?.classList.contains('dusk-light-theme') ? 'dusk-light-theme light-theme' : 'dusk-theme'}`}
+              style={{ 
+                position: 'fixed', 
+                inset: 0, 
+                background: 'oklch(10% 0.015 268 / 0.82)', 
+                backdropFilter: isMobile ? 'none' : 'blur(10px)',
+                zIndex: 2000, 
+                display: 'flex', 
+                alignItems: isMobile ? 'stretch' : 'center', 
+                justifyContent: 'center', 
+                padding: isMobile ? 0 : 20
+              }}
+            >
             <motion.div 
               initial={{ opacity: 0, y: isMobile ? 40 : 8, scale: isMobile ? 1 : 0.98 }} 
               animate={{ opacity: 1, y: 0, scale: 1 }} 
@@ -4112,8 +4115,10 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
 
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
     </div>
   );
