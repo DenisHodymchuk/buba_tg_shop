@@ -805,10 +805,6 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                         />
                       </button>
 
-                      <span className="dusk-mono" style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink)' }}>
-                        {order.order_number ? order.order_number.replace(/^MAN-[A-Z]+-/, '#') : `#${String(order.id).slice(0, 8)}`}
-                      </span>
-
                       {(() => {
                         const meta = STATUS_META[order.status] || STATUS_META.new;
                         return (
@@ -865,7 +861,10 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                   }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
                       <div style={{ fontSize: isMobile ? 15.5 : 15, fontWeight: 700, color: 'var(--color-ink)', lineHeight: 1.25, wordBreak: 'break-word' }}>
-                        {clientName}
+                        {clientName}{' '}
+                        <span className="dusk-mono" style={{ fontSize: isMobile ? 12.5 : 12, fontWeight: 500, color: 'var(--color-muted)' }}>
+                          ({order.order_number ? order.order_number.replace(/^MAN-[A-Z]+-/, '#') : `#${String(order.id).slice(0, 8)}`})
+                        </span>
                       </div>
                       {clientPhone && (
                         <button
