@@ -36,12 +36,25 @@ export const novaPoshta = {
     });
   },
 
-  // Отримання відділень у місті (за назвою міста або Ref)
-  getWarehouses: async (cityRef) => {
+  // Отримання відділень у місті (за назвою міста або Ref), з підтримкою пошуку за номером або назвою
+  getWarehouses: async (cityRef, search = '', limit = '500') => {
     if (!cityRef) return [];
-    return npRequest('Address', 'getWarehouses', {
+    const methodProperties = {
       CityRef: cityRef,
-      Limit: "500"
-    });
+      Limit: String(limit || '500')
+    };
+
+    const raw = String(search || '').trim();
+    if (raw) {
+      const numMatch = raw.match(/(?:№|#)?\s*([0-9]+(?:\/[0-9]+)?)/);
+      const stripped = raw.replace(/поштомат|почтомат|відділення|отделение|пункт|нова\s*пошта|нп/gi, '').trim();
+      const candidate = stripped || (numMatch ? numMatch[1] : raw);
+      if (candidate) {
+        methodProperties.FindByString = candidate;
+        methodProperties.Limit = '100';
+      }
+    }
+
+    return npRequest('Address', 'getWarehouses', methodProperties);
   }
 };

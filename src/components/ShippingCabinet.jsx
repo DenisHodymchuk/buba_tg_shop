@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getColorMeta } from '@/lib/orderHelpers';
+import { novaPoshta } from '@/lib/novaposhta';
 
 const STATUS_META = {
   new: { label: 'Нове', signal: 'apricot', icon: Clock },
@@ -112,14 +113,9 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
     const timer = setTimeout(async () => {
       setNpLoadingCities(true);
       try {
-        const res = await fetch('/api/novaposhta', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'searchCities', query: npCityQuery })
-        });
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
-          setNpCities(json.data);
+        const cities = await novaPoshta.getCities(npCityQuery);
+        if (Array.isArray(cities)) {
+          setNpCities(cities);
           setNpShowCities(true);
         }
       } catch (e) {
@@ -131,7 +127,7 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
     return () => clearTimeout(timer);
   }, [npCityQuery, editForm.city, editForm.shipping_method, editingOrder]);
 
-  // Warehouses load effect
+  // Warehouses initial load effect
   useEffect(() => {
     if (!editingOrder || editForm.shipping_method !== 'nova_poshta' || !editForm.cityRef) {
       setNpWarehouses([]);
@@ -141,14 +137,9 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
     const fetchWh = async () => {
       setNpLoadingWarehouses(true);
       try {
-        const res = await fetch('/api/novaposhta', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'getWarehouses', cityRef: editForm.cityRef })
-        });
-        const json = await res.json();
-        if (active && json.success && Array.isArray(json.data)) {
-          setNpWarehouses(json.data);
+        const data = await novaPoshta.getWarehouses(editForm.cityRef);
+        if (active && Array.isArray(data)) {
+          setNpWarehouses(data);
         }
       } catch (e) {
         console.error(e);
@@ -160,11 +151,59 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
     return () => { active = false; };
   }, [editForm.cityRef, editForm.shipping_method, editingOrder]);
 
+  // Live server search for warehouses when typing in edit modal
+  useEffect(() => {
+    const q = String(npWarehouseQuery || '').trim();
+    if (!editingOrder || editForm.shipping_method !== 'nova_poshta' || !editForm.cityRef || !q || (editForm.warehouse && q === String(editForm.warehouse).trim())) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setNpLoadingWarehouses(true);
+        const results = await novaPoshta.getWarehouses(editForm.cityRef, q);
+        if (Array.isArray(results) && results.length > 0) {
+          setNpWarehouses(prev => {
+            const existingRefs = new Set(prev.map(w => w.Ref));
+            const newItems = results.filter(w => !existingRefs.has(w.Ref));
+            return [...results, ...newItems, ...prev.filter(w => !results.some(r => r.Ref === w.Ref))];
+          });
+          setNpShowWarehouses(true);
+        }
+      } catch (err) {
+        console.error('Error searching warehouses in ShippingCabinet:', err);
+      } finally {
+        setNpLoadingWarehouses(false);
+      }
+    }, 280);
+
+    return () => clearTimeout(timer);
+  }, [npWarehouseQuery, editForm.cityRef, editForm.warehouse, editForm.shipping_method, editingOrder]);
+
   const npFilteredWarehouses = useMemo(() => {
-    if (!npWarehouseQuery.trim()) return npWarehouses;
-    const q = npWarehouseQuery.toLowerCase();
-    return npWarehouses.filter(w => w.Description.toLowerCase().includes(q));
-  }, [npWarehouses, npWarehouseQuery]);
+    if (!npWarehouses || !Array.isArray(npWarehouses)) return [];
+    const q = String(npWarehouseQuery || '').trim().toLowerCase();
+    if (!q || (editForm.warehouse && q === String(editForm.warehouse).trim().toLowerCase())) {
+      return npWarehouses;
+    }
+    const cleanNum = q.replace(/\D/g, '');
+    const filtered = npWarehouses.filter(w => {
+      if (!w) return false;
+      const desc = String(w.Description || '').toLowerCase();
+      const num = String(w.Number || '').toLowerCase();
+      if (num === q || (cleanNum && num === cleanNum)) return true;
+      if (desc.includes(q)) return true;
+      if (cleanNum && desc.includes(cleanNum)) return true;
+      return false;
+    });
+    return filtered.sort((a, b) => {
+      const aNum = String(a.Number || '');
+      const bNum = String(b.Number || '');
+      const aExact = aNum === q || (cleanNum && aNum === cleanNum) ? 0 : 1;
+      const bExact = bNum === q || (cleanNum && bNum === cleanNum) ? 0 : 1;
+      return aExact - bExact;
+    });
+  }, [npWarehouses, npWarehouseQuery, editForm.warehouse]);
 
   const openEditModal = (order, e) => {
     if (e) e.stopPropagation();
@@ -1572,23 +1611,29 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                         className="dusk-input"
                       />
                       {npLoadingWarehouses && <Loader2 size={14} className="animate-spin" style={{ position: 'absolute', right: 12, bottom: 12, color: 'var(--color-accent)' }} />}
-                      {npShowWarehouses && npFilteredWarehouses.length > 0 && (
+                      {npShowWarehouses && (
                         <div className="dusk-panel" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 40, marginTop: 4, maxHeight: 180, overflowY: 'auto', padding: 4 }}>
-                          {npFilteredWarehouses.slice(0, 60).map(wh => (
-                            <button
-                              key={wh.Ref}
-                              type="button"
-                              onMouseDown={e => e.preventDefault()}
-                              onClick={() => {
-                                setEditForm(prev => ({ ...prev, warehouse: wh.Description }));
-                                setNpWarehouseQuery(wh.Description);
-                                setNpShowWarehouses(false);
-                              }}
-                              style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'transparent', border: 'none', color: 'var(--color-ink)', fontSize: 12, cursor: 'pointer', borderRadius: 6 }}
-                            >
-                              {wh.Description}
-                            </button>
-                          ))}
+                          {npFilteredWarehouses.length > 0 ? (
+                            npFilteredWarehouses.slice(0, 60).map(wh => (
+                              <button
+                                key={wh.Ref}
+                                type="button"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => {
+                                  setEditForm(prev => ({ ...prev, warehouse: wh.Description }));
+                                  setNpWarehouseQuery(wh.Description);
+                                  setNpShowWarehouses(false);
+                                }}
+                                style={{ width: '100%', textAlign: 'left', padding: '8px 10px', background: 'transparent', border: 'none', color: 'var(--color-ink)', fontSize: 12, cursor: 'pointer', borderRadius: 6 }}
+                              >
+                                {wh.Description}
+                              </button>
+                            ))
+                          ) : (
+                            <div style={{ padding: '8px 10px', color: 'var(--color-muted)', fontSize: 12, textAlign: 'center' }}>
+                              {npLoadingWarehouses ? 'Шукаємо у базі Нової Пошти...' : 'Відділень не знайдено'}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

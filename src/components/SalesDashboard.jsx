@@ -538,21 +538,31 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
     async function fetchWarehouses() {
       if (formData.cityRef) {
         setNpLoadingWarehouses(true);
+
+        let specificMatch = null;
+        if (pendingWarehouseNumber) {
+          try {
+            const specificData = await novaPoshta.getWarehouses(formData.cityRef, pendingWarehouseNumber);
+            if (Array.isArray(specificData) && specificData.length > 0) {
+              const numStr = String(pendingWarehouseNumber).trim();
+              specificMatch = specificData.find(w => String(w.Number) === numStr) || specificData[0];
+            }
+          } catch (_) {}
+        }
+
         const data = await novaPoshta.getWarehouses(formData.cityRef);
-        setNpWarehouses(data || []);
+        const combined = Array.isArray(data) ? [...data] : [];
+        if (specificMatch && !combined.some(w => w.Ref === specificMatch.Ref)) {
+          combined.unshift(specificMatch);
+        }
+
+        setNpWarehouses(combined);
         setNpLoadingWarehouses(false);
 
-        if (pendingWarehouseNumber && Array.isArray(data) && data.length > 0) {
-          const numStr = String(pendingWarehouseNumber);
-          const exactMatch = data.find(w => 
-            String(w.Number) === numStr || 
-            new RegExp(`(?:№|відділення|поштомат)\\s*${numStr}\\b`, 'i').test(w.Description)
-          );
-          if (exactMatch) {
-            setFormData(prev => ({ ...prev, warehouse: exactMatch.Description }));
-            setNpWarehouseQuery(exactMatch.Description);
-            setNpShowWarehouses(false);
-          }
+        if (specificMatch) {
+          setFormData(prev => ({ ...prev, warehouse: specificMatch.Description }));
+          setNpWarehouseQuery(specificMatch.Description);
+          setNpShowWarehouses(false);
           setPendingWarehouseNumber('');
         }
       } else {
@@ -562,21 +572,56 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
     fetchWarehouses();
   }, [formData.cityRef, pendingWarehouseNumber]);
 
+  // Live server search for warehouses when user types a query (e.g. "33307" or street)
+  useEffect(() => {
+    const q = String(npWarehouseQuery || '').trim();
+    if (!formData.cityRef || !q || (formData.warehouse && q === String(formData.warehouse).trim())) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setNpLoadingWarehouses(true);
+        const results = await novaPoshta.getWarehouses(formData.cityRef, q);
+        if (Array.isArray(results) && results.length > 0) {
+          setNpWarehouses(prev => {
+            const existingRefs = new Set(prev.map(w => w.Ref));
+            const newItems = results.filter(w => !existingRefs.has(w.Ref));
+            return [...results, ...newItems, ...prev.filter(w => !results.some(r => r.Ref === w.Ref))];
+          });
+          setNpShowWarehouses(true);
+        }
+      } catch (err) {
+        console.error('Error searching warehouses:', err);
+      } finally {
+        setNpLoadingWarehouses(false);
+      }
+    }, 280);
+
+    return () => clearTimeout(timer);
+  }, [npWarehouseQuery, formData.cityRef, formData.warehouse]);
+
   const npFilteredWarehouses = useMemo(() => {
     if (!npWarehouses || !Array.isArray(npWarehouses)) return [];
     const q = String(npWarehouseQuery || '').trim().toLowerCase();
     if (!q || (formData.warehouse && q === String(formData.warehouse).trim().toLowerCase())) {
       return npWarehouses;
     }
-    const filtered = npWarehouses.filter(w => 
-      w && (
-        (w.Description && String(w.Description).toLowerCase().includes(q)) ||
-        (w.Number && String(w.Number).toLowerCase().includes(q))
-      )
-    );
+    const cleanNum = q.replace(/\D/g, '');
+    const filtered = npWarehouses.filter(w => {
+      if (!w) return false;
+      const desc = String(w.Description || '').toLowerCase();
+      const num = String(w.Number || '').toLowerCase();
+      if (num === q || (cleanNum && num === cleanNum)) return true;
+      if (desc.includes(q)) return true;
+      if (cleanNum && desc.includes(cleanNum)) return true;
+      return false;
+    });
     return filtered.sort((a, b) => {
-      const aExact = String(a.Number) === q ? 0 : 1;
-      const bExact = String(b.Number) === q ? 0 : 1;
+      const aNum = String(a.Number || '');
+      const bNum = String(b.Number || '');
+      const aExact = aNum === q || (cleanNum && aNum === cleanNum) ? 0 : 1;
+      const bExact = bNum === q || (cleanNum && bNum === cleanNum) ? 0 : 1;
       return aExact - bExact;
     });
   }, [npWarehouses, npWarehouseQuery, formData.warehouse]);
@@ -991,6 +1036,24 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
           updates.cityRef = bestCity.Ref;
           setNpCityQuery(bestCity.Description);
           setNpShowCities(false);
+
+          if (parsed.warehouseNumber || parsed.rawWarehouseHint) {
+            const whQuery = parsed.warehouseNumber || parsed.rawWarehouseHint;
+            try {
+              const whList = await novaPoshta.getWarehouses(bestCity.Ref, whQuery);
+              if (Array.isArray(whList) && whList.length > 0) {
+                const numStr = String(parsed.warehouseNumber || '').trim();
+                const matchedWh = (numStr && whList.find(w => String(w.Number) === numStr)) || whList[0];
+                if (matchedWh) {
+                  updates.warehouse = matchedWh.Description;
+                  setNpWarehouseQuery(matchedWh.Description);
+                  setNpWarehouses(whList);
+                  setNpShowWarehouses(false);
+                  setPendingWarehouseNumber('');
+                }
+              }
+            } catch (_) {}
+          }
         }
       } catch (_) {
         setNpLoadingCities(false);
@@ -3574,13 +3637,15 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                         <div style={{ position: 'relative' }}>
                           <label style={{ fontSize: 11, color: 'var(--color-muted)', display: 'block', marginBottom: 3 }}>
                             Відділення / поштомат
-                            {formData.cityRef && !npLoadingWarehouses && npWarehouses.length > 0 && (
-                              <span className="dusk-num" style={{ color: 'var(--color-accent)', marginLeft: 5 }}>({npWarehouses.length})</span>
+                            {formData.cityRef && (
+                              <span className="dusk-num" style={{ color: 'var(--color-accent)', marginLeft: 5 }}>
+                                {npLoadingWarehouses ? '(пошук…)' : npFilteredWarehouses.length > 0 ? `(${npFilteredWarehouses.length})` : ''}
+                              </span>
                             )}
                           </label>
                           <input 
                             type="text" 
-                            placeholder={formData.shipping_method === 'ukrposhta' ? "Індекс та адреса…" : "№ відділення або поштомату…"} 
+                            placeholder={formData.shipping_method === 'ukrposhta' ? "Індекс та адреса…" : "№ відділення або поштомату (напр. 33307)…"} 
                             value={npWarehouseQuery} 
                             onChange={e => { 
                               setNpWarehouseQuery(e.target.value); 
@@ -3598,32 +3663,42 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                                 setNpShowWarehouses(true);
                               }
                             }}
-                            onBlur={() => setTimeout(() => setNpShowWarehouses(false), 200)}
+                            onBlur={() => setTimeout(() => setNpShowWarehouses(false), 220)}
                             className="dusk-input"
                             style={{ height: 34, fontSize: 12.5 }}
                           />
                           {npLoadingWarehouses && <Loader2 size={13} className="animate-spin" style={{ position: 'absolute', right: 10, bottom: 10, color: 'var(--color-accent)' }} />}
                           
                           <AnimatePresence>
-                            {npShowWarehouses && formData.cityRef && npFilteredWarehouses.length > 0 && (
+                            {npShowWarehouses && formData.cityRef && (
                               <motion.div 
                                 initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
                                 style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 90, background: 'var(--color-paper-2)', borderRadius: 10, border: '1px solid var(--color-rule)', marginTop: 4, maxHeight: 190, overflowY: 'auto', boxShadow: '0 12px 32px rgba(0,0,0,0.45)', padding: 4 }}
                               >
-                                {npFilteredWarehouses.slice(0, 80).map(wh => (
-                                  <button
-                                    key={wh.Ref} type="button"
-                                    onMouseDown={e => e.preventDefault()}
-                                    onClick={() => {
-                                      setFormData(prev => ({ ...prev, warehouse: wh.Description }));
-                                      setNpWarehouseQuery(wh.Description);
-                                      setNpShowWarehouses(false);
-                                    }}
-                                    style={{ width: '100%', padding: '7px 10px', textAlign: 'left', background: 'transparent', border: 'none', color: 'var(--color-ink)', fontSize: 11.5, borderRadius: 7, cursor: 'pointer', lineHeight: 1.3 }}
-                                  >
-                                    {wh.Description}
-                                  </button>
-                                ))}
+                                {npFilteredWarehouses.length > 0 ? (
+                                  npFilteredWarehouses.slice(0, 80).map(wh => (
+                                    <button
+                                      key={wh.Ref} type="button"
+                                      onMouseDown={e => e.preventDefault()}
+                                      onClick={() => {
+                                        setFormData(prev => ({ ...prev, warehouse: wh.Description }));
+                                        setNpWarehouseQuery(wh.Description);
+                                        setNpShowWarehouses(false);
+                                      }}
+                                      style={{ width: '100%', padding: '7px 10px', textAlign: 'left', background: 'transparent', border: 'none', color: 'var(--color-ink)', fontSize: 11.5, borderRadius: 7, cursor: 'pointer', lineHeight: 1.3 }}
+                                    >
+                                      {wh.Description}
+                                    </button>
+                                  ))
+                                ) : npLoadingWarehouses ? (
+                                  <div style={{ padding: '10px', fontSize: 11.5, color: 'var(--color-muted)', textAlign: 'center' }}>
+                                    Шукаємо відділення / поштомат…
+                                  </div>
+                                ) : (
+                                  <div style={{ padding: '10px', fontSize: 11.5, color: 'var(--color-muted)', textAlign: 'center' }}>
+                                    Нічого не знайдено за цим запитом.
+                                  </div>
+                                )}
                               </motion.div>
                             )}
                           </AnimatePresence>

@@ -78,7 +78,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
       if (formData.cityRef && deliveryMethod === 'nova_poshta') {
         setLoadingWarehouses(true);
         const data = await novaPoshta.getWarehouses(formData.cityRef);
-        setWarehouses(data);
+        setWarehouses(data || []);
         setLoadingWarehouses(false);
       } else {
         setWarehouses([]);
@@ -87,12 +87,53 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
     fetchWarehouses();
   }, [formData.cityRef, deliveryMethod]);
 
+  // Live server search for warehouses when user types number or address
+  React.useEffect(() => {
+    const q = String(warehouseQuery || '').trim();
+    if (!formData.cityRef || deliveryMethod !== 'nova_poshta' || !q || q === String(formData.warehouse || '').trim()) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setLoadingWarehouses(true);
+        const results = await novaPoshta.getWarehouses(formData.cityRef, q);
+        if (Array.isArray(results) && results.length > 0) {
+          setWarehouses(prev => {
+            const list = Array.isArray(prev) ? prev : [];
+            const existingRefs = new Set(list.map(w => w.Ref));
+            const newItems = results.filter(w => !existingRefs.has(w.Ref));
+            return [...results, ...newItems, ...list.filter(w => !results.some(r => r.Ref === w.Ref))];
+          });
+        }
+      } catch (err) {
+        console.error('Error searching warehouses in checkout:', err);
+      } finally {
+        setLoadingWarehouses(false);
+      }
+    }, 280);
+
+    return () => clearTimeout(timer);
+  }, [warehouseQuery, formData.cityRef, formData.warehouse, deliveryMethod]);
+
   const filteredWarehouses = useMemo(() => {
+    if (!warehouses || !Array.isArray(warehouses)) return [];
     if (!warehouseQuery) return warehouses;
     if (warehouseQuery === formData.warehouse) return [];
-    return warehouses.filter(w =>
-      w.Description.toLowerCase().includes(warehouseQuery.toLowerCase())
-    );
+    const q = warehouseQuery.toLowerCase();
+    const cleanNum = q.replace(/\D/g, '');
+    return warehouses.filter(w => {
+      if (!w) return false;
+      const desc = (w.Description || '').toLowerCase();
+      const num = String(w.Number || '').toLowerCase();
+      return desc.includes(q) || num === q || (cleanNum && num === cleanNum) || (cleanNum && desc.includes(cleanNum));
+    }).sort((a, b) => {
+      const aNum = String(a.Number || '');
+      const bNum = String(b.Number || '');
+      const aExact = aNum === q || (cleanNum && aNum === cleanNum) ? 0 : 1;
+      const bExact = bNum === q || (cleanNum && bNum === cleanNum) ? 0 : 1;
+      return aExact - bExact;
+    });
   }, [warehouses, warehouseQuery, formData.warehouse]);
 
   const subtotal = useMemo(() => {
