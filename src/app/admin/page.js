@@ -56,13 +56,16 @@ const scrollbarHide = `
     .admin-layout { flex-direction: column !important; }
     .admin-aside { 
       position: fixed !important; 
-      left: -268px !important; 
+      left: 0 !important;
       top: 0 !important; 
       bottom: 0 !important; 
+      width: 256px !important;
       z-index: 1001 !important;
-      transition: left 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important;
+      transform: translate3d(-100%, 0, 0);
+      will-change: transform;
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
-    .admin-aside.open { left: 0 !important; }
+    .admin-aside.open { transform: translate3d(0, 0, 0); }
     .admin-main-header { display: none !important; }
     .admin-mobile-header { display: flex !important; }
     .admin-content { padding: 16px !important; }
@@ -1563,17 +1566,18 @@ export default function AdminPanel() {
       {isSidebarOpen && (
         <div 
           onMouseDown={(e) => { if (e.target === e.currentTarget) setIsSidebarOpen(false); }}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(8, 10, 18, 0.65)', backdropFilter: 'blur(4px)', zIndex: 1000 }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(8, 10, 18, 0.72)', zIndex: 1000 }}
         />
       )}
 
       {/* Dusk Sidebar */}
       <aside className={`admin-aside ${isSidebarOpen ? 'open' : ''}`} style={{ 
-        width: 256, flexShrink: 0, background: 'var(--color-paper-2)', 
+        width: 256, minWidth: 256, flexShrink: 0, background: 'var(--color-paper-2)', 
         borderRight: '1px solid var(--color-rule)', 
         display: 'flex', flexDirection: 'column', zIndex: 1001,
         position: isMobile ? 'fixed' : 'relative',
-        top: 0, bottom: 0, left: isMobile ? (isSidebarOpen ? 0 : -268) : 0
+        top: 0, bottom: 0, left: 0,
+        transform: isMobile ? (isSidebarOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)') : 'none'
       }}>
         {/* Brand Header */}
         <div style={{ padding: '20px 18px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-rule)' }}>

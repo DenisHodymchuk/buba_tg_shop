@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Clock, Printer, Palette, ClipboardList, Truck, 
   CheckCircle2, XCircle, Star, Phone, MapPin, Copy, 
@@ -778,46 +779,48 @@ export default function OrderKanbanBoard({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
-      {/* Kanban Toolbar Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--color-muted)' }}>
-          <span>
-            {isMobile ? 'Оберіть етап нижче або перемикайте статус кнопками на картці' : 'Перетягуйте картки між колонками або натискайте стрілки переходу етапів'}
-          </span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12, width: '100%' }}>
+      {/* Kanban Toolbar Controls (Desktop only) */}
+      {!isMobile && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--color-muted)' }}>
+            <span>
+              Перетягуйте картки між колонками або натискайте стрілки переходу етапів
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setCompactCards(!compactCards)}
+              className={`dusk-facet-pill ${compactCards ? 'active' : ''}`}
+            >
+              {compactCards ? 'Компактні картки' : 'Звичайні картки'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setExpandedCards(expandedCards.length > 0 ? [] : sales.map(s => s.id))}
+              className="dusk-facet-pill"
+            >
+              {expandedCards.length > 0 ? 'Згорнути всі' : 'Розгорнути всі'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setHideCancelled(!hideCancelled)}
+              className={`dusk-facet-pill ${!hideCancelled ? 'active' : ''}`}
+            >
+              {hideCancelled ? 'Показати скасовані' : 'Скасовані видно'}
+            </button>
+          </div>
         </div>
-
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={() => setCompactCards(!compactCards)}
-            className={`dusk-facet-pill ${compactCards ? 'active' : ''}`}
-          >
-            {compactCards ? 'Компактні картки' : 'Звичайні картки'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setExpandedCards(expandedCards.length > 0 ? [] : sales.map(s => s.id))}
-            className="dusk-facet-pill"
-          >
-            {expandedCards.length > 0 ? 'Згорнути всі' : 'Розгорнути всі'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setHideCancelled(!hideCancelled)}
-            className={`dusk-facet-pill ${!hideCancelled ? 'active' : ''}`}
-          >
-            {hideCancelled ? 'Показати скасовані' : 'Скасовані видно'}
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* MOBILE VIEW: Column Tabs + Single Active Column */}
       {isMobile ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div className="dusk-pipeline hide-scrollbar">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="dusk-pipeline hide-scrollbar" style={{ position: 'sticky', top: 4, zIndex: 20, backdropFilter: 'blur(12px)' }}>
             {visibleColumns.map(col => {
               const count = columnsData[col.id]?.length || 0;
               const isActive = activeMobileCol === col.id;
@@ -825,8 +828,12 @@ export default function OrderKanbanBoard({
                 <button
                   key={col.id}
                   type="button"
-                  onClick={() => setActiveMobileCol(col.id)}
+                  onClick={(e) => {
+                    setActiveMobileCol(col.id);
+                    e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                  }}
                   className={`dusk-pipeline__step ${isActive ? 'active' : ''}`}
+                  style={{ flexShrink: 0, transition: 'background-color 0.18s, color 0.18s, border-color 0.18s' }}
                 >
                   <span className={`dusk-dot ${col.signal === 'periwinkle' ? 'dusk-dot--periwinkle' : col.signal === 'apricot' ? 'dusk-dot--apricot' : 'dusk-dot--muted'}`} />
                   <span>{col.shortTitle}</span>
@@ -836,36 +843,46 @@ export default function OrderKanbanBoard({
             })}
           </div>
 
-          {(() => {
-            const currentCol = KANBAN_COLUMNS.find(c => c.id === activeMobileCol) || KANBAN_COLUMNS[0];
-            const colOrders = columnsData[currentCol.id] || [];
-            const colSum = colOrders.reduce((acc, s) => acc + parseFloat(s.total || 0), 0);
+          <AnimatePresence mode="wait" initial={false}>
+            {(() => {
+              const currentCol = KANBAN_COLUMNS.find(c => c.id === activeMobileCol) || KANBAN_COLUMNS[0];
+              const colOrders = columnsData[currentCol.id] || [];
+              const colSum = colOrders.reduce((acc, s) => acc + parseFloat(s.total || 0), 0);
 
-            return (
-              <div className="dusk-panel" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, borderBottom: '1px solid var(--color-rule)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className={`dusk-dot ${currentCol.signal === 'periwinkle' ? 'dusk-dot--periwinkle' : currentCol.signal === 'apricot' ? 'dusk-dot--apricot' : 'dusk-dot--muted'}`} />
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-ink)' }}>{currentCol.title}</span>
-                    <span className="dusk-num" style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>({colOrders.length})</span>
+              return (
+                <motion.div
+                  key={currentCol.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                  className="dusk-panel"
+                  style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10, minHeight: '55vh' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, borderBottom: '1px solid var(--color-rule)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className={`dusk-dot ${currentCol.signal === 'periwinkle' ? 'dusk-dot--periwinkle' : currentCol.signal === 'apricot' ? 'dusk-dot--apricot' : 'dusk-dot--muted'}`} />
+                      <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-ink)' }}>{currentCol.title}</span>
+                      <span className="dusk-num" style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>({colOrders.length})</span>
+                    </div>
+                    <span className="dusk-num" style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--color-ink-2)' }}>
+                      {colSum.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
+                    </span>
                   </div>
-                  <span className="dusk-num" style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--color-ink-2)' }}>
-                    {colSum.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
-                  </span>
-                </div>
 
-                {colOrders.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--color-muted)', fontSize: 12 }}>
-                    Немає замовлень на етапі «{currentCol.title}»
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {colOrders.map(sale => renderCard(sale, currentCol))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+                  {colOrders.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--color-muted)', fontSize: 12 }}>
+                      Немає замовлень на етапі «{currentCol.title}»
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {colOrders.map(sale => renderCard(sale, currentCol))}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })()}
+          </AnimatePresence>
         </div>
       ) : (
         /* DESKTOP VIEW: Horizontal Multi-Column Dusk Board */

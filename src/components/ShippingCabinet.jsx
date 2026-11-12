@@ -6,7 +6,7 @@ import {
   Truck, Search, Copy, Check, ExternalLink, Send, CheckCircle2, 
   Clock, Printer, Palette, ClipboardList, XCircle, MapPin, Phone, 
   User, Package, Coins, Star, ChevronDown, ChevronUp, Edit3, X,
-  MessageSquare, Loader2
+  MessageSquare, Loader2, SlidersHorizontal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getColorMeta } from '@/lib/orderHelpers';
@@ -63,6 +63,7 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
   const [copiedAddressId, setCopiedAddressId] = useState(null);
   const [copiedMsgId, setCopiedMsgId] = useState(null);
   const [expandedOrderIds, setExpandedOrderIds] = useState([]);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Edit Shipping Modal State
   const [editingOrder, setEditingOrder] = useState(null);
@@ -515,60 +516,130 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
     setTimeout(() => setCopiedMsgId(null), 2000);
   };
 
+  const activeMobileFilterCount = (deliveryFilter !== 'all' ? 1 : 0) + (codFilter !== 'all' ? 1 : 0) + (stageTab !== 'ready' ? 1 : 0);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', paddingBottom: isMobile ? 75 : 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 16, width: '100%', paddingBottom: isMobile ? 75 : 0 }}>
       
       {/* Dusk Glass Header & Logistics Command Bar */}
-      <div className="dusk-glass" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="dusk-glass" style={{ padding: isMobile ? '10px 12px' : 20, display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 16 }}>
         
         {/* Row 1: Title + Search + Expand/Collapse */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 8 : 12 }}>
           <div>
-            <h1 className="dusk-heading" style={{ fontSize: isMobile ? 20 : 22 }}>
-              Кабінет відправок
+            <h1 className="dusk-heading" style={{ fontSize: isMobile ? 17 : 22, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>Кабінет відправок</span>
             </h1>
-            <p className="dusk-subheading" style={{ marginTop: 2 }}>
-              Пакування виробів, швидке копіювання реквізитів, ТТН та контроль посилок у дорозі
-            </p>
+            {!isMobile && (
+              <p className="dusk-subheading" style={{ marginTop: 2 }}>
+                Пакування виробів, швидке копіювання реквізитів, ТТН та контроль посилок у дорозі
+              </p>
+            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', minWidth: isMobile ? '100%' : 260 }}>
-              <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-              <input 
-                type="text" 
-                placeholder="Отримувач, телефон, місто, ТТН..." 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
-                className="dusk-input"
-                style={{ paddingLeft: 32, paddingRight: searchQuery ? 28 : 12, height: 34, fontSize: 12.5, borderRadius: 999 }}
-              />
-              {searchQuery && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: isMobile ? '100%' : 'auto' }}>
+              <div style={{ position: 'relative', flex: isMobile ? 1 : 'none', minWidth: isMobile ? 0 : 260 }}>
+                <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+                <input 
+                  type="text" 
+                  placeholder="Отримувач, телефон, місто, ТТН..." 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                  className="dusk-input"
+                  style={{ paddingLeft: 32, paddingRight: searchQuery ? 28 : 12, height: isMobile ? 32 : 34, fontSize: 12.5, borderRadius: 999, width: '100%' }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 2 }}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {isMobile && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
-                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 2 }}
+                  onClick={() => setMobileFiltersOpen(prev => !prev)}
+                  className={`dusk-facet-pill ${mobileFiltersOpen || activeMobileFilterCount > 0 ? 'active' : ''}`}
+                  style={{ padding: '5px 10px', fontSize: 11.5, flexShrink: 0, height: 32 }}
                 >
-                  <X size={13} />
+                  <SlidersHorizontal size={12} />
+                  <span>Фільтри{activeMobileFilterCount > 0 ? ` (${activeMobileFilterCount})` : ''}</span>
+                  <ChevronDown size={12} style={{ transform: mobileFiltersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
                 </button>
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setExpandedOrderIds(filteredOrders.map(o => o.id))}
-              className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-            >
-              Розгорнути всі
-            </button>
-            <button
-              type="button"
-              onClick={() => setExpandedOrderIds([])}
-              className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-            >
-              Згорнути всі
-            </button>
+            {!isMobile && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setExpandedOrderIds(filteredOrders.map(o => o.id))}
+                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                >
+                  Розгорнути всі
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExpandedOrderIds([])}
+                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                >
+                  Згорнути всі
+                </button>
+              </>
+            )}
           </div>
+        </div>
+
+        {/* Stage Pipeline + Tally + Facet Filters (always on desktop, smoothly collapsible on mobile) */}
+        <AnimatePresence initial={false}>
+          {(!isMobile || mobileFiltersOpen) && (
+            <motion.div
+              key="shipping-filters-drawer"
+              initial={isMobile ? { opacity: 0, height: 0 } : false}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={isMobile ? { opacity: 0, height: 0 } : undefined}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{ overflow: isMobile ? 'hidden' : 'visible', display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 16 }}
+            >
+
+        {/* Stage Pipeline Strip */}
+        <div className="dusk-pipeline hide-scrollbar">
+          {[
+            { id: 'all_active', label: isMobile ? 'Всі' : 'Усі активні', count: stageCounts.all_active, dot: null },
+            { id: 'ready', label: isMobile ? 'До відправки' : 'Готово до відправки', count: stageCounts.ready, dot: 'apricot' },
+            { id: 'packing', label: 'Пакування', count: stageCounts.packing, dot: 'apricot' },
+            { id: 'in_work', label: isMobile ? 'В роботі' : 'Друк / Склейка', count: stageCounts.in_work, dot: 'apricot' },
+            { id: 'shipped', label: 'В дорозі', count: stageCounts.shipped, dot: 'periwinkle' },
+            { id: 'completed', label: 'Виконано', count: stageCounts.completed, dot: 'periwinkle' }
+          ].map(tab => {
+            const active = stageTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={(e) => {
+                  setStageTab(tab.id);
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }}
+                className={`dusk-pipeline__step ${active ? 'active' : ''}`}
+                style={{
+                  flexShrink: 0,
+                  padding: isMobile ? '5px 8px' : undefined,
+                  fontSize: isMobile ? 11.5 : undefined,
+                  gap: isMobile ? 5 : undefined
+                }}
+              >
+                {tab.dot && <span className={`dusk-dot ${tab.dot === 'periwinkle' ? 'dusk-dot--periwinkle' : 'dusk-dot--apricot'}`} />}
+                <span>{tab.label}</span>
+                <span className="dusk-pipeline__count">{tab.count}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Dusk Ruled Tally — 4 Key Logistics Figures */}
@@ -615,32 +686,6 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
           </div>
         </div>
 
-        {/* Row 2: Stage Pipeline Strip */}
-        <div className="dusk-pipeline hide-scrollbar">
-          {[
-            { id: 'all_active', label: 'Усі активні', count: stageCounts.all_active, dot: null },
-            { id: 'ready', label: 'Готово до відправки', count: stageCounts.ready, dot: 'apricot' },
-            { id: 'packing', label: 'Пакування', count: stageCounts.packing, dot: 'apricot' },
-            { id: 'in_work', label: 'Друк / Склейка', count: stageCounts.in_work, dot: 'apricot' },
-            { id: 'shipped', label: 'В дорозі', count: stageCounts.shipped, dot: 'periwinkle' },
-            { id: 'completed', label: 'Виконано', count: stageCounts.completed, dot: 'periwinkle' }
-          ].map(tab => {
-            const active = stageTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setStageTab(tab.id)}
-                className={`dusk-pipeline__step ${active ? 'active' : ''}`}
-              >
-                {tab.dot && <span className={`dusk-dot ${tab.dot === 'periwinkle' ? 'dusk-dot--periwinkle' : 'dusk-dot--apricot'}`} />}
-                <span>{tab.label}</span>
-                <span className="dusk-pipeline__count">{tab.count}</span>
-              </button>
-            );
-          })}
-        </div>
-
         {/* Row 3: Delivery Method & COD Facet Pills */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -680,10 +725,21 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
             ))}
           </div>
         </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Shipment Cards List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={stageTab}
+          initial={isMobile ? { opacity: 0, y: 6 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          exit={isMobile ? { opacity: 0, y: -4 } : undefined}
+          transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 10, minHeight: isMobile ? '55vh' : 'auto' }}
+        >
         {filteredOrders.length === 0 ? (
           <div className="dusk-panel" style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--color-muted)', fontSize: 13 }}>
             Немає замовлень у цій вкладці за вибраними фільтрами.
@@ -731,8 +787,8 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                   style={{ display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer', userSelect: 'none' }}
                 >
                   {/* Row 1: Priority, Number, Platform, COD badge, Status Badge */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
                       <button
                         type="button"
                         onClick={(e) => togglePriority(order.id, e)}
@@ -753,9 +809,15 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                         {order.order_number ? order.order_number.replace(/^MAN-[A-Z]+-/, '#') : `#${String(order.id).slice(0, 8)}`}
                       </span>
 
-                      <span className="dusk-badge dusk-badge--neutral" style={{ fontSize: 10.5, padding: '2px 8px' }}>
-                        {PLATFORM_LABELS[platform] || PLATFORM_LABELS.other}
-                      </span>
+                      {(() => {
+                        const meta = STATUS_META[order.status] || STATUS_META.new;
+                        return (
+                          <span className={`dusk-badge ${meta.signal === 'periwinkle' ? 'dusk-badge--periwinkle' : meta.signal === 'apricot' ? 'dusk-badge--apricot' : 'dusk-badge--neutral'}`} style={{ fontSize: 10.5, padding: '2px 8px' }}>
+                            <span className={`dusk-dot ${meta.signal === 'periwinkle' ? 'dusk-dot--periwinkle' : meta.signal === 'apricot' ? 'dusk-dot--apricot' : 'dusk-dot--muted'}`} style={{ width: 5, height: 5 }} />
+                            {meta.label}
+                          </span>
+                        );
+                      })()}
 
                       {isCod ? (
                         <span className="dusk-badge dusk-badge--apricot dusk-num" style={{ fontSize: 10.5, padding: '2px 8px' }}>
@@ -775,7 +837,7 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                       <button
                         type="button"
                         onClick={(e) => openEditModal(order, e)}
@@ -785,16 +847,6 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                       >
                         <Edit3 size={11} /> {!isMobile && 'Змінити'}
                       </button>
-
-                      {(() => {
-                        const meta = STATUS_META[order.status] || STATUS_META.new;
-                        return (
-                          <span className={`dusk-badge ${meta.signal === 'periwinkle' ? 'dusk-badge--periwinkle' : meta.signal === 'apricot' ? 'dusk-badge--apricot' : 'dusk-badge--neutral'}`} style={{ fontSize: 11 }}>
-                            <span className={`dusk-dot ${meta.signal === 'periwinkle' ? 'dusk-dot--periwinkle' : meta.signal === 'apricot' ? 'dusk-dot--apricot' : 'dusk-dot--muted'}`} style={{ width: 5, height: 5 }} />
-                            {meta.label}
-                          </span>
-                        );
-                      })()}
                       {isExpanded ? <ChevronUp size={16} style={{ color: 'var(--color-muted)' }} /> : <ChevronDown size={16} style={{ color: 'var(--color-muted)' }} />}
                     </div>
                   </div>
@@ -857,8 +909,8 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                     </div>
                   </div>
 
-                  {/* Collapsed Quick Items + Colors + Notes Preview */}
-                  {!isExpanded && (items.length > 0 || details.notes) && (
+                  {/* Collapsed Quick Items + Colors Preview */}
+                  {!isExpanded && items.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
                       {items.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -867,38 +919,34 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                             const itemNote = item.item_note || item.color_details || item.note || '';
                             return (
                               <span key={idx} style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 5, flexWrap: 'wrap',
-                                background: 'var(--color-paper)', border: '1px solid var(--color-rule)',
-                                padding: '3px 8px', borderRadius: 6, fontSize: 11, color: 'var(--color-ink)', fontWeight: 500
+                                display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+                                background: 'var(--color-paper-2)', border: '1px solid var(--color-rule)',
+                                padding: isMobile ? '6px 10px' : '4px 9px', borderRadius: 8,
+                                fontSize: isMobile ? 13 : 12, color: 'var(--color-ink)', fontWeight: 600
                               }}>
-                                {item.is_manufactured && <Check size={11} style={{ color: 'var(--color-accent)' }} />}
+                                {item.is_manufactured && <Check size={12} style={{ color: 'var(--color-accent)' }} />}
                                 <span>{item.name} <strong className="dusk-num" style={{ color: 'var(--color-accent)' }}>×{item.quantity || 1}</strong></span>
                                 {itemColors.map((cName, cIdx) => {
                                   const cMeta = getColorMeta(cName);
                                   return (
-                                    <span key={cIdx} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 10, lineHeight: 1, color: 'var(--color-ink-2)', background: 'var(--color-paper-2)', padding: '3px 6px', borderRadius: 4 }}>
+                                    <span key={cIdx} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 10.5, lineHeight: 1, color: 'var(--color-ink-2)', background: 'var(--color-paper)', padding: '3px 6px', borderRadius: 4, fontWeight: 500 }}>
                                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: cMeta.gradient || cMeta.hex, flexShrink: 0 }} />
                                       <span>{cMeta.label}</span>
                                     </span>
                                   );
                                 })}
-                                {itemNote && <span style={{ fontSize: 10.5, color: 'var(--color-accent-2)' }}>({itemNote})</span>}
+                                {itemNote && <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)' }}>({itemNote})</span>}
                               </span>
                             );
                           })}
-                        </div>
-                      )}
-                      {details.notes && (
-                        <div className="dusk-apricot-strip" style={{ alignSelf: 'flex-start' }}>
-                          {details.notes}
                         </div>
                       )}
                     </div>
                   )}
                 </div>
 
-                {/* 1-Tap Quick Copy Bar */}
-                {!isPickup && (
+                {/* 1-Tap Quick Copy Bar (Desktop only) */}
+                {!isPickup && !isMobile && (
                   <div 
                     onClick={(e) => e.stopPropagation()}
                     style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 8, borderTop: '1px solid var(--color-rule)' }}
@@ -1354,7 +1402,8 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
             );
           })
         )}
-      </div>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Quick Edit Shipping Modal */}
       <AnimatePresence>

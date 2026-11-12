@@ -354,6 +354,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
   const [salesFilterTemplates, setSalesFilterTemplates] = useState([]);
   const [newSalesTemplateName, setNewSalesTemplateName] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'kanban'
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [ads, setAds] = useState([]);
@@ -1535,18 +1536,18 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', height: isMobile ? 'auto' : 'calc(100vh - 28px)', overflow: isMobile ? 'visible' : 'hidden', paddingBottom: isMobile ? 78 : 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12, width: '100%', height: isMobile ? 'auto' : 'calc(100vh - 28px)', overflow: isMobile ? 'visible' : 'hidden', paddingBottom: isMobile ? 78 : 0 }}>
       
       {/* Dusk Command & Filter Panel */}
-      <div className="dusk-glass" style={{ padding: isMobile ? 14 : '14px 20px', display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
+      <div className="dusk-glass" style={{ padding: isMobile ? '10px 12px' : '14px 20px', display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12, flexShrink: 0 }}>
         
         {/* Top Row: Title + Search + Period + View Switcher + Primary Action */}
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
             <div>
-              <h1 style={{ fontSize: isMobile ? 20 : 22, fontWeight: 500, color: 'var(--color-ink)', margin: 0, letterSpacing: '-0.022em', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <h1 style={{ fontSize: isMobile ? 17 : 22, fontWeight: 500, color: 'var(--color-ink)', margin: 0, letterSpacing: '-0.022em', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span>Реєстр замовлень</span>
-                <span className="dusk-num" style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-muted)', background: 'oklch(100% 0 0 / 0.05)', padding: '2px 10px', borderRadius: 999, border: '1px solid var(--color-rule)' }}>
+                <span className="dusk-num" style={{ fontSize: isMobile ? 11.5 : 13, fontWeight: 500, color: 'var(--color-muted)', background: 'oklch(100% 0 0 / 0.05)', padding: isMobile ? '1px 8px' : '2px 10px', borderRadius: 999, border: '1px solid var(--color-rule)' }}>
                   {tallyMetrics.count}
                 </span>
               </h1>
@@ -1557,97 +1558,115 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                 type="button"
                 onClick={() => { resetForm(); setShowAddForm(true); }}
                 className="dusk-btn-primary"
-                style={{ minHeight: 36, padding: '0 14px', fontSize: 12.5 }}
+                style={{ minHeight: 32, padding: '0 11px', fontSize: 12 }}
               >
-                <Plus size={15} /> Новий продаж
+                <Plus size={14} /> Новий продаж
               </button>
             )}
           </div>
 
           {/* Search, Period, View Mode & Primary CTA */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
-            {/* Search Pill */}
-            <div style={{ flex: isMobile ? '1 1 100%' : '0 1 280px', minWidth: 180, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-input)', border: '1px solid var(--color-rule)', borderRadius: 999, padding: '6px 14px' }}>
-              <Search size={14} style={{ color: 'var(--color-muted)', flexShrink: 0 }} />
-              <input 
-                type="text" 
-                placeholder="Пошук клієнта, телефону, ТТН, виробу…" 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
-                style={{ background: 'transparent', border: 'none', color: 'var(--color-ink)', fontSize: 12.5, outline: 'none', width: '100%' }} 
-              />
-              {searchQuery && (
+          <div style={{ display: 'flex', gap: isMobile ? 6 : 8, alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
+            {/* Search Pill (+ Mobile Filter Toggle) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: isMobile ? '1 1 100%' : '0 1 280px', minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, background: 'var(--bg-input)', border: '1px solid var(--color-rule)', borderRadius: 999, padding: isMobile ? '5px 11px' : '6px 14px' }}>
+                <Search size={13} style={{ color: 'var(--color-muted)', flexShrink: 0 }} />
+                <input 
+                  type="text" 
+                  placeholder="Пошук клієнта, телефону, ТТН…" 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                  style={{ background: 'transparent', border: 'none', color: 'var(--color-ink)', fontSize: 12.5, outline: 'none', width: '100%', minWidth: 0 }} 
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-muted)', display: 'flex' }}
+                    aria-label="Очистити пошук"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {isMobile && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
-                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-muted)', display: 'flex' }}
-                  aria-label="Очистити пошук"
+                  onClick={() => setMobileFiltersOpen(prev => !prev)}
+                  className={`dusk-facet-pill ${mobileFiltersOpen || activeFilterCount > 0 ? 'is-active' : ''}`}
+                  style={{ padding: '5px 10px', fontSize: 11.5, flexShrink: 0, height: 31 }}
                 >
-                  <X size={13} />
+                  <SlidersHorizontal size={12} />
+                  <span>Фільтри{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</span>
+                  <ChevronDown size={12} style={{ transform: mobileFiltersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
                 </button>
               )}
             </div>
 
-            {/* Quick Date Segment */}
-            <div style={{ display: 'flex', background: 'var(--bg-input)', border: '1px solid var(--color-rule)', borderRadius: 999, padding: 2, gap: 2 }}>
-              {[
-                { id: 'all', label: 'Весь час' },
-                { id: 'today', label: 'Сьогодні' },
-                { id: '7d', label: '7 днів' },
-                { id: '30d', label: '30 днів' }
-              ].map(df => {
-                const active = dateFilter === df.id;
-                return (
-                  <button
-                    key={df.id}
-                    type="button"
-                    onClick={() => setDateFilter(df.id)}
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: 999,
-                      border: 'none',
-                      background: active ? 'var(--color-paper-3)' : 'transparent',
-                      color: active ? 'var(--color-ink)' : 'var(--color-muted)',
-                      fontSize: 12,
-                      fontWeight: active ? 600 : 500,
-                      cursor: 'pointer',
-                      transition: 'background-color 0.15s, color 0.15s'
-                    }}
-                  >
-                    {df.label}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Quick Date Segment + View Mode Switcher */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'space-between' : 'flex-end', gap: 6, width: isMobile ? '100%' : 'auto' }}>
+              <div className="hide-scrollbar" style={{ display: 'flex', background: 'var(--bg-input)', border: '1px solid var(--color-rule)', borderRadius: 999, padding: 2, gap: 1, overflowX: 'auto' }}>
+                {[
+                  { id: 'all', label: 'Весь час' },
+                  { id: 'today', label: 'Сьогодні' },
+                  { id: '7d', label: isMobile ? '7д' : '7 днів' },
+                  { id: '30d', label: isMobile ? '30д' : '30 днів' }
+                ].map(df => {
+                  const active = dateFilter === df.id;
+                  return (
+                    <button
+                      key={df.id}
+                      type="button"
+                      onClick={() => setDateFilter(df.id)}
+                      style={{
+                        padding: isMobile ? '4px 8px' : '4px 10px',
+                        borderRadius: 999,
+                        border: 'none',
+                        background: active ? 'var(--color-paper-3)' : 'transparent',
+                        color: active ? 'var(--color-ink)' : 'var(--color-muted)',
+                        fontSize: isMobile ? 11 : 12,
+                        fontWeight: active ? 600 : 500,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'background-color 0.15s, color 0.15s'
+                      }}
+                    >
+                      {df.label}
+                    </button>
+                  );
+                })}
+              </div>
 
-            {/* View Mode Switcher */}
-            <div style={{ display: 'flex', background: 'var(--bg-input)', border: '1px solid var(--color-rule)', borderRadius: 999, padding: 2, gap: 2, flexShrink: 0 }}>
-              <button
-                type="button"
-                onClick={() => switchViewMode('table')}
-                style={{
-                  padding: '5px 11px', borderRadius: 999, border: 'none',
-                  background: viewMode === 'table' ? 'var(--color-paper-3)' : 'transparent',
-                  color: viewMode === 'table' ? 'var(--color-ink)' : 'var(--color-muted)',
-                  fontSize: 12, fontWeight: viewMode === 'table' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
-                }}
-              >
-                <List size={13} />
-                <span>Список</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => switchViewMode('kanban')}
-                style={{
-                  padding: '5px 11px', borderRadius: 999, border: 'none',
-                  background: viewMode === 'kanban' ? 'var(--color-paper-3)' : 'transparent',
-                  color: viewMode === 'kanban' ? 'var(--color-ink)' : 'var(--color-muted)',
-                  fontSize: 12, fontWeight: viewMode === 'kanban' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
-                }}
-              >
-                <LayoutGrid size={13} />
-                <span>Канбан</span>
-              </button>
+              {/* View Mode Switcher */}
+              <div style={{ display: 'flex', background: 'var(--bg-input)', border: '1px solid var(--color-rule)', borderRadius: 999, padding: 2, gap: 2, flexShrink: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => switchViewMode('table')}
+                  style={{
+                    padding: isMobile ? '4px 9px' : '5px 11px', borderRadius: 999, border: 'none',
+                    background: viewMode === 'table' ? 'var(--color-paper-3)' : 'transparent',
+                    color: viewMode === 'table' ? 'var(--color-ink)' : 'var(--color-muted)',
+                    fontSize: isMobile ? 11 : 12, fontWeight: viewMode === 'table' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                  }}
+                >
+                  <List size={12} />
+                  <span>Список</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchViewMode('kanban')}
+                  style={{
+                    padding: isMobile ? '4px 9px' : '5px 11px', borderRadius: 999, border: 'none',
+                    background: viewMode === 'kanban' ? 'var(--color-paper-3)' : 'transparent',
+                    color: viewMode === 'kanban' ? 'var(--color-ink)' : 'var(--color-muted)',
+                    fontSize: isMobile ? 11 : 12, fontWeight: viewMode === 'kanban' ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                  }}
+                >
+                  <LayoutGrid size={12} />
+                  <span>Канбан</span>
+                </button>
+              </div>
             </div>
 
             {!isMobile && (
@@ -1663,15 +1682,26 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
           </div>
         </div>
 
-        {/* Dusk Ruled Tally of Four Figures (Compact, calm, tabular numerals) */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))', 
-          borderTop: '1px solid var(--color-rule)', 
-          borderBottom: '1px solid var(--color-rule)', 
-          padding: '10px 0',
-          gap: isMobile ? 10 : 0
-        }}>
+        {/* Full Tally + Pipeline + Facet Filters (always on desktop, smoothly collapsible on mobile) */}
+        <AnimatePresence initial={false}>
+          {(!isMobile || mobileFiltersOpen) && (
+            <motion.div
+              key="sales-filters-drawer"
+              initial={isMobile ? { opacity: 0, height: 0 } : false}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={isMobile ? { opacity: 0, height: 0 } : undefined}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{ overflow: isMobile ? 'hidden' : 'visible', display: 'flex', flexDirection: 'column', gap: 12 }}
+            >
+            {/* Dusk Ruled Tally of Four Figures (Compact, calm, tabular numerals) */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))', 
+              borderTop: '1px solid var(--color-rule)', 
+              borderBottom: '1px solid var(--color-rule)', 
+              padding: '10px 0',
+              gap: isMobile ? 10 : 0
+            }}>
           <div style={{ paddingRight: 16, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
             <span style={{ fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>Сума вибірки</span>
             <span className="dusk-num" style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 500, color: 'var(--color-ink)' }}>
@@ -1914,6 +1944,9 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
             )}
           </div>
         </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Main Content Container (Table / Mobile Cards or Kanban) */}
@@ -2394,10 +2427,10 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
               position: 'fixed', 
               inset: 0, 
               background: 'oklch(10% 0.015 268 / 0.82)', 
-              backdropFilter: 'blur(10px)',
+              backdropFilter: isMobile ? 'none' : 'blur(10px)',
               zIndex: 1100, 
               display: 'flex', 
-              alignItems: isMobile ? 'flex-end' : 'center', 
+              alignItems: isMobile ? 'stretch' : 'center', 
               justifyContent: 'center', 
               padding: isMobile ? 0 : 20
             }}
@@ -2411,12 +2444,13 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
               className="dusk-panel"
               style={{ 
                 background: 'var(--color-paper)', 
-                borderRadius: isMobile ? '22px 22px 0 0' : 18, 
+                borderRadius: isMobile ? 0 : 18, 
                 width: '100%', 
                 maxWidth: 1080, 
-                border: '1px solid var(--color-rule)', 
+                border: isMobile ? 'none' : '1px solid var(--color-rule)', 
                 color: 'var(--color-ink)', 
-                maxHeight: isMobile ? '95vh' : '93vh',
+                height: isMobile ? '100dvh' : 'auto',
+                maxHeight: isMobile ? '100dvh' : '93vh',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
@@ -2429,55 +2463,78 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                 flexDirection: isMobile ? 'column' : 'row',
                 justifyContent: 'space-between',
                 alignItems: isMobile ? 'stretch' : 'center', 
-                gap: 12,
-                padding: isMobile ? '12px 14px' : '14px 20px', 
+                gap: isMobile ? 8 : 12,
+                padding: isMobile ? '10px 12px' : '14px 20px', 
                 borderBottom: '1px solid var(--color-rule)',
                 background: 'var(--color-paper-2)',
                 flexShrink: 0
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                     <div style={{
-                      width: 34, height: 34, borderRadius: 9,
+                      width: isMobile ? 30 : 34, height: isMobile ? 30 : 34, borderRadius: 9,
                       background: 'var(--color-accent-soft)',
                       border: '1px solid var(--color-accent-border)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: 'var(--color-accent)', flexShrink: 0
                     }}>
-                      <ShoppingBag size={16} />
+                      <ShoppingBag size={isMobile ? 14 : 16} />
                     </div>
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <h2 className="dusk-heading" style={{ fontSize: isMobile ? 16 : 18, margin: 0 }}>
-                          {editingSale ? `Редагувати замовлення ${editingSale.order_number ? editingSale.order_number.replace(/^MAN-[A-Z]+-/, '#') : ''}` : 'Новий продаж'}
+                        <h2 className="dusk-heading" style={{ fontSize: isMobile ? 15.5 : 18, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {editingSale ? `Редагувати ${editingSale.order_number ? editingSale.order_number.replace(/^MAN-[A-Z]+-/, '#') : ''}` : 'Новий продаж'}
                         </h2>
-                        {formData.is_priority && (
+                        {!isMobile && formData.is_priority && (
                           <span className="dusk-badge dusk-badge--apricot" style={{ fontSize: 10.5, padding: '2px 7px' }}>
                             Термінове
                           </span>
                         )}
                       </div>
-                      <p style={{ margin: 0, fontSize: 11.5, color: 'var(--color-muted)' }}>
-                        Швидке оформлення: оберіть товари зліва, вставте реквізити клієнта справа
-                      </p>
+                      {!isMobile && (
+                        <p style={{ margin: 0, fontSize: 11.5, color: 'var(--color-muted)' }}>
+                          Швидке оформлення: оберіть товари зліва, вставте реквізити клієнта справа
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   {isMobile && (
-                    <button 
-                      type="button"
-                      onClick={() => setShowAddForm(false)} 
-                      className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                      style={{ width: 32, height: 32, padding: 0 }}
-                    >
-                      <X size={16} />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, is_priority: !formData.is_priority })}
+                        className={`dusk-facet-pill ${formData.is_priority ? 'active-apricot' : ''}`}
+                        style={{ height: 30, padding: '0 9px', fontSize: 11.5 }}
+                        title="Позначити як термінове / пріоритетне"
+                      >
+                        <Star size={12} fill={formData.is_priority ? 'var(--color-accent-2)' : 'transparent'} style={{ color: 'var(--color-accent-2)' }} />
+                        <span>Пріоритет</span>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setShowAddForm(false)} 
+                        className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                        style={{ width: 30, height: 30, padding: 0 }}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
                   )}
                 </div>
 
-                {/* Channel Quick Strip + Priority + Guest Pickup + Close */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', background: 'var(--color-paper)', padding: 3, borderRadius: 999, border: '1px solid var(--color-rule)' }}>
+                {/* Channel Quick Strip + Priority + Close */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: isMobile ? 'nowrap' : 'wrap', justifyContent: isMobile ? 'flex-start' : 'flex-end', minWidth: 0 }}>
+                  <div
+                    className="hide-scrollbar"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 3,
+                      flexWrap: isMobile ? 'nowrap' : 'wrap',
+                      overflowX: isMobile ? 'auto' : 'visible',
+                      width: isMobile ? '100%' : 'auto',
+                      background: 'var(--color-paper)', padding: 3, borderRadius: 999, border: '1px solid var(--color-rule)'
+                    }}
+                  >
                     {CHANNELS.map(ch => {
                       const active = formData.source === ch.value;
                       return (
@@ -2486,7 +2543,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                           type="button"
                           onClick={() => setFormData({ ...formData, source: ch.value })}
                           style={{
-                            padding: '4px 10px',
+                            padding: isMobile ? '4px 9px' : '4px 10px',
                             borderRadius: 999,
                             border: 'none',
                             background: active ? 'var(--color-accent)' : 'transparent',
@@ -2495,6 +2552,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                             fontWeight: active ? 600 : 500,
                             cursor: 'pointer',
                             whiteSpace: 'nowrap',
+                            flexShrink: 0,
                             transition: 'all 0.14s ease'
                           }}
                         >
@@ -2504,16 +2562,18 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                     })}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, is_priority: !formData.is_priority })}
-                    className={`dusk-facet-pill ${formData.is_priority ? 'active-apricot' : ''}`}
-                    style={{ height: 30, padding: '0 10px' }}
-                    title="Позначити як термінове / пріоритетне"
-                  >
-                    <Star size={12} fill={formData.is_priority ? 'var(--color-accent-2)' : 'transparent'} style={{ color: 'var(--color-accent-2)' }} />
-                    <span>Пріоритет</span>
-                  </button>
+                  {!isMobile && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, is_priority: !formData.is_priority })}
+                      className={`dusk-facet-pill ${formData.is_priority ? 'active-apricot' : ''}`}
+                      style={{ height: 30, padding: '0 10px' }}
+                      title="Позначити як термінове / пріоритетне"
+                    >
+                      <Star size={12} fill={formData.is_priority ? 'var(--color-accent-2)' : 'transparent'} style={{ color: 'var(--color-accent-2)' }} />
+                      <span>Пріоритет</span>
+                    </button>
+                  )}
 
                   {!isMobile && (
                     <button 
@@ -2536,18 +2596,21 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                   flex: 1, 
                   minHeight: 0,
                   overflowY: isMobile ? 'auto' : 'hidden',
-                  display: 'grid',
-                  gridTemplateColumns: isMobile ? '1fr' : '1.08fr 0.92fr',
-                  divideX: '1px solid var(--color-rule)'
+                  overflowX: 'hidden',
+                  display: isMobile ? 'flex' : 'grid',
+                  flexDirection: isMobile ? 'column' : undefined,
+                  gridTemplateColumns: isMobile ? undefined : 'minmax(0, 1.08fr) minmax(0, 0.92fr)'
                 }}
               >
                 {/* ================= LEFT COLUMN: CATALOG PICKER & ACTIVE CART ================= */}
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  minHeight: 0,
+                  minHeight: isMobile ? 'auto' : 0,
+                  minWidth: 0,
+                  flexShrink: isMobile ? 0 : undefined,
                   overflowY: isMobile ? 'visible' : 'auto',
-                  padding: isMobile ? 14 : '16px 20px',
+                  padding: isMobile ? 12 : '16px 20px',
                   borderRight: isMobile ? 'none' : '1px solid var(--color-rule)',
                   borderBottom: isMobile ? '1px solid var(--color-rule)' : 'none',
                   gap: 14
@@ -2557,7 +2620,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--color-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <ShoppingBag size={14} style={{ color: 'var(--color-accent)' }} />
-                        <span>1. Додати вироби в замовлення</span>
+                        <span>{isMobile ? '1. Вироби' : '1. Додати вироби в замовлення'}</span>
                       </span>
 
                       <div className="dusk-segmented">
@@ -2638,11 +2701,11 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                         <AnimatePresence initial={false}>
                           {catalogDropdownOpen && (
                             <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                              style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 8 }}
+                              initial={isMobile ? { opacity: 0, y: -4 } : { opacity: 0, height: 0 }}
+                              animate={isMobile ? { opacity: 1, y: 0 } : { opacity: 1, height: 'auto' }}
+                              exit={isMobile ? { opacity: 0 } : { opacity: 0, height: 0 }}
+                              transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
+                              style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}
                             >
                               {catalogCategories.length > 2 && (
                                 <div className="hide-scrollbar" style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 2 }}>
@@ -2662,10 +2725,12 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
 
                               {/* Compact 2-Column Catalog Grid */}
                               <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+                                display: isMobile ? 'flex' : 'grid',
+                                flexDirection: isMobile ? 'column' : undefined,
+                                gridTemplateColumns: isMobile ? undefined : 'repeat(2, minmax(0, 1fr))',
+                                gridAutoRows: 'max-content',
                                 gap: 6,
-                                maxHeight: 200,
+                                maxHeight: isMobile ? 240 : 200,
                                 overflowY: 'auto',
                                 paddingRight: 2
                               }}>
@@ -2684,6 +2749,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                                         onClick={() => handleAddCatalogProduct(prod)}
                                         style={{
                                           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                                          width: '100%', minWidth: 0, minHeight: 44, flexShrink: 0, overflow: 'hidden',
                                           padding: '6px 9px', borderRadius: 9, cursor: 'pointer', textAlign: 'left',
                                           background: inCartCount > 0 ? 'var(--color-accent-soft)' : 'var(--color-paper)',
                                           border: inCartCount > 0 ? '1px solid var(--color-accent-border)' : '1px solid var(--color-rule)',
@@ -2803,15 +2869,15 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
 
                     {(formData.items || []).length === 0 ? (
                       <div style={{
-                        padding: '28px 16px',
+                        padding: isMobile ? '10px 12px' : '28px 16px',
                         borderRadius: 12,
                         background: 'var(--color-paper-2)',
                         border: '1px dashed var(--color-rule)',
                         textAlign: 'center',
                         color: 'var(--color-muted)',
-                        fontSize: 12.5
+                        fontSize: isMobile ? 11.5 : 12.5
                       }}>
-                        Клікніть на будь-який товар вище, щоб додати його у кошик та обрати колір пластику
+                        {isMobile ? 'Оберіть товар вище, щоб додати у кошик' : 'Клікніть на будь-який товар вище, щоб додати його у кошик та обрати колір пластику'}
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -3252,9 +3318,11 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  minHeight: 0,
+                  minHeight: isMobile ? 'auto' : 0,
+                  minWidth: 0,
+                  flexShrink: isMobile ? 0 : undefined,
                   overflowY: isMobile ? 'visible' : 'auto',
-                  padding: isMobile ? 14 : '16px 20px',
+                  padding: isMobile ? 12 : '16px 20px',
                   gap: 14
                 }}>
                   {/* 2. RECIPIENT & SMART PASTE */}
@@ -4019,23 +4087,25 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                   ) : null}
                 </div>
 
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowAddForm(false)} 
-                    className="dusk-btn dusk-btn--ghost"
-                  >
-                    Скасувати
-                  </button>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>
+                  {!isMobile && (
+                    <button 
+                      type="button" 
+                      onClick={() => setShowAddForm(false)} 
+                      className="dusk-btn dusk-btn--ghost"
+                    >
+                      Скасувати
+                    </button>
+                  )}
                   <button 
                     type="submit" 
                     form="sale-form"
                     disabled={saving}
                     className="dusk-btn dusk-btn--primary"
-                    style={{ minWidth: isMobile ? 160 : 210 }}
+                    style={{ minWidth: isMobile ? 140 : 210, padding: isMobile ? '0 14px' : undefined }}
                   >
                     <Check size={15} />
-                    <span>{saving ? 'Збереження…' : (editingSale ? 'Зберегти зміни' : 'Створити замовлення')}</span>
+                    <span>{saving ? 'Збереження…' : (editingSale ? 'Зберегти' : (isMobile ? 'Створити' : 'Створити замовлення'))}</span>
                   </button>
                 </div>
               </div>

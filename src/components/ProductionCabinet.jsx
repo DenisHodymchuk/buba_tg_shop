@@ -5,7 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Hammer, CheckCircle2, Clock, Printer, Palette, ClipboardList, 
   Truck, Search, Star, AlertCircle, Check, ChevronDown, ChevronUp, X,
-  ExternalLink, Phone, MapPin, Copy, CreditCard, MessageSquare, Package
+  ExternalLink, Phone, MapPin, Copy, CreditCard, MessageSquare, Package, SlidersHorizontal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getColorMeta, FILAMENT_COLORS, getChannelMeta } from '@/lib/orderHelpers';
@@ -24,6 +24,7 @@ export default function ProductionCabinet({ orders = [], setOrders, supabase, sh
   const [expandedProductNames, setExpandedProductNames] = useState([]);
   const [specFilter, setSpecFilter] = useState('all'); // 'all' | 'priority' | 'custom_colors' | 'pending_only'
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const selectedOrder = useMemo(() => {
     if (!selectedOrderId) return null;
@@ -314,76 +315,117 @@ export default function ProductionCabinet({ orders = [], setOrders, supabase, sh
     );
   };
 
+  const activeMobileFilterCount = (specFilter !== 'all' ? 1 : 0) + (selectedStatuses.length !== 3 || !selectedStatuses.includes('new') || !selectedStatuses.includes('printing') || !selectedStatuses.includes('painting') ? 1 : 0);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', paddingBottom: isMobile ? 70 : 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 16, width: '100%', paddingBottom: isMobile ? 70 : 0 }}>
       
       {/* Dusk Glass Header & Filter Command Bar */}
-      <div className="dusk-glass" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="dusk-glass" style={{ padding: isMobile ? '10px 12px' : 20, display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 16 }}>
         
         {/* Top Row: Title + Search + Expand/Collapse Actions */}
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 12 }}>
           <div>
-            <h1 className="dusk-heading" style={{ fontSize: isMobile ? 20 : 22 }}>
-              Черга виготовлення
+            <h1 className="dusk-heading" style={{ fontSize: isMobile ? 17 : 22, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>Черга виготовлення</span>
+              {isMobile && (
+                <span className="dusk-num" style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--color-accent-2)', background: 'var(--color-accent-2-soft, oklch(100% 0 0 / 0.05))', padding: '1px 8px', borderRadius: 999, border: '1px solid var(--color-rule)' }}>
+                  {totals.remainingCount} шт.
+                </span>
+              )}
             </h1>
-            <p className="dusk-subheading" style={{ marginTop: 2 }}>
-              Чек-лист моделей до 3D-друку, кольори пластику та уточнення по кожному замовленню
-            </p>
+            {!isMobile && (
+              <p className="dusk-subheading" style={{ marginTop: 2 }}>
+                Чек-лист моделей до 3D-друку, кольори пластику та уточнення по кожному замовленню
+              </p>
+            )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {/* Search Input */}
-            <div style={{ position: 'relative', minWidth: isMobile ? '100%' : 250 }}>
-              <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-              <input
-                type="text"
-                placeholder="Пошук виробу, кольору, клієнта..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="dusk-input"
-                style={{ paddingLeft: 32, paddingRight: searchQuery ? 28 : 12, height: 34, fontSize: 12.5, borderRadius: 999 }}
-              />
-              {searchQuery && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, flexWrap: 'wrap' }}>
+            {/* Search Input (+ Mobile Filter Toggle) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: isMobile ? '100%' : 'auto' }}>
+              <div style={{ position: 'relative', flex: isMobile ? 1 : 'none', minWidth: isMobile ? 0 : 250 }}>
+                <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Пошук виробу, кольору, клієнта..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="dusk-input"
+                  style={{ paddingLeft: 32, paddingRight: searchQuery ? 28 : 12, height: isMobile ? 32 : 34, fontSize: 12.5, borderRadius: 999, width: '100%' }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 2 }}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {isMobile && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery('')}
-                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 2 }}
+                  onClick={() => setMobileFiltersOpen(prev => !prev)}
+                  className={`dusk-facet-pill ${mobileFiltersOpen || activeMobileFilterCount > 0 ? 'active' : ''}`}
+                  style={{ padding: '5px 10px', fontSize: 11.5, flexShrink: 0, height: 32 }}
                 >
-                  <X size={13} />
+                  <SlidersHorizontal size={12} />
+                  <span>Фільтри{activeMobileFilterCount > 0 ? ` (${activeMobileFilterCount})` : ''}</span>
+                  <ChevronDown size={12} style={{ transform: mobileFiltersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
                 </button>
               )}
             </div>
 
-            {productionList.length > 0 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setExpandedProductNames(productionList.map(p => p.name))}
-                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                >
-                  Розгорнути всі
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setExpandedProductNames([])}
-                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                >
-                  Згорнути всі
-                </button>
-              </>
-            )}
+            <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: isMobile ? 'nowrap' : 'wrap', overflowX: isMobile ? 'auto' : 'visible', width: isMobile ? '100%' : 'auto' }}>
+              {productionList.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedProductNames(productionList.map(p => p.name))}
+                    className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                    style={isMobile ? { padding: '4px 9px', fontSize: 11, whiteSpace: 'nowrap', flexShrink: 0 } : undefined}
+                  >
+                    Розгорнути всі
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedProductNames([])}
+                    className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                    style={isMobile ? { padding: '4px 9px', fontSize: 11, whiteSpace: 'nowrap', flexShrink: 0 } : undefined}
+                  >
+                    Згорнути всі
+                  </button>
+                </>
+              )}
 
-            {totals.checkedCount > 0 && (
-              <button
-                type="button"
-                onClick={clearChecklist}
-                className="dusk-btn dusk-btn--danger dusk-btn--sm"
-              >
-                Скинути відмітки
-              </button>
-            )}
+              {totals.checkedCount > 0 && (
+                <button
+                  type="button"
+                  onClick={clearChecklist}
+                  className="dusk-btn dusk-btn--danger dusk-btn--sm"
+                  style={isMobile ? { padding: '4px 9px', fontSize: 11, whiteSpace: 'nowrap', flexShrink: 0 } : undefined}
+                >
+                  Скинути відмітки
+                </button>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Tally + Filters (always on desktop, smoothly collapsible on mobile) */}
+        <AnimatePresence initial={false}>
+          {(!isMobile || mobileFiltersOpen) && (
+            <motion.div
+              key="production-filters-drawer"
+              initial={isMobile ? { opacity: 0, height: 0 } : false}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={isMobile ? { opacity: 0, height: 0 } : undefined}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{ overflow: isMobile ? 'hidden' : 'visible', display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 16 }}
+            >
 
         {/* Dusk Ruled Tally — 4 Key Production Figures */}
         <div
@@ -474,6 +516,9 @@ export default function ProductionCabinet({ orders = [], setOrders, supabase, sh
             ))}
           </div>
         </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Production List Items */}
@@ -559,14 +604,14 @@ export default function ProductionCabinet({ orders = [], setOrders, supabase, sh
                   </div>
                 </div>
 
-                {/* Inline Preview of Colors / Notes when collapsed */}
-                {!isExpanded && item.hasCustomSpecs && (
+                {/* Inline Preview of Colors when collapsed (comments stay inside expanded view) */}
+                {!isExpanded && item.orders.some(ord => ord.colors.length > 0) && (
                   <div 
                     onClick={() => toggleProductExpand(item.name)}
                     style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingLeft: 30, cursor: 'pointer' }}
                   >
                     {item.orders.map((ord, idx) => {
-                      if (ord.colors.length === 0 && !ord.itemNote && !ord.orderNotes) return null;
+                      if (ord.colors.length === 0) return null;
                       return (
                         <div 
                           key={idx}
@@ -587,12 +632,6 @@ export default function ProductionCabinet({ orders = [], setOrders, supabase, sh
                               </span>
                             );
                           })}
-                          {ord.itemNote && (
-                            <span style={{ color: 'var(--color-accent-2)', fontWeight: 500 }}>({ord.itemNote})</span>
-                          )}
-                          {ord.orderNotes && !ord.itemNote && (
-                            <span style={{ color: 'var(--color-accent-2)', fontWeight: 500 }}>• {ord.orderNotes}</span>
-                          )}
                         </div>
                       );
                     })}
