@@ -51,6 +51,15 @@ const formatCleanPhoneForCopy = (phoneStr) => {
   return digits || phoneStr.trim();
 };
 
+// Formats phone for easy reading out loud: 095 546 56 79
+const formatReadablePhone = (phoneStr) => {
+  const clean = formatCleanPhoneForCopy(phoneStr);
+  if (/^0\d{9}$/.test(clean)) {
+    return `${clean.slice(0, 3)} ${clean.slice(3, 6)} ${clean.slice(6, 8)} ${clean.slice(8, 10)}`;
+  }
+  return clean || phoneStr;
+};
+
 export default function ShippingCabinet({ orders = [], setOrders, supabase, showToast, isMobile }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [stageTab, setStageTab] = useState('ready'); // 'ready' | 'packing' | 'in_work' | 'shipped' | 'all_active' | 'completed'
@@ -882,7 +891,7 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                           title="Натисніть, щоб скопіювати номер"
                         >
                           <Phone size={13} style={{ flexShrink: 0 }} />
-                          <span>{cleanPhone || clientPhone}</span>
+                          <span>{formatReadablePhone(clientPhone)}</span>
                           {copiedId === `hd-ph-${order.id}` && <Check size={13} />}
                         </button>
                       )}
