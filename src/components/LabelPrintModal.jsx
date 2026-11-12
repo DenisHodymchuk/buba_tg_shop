@@ -45,16 +45,17 @@ export function buildLabelText(order) {
 
   const fullName =
     `${details.firstName || ''} ${details.lastName || ''}`.trim() ||
+    `${order.customers?.first_name || ''} ${order.customers?.last_name || ''}`.trim() ||
     order.client_name ||
     'Клієнт';
 
-  const phone = formatPhoneForLabel(details.phone || order.phone || '');
+  const phone = formatPhoneForLabel(details.phone || order.customers?.phone || order.phone || '');
 
-  const city = String(details.city || '').split(',')[0].trim();
-  const branch = formatShortWarehouse(details.warehouse || details.address || '');
+  const city = String(details.city || order.city || '').split(',')[0].trim();
+  const branch = formatShortWarehouse(details.warehouse || details.address || order.warehouse || '');
   const address = [city, branch].filter(Boolean).join(', ');
 
-  const totalAmount = Number(order.total_amount) || 0;
+  const totalAmount = Number(order.total) || Number(order.total_amount) || 0;
   const prepay = Number(details.prepayment_amount) || 0;
   let paymentLine = 'Сплачено';
   if (details.is_cod) {
@@ -86,6 +87,7 @@ function escapeHtml(str) {
 export default function LabelPrintModal({ order, onClose, showToast }) {
   const [labelText, setLabelText] = useState('');
   const [copied, setCopied] = useState(false);
+  const [fontScale, setFontScale] = useState('normal'); // 'normal' | 'compact'
 
   useEffect(() => {
     if (order) {
@@ -95,15 +97,29 @@ export default function LabelPrintModal({ order, onClose, showToast }) {
   }, [order]);
 
   const handlePrint = () => {
-    const lines = labelText.split('\n');
-    const htmlLines = lines
+    const rawLines = labelText.split('\n');
+    const lines = rawLines.map(l => l.trim()).filter(l => l.length > 0);
+    const htmlLines = (lines.length > 0 ? lines : [' '])
       .map((line, idx) => {
         const isFirst = idx === 0;
         const isLast = idx === lines.length - 1;
-        const cls = isFirst ? 'line line--name' : isLast ? 'line line--pay' : 'line';
+        const isSecond = idx === 1 && !isLast;
+        const cls = isFirst
+          ? 'line line--name'
+          : isLast
+          ? 'line line--pay'
+          : isSecond
+          ? 'line line--phone'
+          : 'line line--address';
         return `<div class="${cls}">${escapeHtml(line || ' ')}</div>`;
       })
       .join('');
+
+    const isCompact = fontScale === 'compact';
+    const nameSize = isCompact ? '11pt' : '12.5pt';
+    const phoneSize = isCompact ? '10pt' : '11pt';
+    const addrSize = isCompact ? '8.5pt' : '9.5pt';
+    const paySize = isCompact ? '12pt' : '13.5pt';
 
     const printHtml = `<!DOCTYPE html>
 <html lang="uk">
@@ -115,6 +131,18 @@ export default function LabelPrintModal({ order, onClose, showToast }) {
       size: 58mm 40mm;
       margin: 0;
     }
+    @media print {
+      @page {
+        size: 58mm 40mm;
+        margin: 0;
+      }
+      html, body {
+        width: 58mm !important;
+        height: 40mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+    }
     * {
       box-sizing: border-box;
       margin: 0;
@@ -123,40 +151,61 @@ export default function LabelPrintModal({ order, onClose, showToast }) {
     html, body {
       width: 58mm;
       height: 40mm;
+      max-width: 58mm;
+      max-height: 40mm;
       background: #fff;
       color: #000;
       font-family: Arial, Helvetica, sans-serif;
       overflow: hidden;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     .label {
       width: 58mm;
       height: 40mm;
-      padding: 1.5mm 2mm;
+      max-width: 58mm;
+      max-height: 40mm;
+      padding: 1.5mm 2.2mm;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
-      gap: 1mm;
+      gap: 0.8mm;
+      overflow: hidden;
     }
     .line {
-      font-size: 12pt;
-      line-height: 1.14;
+      font-size: ${addrSize};
+      line-height: 1.15;
       color: #000;
       word-break: break-word;
     }
     .line--name {
-      font-size: 17pt;
+      font-size: ${nameSize};
       font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: -0.1px;
     }
-    .line:nth-child(2) {
-      font-size: 14pt;
-      font-weight: 600;
+    .line--phone {
+      font-size: ${phoneSize};
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: 0.2px;
+    }
+    .line--address {
+      font-size: ${addrSize};
+      font-weight: 500;
+      line-height: 1.16;
     }
     .line--pay {
-      font-size: 20pt;
-      font-weight: 700;
-      border-top: 0.35mm solid #000;
-      padding-top: 1mm;
+      font-size: ${paySize};
+      font-weight: 800;
+      line-height: 1.1;
+      border-top: 0.4mm solid #000;
+      padding-top: 0.8mm;
       margin-top: auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.2px;
     }
   </style>
 </head>
@@ -184,8 +233,8 @@ export default function LabelPrintModal({ order, onClose, showToast }) {
         iframe.contentWindow?.print();
         setTimeout(() => {
           iframe.remove();
-        }, 1000);
-      }, 120);
+        }, 1200);
+      }, 150);
     } else {
       iframe.remove();
     }
@@ -200,7 +249,8 @@ export default function LabelPrintModal({ order, onClose, showToast }) {
 
   if (typeof document === 'undefined') return null;
 
-  const previewLines = labelText.split('\n');
+  const rawPreviewLines = labelText.split('\n');
+  const previewLines = rawPreviewLines.length > 0 ? rawPreviewLines : [' '];
 
   return createPortal(
     <AnimatePresence>
@@ -282,23 +332,62 @@ export default function LabelPrintModal({ order, onClose, showToast }) {
             <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Realistic 58x40mm Label Preview */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 10.5, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Попередній перегляд (58 × 40 мм)
-                </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: 290 }}>
+                  <span style={{ fontSize: 10.5, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                    58 × 40 мм
+                  </span>
+                  <div style={{ display: 'inline-flex', background: 'var(--color-paper-2)', padding: 2, borderRadius: 7, border: '1px solid var(--color-rule)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setFontScale('normal')}
+                      style={{
+                        border: 'none',
+                        background: fontScale === 'normal' ? 'var(--color-accent-soft)' : 'transparent',
+                        color: fontScale === 'normal' ? 'var(--color-accent)' : 'var(--color-muted)',
+                        fontSize: 10.5,
+                        fontWeight: 650,
+                        padding: '2px 8px',
+                        borderRadius: 5,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      Звичайний
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFontScale('compact')}
+                      style={{
+                        border: 'none',
+                        background: fontScale === 'compact' ? 'var(--color-accent-soft)' : 'transparent',
+                        color: fontScale === 'compact' ? 'var(--color-accent)' : 'var(--color-muted)',
+                        fontSize: 10.5,
+                        fontWeight: 650,
+                        padding: '2px 8px',
+                        borderRadius: 5,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      Компактний
+                    </button>
+                  </div>
+                </div>
+
                 <div
                   style={{
                     width: '100%',
-                    maxWidth: 310,
+                    maxWidth: 290,
                     aspectRatio: '58 / 40',
                     background: '#ffffff',
                     color: '#111111',
                     borderRadius: 8,
-                    padding: '10px 12px',
+                    padding: '8px 11px',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'flex-start',
-                    gap: 4,
+                    gap: 3,
                     fontFamily: 'Arial, Helvetica, sans-serif',
                     overflow: 'hidden'
                   }}
@@ -307,15 +396,26 @@ export default function LabelPrintModal({ order, onClose, showToast }) {
                     const isFirst = idx === 0;
                     const isLast = idx === previewLines.length - 1;
                     const isSecond = idx === 1 && !isLast;
+                    const isCompact = fontScale === 'compact';
                     return (
                       <div
                         key={idx}
                         style={{
-                          fontSize: isFirst ? 21 : isLast ? 24 : isSecond ? 17.5 : 15,
-                          fontWeight: isFirst || isLast ? 700 : isSecond ? 600 : 400,
+                          fontSize: isFirst
+                            ? (isCompact ? 13.5 : 15.5)
+                            : isLast
+                            ? (isCompact ? 14 : 16)
+                            : isSecond
+                            ? (isCompact ? 12 : 13.5)
+                            : (isCompact ? 10.5 : 11.5),
+                          fontWeight: isFirst || isLast || isSecond ? 700 : 500,
                           lineHeight: 1.14,
                           color: '#111111',
                           wordBreak: 'break-word',
+                          whiteSpace: isLast ? 'nowrap' : 'normal',
+                          overflow: isLast ? 'hidden' : 'visible',
+                          textOverflow: isLast ? 'ellipsis' : 'clip',
+                          letterSpacing: isSecond ? '0.2px' : '-0.1px',
                           ...(isLast
                             ? { borderTop: '1.5px solid #222', paddingTop: 4, marginTop: 'auto' }
                             : {})
@@ -326,6 +426,9 @@ export default function LabelPrintModal({ order, onClose, showToast }) {
                     );
                   })}
                 </div>
+                <span style={{ fontSize: 10, color: 'var(--color-muted)', textAlign: 'center', marginTop: 2 }}>
+                  💡 У діалозі друку виберіть «Поля: Немає» (Margins: None)
+                </span>
               </div>
 
               {/* Editable Text */}
