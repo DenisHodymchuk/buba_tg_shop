@@ -780,7 +780,7 @@ export default function OrderKanbanBoard({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12, width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12, width: '100%', height: isMobile ? 'auto' : '100%', flex: isMobile ? undefined : 1, minHeight: 0 }}>
       {/* Kanban Toolbar Controls (Desktop only) */}
       {!isMobile && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
@@ -915,9 +915,11 @@ export default function OrderKanbanBoard({
             display: 'flex',
             gap: 14,
             overflowX: 'auto',
-            paddingBottom: 16,
+            overflowY: 'hidden',
+            paddingBottom: 8,
             alignItems: 'flex-start',
-            minHeight: 'calc(100vh - 280px)',
+            flex: 1,
+            minHeight: 0,
             cursor: 'grab'
           }}
         >
@@ -941,7 +943,7 @@ export default function OrderKanbanBoard({
                   border: isDragOver ? '1.5px dashed var(--color-accent)' : '1px solid var(--color-rule)',
                   display: 'flex',
                   flexDirection: 'column',
-                  maxHeight: 'calc(100vh - 190px)',
+                  maxHeight: '100%',
                   transition: 'all 0.16s ease'
                 }}
               >
@@ -999,11 +1001,12 @@ export default function OrderKanbanBoard({
 
                 {/* Column Cards Container */}
                 <div style={{
-                  padding: 10,
+                  padding: '10px 10px 14px 10px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 10,
                   overflowY: 'auto',
+                  minHeight: 0,
                   flex: 1
                 }}>
                   {colOrders.length === 0 ? (

@@ -227,7 +227,9 @@ export default function DeadlineMiniPicker({
               {/* Days */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4 }}>
                 {monthDays.map(cell => {
-                  const count = workloadMap[cell.key]?.activeCount || 0;
+                  const dayStats = workloadMap[cell.key];
+                  const count = dayStats?.activeCount || 0;
+                  const itemsCount = dayStats?.itemsCount || 0;
                   const tone = getWorkloadTone(count, capacity);
                   const isSelected = selectedDateSet.has(cell.key);
                   const isToday = cell.key === todayKey;
@@ -263,7 +265,7 @@ export default function DeadlineMiniPicker({
                             : '1px solid var(--color-rule)',
                         color: 'var(--color-ink)'
                       }}
-                      title={`${formatShortDateUa(cell.key)} — активних замовлень: ${count} / ${capacity}`}
+                      title={`${formatShortDateUa(cell.key)} — активних замовлень: ${count} / ${capacity}, фігурок: ${itemsCount} шт.`}
                     >
                       <span className="dusk-num" style={{ fontSize: 11.5, fontWeight: isSelected || isToday ? 700 : 500, lineHeight: 1 }}>
                         {cell.date.getDate()}
@@ -271,9 +273,10 @@ export default function DeadlineMiniPicker({
                       <span
                         className="dusk-num"
                         style={{
-                          fontSize: 9,
+                          fontSize: 8.5,
                           lineHeight: 1,
                           fontWeight: 600,
+                          whiteSpace: 'nowrap',
                           color: tone === 'full'
                             ? 'var(--color-accent-2)'
                             : count > 0
@@ -281,7 +284,7 @@ export default function DeadlineMiniPicker({
                               : 'var(--color-muted)'
                         }}
                       >
-                        {count > 0 ? `${count} зам` : 'вільно'}
+                        {count > 0 ? `${count}з · ${itemsCount}шт` : 'вільно'}
                       </span>
                     </button>
                   );

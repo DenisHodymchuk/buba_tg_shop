@@ -1537,7 +1537,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12, width: '100%', height: isMobile ? 'auto' : 'calc(100vh - 28px)', overflow: isMobile ? 'visible' : 'hidden', paddingBottom: isMobile ? 78 : 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12, width: '100%', height: isMobile ? 'auto' : 'calc(100vh - 94px)', overflow: isMobile ? 'visible' : 'hidden', paddingBottom: isMobile ? 78 : 0 }}>
       
       {/* Dusk Command & Filter Panel */}
       <div className="dusk-glass" style={{ padding: isMobile ? '10px 12px' : '14px 20px', display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12, flexShrink: 0 }}>
