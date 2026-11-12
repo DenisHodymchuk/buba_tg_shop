@@ -179,3 +179,21 @@ export function formatCleanPhoneForCopy(phone) {
   }
   return phone.trim();
 }
+
+
+export const CHANNEL_META = {
+  website: { id: 'website', label: 'Сайт' },
+  instagram: { id: 'instagram', label: 'Instagram' },
+  tiktok: { id: 'tiktok', label: 'TikTok' },
+  telegram: { id: 'telegram', label: 'Telegram' },
+  olx: { id: 'olx', label: 'OLX' },
+  prom: { id: 'prom', label: 'Prom' },
+  Rozetka: { id: 'Rozetka', label: 'Rozetka' },
+  rozetka: { id: 'rozetka', label: 'Rozetka' },
+  other: { id: 'other', label: 'Інше' }
+};
+
+export function getChannelMeta(channelId) {
+  if (!channelId) return CHANNEL_META.website;
+  return CHANNEL_META[channelId] || CHANNEL_META[String(channelId).toLowerCase()] || { id: channelId, label: channelId };
+}

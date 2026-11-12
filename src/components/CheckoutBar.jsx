@@ -1,81 +1,99 @@
 "use client";
 import React from 'react';
 import { ShoppingCart, ArrowRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function CheckoutBar({ items, onCheckout }) {
   const total = items.reduce((sum, item) => {
     const price = item.price * (1 - (item.discount || 0) / 100);
-    return sum + price;
+    return sum + price * (item.quantity || 1);
   }, 0);
 
   const cartTotalItems = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   return (
     <motion.div
-      initial={{ y: 100, opacity: 0 }}
+      initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 100, opacity: 0 }}
+      exit={{ y: 80, opacity: 0 }}
       style={{
-        position: 'fixed', 
-        bottom: 'calc(32px + env(safe-area-inset-bottom))',
-        left: 16, 
+        position: 'fixed',
+        bottom: 'calc(24px + env(safe-area-inset-bottom))',
+        left: 16,
         right: 16,
-        maxWidth: 500, 
+        maxWidth: 480,
         zIndex: 1000,
-        background: 'rgba(10, 10, 26, 0.98)', 
-        backdropFilter: 'blur(30px)',
-        borderRadius: 24, 
-        padding: '12px 16px',
-        border: '1px solid rgba(255, 255, 255, 0.15)',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)',
-        display: 'flex', 
-        alignItems: 'center', 
+        background: 'rgba(24, 27, 34, 0.96)',
+        backdropFilter: 'blur(20px) saturate(140%)',
+        borderRadius: 16,
+        padding: '10px 14px',
+        border: '1px solid rgba(147, 162, 250, 0.32)',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'space-between',
         margin: '0 auto'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
         <div style={{
-          width: 40, height: 40, borderRadius: 12,
-          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.2))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed',
+          width: 38,
+          height: 38,
+          borderRadius: 10,
+          background: 'rgba(147, 162, 250, 0.14)',
+          border: '1px solid rgba(147, 162, 250, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#93A2FA',
           flexShrink: 0
         }}>
-          <ShoppingCart size={20} />
+          <ShoppingCart size={18} />
         </div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 9, color: '#6b6b8a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
-            РАЗОМ ({cartTotalItems})
+          <div style={{
+            fontSize: 10.5,
+            color: '#8D93A5',
+            fontWeight: 500,
+            whiteSpace: 'nowrap'
+          }}>
+            У кошику ({cartTotalItems} шт.)
           </div>
-          <div style={{ fontSize: 20, fontWeight: 950, color: '#fff', lineHeight: 1 }}>
-            {total.toFixed(0)}<span style={{ fontSize: 13, marginLeft: 2, color: '#ec4899' }}>₴</span>
+          <div style={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: '#F3F4F8',
+            lineHeight: 1.15,
+            fontVariantNumeric: 'tabular-nums'
+          }}>
+            {Math.round(total).toLocaleString('uk-UA')} <span style={{ fontSize: 13, color: '#93A2FA', fontWeight: 500 }}>₴</span>
           </div>
         </div>
       </div>
 
       <button
+        type="button"
         onClick={onCheckout}
         style={{
-          padding: '10px 16px', 
-          borderRadius: 16, 
+          height: 38,
+          padding: '0 16px',
+          borderRadius: 10,
           border: 'none',
-          background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
-          color: '#fff', 
-          fontWeight: 950, 
-          fontSize: 14, 
+          background: '#93A2FA',
+          color: '#13151B',
+          fontWeight: 600,
+          fontSize: 13.5,
           cursor: 'pointer',
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 6,
-          boxShadow: '0 8px 20px rgba(124, 58, 237, 0.3)',
-          transition: 'all 0.2s',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 7,
+          transition: 'all 0.15s ease',
           flexShrink: 0
         }}
-        className="active:scale-95"
       >
-        <span>Оплатити</span>
-        <ArrowRight size={16} strokeWidth={3} />
+        <span>Оформити</span>
+        <ArrowRight size={15} strokeWidth={2.3} />
       </button>
     </motion.div>
   );

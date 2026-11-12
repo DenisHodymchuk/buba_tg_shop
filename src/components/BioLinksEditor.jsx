@@ -332,7 +332,7 @@ export default function BioLinksEditor() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '36px', height: '36px', borderRadius: '12px',
-              background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              background: 'var(--color-accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
             }}>
               <Globe size={20} />
@@ -370,14 +370,14 @@ export default function BioLinksEditor() {
             style={{
               padding: '10px 20px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              background: 'var(--color-accent)',
               border: 'none',
               color: '#fff',
               fontSize: '13px',
               fontWeight: 800,
               cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: '8px',
-              boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)'
+              boxShadow: '0 4px 15px var(--color-accent-soft)'
             }}
           >
             <Plus size={18} />
@@ -406,7 +406,7 @@ export default function BioLinksEditor() {
             fontSize: '13px',
             fontWeight: 800,
             cursor: 'pointer',
-            background: activeSubTab === 'editor' ? 'linear-gradient(135deg, #7c3aed, #ec4899)' : 'transparent',
+            background: activeSubTab === 'editor' ? 'var(--color-accent)' : 'transparent',
             color: activeSubTab === 'editor' ? '#fff' : 'var(--text-muted)',
             transition: 'all 0.2s',
             display: 'flex',
@@ -428,7 +428,7 @@ export default function BioLinksEditor() {
             fontSize: '13px',
             fontWeight: 800,
             cursor: 'pointer',
-            background: activeSubTab === 'analytics' ? 'linear-gradient(135deg, #7c3aed, #ec4899)' : 'transparent',
+            background: activeSubTab === 'analytics' ? 'var(--color-accent)' : 'transparent',
             color: activeSubTab === 'analytics' ? '#fff' : 'var(--text-muted)',
             transition: 'all 0.2s',
             display: 'flex',
@@ -455,7 +455,7 @@ export default function BioLinksEditor() {
           }}>
             <div>
               <h2 style={{ fontSize: '18px', fontWeight: 900, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <TrendingUp size={20} style={{ color: '#c084fc' }} /> Статистика відвідувань сторінки посилань
+                <TrendingUp size={20} style={{ color: 'var(--color-accent)' }} /> Статистика відвідувань сторінки посилань
               </h2>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
                 Аналіз переглядів та кліків по кнопках за останній час
@@ -486,7 +486,7 @@ export default function BioLinksEditor() {
           </div>
 
           {analyticsLoading && viewsData.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: '12px', color: '#c084fc' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', gap: '12px', color: 'var(--color-accent)' }}>
               <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite' }} />
               <span style={{ fontSize: '13px', fontWeight: 700 }}>Завантаження статистики...</span>
             </div>
@@ -500,7 +500,7 @@ export default function BioLinksEditor() {
               }}>
                 {/* Views Card */}
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(10, 25, 47, 0.3))',
+                  background: 'var(--color-paper-2)',
                   borderRadius: '20px',
                   border: '1px solid var(--border)',
                   padding: '20px',
@@ -510,7 +510,7 @@ export default function BioLinksEditor() {
                     <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Перегляди сторінки (Views)
                     </span>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(124,58,237,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--color-accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)' }}>
                       <Monitor size={16} />
                     </div>
                   </div>
@@ -524,7 +524,7 @@ export default function BioLinksEditor() {
 
                 {/* Clicks Card */}
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(10, 25, 47, 0.3))',
+                  background: 'var(--color-paper-2)',
                   borderRadius: '20px',
                   border: '1px solid var(--border)',
                   padding: '20px',
@@ -534,11 +534,11 @@ export default function BioLinksEditor() {
                     <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Переходи за лінками (Clicks)
                     </span>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(236,72,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f472b6' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--color-accent-2-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent-2)' }}>
                       <MousePointerClick size={16} />
                     </div>
                   </div>
-                  <div style={{ fontSize: '28px', fontWeight: 950, color: '#f472b6' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 950, color: 'var(--color-accent-2)' }}>
                     {totalClicks.toLocaleString('uk-UA')}
                   </div>
                   <p style={{ fontSize: '11px', color: '#6b6b8a', marginTop: '6px', margin: 0, fontWeight: 700 }}>
@@ -548,7 +548,7 @@ export default function BioLinksEditor() {
 
                 {/* CTR Card */}
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(10, 25, 47, 0.3))',
+                  background: 'var(--color-paper-2)',
                   borderRadius: '20px',
                   border: '1px solid var(--border)',
                   padding: '20px',
@@ -558,11 +558,11 @@ export default function BioLinksEditor() {
                     <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Конверсія сторінки (CTR)
                     </span>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'oklch(76% 0.14 155)' }}>
                       <TrendingUp size={16} />
                     </div>
                   </div>
-                  <div style={{ fontSize: '28px', fontWeight: 950, color: '#34d399' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 950, color: 'oklch(76% 0.14 155)' }}>
                     {clickThroughRate}%
                   </div>
                   <p style={{ fontSize: '11px', color: '#6b6b8a', marginTop: '6px', margin: 0, fontWeight: 700 }}>
@@ -582,7 +582,7 @@ export default function BioLinksEditor() {
                 gap: '16px'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Calendar size={18} style={{ color: '#7c3aed' }} />
+                  <Calendar size={18} style={{ color: 'var(--color-accent)' }} />
                   <h3 style={{ fontSize: '14px', fontWeight: 900, color: '#fff', margin: 0 }}>Динаміка за останні 7 днів</h3>
                 </div>
 
@@ -626,7 +626,7 @@ export default function BioLinksEditor() {
                               width: '12px',
                               height: `${viewHeight}%`,
                               minHeight: day.views > 0 ? '4px' : '0px',
-                              background: 'linear-gradient(to top, #7c3aed, #a78bfa)',
+                              background: 'linear-gradient(to top, var(--color-accent), var(--color-accent))',
                               borderRadius: '4px 4px 0 0',
                               transition: 'height 0.3s ease'
                             }}
@@ -638,7 +638,7 @@ export default function BioLinksEditor() {
                               width: '12px',
                               height: `${clickHeight}%`,
                               minHeight: day.clicks > 0 ? '4px' : '0px',
-                              background: 'linear-gradient(to top, #f472b6, #ec4899)',
+                              background: 'linear-gradient(to top, var(--color-accent-2), var(--color-accent-2))',
                               borderRadius: '4px 4px 0 0',
                               transition: 'height 0.3s ease'
                             }}
@@ -656,12 +656,12 @@ export default function BioLinksEditor() {
 
                 {/* Legend */}
                 <div style={{ display: 'flex', gap: '16px', fontSize: '11px', fontWeight: 800 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a78bfa' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#a78bfa' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-accent)' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-accent)' }} />
                     <span>Перегляди</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f472b6' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f472b6' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-accent-2)' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-accent-2)' }} />
                     <span>Кліки</span>
                   </div>
                 </div>
@@ -684,7 +684,7 @@ export default function BioLinksEditor() {
                   gap: '14px'
                 }}>
                   <h3 style={{ fontSize: '14px', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <MousePointerClick size={16} style={{ color: '#f472b6' }} /> Популярність посилань
+                    <MousePointerClick size={16} style={{ color: 'var(--color-accent-2)' }} /> Популярність посилань
                   </h3>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -708,14 +708,14 @@ export default function BioLinksEditor() {
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 900, color: '#f472b6', background: 'rgba(244,114,182,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--color-accent-2)', background: 'rgba(244,114,182,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
                                   #{index + 1}
                                 </span>
                                 <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff' }}>
                                   {linkClick.title}
                                 </span>
                               </div>
-                              <span style={{ fontSize: '12px', fontWeight: 900, color: '#f472b6' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--color-accent-2)' }}>
                                 {linkClick.count} кліків
                               </span>
                             </div>
@@ -725,7 +725,7 @@ export default function BioLinksEditor() {
                               <div style={{
                                 width: `${progressWidth}%`,
                                 height: '100%',
-                                background: 'linear-gradient(to right, #7c3aed, #f472b6)',
+                                background: 'linear-gradient(to right, var(--color-accent), var(--color-accent-2))',
                                 borderRadius: '3px'
                               }} />
                             </div>
@@ -753,7 +753,7 @@ export default function BioLinksEditor() {
                     gap: '12px'
                   }}>
                     <h3 style={{ fontSize: '14px', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Globe size={16} style={{ color: '#34d399' }} /> Джерела трафіку (Referrers)
+                      <Globe size={16} style={{ color: 'oklch(76% 0.14 155)' }} /> Джерела трафіку (Referrers)
                     </h3>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -771,7 +771,7 @@ export default function BioLinksEditor() {
                                 <span style={{ color: 'var(--text-muted)' }}>{ref.count} візитів ({Math.round(ref.count / totalViews * 100)}%)</span>
                               </div>
                               <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
-                                <div style={{ width: `${progressWidth}%`, height: '100%', background: '#34d399', borderRadius: '2px' }} />
+                                <div style={{ width: `${progressWidth}%`, height: '100%', background: 'oklch(76% 0.14 155)', borderRadius: '2px' }} />
                               </div>
                             </div>
                           );
@@ -791,16 +791,16 @@ export default function BioLinksEditor() {
                     gap: '12px'
                   }}>
                     <h3 style={{ fontSize: '14px', fontWeight: 900, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Smartphone size={16} style={{ color: '#c084fc' }} /> Типи пристроїв
+                      <Smartphone size={16} style={{ color: 'var(--color-accent)' }} /> Типи пристроїв
                     </h3>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', textAlign: 'center' }}>
                       {devicesBreakdown.map((device, idx) => {
                         const percent = totalViews > 0 ? Math.round((device.count / totalViews) * 100) : 0;
                         const renderDeviceIcon = () => {
-                          if (device.name === 'mobile') return <Smartphone size={18} style={{ color: '#f472b6' }} />;
-                          if (device.name === 'tablet') return <Tablet size={18} style={{ color: '#3b82f6' }} />;
-                          return <Monitor size={18} style={{ color: '#34d399' }} />;
+                          if (device.name === 'mobile') return <Smartphone size={18} style={{ color: 'var(--color-accent-2)' }} />;
+                          if (device.name === 'tablet') return <Tablet size={18} style={{ color: 'var(--color-accent)' }} />;
+                          return <Monitor size={18} style={{ color: 'oklch(76% 0.14 155)' }} />;
                         };
                         const deviceLabels = { mobile: 'Мобільні', tablet: 'Планшети', desktop: 'ПК' };
 
@@ -846,7 +846,7 @@ export default function BioLinksEditor() {
               Активні посилання ({links.length})
             </span>
             {savedSuccess && (
-              <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '12px', color: 'oklch(76% 0.14 155)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <CheckCircle size={14} /> Збережено успішно!
               </span>
             )}
@@ -862,7 +862,7 @@ export default function BioLinksEditor() {
                 padding: '16px',
                 borderRadius: '18px',
                 background: 'var(--bg-card)',
-                border: item.hidden ? '1px dashed rgba(239,68,68,0.3)' : '1px solid var(--border)',
+                border: item.hidden ? '1px dashed var(--color-danger-soft)' : '1px solid var(--border)',
                 opacity: item.hidden ? 0.6 : 1,
                 gap: '12px',
                 transition: 'all 0.2s'
@@ -889,7 +889,7 @@ export default function BioLinksEditor() {
                         fontWeight: 900,
                         padding: '2px 8px',
                         borderRadius: '100px',
-                        background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(236, 72, 153, 0.2))',
+                        background: 'linear-gradient(135deg, var(--color-accent-soft), var(--color-accent-2-soft))',
                         border: '1px solid rgba(192, 132, 252, 0.35)',
                         color: '#f3e8ff',
                         textTransform: 'uppercase',
@@ -903,7 +903,7 @@ export default function BioLinksEditor() {
                       </span>
                     )}
                     {item.hidden && (
-                      <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171' }}>
+                      <span style={{ fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '6px', background: 'var(--color-danger-soft)', color: 'var(--color-danger)' }}>
                         Приховано
                       </span>
                     )}
@@ -921,8 +921,8 @@ export default function BioLinksEditor() {
                   onClick={() => handleToggleHidden(index)}
                   style={{
                     padding: '6px 10px', borderRadius: '8px', border: 'none',
-                    background: item.hidden ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                    color: item.hidden ? '#ef4444' : '#10b981',
+                    background: item.hidden ? 'var(--color-danger-soft)' : 'rgba(16, 185, 129, 0.15)',
+                    color: item.hidden ? 'var(--color-danger)' : 'oklch(76% 0.14 155)',
                     cursor: 'pointer', fontSize: '11px', fontWeight: 800,
                     display: 'flex', alignItems: 'center', gap: '4px',
                     transition: 'all 0.2s'
@@ -964,7 +964,7 @@ export default function BioLinksEditor() {
                   onClick={() => handleOpenEdit(index)}
                   style={{
                     padding: '6px 10px', borderRadius: '8px', border: 'none',
-                    background: 'rgba(59, 130, 246, 0.12)', color: '#60a5fa',
+                    background: 'var(--color-accent-soft)', color: 'var(--color-accent)',
                     cursor: 'pointer', fontSize: '12px', fontWeight: 700,
                     display: 'flex', alignItems: 'center', gap: '4px'
                   }}
@@ -976,7 +976,7 @@ export default function BioLinksEditor() {
                   onClick={() => handleDelete(index)}
                   style={{
                     padding: '6px', borderRadius: '8px', border: 'none',
-                    background: 'rgba(239, 68, 68, 0.12)', color: '#f87171',
+                    background: 'var(--color-danger-soft)', color: 'var(--color-danger)',
                     cursor: 'pointer'
                   }}
                   title="Видалити"
@@ -990,10 +990,10 @@ export default function BioLinksEditor() {
 
         {/* Права колонка: Симуляція мобільного екрана (Preview) */}
         <div style={{
-          background: '#0a0a1a',
+          background: 'var(--color-paper)',
           borderRadius: '32px',
           padding: '24px 16px',
-          border: '4px solid #1e1e38',
+          border: '4px solid var(--color-rule)',
           boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
           maxWidth: '380px',
           width: '100%',
@@ -1003,13 +1003,13 @@ export default function BioLinksEditor() {
             <div style={{
               width: '68px', height: '68px', borderRadius: '18px',
               margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 8px 20px rgba(124, 58, 237, 0.4)',
+              boxShadow: '0 8px 20px var(--color-accent-soft)',
               overflow: 'hidden'
             }}>
               <img src="/images/buba-logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#fff', margin: 0 }}>BUBA STORE</h3>
-            <span style={{ fontSize: '11px', color: '#a78bfa', fontWeight: 700 }}>ПЕРЕДПЕРЕГЛЯД /LINKS</span>
+            <span style={{ fontSize: '11px', color: 'var(--color-accent)', fontWeight: 700 }}>ПЕРЕДПЕРЕГЛЯД /LINKS</span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1064,7 +1064,7 @@ export default function BioLinksEditor() {
           <form
             onSubmit={handleSaveForm}
             style={{
-              background: '#161630', border: '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--color-paper-2)', border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: '24px', padding: '28px', maxWidth: '480px', width: '100%',
               display: 'flex', flexDirection: 'column', gap: '16px'
             }}
@@ -1148,7 +1148,7 @@ export default function BioLinksEditor() {
                   value={formData.iconType}
                   onChange={(e) => setFormData({ ...formData, iconType: e.target.value })}
                   style={{
-                    width: '100%', background: '#0f0f23', border: '1px solid rgba(255,255,255,0.1)',
+                    width: '100%', background: 'var(--bg-input)', border: '1px solid rgba(255,255,255,0.1)',
                     borderRadius: '12px', padding: '10px 14px', color: '#fff', fontSize: '13px', outline: 'none'
                   }}
                 >
@@ -1167,7 +1167,7 @@ export default function BioLinksEditor() {
                 value={formData.colorGradient}
                 onChange={(e) => setFormData({ ...formData, colorGradient: e.target.value })}
                 style={{
-                  width: '100%', background: '#0f0f23', border: '1px solid rgba(255,255,255,0.1)',
+                  width: '100%', background: 'var(--bg-input)', border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '12px', padding: '10px 14px', color: '#fff', fontSize: '13px', outline: 'none'
                 }}
               >
@@ -1196,7 +1196,7 @@ export default function BioLinksEditor() {
                 <span>Сяйво (Glow)</span>
               </label>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#f87171' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--color-danger)' }}>
                 <input
                   type="checkbox"
                   checked={formData.hidden}
@@ -1220,7 +1220,7 @@ export default function BioLinksEditor() {
               <button
                 type="submit"
                 style={{
-                  flex: 1, padding: '12px', borderRadius: '12px', background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                  flex: 1, padding: '12px', borderRadius: '12px', background: 'var(--color-accent)',
                   border: 'none', color: '#fff', fontWeight: 800, cursor: 'pointer'
                 }}
               >

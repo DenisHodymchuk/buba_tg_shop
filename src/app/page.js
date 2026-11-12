@@ -8,9 +8,9 @@ import CheckoutBar from '@/components/CheckoutBar';
 import Checkout from '@/components/Checkout';
 import OrderHistory from '@/components/OrderHistory';
 import { AnimatePresence, motion } from 'framer-motion';
-import { 
-  Plus, ShoppingCart, Award, Package, Search, Box, X, 
-  ChevronLeft, ChevronRight, Droplets, ShieldCheck, Info, Weight 
+import {
+  Plus, ShoppingCart, Award, Package, Search, Box, X,
+  ChevronLeft, ChevronRight, Droplets, ShieldCheck, Info, Weight, ArrowRight, Sparkles
 } from 'lucide-react';
 import Reviews from '@/components/Reviews';
 
@@ -24,8 +24,16 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImgIndex, setActiveImgIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Скидаємо індекс при зміні товару
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 720);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Reset image index when product changes
   useEffect(() => { setActiveImgIndex(0); }, [selectedProduct]);
 
   const allImages = useMemo(() => {
@@ -41,7 +49,7 @@ export default function Home() {
         const webApp = window.Telegram.WebApp;
         webApp.ready();
         webApp.expand();
-        
+
         const checkUser = () => {
           const u = webApp.initDataUnsafe?.user;
           const s = webApp.initDataUnsafe?.start_param;
@@ -68,28 +76,25 @@ export default function Home() {
     if (!supabase) return;
     try {
       const tid = tgUser.id.toString();
-      
-      // Спершу перевіряємо чи є такий користувач і чи має він вже джерело
+
       const { data: existing } = await supabase
         .from('customers')
         .select('acquisition_source')
         .eq('tg_id', tid)
         .single();
 
-      const upsertData = { 
-        tg_id: tid, 
-        first_name: tgUser.first_name || 'Клієнт', 
+      const upsertData = {
+        tg_id: tid,
+        first_name: tgUser.first_name || 'Клієнт',
         last_name: tgUser.last_name || '',
         allow_notifications: true
       };
 
-      // Зберігаємо джерело тільки якщо воно прийшло і у користувача в базі ще немає джерела
-      // (Первинна атрибуція)
       if (source && (!existing || !existing.acquisition_source)) {
         upsertData.acquisition_source = source;
       }
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('customers')
         .upsert(upsertData, { onConflict: 'tg_id' })
         .select('bonuses, cart_data')
@@ -106,14 +111,13 @@ export default function Home() {
     }
   }
 
-  // Sync Cart to Supabase
   const syncCartToDB = async (newCart) => {
     if (!user?.id) return;
     try {
       const tid = user.id.toString();
       await supabase
         .from('customers')
-        .update({ 
+        .update({
           cart_data: newCart,
           last_cart_activity: new Date().toISOString()
         })
@@ -164,78 +168,152 @@ export default function Home() {
   const cartTotalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   return (
-    <div style={{ minHeight: '100vh', width: '100%', margin: '0', display: 'flex', flexDirection: 'column', background: '#05050f' }}>
-      <Header 
-        cartCount={cartTotalItems} bonuses={bonuses}
-        onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)} 
-        onOpenHistory={() => setIsHistoryOpen(true)} 
+    <div style={{
+      minHeight: '100vh',
+      width: '100%',
+      margin: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      background: '#13151B',
+      color: '#F3F4F8'
+    }}>
+      <Header
+        cartCount={cartTotalItems}
+        bonuses={bonuses}
+        onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)}
+        onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenReviews={() => setIsReviewsOpen(true)}
         onSearch={setSearchQuery}
       />
 
       <AnimatePresence>
         {isHistoryOpen && (
-          <OrderHistory 
-            isOpen={isHistoryOpen} 
-            onClose={() => setIsHistoryOpen(false)} 
-            tgUser={user} 
+          <OrderHistory
+            isOpen={isHistoryOpen}
+            onClose={() => setIsHistoryOpen(false)}
+            tgUser={user}
           />
         )}
       </AnimatePresence>
 
-      <Reviews 
-        isOpen={isReviewsOpen} 
-        onClose={() => setIsReviewsOpen(false)} 
-        tgUser={user} 
+      <Reviews
+        isOpen={isReviewsOpen}
+        onClose={() => setIsReviewsOpen(false)}
+        tgUser={user}
       />
 
+      {/* Custom 3D Modeling Hero Banner */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        style={{ padding: '20px 20px 0', maxWidth: 1200, margin: '0 auto', width: '100%' }}
+        style={{
+          padding: isMobile ? '14px 12px 0' : '20px 20px 0',
+          maxWidth: 1360,
+          margin: '0 auto',
+          width: '100%'
+        }}
       >
-        <Link href="/custom-modeling" style={{ textDecoration: 'none' }}>
-          <div style={{ 
-            background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(147,51,234,0.15))',
-            borderRadius: 32, padding: '20px 30px', border: '1px solid rgba(255,255,255,0.1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', overflow: 'hidden', position: 'relative'
+        <Link href="/custom-modeling" style={{ textDecoration: 'none', display: 'block' }}>
+          <div style={{
+            background: '#181B22',
+            borderRadius: isMobile ? 16 : 18,
+            padding: isMobile ? '16px' : '20px 26px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.28)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            overflow: 'hidden',
+            position: 'relative',
+            transition: 'border-color 0.16s ease'
           }}>
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase', marginBottom: 4, letterSpacing: '0.1em' }}>Послуга</div>
-              <h2 style={{ fontSize: 22, fontWeight: 950, color: '#fff', margin: 0 }}>МОДЕЛЮВАННЯ</h2>
-              <p style={{ fontSize: 13, color: '#94a3b8', margin: '4px 0 0' }}>Будь якої складності</p>
+            <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '3px 9px',
+                  borderRadius: 999,
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  background: 'rgba(147, 162, 250, 0.14)',
+                  color: '#93A2FA',
+                  border: '1px solid rgba(147, 162, 250, 0.32)'
+                }}>
+                  <Sparkles size={11} />
+                  <span>Індивідуальна послуга</span>
+                </span>
+                {!isMobile && (
+                  <span style={{ fontSize: 11.5, color: '#8D93A5' }}>
+                    3D-друк та моделювання за вашим фото, ескізом або кресленням
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
+                <h2 style={{
+                  fontSize: isMobile ? 18 : 22,
+                  fontWeight: 700,
+                  color: '#F3F4F8',
+                  margin: 0,
+                  letterSpacing: '-0.02em'
+                }}>
+                  3D-моделювання будь-якої складності
+                </h2>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: '#93A2FA'
+                }}>
+                  <span>Замовити прорахунок</span>
+                  <ArrowRight size={14} />
+                </span>
+              </div>
             </div>
-            <div style={{ 
-              width: 80, height: 80, borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)',
-              background: '#000', position: 'relative', zIndex: 1
+
+            <div style={{
+              width: isMobile ? 60 : 72,
+              height: isMobile ? 60 : 72,
+              borderRadius: 14,
+              overflow: 'hidden',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: '#13151B',
+              position: 'relative',
+              zIndex: 1,
+              flexShrink: 0
             }}>
-              <img src="/images/custom-modeling.png" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img
+                src="/images/custom-modeling.png"
+                alt="3D Моделювання"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             </div>
-            {/* Glow effect */}
-            <div style={{ 
-              position: 'absolute', top: '50%', right: '-10%', width: 200, height: 200, 
-              background: 'radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)', 
-              transform: 'translateY(-50%)', pointerEvents: 'none' 
-            }} />
           </div>
         </Link>
       </motion.div>
 
-      <main style={{ flex: '1 0 auto', paddingBottom: 140 }}>
-        <Storefront 
-          addToCart={addToCart} 
-          searchQuery={searchQuery} 
+      <main style={{ flex: '1 0 auto', paddingBottom: 120 }}>
+        <Storefront
+          addToCart={addToCart}
+          searchQuery={searchQuery}
           onProductClick={setSelectedProduct}
+          cart={cart}
         />
       </main>
 
-
       <AnimatePresence>
         {isCheckoutOpen && (
-          <Checkout 
-            items={cart} bonuses={bonuses}
-            onClose={() => setIsCheckoutOpen(false)} 
-            onRemove={removeFromCart} onUpdateQuantity={updateQuantity}
+          <Checkout
+            items={cart}
+            bonuses={bonuses}
+            onClose={() => setIsCheckoutOpen(false)}
+            onRemove={removeFromCart}
+            onUpdateQuantity={updateQuantity}
             onOrderSuccess={() => {
               setCart([]);
               syncCartToDB([]);
@@ -250,56 +328,127 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Product Details Modal (Direct child of Root to overlay Header) */}
+      {/* Product Details Modal (Hallmark Dusk) */}
       <AnimatePresence>
         {selectedProduct && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 10001, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 20px' }}>
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10001,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: isMobile ? 12 : 24
+          }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setSelectedProduct(null)}
-              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(20px)' }}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(10, 12, 16, 0.78)',
+                backdropFilter: 'blur(12px)'
+              }}
             />
-            <motion.div 
-              initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '100%', opacity: 0 }}
-              style={{ 
-                position: 'relative', width: '100%', maxWidth: 450, background: '#0a0a1a', 
-                borderRadius: 40, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh', boxShadow: '0 40px 100px rgba(0,0,0,0.8)'
+
+            <motion.div
+              initial={{ y: 24, opacity: 0, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 24, opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.18 }}
+              style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: isMobile ? 460 : 820,
+                background: '#181B22',
+                borderRadius: 20,
+                overflow: 'hidden',
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : '1.05fr 1fr',
+                border: '1px solid rgba(255, 255, 255, 0.09)',
+                maxHeight: '90vh',
+                boxShadow: '0 32px 80px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
               }}
             >
-              <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 100 }}>
-                <button 
-                  onClick={() => setSelectedProduct(null)}
-                  style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                >
-                  <X size={24} />
-                </button>
-              </div>
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedProduct(null)}
+                style={{
+                  position: 'absolute',
+                  top: 14,
+                  right: 14,
+                  zIndex: 100,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
+                  background: 'rgba(19, 21, 27, 0.8)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#B8BDCB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} />
+              </button>
 
-              {/* Scrollable Content Area */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 100px', scrollbarWidth: 'none' }}>
-                <div style={{ width: '100%', height: 320, position: 'relative', marginTop: 24, background: 'rgba(255,255,255,0.02)', borderRadius: 32, overflow: 'hidden' }}>
+              {/* Left Column: Image / 3D Gallery */}
+              <div style={{
+                background: '#13151B',
+                padding: isMobile ? 16 : 20,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: 12,
+                borderRight: isMobile ? 'none' : '1px solid rgba(255, 255, 255, 0.06)',
+                borderBottom: isMobile ? '1px solid rgba(255, 255, 255, 0.06)' : 'none'
+              }}>
+                <div style={{
+                  width: '100%',
+                  height: isMobile ? 250 : 340,
+                  position: 'relative',
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
                   <AnimatePresence mode="wait">
                     {activeImgIndex === 0 && selectedProduct.model_3d ? (
-                      <motion.div 
-                        key="model" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      <motion.div
+                        key="model"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         style={{ width: '100%', height: '100%' }}
                       >
                         <model-viewer
-                          src={selectedProduct.model_3d} alt={selectedProduct.name}
-                          auto-rotate camera-controls touch-action="pan-y"
-                          shadow-intensity="1" environment-image="neutral"
+                          src={selectedProduct.model_3d}
+                          alt={selectedProduct.name}
+                          auto-rotate
+                          camera-controls
+                          touch-action="pan-y"
+                          shadow-intensity="1"
+                          environment-image="neutral"
                           style={{ width: '100%', height: '100%' }}
-                        ></model-viewer>
+                        />
                       </motion.div>
                     ) : (
-                      <motion.div 
-                        key={activeImgIndex} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1 }}
+                      <motion.div
+                        key={activeImgIndex}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
-                        <img 
-                          src={selectedProduct.model_3d ? allImages[activeImgIndex - 1] : allImages[activeImgIndex]} 
-                          style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 20 }} 
+                        <img
+                          src={selectedProduct.model_3d ? allImages[activeImgIndex - 1] : allImages[activeImgIndex]}
+                          alt={selectedProduct.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         />
                       </motion.div>
                     )}
@@ -308,62 +457,191 @@ export default function Home() {
                   {/* Navigation Arrows */}
                   {(allImages.length + (selectedProduct.model_3d ? 1 : 0)) > 1 && (
                     <>
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => setActiveImgIndex(prev => prev > 0 ? prev - 1 : (allImages.length + (selectedProduct.model_3d ? 1 : 0)) - 1)}
-                        style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 5 }}
+                        style={{
+                          position: 'absolute',
+                          left: 8,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          width: 32,
+                          height: 32,
+                          borderRadius: 9,
+                          background: 'rgba(24, 27, 34, 0.85)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#F3F4F8',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          zIndex: 5
+                        }}
                       >
-                        <ChevronLeft size={20} />
+                        <ChevronLeft size={17} />
                       </button>
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => setActiveImgIndex(prev => prev < (allImages.length + (selectedProduct.model_3d ? 1 : 0)) - 1 ? prev + 1 : 0)}
-                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 5 }}
+                        style={{
+                          position: 'absolute',
+                          right: 8,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          width: 32,
+                          height: 32,
+                          borderRadius: 9,
+                          background: 'rgba(24, 27, 34, 0.85)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          color: '#F3F4F8',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          zIndex: 5
+                        }}
                       >
-                        <ChevronRight size={20} />
+                        <ChevronRight size={17} />
                       </button>
                     </>
                   )}
                 </div>
 
-                <div style={{ marginTop: 24 }}>
-                  <div style={{ fontSize: 11, fontWeight: 900, color: '#7c3aed', textTransform: 'uppercase', marginBottom: 4, letterSpacing: '0.1em' }}>{selectedProduct.category}</div>
-                  <h2 style={{ fontSize: 24, fontWeight: 950, color: '#fff', marginBottom: 20, lineHeight: 1.2 }}>{selectedProduct.name}</h2>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 30 }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <Droplets size={12} style={{ color: '#3b82f6' }} /> Матеріал
+                {/* Thumbnail Strip */}
+                {(allImages.length + (selectedProduct.model_3d ? 1 : 0)) > 1 && (
+                  <div className="no-scrollbar" style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+                    {Array.from({ length: allImages.length + (selectedProduct.model_3d ? 1 : 0) }).map((_, i) => {
+                      const is3d = i === 0 && selectedProduct.model_3d;
+                      const imgUrl = selectedProduct.model_3d ? allImages[i - 1] : allImages[i];
+                      const active = activeImgIndex === i;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setActiveImgIndex(i)}
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 8,
+                            overflow: 'hidden',
+                            border: active ? '1.5px solid #93A2FA' : '1px solid rgba(255, 255, 255, 0.08)',
+                            background: '#181B22',
+                            padding: 0,
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#93A2FA',
+                            fontSize: 10,
+                            fontWeight: 700
+                          }}
+                        >
+                          {is3d ? '3D' : <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Info, Specs & CTA */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                maxHeight: isMobile ? '52vh' : '90vh',
+                overflowY: 'auto'
+              }}>
+                <div style={{ padding: isMobile ? 16 : '22px 24px 16px' }}>
+                  {selectedProduct.category && (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '3px 9px',
+                      borderRadius: 999,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      background: 'rgba(147, 162, 250, 0.14)',
+                      color: '#93A2FA',
+                      border: '1px solid rgba(147, 162, 250, 0.3)',
+                      marginBottom: 8
+                    }}>
+                      {selectedProduct.category}
+                    </span>
+                  )}
+
+                  <h2 style={{
+                    fontSize: isMobile ? 19 : 22,
+                    fontWeight: 700,
+                    color: '#F3F4F8',
+                    marginBottom: 14,
+                    lineHeight: 1.25,
+                    letterSpacing: '-0.02em'
+                  }}>
+                    {selectedProduct.name}
+                  </h2>
+
+                  {/* Specs Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                    <div style={{
+                      background: '#13151B',
+                      padding: '10px 12px',
+                      borderRadius: 11,
+                      border: '1px solid rgba(255, 255, 255, 0.06)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#8D93A5', fontSize: 10.5, fontWeight: 500, marginBottom: 4 }}>
+                        <Droplets size={12} style={{ color: '#93A2FA' }} /> Матеріал
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>{selectedProduct.plastic_type || 'PLA Eco'}</div>
+                      <div style={{ color: '#F3F4F8', fontWeight: 600, fontSize: 13 }}>{selectedProduct.plastic_type || 'PLA Eco'}</div>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <ShieldCheck size={12} style={{ color: '#22c55e' }} /> Безпека
+
+                    <div style={{
+                      background: '#13151B',
+                      padding: '10px 12px',
+                      borderRadius: 11,
+                      border: '1px solid rgba(255, 255, 255, 0.06)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#8D93A5', fontSize: 10.5, fontWeight: 500, marginBottom: 4 }}>
+                        <ShieldCheck size={12} style={{ color: '#93A2FA' }} /> Безпека
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>{selectedProduct.safety_info || '100% Безпечно'}</div>
+                      <div style={{ color: '#F3F4F8', fontWeight: 600, fontSize: 13 }}>{selectedProduct.safety_info || '100% Безпечно'}</div>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <Weight size={12} style={{ color: '#ec4899' }} /> Вага
+
+                    <div style={{
+                      background: '#13151B',
+                      padding: '10px 12px',
+                      borderRadius: 11,
+                      border: '1px solid rgba(255, 255, 255, 0.06)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#8D93A5', fontSize: 10.5, fontWeight: 500, marginBottom: 4 }}>
+                        <Weight size={12} style={{ color: '#F4A97B' }} /> Вага
                       </div>
-                      <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>{selectedProduct.weight || '---'}</div>
+                      <div style={{ color: '#F3F4F8', fontWeight: 600, fontSize: 13 }}>{selectedProduct.weight || 'Стандарт'}</div>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: 14, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 8 }}>
-                        <Droplets size={12} style={{ color: '#7c3aed' }} /> Кольори
+
+                    <div style={{
+                      background: '#13151B',
+                      padding: '10px 12px',
+                      borderRadius: 11,
+                      border: '1px solid rgba(255, 255, 255, 0.06)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#8D93A5', fontSize: 10.5, fontWeight: 500, marginBottom: 5 }}>
+                        <Droplets size={12} style={{ color: '#93A2FA' }} /> Кольори
                       </div>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
                         {selectedProduct.color ? selectedProduct.color.split(',').map((c, i) => {
                           const val = c.trim().toLowerCase();
                           const colorMap = {
                             'білий': '#ffffff', 'white': '#ffffff',
-                            'чорний': '#000000', 'black': '#000000',
+                            'чорний': '#18181b', 'black': '#18181b',
                             'червоний': '#ef4444', 'red': '#ef4444',
                             'синій': '#3b82f6', 'blue': '#3b82f6',
                             'жовтий': '#facc15', 'yellow': '#facc15',
                             'зелений': '#22c55e', 'green': '#22c55e',
                             'рожевий': '#ec4899', 'pink': '#ec4899',
                             'помаранчевий': '#f97316', 'orange': '#f97316',
-                            'салатовий': '#adff2f', 'lime': '#adff2f',
+                            'салатовий': '#84cc16', 'lime': '#84cc16',
                             'фіолетовий': '#a855f7', 'purple': '#a855f7',
                             'блакитний': '#0ea5e9', 'sky': '#0ea5e9',
                             'сірий': '#94a3b8', 'gray': '#94a3b8',
@@ -371,46 +649,90 @@ export default function Home() {
                             'срібний': '#cbd5e1', 'silver': '#cbd5e1'
                           };
                           let bg = colorMap[val] || val;
-                          if (val.includes('веселк')) bg = 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)';
+                          if (val.includes('веселк')) bg = 'linear-gradient(to right, #ef4444, #eab308, #22c55e, #3b82f6, #a855f7)';
                           return (
-                            <div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: bg, border: '1px solid rgba(255,255,255,0.2)' }} />
+                            <div
+                              key={i}
+                              title={c.trim()}
+                              style={{ width: 13, height: 13, borderRadius: '50%', background: bg, border: '1px solid rgba(255,255,255,0.25)' }}
+                            />
                           );
-                        }) : <div style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>Базовий</div>}
+                        }) : <div style={{ color: '#F3F4F8', fontWeight: 600, fontSize: 13 }}>Базовий</div>}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b6b8a', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10 }}>
-                      <Info size={12} /> Про цей виріб
+                  {/* Product Description */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#8D93A5', fontSize: 11, fontWeight: 600, marginBottom: 6 }}>
+                      <Info size={12} /> Опис виробу
                     </div>
-                    <p style={{ color: '#6b6b8a', lineHeight: 1.6, fontSize: 15, margin: 0 }}>{(selectedProduct.description || '').split('|||ADMIN_NOTES|||')[0]?.trim() || 'Опис скоро з\'явиться...'}</p>
+                    <p style={{
+                      color: '#B8BDCB',
+                      lineHeight: 1.55,
+                      fontSize: 13.5,
+                      margin: 0,
+                      whiteSpace: 'pre-line'
+                    }}>
+                      {(selectedProduct.description || '').split('|||ADMIN_NOTES|||')[0]?.trim() || 'Якісний 3D-друкований виріб власного виробництва.'}
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Fixed Bottom Action Bar */}
-              <div style={{ 
-                flexShrink: 0, padding: '24px 24px 32px', background: 'linear-gradient(to top, #0a0a1a 80%, transparent)', 
-                borderTop: '1px solid rgba(255,255,255,0.05)', position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10 
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
+                {/* Sticky Footer Action Bar */}
+                <div style={{
+                  padding: isMobile ? '14px 16px' : '16px 24px',
+                  background: '#181B22',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.07)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 16
+                }}>
                   <div>
-                    <div style={{ fontSize: 10, color: '#6b6b8a', marginBottom: 4, fontWeight: 800, textTransform: 'uppercase' }}>Вартість</div>
-                    <div style={{ fontSize: 26, fontWeight: 1000, color: '#f97316', display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                    <div style={{ fontSize: 10.5, color: '#8D93A5', marginBottom: 2, fontWeight: 500 }}>Вартість</div>
+                    <div style={{
+                      fontSize: 24,
+                      fontWeight: 700,
+                      color: '#F3F4F8',
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 5,
+                      fontVariantNumeric: 'tabular-nums'
+                    }}>
                       {(selectedProduct.price * (1 - (selectedProduct.discount || 0) / 100)).toFixed(0)}
-                      <span style={{ fontSize: 16 }}>₴</span>
+                      <span style={{ fontSize: 15, color: '#8D93A5', fontWeight: 500 }}>₴</span>
+                      {Number(selectedProduct.discount) > 0 && (
+                        <span style={{ fontSize: 13, color: '#8D93A5', textDecoration: 'line-through', fontWeight: 500, marginLeft: 4 }}>
+                          {selectedProduct.price} ₴
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <button 
+
+                  <button
+                    type="button"
                     onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
-                    style={{ 
-                      flex: 1, padding: '16px 20px', borderRadius: 20, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', 
-                      color: '#fff', border: 'none', fontWeight: 1000, fontSize: 15, cursor: 'pointer',
-                      boxShadow: '0 12px 24px rgba(124,58,237,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em'
+                    style={{
+                      flex: 1,
+                      maxWidth: 220,
+                      height: 44,
+                      borderRadius: 11,
+                      background: '#93A2FA',
+                      color: '#13151B',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: 14,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      transition: 'all 0.15s ease'
                     }}
                   >
-                    В кошик
+                    <ShoppingCart size={16} />
+                    <span>Додати в кошик</span>
                   </button>
                 </div>
               </div>
@@ -419,9 +741,15 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <footer style={{ padding: '60px 20px 40px', textAlign: 'center', flexShrink: 0 }}>
-        <p style={{ fontSize: 10, color: '#4a4a6a', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em' }}>© 2026 BUBA STORE</p>
-        <p style={{ marginTop: 6, fontSize: 8, color: '#3a3a5a', textTransform: 'uppercase', letterSpacing: '0.3em' }}>3D ДРУКОВАНІ ВИРОБИ</p>
+      <footer style={{
+        padding: '40px 20px 32px',
+        textAlign: 'center',
+        flexShrink: 0,
+        borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+      }}>
+        <p style={{ fontSize: 11.5, color: '#8D93A5', fontWeight: 600, letterSpacing: '0.04em' }}>
+          © 2026 BUBA Store · Майстерня 3D виробів
+        </p>
       </footer>
     </div>
   );

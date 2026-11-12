@@ -1,0 +1,925 @@
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: Dusk (by request) · dials: fog/periwinkle-apricot/glass · posture: committed · v2.0.0 */
+/* critique: replaced multi-hue neon dashboard chrome with Dusk slate paper, smoked glass with lit top edge, Wix Madefor typography, tabular numerals, and two restrained signals (periwinkle for matched/active/done, apricot for open/waiting/attention). */
+
+@import url('https://fonts.googleapis.com/css2?family=Wix+Madefor+Display:wght@400;500;600&family=Wix+Madefor+Text:wght@400;500;600&display=swap');
+
+:root,
+.dusk-theme {
+  /* Dusk Core Tokens (OKLCH with hex fallbacks) */
+  --color-paper: oklch(17.5% 0.014 268);
+  --color-paper-2: oklch(21% 0.016 268);
+  --color-paper-3: oklch(25% 0.017 268);
+  --color-ink: oklch(96% 0.006 75);
+  --color-ink-2: oklch(85% 0.010 262);
+  --color-muted: oklch(70% 0.016 262);
+  --color-rule: oklch(30% 0.016 266);
+  --color-rule-soft: oklch(26% 0.015 266);
+  --color-light: oklch(100% 0 0);
+  --color-shade: oklch(10% 0.022 268);
+
+  /* Signal 1: Periwinkle (Done, Matched, Active, Primary Action, Focus) */
+  --color-accent: oklch(77% 0.10 274);
+  --color-accent-ink: oklch(19% 0.035 274);
+  --color-accent-hi: oklch(84% 0.085 274);
+  --color-accent-deep: oklch(44% 0.13 274);
+  --color-accent-soft: oklch(77% 0.10 274 / 0.12);
+  --color-accent-border: oklch(77% 0.10 274 / 0.28);
+  --color-focus: oklch(80% 0.10 274);
+
+  /* Signal 2: Apricot (Open, Waiting, In-Progress, Owed / COD, Priority) */
+  --color-accent-2: oklch(83% 0.095 62);
+  --color-accent-2-ink: oklch(22% 0.04 62);
+  --color-accent-2-soft: oklch(83% 0.095 62 / 0.12);
+  --color-accent-2-border: oklch(83% 0.095 62 / 0.28);
+
+  /* Subtle Semantic Muted Rose for Destructive / Cancelled (never loud neon red) */
+  --color-danger: oklch(74% 0.11 22);
+  --color-danger-soft: oklch(74% 0.11 22 / 0.11);
+  --color-danger-border: oklch(74% 0.11 22 / 0.25);
+
+  /* Dusk Atmospheric & Bone Well Tokens */
+  --color-dusk: oklch(70% 0.12 330);
+  --color-day-ink: oklch(22% 0.022 268);
+  --color-day-muted: oklch(38% 0.022 266);
+  --color-fog: oklch(94% 0.012 70);
+  --color-well: oklch(95.5% 0.008 75);
+  --color-well-2: oklch(92% 0.010 75);
+  --color-well-ink: oklch(21% 0.016 268);
+  --color-well-muted: oklch(47% 0.016 265);
+  --color-well-rule: oklch(87.5% 0.009 75);
+  --color-card: oklch(99.5% 0.003 75);
+
+  /* Smoked Glass */
+  --glass: oklch(22% 0.018 268 / 0.62);
+  --glass-elevated: oklch(24% 0.018 268 / 0.78);
+  --glass-blur: 22px;
+  --glass-hi: inset 0 1px 0 oklch(100% 0 0 / 0.10), inset 0 0 0 1px oklch(100% 0 0 / 0.06);
+  --shadow-card: 0 1px 0 oklch(100% 0 0 / 0.06) inset, 0 32px 64px -28px oklch(8% 0.02 268 / 0.65);
+  --shadow-subtle: 0 1px 0 oklch(100% 0 0 / 0.05) inset, 0 12px 28px -12px oklch(8% 0.02 268 / 0.45);
+
+  /* Typography & Geometry */
+  --font-display: "Wix Madefor Display", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-body: "Wix Madefor Text", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --radius-card: 18px;
+  --radius-inner: 10px;
+  --radius-pill: 999px;
+  --rule-hair: 1px;
+  --tracking-display: -0.022em;
+  --display-weight: 500;
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+
+  /* Bridge legacy variables for child components */
+  --bg-main: var(--color-paper);
+  --bg-card: var(--color-paper-2);
+  --bg-header: oklch(18.5% 0.015 268 / 0.82);
+  --bg-input: oklch(14.5% 0.014 268);
+  --text-main: var(--color-ink);
+  --text-muted: var(--color-muted);
+  --text-accent: var(--color-accent);
+  --border: var(--color-rule);
+  --sidebar-active: var(--color-accent-soft);
+
+  /* Aliases used across Dusk admin cabinets */
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-muted);
+  --color-text-subtle: oklch(54% 0.016 262);
+}
+
+/* Bone Well Mode (Light Surface Option from Dusk Spec) */
+.dusk-light-theme,
+.light-theme {
+  --color-paper: oklch(95.5% 0.008 75);
+  --color-paper-2: oklch(99.2% 0.003 75);
+  --color-paper-3: oklch(92.5% 0.010 75);
+  --color-ink: oklch(21% 0.016 268);
+  --color-ink-2: oklch(32% 0.016 268);
+  --color-muted: oklch(49% 0.016 265);
+  --color-rule: oklch(87.5% 0.009 75);
+  --color-rule-soft: oklch(90.5% 0.008 75);
+
+  --color-accent: oklch(54% 0.14 274);
+  --color-accent-ink: oklch(99% 0.003 75);
+  --color-accent-hi: oklch(48% 0.15 274);
+  --color-accent-soft: oklch(54% 0.14 274 / 0.10);
+  --color-accent-border: oklch(54% 0.14 274 / 0.26);
+
+  --color-accent-2: oklch(62% 0.13 58);
+  --color-accent-2-ink: oklch(99% 0.003 75);
+  --color-accent-2-soft: oklch(75% 0.11 62 / 0.16);
+  --color-accent-2-border: oklch(68% 0.12 60 / 0.32);
+
+  --color-danger: oklch(55% 0.15 22);
+  --color-danger-soft: oklch(55% 0.15 22 / 0.09);
+  --color-danger-border: oklch(55% 0.15 22 / 0.24);
+
+  --glass: oklch(99.5% 0.003 75 / 0.85);
+  --glass-elevated: oklch(99.5% 0.003 75 / 0.96);
+  --glass-hi: inset 0 1px 0 oklch(100% 0 0 / 0.8), inset 0 0 0 1px oklch(21% 0.016 268 / 0.07);
+  --shadow-card: 0 20px 44px -24px oklch(21% 0.016 268 / 0.12);
+  --shadow-subtle: 0 6px 18px -8px oklch(21% 0.016 268 / 0.07);
+
+  --bg-main: var(--color-paper);
+  --bg-card: var(--color-paper-2);
+  --bg-header: oklch(96.5% 0.007 75 / 0.86);
+  --bg-input: oklch(93.5% 0.009 75);
+  --text-main: var(--color-ink);
+  --text-muted: var(--color-muted);
+  --text-accent: var(--color-accent);
+  --border: var(--color-rule);
+  --sidebar-active: var(--color-accent-soft);
+
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-muted);
+  --color-text-subtle: oklch(60% 0.014 265);
+}
+
+/* Base Dusk Scope */
+.dusk-admin-scope {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+.dusk-admin-scope h1,
+.dusk-admin-scope h2,
+.dusk-admin-scope h3,
+.dusk-display {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
+  line-height: 1.08;
+}
+
+.dusk-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.dusk-num .c {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+/* Smoked Glass Surface */
+.dusk-glass {
+  background: var(--glass);
+  border-radius: var(--radius-card);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.35);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.35);
+  box-shadow: var(--glass-hi), var(--shadow-card);
+}
+
+.dusk-panel {
+  background: var(--color-paper-2);
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-hi), var(--shadow-subtle);
+}
+
+.dusk-well-card {
+  background: var(--color-well);
+  color: var(--color-well-ink);
+  border-radius: var(--radius-card);
+  padding: 16px;
+}
+
+/* Dusk Controls */
+.dusk-btn-primary {
+  min-height: 38px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.35);
+  transition: background-color var(--dur-micro) ease-out, transform var(--dur-micro) ease-out, box-shadow var(--dur-micro) ease-out;
+}
+
+.dusk-btn-primary:hover:not(:disabled) {
+  background: var(--color-accent-hi);
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.45), 0 0 0 3px var(--color-accent-soft);
+}
+
+.dusk-btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.dusk-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dusk-btn-ghost {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-pill);
+  background: oklch(100% 0 0 / 0.03);
+  color: var(--color-ink-2);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: background-color var(--dur-micro) ease-out, color var(--dur-micro) ease-out, border-color var(--dur-micro) ease-out;
+}
+
+.dusk-light-theme .dusk-btn-ghost {
+  background: oklch(21% 0.016 268 / 0.03);
+}
+
+.dusk-btn-ghost:hover:not(:disabled) {
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+  border-color: oklch(40% 0.018 266);
+}
+
+/* Focus rings */
+.dusk-admin-scope button:focus-visible,
+.dusk-admin-scope input:focus-visible,
+.dusk-admin-scope select:focus-visible,
+.dusk-admin-scope textarea:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+/* Dusk Signal Dots */
+.dusk-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.dusk-dot--periwinkle {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.dusk-dot--apricot {
+  background: var(--color-accent-2);
+  box-shadow: 0 0 0 3px var(--color-accent-2-soft);
+}
+
+.dusk-dot--muted {
+  background: var(--color-muted);
+  opacity: 0.55;
+}
+
+.dusk-dot--danger {
+  background: var(--color-danger);
+}
+
+/* Dusk Ruled Tally (4 figures separated by hairlines) */
+.dusk-tally {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule);
+  padding: 14px 0;
+  gap: 0;
+}
+
+.dusk-tally__cell {
+  padding: 0 20px;
+  border-left: 1px solid var(--color-rule);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dusk-tally__cell:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.dusk-tally__cell:last-child {
+  padding-right: 0;
+}
+
+.dusk-tally__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dusk-tally__value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+@media (max-width: 900px) {
+  .dusk-tally {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 14px;
+  }
+  .dusk-tally__cell:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+/* Dusk Pipeline Filter Strip */
+.dusk-pipeline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px;
+  background: oklch(14.5% 0.014 268 / 0.65);
+  border-radius: 13px;
+  box-shadow: inset 0 0 0 1px var(--color-rule);
+}
+
+.dusk-light-theme .dusk-pipeline {
+  background: var(--color-well-2);
+}
+
+.dusk-pipeline__step {
+  padding: 7px 12px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--dur-micro) ease-out, color var(--dur-micro) ease-out, border-color var(--dur-micro) ease-out;
+}
+
+.dusk-pipeline__step:hover {
+  color: var(--color-ink);
+  background: oklch(100% 0 0 / 0.04);
+}
+
+.dusk-pipeline__step.is-active,
+.dusk-pipeline__step.active {
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+  border-color: var(--color-accent-border);
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.08);
+}
+
+.dusk-light-theme .dusk-pipeline__step.is-active,
+.dusk-light-theme .dusk-pipeline__step.active {
+  background: var(--color-card);
+  box-shadow: 0 1px 3px oklch(21% 0.016 268 / 0.08);
+}
+
+.dusk-pipeline__count {
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--color-muted);
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: oklch(100% 0 0 / 0.05);
+  line-height: 1.3;
+}
+
+.dusk-pipeline__step.is-active .dusk-pipeline__count,
+.dusk-pipeline__step.active .dusk-pipeline__count {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Dusk Facet Pills */
+.dusk-facet-pill {
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-rule);
+  background: transparent;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.2;
+  transition: background-color var(--dur-micro) ease-out, color var(--dur-micro) ease-out, border-color var(--dur-micro) ease-out;
+}
+
+.dusk-facet-pill svg {
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.dusk-facet-pill:hover {
+  color: var(--color-ink);
+  border-color: oklch(40% 0.018 266);
+  background: oklch(100% 0 0 / 0.03);
+}
+
+.dusk-facet-pill.is-active,
+.dusk-facet-pill.active {
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
+  border-color: var(--color-accent-border);
+}
+
+.dusk-facet-pill.is-active-apricot,
+.dusk-facet-pill.active-apricot {
+  background: var(--color-accent-2-soft);
+  color: var(--color-accent-2);
+  border-color: var(--color-accent-2-border);
+}
+
+/* Dusk Apricot Callout Strip (for Open / Attention / COD / Notes) */
+.dusk-apricot-strip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-inner);
+  background: oklch(83% 0.095 62 / 0.09);
+  border: 1px solid oklch(83% 0.095 62 / 0.22);
+  border-left: 3px solid var(--color-accent-2);
+  color: var(--color-ink-2);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+/* Dusk Status Badge & Universal Badge (.dusk-status-badge and .dusk-badge) */
+.dusk-status-badge,
+.dusk-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid var(--color-rule);
+  background: oklch(100% 0 0 / 0.04);
+  color: var(--color-ink-2);
+}
+
+.dusk-status-badge svg,
+.dusk-badge svg {
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.dusk-status-badge--periwinkle,
+.dusk-badge--periwinkle {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-border);
+}
+
+.dusk-status-badge--apricot,
+.dusk-badge--apricot {
+  background: var(--color-accent-2-soft);
+  color: var(--color-accent-2);
+  border: 1px solid var(--color-accent-2-border);
+}
+
+.dusk-status-badge--slate,
+.dusk-badge--neutral {
+  background: oklch(100% 0 0 / 0.045);
+  color: var(--color-ink-2);
+  border: 1px solid var(--color-rule);
+}
+
+.dusk-light-theme .dusk-status-badge--slate,
+.dusk-light-theme .dusk-badge--neutral {
+  background: oklch(21% 0.016 268 / 0.045);
+}
+
+.dusk-status-badge--danger,
+.dusk-badge--danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
+}
+
+/* Typography & Utility Classes used across Admin Cabinets */
+.dusk-heading {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  color: var(--color-ink);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.dusk-subheading {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.dusk-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.dusk-currency {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+}
+
+.dusk-tally__sub {
+  font-size: 11.5px;
+  color: var(--color-muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+/* Dusk Universal Buttons (.dusk-btn, .dusk-btn--primary, .dusk-btn--ghost, .dusk-btn--sm, .dusk-btn--danger) */
+.dusk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-rule);
+  background: oklch(100% 0 0 / 0.035);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: background-color var(--dur-micro) ease-out, border-color var(--dur-micro) ease-out, color var(--dur-micro) ease-out, transform var(--dur-micro) ease-out;
+}
+
+.dusk-btn svg,
+.dusk-btn-primary svg,
+.dusk-btn-ghost svg {
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dusk-btn:hover:not(:disabled) {
+  background: oklch(100% 0 0 / 0.07);
+  border-color: oklch(42% 0.018 266);
+}
+
+.dusk-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dusk-btn--primary {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 2px 8px oklch(74% 0.125 272 / 0.22);
+}
+
+.dusk-btn--primary:hover:not(:disabled) {
+  background: oklch(78% 0.125 272);
+  border-color: transparent;
+  color: var(--color-accent-ink);
+}
+
+.dusk-btn--ghost {
+  background: oklch(100% 0 0 / 0.025);
+  color: var(--color-ink-2);
+  border: 1px solid var(--color-rule);
+}
+
+.dusk-btn--ghost:hover:not(:disabled) {
+  background: oklch(100% 0 0 / 0.065);
+  color: var(--color-ink);
+  border-color: oklch(40% 0.018 266);
+}
+
+.dusk-light-theme .dusk-btn--ghost {
+  background: oklch(21% 0.016 268 / 0.03);
+}
+
+.dusk-light-theme .dusk-btn--ghost:hover:not(:disabled) {
+  background: oklch(21% 0.016 268 / 0.07);
+}
+
+.dusk-btn--danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-color: var(--color-danger-border);
+}
+
+.dusk-btn--danger:hover:not(:disabled) {
+  background: oklch(68% 0.14 25 / 0.24);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.dusk-btn--sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  gap: 5px;
+}
+
+/* Dusk Inputs, Textareas & Selects (.dusk-input, .dusk-textarea, .dusk-select) */
+.dusk-input,
+.dusk-select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: oklch(14.5% 0.014 268 / 0.9);
+  border: 1px solid oklch(30% 0.016 268);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.3;
+  outline: none;
+  transition: border-color var(--dur-micro) ease-out, box-shadow var(--dur-micro) ease-out, background-color var(--dur-micro) ease-out;
+}
+
+.dusk-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: oklch(14.5% 0.014 268 / 0.9);
+  border: 1px solid oklch(30% 0.016 268);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.45;
+  outline: none;
+  resize: vertical;
+  transition: border-color var(--dur-micro) ease-out, box-shadow var(--dur-micro) ease-out, background-color var(--dur-micro) ease-out;
+}
+
+.dusk-light-theme .dusk-input,
+.dusk-light-theme .dusk-select,
+.dusk-light-theme .dusk-textarea {
+  background: var(--color-card);
+  border-color: var(--color-rule);
+  color: var(--color-ink);
+}
+
+.dusk-input::placeholder,
+.dusk-textarea::placeholder {
+  color: var(--color-muted);
+  opacity: 0.72;
+}
+
+.dusk-input:focus,
+.dusk-input:focus-visible,
+.dusk-select:focus,
+.dusk-select:focus-visible,
+.dusk-textarea:focus,
+.dusk-textarea:focus-visible {
+  outline: none !important;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px oklch(74% 0.125 272 / 0.18);
+  background: oklch(16% 0.015 268);
+}
+
+.dusk-admin-scope input:focus,
+.dusk-admin-scope input:focus-visible,
+.dusk-admin-scope button:focus,
+.dusk-admin-scope button:focus-visible,
+.dusk-admin-scope select:focus,
+.dusk-admin-scope select:focus-visible,
+.dusk-admin-scope textarea:focus,
+.dusk-admin-scope textarea:focus-visible {
+  outline: none !important;
+}
+
+/* Remove ugly browser number spinner arrows inside Dusk Admin */
+.dusk-admin-scope input[type="number"]::-webkit-inner-spin-button,
+.dusk-admin-scope input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.dusk-admin-scope input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.dusk-light-theme .dusk-input:focus,
+.dusk-light-theme .dusk-select:focus,
+.dusk-light-theme .dusk-textarea:focus {
+  background: #ffffff;
+}
+
+.dusk-select option {
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+}
+
+/* Dusk Segmented Control (.dusk-segmented & .dusk-segmented__item) */
+.dusk-segmented {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 10px;
+  background: oklch(14.5% 0.014 268 / 0.85);
+  border: 1px solid var(--color-rule);
+  gap: 2px;
+}
+
+.dusk-light-theme .dusk-segmented {
+  background: var(--color-well-2);
+}
+
+.dusk-segmented__item {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 7px;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--dur-micro) ease-out, color var(--dur-micro) ease-out;
+}
+
+.dusk-segmented__item svg {
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.dusk-segmented__item:hover {
+  color: var(--color-ink);
+}
+
+.dusk-segmented__item.active,
+.dusk-segmented__item.is-active {
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px var(--color-accent-border);
+}
+
+.dusk-light-theme .dusk-segmented__item.active,
+.dusk-light-theme .dusk-segmented__item.is-active {
+  background: var(--color-card);
+  box-shadow: 0 1px 2px oklch(21% 0.016 268 / 0.08);
+}
+
+/* Dusk Round Account/Customer Initial */
+.dusk-initial {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: oklch(100% 0 0 / 0.06);
+  border: 1px solid var(--color-rule);
+  color: var(--color-ink-2);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Dusk Table */
+.dusk-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dusk-table th {
+  text-align: left;
+  padding: 11px 16px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+  border-bottom: 1px solid var(--color-rule);
+  white-space: nowrap;
+  background: var(--color-paper-2);
+}
+
+.dusk-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid oklch(100% 0 0 / 0.055);
+  vertical-align: middle;
+  font-size: 13.5px;
+  color: var(--color-ink);
+}
+
+.dusk-light-theme .dusk-table td {
+  border-bottom: 1px solid var(--color-rule-soft);
+}
+
+.dusk-table tbody tr {
+  transition: background-color var(--dur-micro) ease-out;
+}
+
+.dusk-table tbody tr:hover {
+  background: oklch(100% 0 0 / 0.025);
+}
+
+.dusk-light-theme .dusk-table tbody tr:hover {
+  background: oklch(21% 0.016 268 / 0.02);
+}
+
+/* Scrollbar Override (Replace bright neon purple scrollbar with subtle Dusk slate) */
+.dusk-admin-scope ::-webkit-scrollbar,
+.dusk-admin-scope::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.dusk-admin-scope ::-webkit-scrollbar-track,
+.dusk-admin-scope::-webkit-scrollbar-track {
+  background: oklch(15% 0.013 268);
+}
+
+.dusk-admin-scope ::-webkit-scrollbar-thumb,
+.dusk-admin-scope::-webkit-scrollbar-thumb {
+  background: oklch(30% 0.016 268);
+  border-radius: 999px;
+}
+
+.dusk-admin-scope ::-webkit-scrollbar-thumb:hover,
+.dusk-admin-scope::-webkit-scrollbar-thumb:hover {
+  background: oklch(40% 0.02 268);
+}
+
+.dusk-light-theme ::-webkit-scrollbar-track,
+.dusk-light-theme::-webkit-scrollbar-track {
+  background: oklch(93% 0.008 265);
+}
+
+.dusk-light-theme ::-webkit-scrollbar-thumb,
+.dusk-light-theme::-webkit-scrollbar-thumb {
+  background: oklch(76% 0.014 265);
+}
+
+/* Ensure SVGs inside buttons and links never break onto a separate line */
+.dusk-admin-scope button svg,
+.dusk-admin-scope a svg {
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dusk-admin-scope *,
+  .dusk-admin-scope *::before,
+  .dusk-admin-scope *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,14 +1,13 @@
 "use client";
 import React, { useState, useMemo } from 'react';
-import { 
-  ChevronLeft, Trash2, Minus, Plus, CreditCard, Truck, 
-  User, Phone, MapPin, MessageSquare, Coins, CheckCircle2,
-  Check, ArrowRight, Home, ReceiptText
+import {
+  ChevronLeft, Trash2, Minus, Plus, CreditCard, Truck,
+  User, Phone, MapPin, Coins, CheckCircle2,
+  Check, Home, ReceiptText, Loader2, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { novaPoshta } from '@/lib/novaposhta';
-import { Loader2 } from 'lucide-react';
 
 export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, bonuses, onOrderSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,7 +15,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
   const [orderNumber, setOrderNumber] = useState('');
   const [finalAmount, setFinalAmount] = useState(0);
   const [useBonuses, setUseBonuses] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('online');
+  const [paymentMethod, setPaymentMethod] = useState('card_transfer');
   const [deliveryMethod, setDeliveryMethod] = useState('nova_poshta');
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', phone: '+380', city: '', cityRef: '', warehouse: '', warehouseRef: '', comment: '', noCall: false
@@ -35,7 +34,6 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
-  // Detect keyboard/focus
   React.useEffect(() => {
     const handleFocus = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
@@ -44,9 +42,8 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
     };
     const handleBlur = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        // Delay blur to handle quick switch between inputs
         setTimeout(() => {
-          if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
             setIsKeyboardOpen(false);
           }
         }, 100);
@@ -61,10 +58,8 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
     };
   }, []);
 
-  // Пошук міст
   React.useEffect(() => {
     const timer = setTimeout(async () => {
-      // Не шукаємо, якщо запит порожній або вже збігається з вибраним містом
       if (cityQuery.length >= 2 && deliveryMethod === 'nova_poshta' && cityQuery !== formData.city) {
         setLoadingCities(true);
         const data = await novaPoshta.getCities(cityQuery);
@@ -74,11 +69,10 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
       } else {
         setCities([]);
       }
-    }, 500);
+    }, 400);
     return () => clearTimeout(timer);
   }, [cityQuery, deliveryMethod, formData.city]);
 
-  // Отримання відділень
   React.useEffect(() => {
     async function fetchWarehouses() {
       if (formData.cityRef && deliveryMethod === 'nova_poshta') {
@@ -95,9 +89,8 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
 
   const filteredWarehouses = useMemo(() => {
     if (!warehouseQuery) return warehouses;
-    // Не фільтруємо, якщо запит вже збігається з вибраним відділенням
     if (warehouseQuery === formData.warehouse) return [];
-    return warehouses.filter(w => 
+    return warehouses.filter(w =>
       w.Description.toLowerCase().includes(warehouseQuery.toLowerCase())
     );
   }, [warehouses, warehouseQuery, formData.warehouse]);
@@ -112,9 +105,9 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
   const bonusDiscount = useMemo(() => {
     if (!useBonuses) return 0;
     const requestedCoins = parseInt(bonusInput) || 0;
-    const maxCoinsAllowedByTotal = subtotal * 0.10; // 10% ліміт від суми замовлення
+    const maxCoinsAllowedByTotal = subtotal * 0.10;
     const coinsToUse = Math.min(requestedCoins, bonuses, maxCoinsAllowedByTotal);
-    return Math.floor(coinsToUse); // 1 монета = 1 ₴
+    return Math.floor(coinsToUse);
   }, [useBonuses, bonusInput, subtotal, bonuses]);
 
   const total = subtotal - bonusDiscount;
@@ -130,7 +123,6 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
     setOrderNumber(newOrderNumber);
 
     if (!supabase) {
-      console.warn('Supabase not initialized. Order not saved to database.');
       setTimeout(() => {
         setIsSuccess(true);
         setIsSubmitting(false);
@@ -142,7 +134,6 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
       let customerId = null;
       const tgUser = typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user : null;
 
-      // 1. Отримуємо або створюємо клієнта
       if (tgUser) {
         const { data: existingCust } = await supabase
           .from('customers')
@@ -153,7 +144,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         const bonusesToDeduct = useBonuses ? bonusDiscount : 0;
         const newBonusBalance = existingCust ? Math.max(0, (existingCust.bonuses || 0) - bonusesToDeduct) : 0;
 
-        const { data: customerData, error: upsertError } = await supabase.from('customers').upsert({
+        const { data: customerData } = await supabase.from('customers').upsert({
           tg_id: tgUser.id.toString(),
           first_name: formData.firstName,
           last_name: formData.lastName,
@@ -162,13 +153,11 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           last_login: new Date().toISOString(),
           allow_notifications: true
         }, { onConflict: 'tg_id' }).select().single();
-        
+
         if (customerData) customerId = customerData.id;
-        if (upsertError) console.error('Customer upsert error:', upsertError);
       }
 
-      // 2. Створюємо замовлення
-      const { data: orderData, error } = await supabase
+      const { error } = await supabase
         .from('orders')
         .insert([{
           total: total,
@@ -211,547 +200,655 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         style={{
-          position: 'fixed', inset: 0, zIndex: 2000,
-          background: '#05050f', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', padding: '60px 20px', textAlign: 'center'
+          position: 'fixed',
+          inset: 0,
+          zIndex: 2000,
+          background: '#13151B',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px 20px',
+          textAlign: 'center',
+          color: '#F3F4F8'
         }}
       >
-        {/* Circle for Checkmark */}
         <div style={{
-          width: 90, height: 90, borderRadius: '50%', background: 'rgba(45, 212, 191, 0.1)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2dd4bf',
-          marginBottom: 32, border: '2px solid rgba(45, 212, 191, 0.2)', boxShadow: '0 0 30px rgba(45, 212, 191, 0.15)'
+          width: 72,
+          height: 72,
+          borderRadius: '50%',
+          background: 'rgba(147, 162, 250, 0.14)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#93A2FA',
+          marginBottom: 24,
+          border: '1px solid rgba(147, 162, 250, 0.35)'
         }}>
-          <Check size={44} strokeWidth={4} />
+          <Check size={34} strokeWidth={2.5} />
         </div>
 
-        <h2 style={{ fontSize: 32, fontWeight: 950, color: '#fff', marginBottom: 12 }}>Замовлення Прийнято!</h2>
-        <p style={{ color: '#6b6b8a', fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Номер вашого замовлення:</p>
-        <div style={{ fontSize: 24, fontWeight: 950, color: '#fff', marginBottom: 12, letterSpacing: '0.05em' }}>{orderNumber}</div>
+        <h2 style={{ fontSize: 26, fontWeight: 700, color: '#F3F4F8', marginBottom: 8 }}>Замовлення прийнято</h2>
+        <p style={{ color: '#8D93A5', fontSize: 13, marginBottom: 4 }}>Номер вашого замовлення:</p>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#93A2FA', marginBottom: 20, fontFamily: 'monospace' }}>
+          {orderNumber}
+        </div>
 
         <AnimatePresence>
           {paymentConfirmed && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              style={{ padding: '12px 24px', borderRadius: 20, background: 'rgba(34,197,94,0.15)', color: '#22c55e', fontWeight: 950, fontSize: 13, textAlign: 'center', border: '1px solid rgba(34,197,94,0.2)', marginBottom: 24 }}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                padding: '10px 20px',
+                borderRadius: 12,
+                background: 'rgba(147, 162, 250, 0.14)',
+                color: '#93A2FA',
+                fontWeight: 600,
+                fontSize: 13,
+                border: '1px solid rgba(147, 162, 250, 0.32)',
+                marginBottom: 20
+              }}
             >
-              ДЯКУЄМО! ПЕРЕВІРЯЄМО ОПЛАТУ ⏳
+              Дякуємо! Перевіряємо оплату
             </motion.div>
           )}
         </AnimatePresence>
 
         <AnimatePresence>
           {!paymentConfirmed && (
-            <motion.div 
-              initial={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-              style={{ width: '100%', maxWidth: 400, background: 'rgba(255,255,255,0.03)', borderRadius: 24, padding: 24, border: '1px solid rgba(255,255,255,0.1)', marginBottom: 24, textAlign: 'left', overflow: 'hidden' }}
+            <motion.div
+              initial={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                background: '#181B22',
+                borderRadius: 16,
+                padding: 20,
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                marginBottom: 20,
+                textAlign: 'left',
+                overflow: 'hidden'
+              }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>
-                    {paymentMethod === 'card_transfer' ? 'Очікуємо повну оплату на карту:' : 'Очікуємо передоплату 30% на карту:'}
+                  <div style={{ fontSize: 11, color: '#8D93A5', fontWeight: 500, marginBottom: 6 }}>
+                    {paymentMethod === 'card_transfer' ? 'Реквізити для повної оплати:' : 'Реквізити для передоплати 30%:'}
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginBottom: 4, letterSpacing: '0.05em' }}>4441 1110 5788 6511</div>
-                  <div style={{ fontSize: 13, color: '#2dd4bf', fontWeight: 700 }}>Годимчук Денис Д.</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: '#F3F4F8', marginBottom: 4, fontFamily: 'monospace' }}>
+                    4441 1110 5788 6511
+                  </div>
+                  <div style={{ fontSize: 12.5, color: '#93A2FA', fontWeight: 500 }}>Годимчук Денис Д.</div>
                 </div>
-                <button 
+                <button
+                  type="button"
                   onClick={() => {
                     navigator.clipboard.writeText('4441111057886511');
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   }}
-                  style={{ 
-                    background: copied ? '#22c55e' : 'rgba(124,58,237,0.2)', 
-                    border: `1px solid ${copied ? '#22c55e' : 'rgba(124,58,237,0.3)'}`, 
-                    borderRadius: 10, padding: '6px 12px', color: '#fff', fontSize: 10, fontWeight: 900, 
-                    cursor: 'pointer', minWidth: 100, transition: 'all 0.3s' 
+                  style={{
+                    background: copied ? 'rgba(147, 162, 250, 0.2)' : '#13151B',
+                    border: '1px solid rgba(147, 162, 250, 0.35)',
+                    borderRadius: 8,
+                    padding: '6px 12px',
+                    color: '#93A2FA',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    cursor: 'pointer'
                   }}
                 >
-                  {copied ? 'ГОТОВО ✅' : 'КОПІЮВАТИ'}
+                  {copied ? 'Скопійовано ✓' : 'Копіювати'}
                 </button>
               </div>
-              <div style={{ fontSize: 16, fontWeight: 950, color: '#f97316', paddingTop: 12, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
-                Сума до оплати: {paymentMethod === 'card_transfer' ? finalAmount.toFixed(0) : (finalAmount * 0.3).toFixed(0)} ₴
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#F4A97B', paddingTop: 12, borderTop: '1px solid rgba(255, 255, 255, 0.07)' }}>
+                Сума до сплати зараз: {paymentMethod === 'card_transfer' ? finalAmount.toFixed(0) : (finalAmount * 0.3).toFixed(0)} ₴
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <AnimatePresence mode="wait">
-            {!paymentConfirmed ? (
-              <motion.button 
-                key="confirm-btn"
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-                onClick={async () => {
-                  setIsConfirmingPayment(true);
-                  try {
-                    await supabase.from('orders').update({ payment_status: 'verifying' }).eq('order_number', orderNumber);
-                    setPaymentConfirmed(true);
-                  } catch (e) { console.error(e); }
-                  setIsConfirmingPayment(false);
-                }}
-                disabled={isConfirmingPayment}
-                style={{ 
-                  width: '100%', padding: '20px', borderRadius: 22, border: '2px solid #22c55e', 
-                  background: 'rgba(34,197,94,0.05)', color: '#22c55e', fontWeight: 950, 
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
-                  fontSize: 16, textTransform: 'uppercase', letterSpacing: '0.05em'
-                }}
-              >
-                {isConfirmingPayment ? <Loader2 className="animate-spin" size={20}/> : '✅ Я ОПЛАТИВ(ЛА)'}
-              </motion.button>
-            ) : (
-            <motion.div 
-              key="confirmed-status"
-              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}
+        <div style={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {!paymentConfirmed ? (
+            <button
+              type="button"
+              onClick={async () => {
+                setIsConfirmingPayment(true);
+                try {
+                  await supabase.from('orders').update({ payment_status: 'verifying' }).eq('order_number', orderNumber);
+                  setPaymentConfirmed(true);
+                } catch (e) { console.error(e); }
+                setIsConfirmingPayment(false);
+              }}
+              disabled={isConfirmingPayment}
+              style={{
+                width: '100%',
+                height: 44,
+                borderRadius: 11,
+                border: 'none',
+                background: '#93A2FA',
+                color: '#13151B',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                cursor: 'pointer',
+                fontSize: 14
+              }}
             >
-                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 24, textAlign: 'left' }}>
-                  <h3 style={{ fontSize: 18, color: '#5b5bff', fontWeight: 900, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    Що далі? 🚚
-                  </h3>
-                  <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6, fontWeight: 600 }}>
-                    Невдовзі наш менеджер обробить замовлення. 
-                    Ми створимо ТТН "Нової Пошти" і надішлемо вам номер!
-                  </p>
-                </div>
+              {isConfirmingPayment ? <Loader2 className="animate-spin" size={18} /> : 'Я оплатив(ла)'}
+            </button>
+          ) : null}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <button 
-                    onClick={() => onClose()}
-                    style={{ 
-                      width: '100%', padding: '18px', borderRadius: 20, border: 'none', 
-                      background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: '#fff', fontWeight: 950, 
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
-                      boxShadow: '0 10px 30px rgba(124, 58, 237, 0.4)', fontSize: 15
-                    }}
-                  >
-                    ПОВЕРНУТИСЬ ДО МАГАЗИНУ
-                  </button>
-                  <button 
-                    onClick={() => {
-                      onClose();
-                      setTimeout(() => window.dispatchEvent(new CustomEvent('openOrderHistory')), 100);
-                    }}
-                    style={{ 
-                      width: '100%', padding: '18px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)', 
-                      background: 'rgba(255,255,255,0.03)', color: '#fff', fontWeight: 800, 
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, cursor: 'pointer',
-                      fontSize: 14
-                    }}
-                  >
-                    МОЇ ЗАМОВЛЕННЯ
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <button
+            type="button"
+            onClick={() => onClose()}
+            style={{
+              width: '100%',
+              height: 42,
+              borderRadius: 11,
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: '#181B22',
+              color: '#F3F4F8',
+              fontWeight: 600,
+              fontSize: 13.5,
+              cursor: 'pointer'
+            }}
+          >
+            Повернутись до магазину
+          </button>
         </div>
       </motion.div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 2000,
-        background: '#05050f', display: 'flex', flexDirection: 'column',
-        overflowY: 'auto', overflowX: 'hidden'
-      }}
-    >
-      {/* Header */}
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 10,
-        padding: '20px 16px', background: 'rgba(5,5,15,0.8)', backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
-        display: 'flex', alignItems: 'center', gap: 16
-      }}>
-        <button onClick={onClose} style={{
-          width: 40, height: 40, borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
-          background: 'rgba(255,255,255,0.03)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 2000,
+      background: 'rgba(10, 12, 16, 0.78)',
+      backdropFilter: 'blur(12px)',
+      display: 'flex',
+      justifyContent: 'flex-end'
+    }}>
+      <div onClick={onClose} style={{ flex: 1 }} />
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+        style={{
+          width: '100%',
+          maxWidth: 520,
+          height: '100%',
+          background: '#13151B',
+          borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          color: '#F3F4F8'
+        }}
+      >
+        {/* Header */}
+        <header style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          padding: '14px 20px',
+          background: 'rgba(19, 21, 27, 0.92)',
+          backdropFilter: 'blur(16px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12
         }}>
-          <ChevronLeft size={24} />
-        </button>
-        <div>
-          <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff', lineHeight: 1 }}>Оформлення</h2>
-          <p style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 700, textTransform: 'uppercase', marginTop: 4 }}>Замовлення завершено</p>
-        </div>
-      </header>
-
-      <div style={{ 
-        padding: `24px 16px ${isKeyboardOpen ? '24px' : '120px'}`, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: 32 
-      }}>
-        
-        {/* Your Order */}
-        <section>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-             <CheckCircle2 size={18} style={{ color: '#2dd4bf' }} />
-             <h3 style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>Ваше замовлення</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 9,
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: '#181B22',
+                color: '#F3F4F8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <div>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: '#F3F4F8', lineHeight: 1.2, margin: 0 }}>Оформлення замовлення</h2>
+              <p style={{ fontSize: 11.5, color: '#8D93A5', margin: 0 }}>Перевірте товари та вкажіть відділення доставки</p>
+            </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {items.map((item, idx) => (
-              <div key={idx} style={{ 
-                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', 
-                borderRadius: 20, padding: 12, display: 'flex', gap: 12, alignItems: 'center' 
-              }}>
-                <div style={{ width: 60, height: 60, background: 'rgba(255,255,255,0.03)', borderRadius: 14, overflow: 'hidden' }}>
-                  <img src={item.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ fontSize: 13, fontWeight: 800, color: '#fff', marginBottom: 8 }}>{item.name}</h4>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 4 }}>
-                        <button onClick={() => onUpdateQuantity(idx, -1)} style={{ width: 24, height: 24, border: 'none', background: 'transparent', color: '#6b6b8a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={14}/></button>
-                        <span style={{ fontSize: 13, fontWeight: 900, color: '#fff', minWidth: 20, textAlign: 'center' }}>{item.quantity || 1}</span>
-                        <button onClick={() => onUpdateQuantity(idx, 1)} style={{ width: 24, height: 24, border: 'none', background: 'transparent', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={14}/></button>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: 'transparent', border: 'none', color: '#8D93A5', cursor: 'pointer', padding: 4 }}
+          >
+            <X size={18} />
+          </button>
+        </header>
+
+        <div style={{
+          padding: `18px 20px ${isKeyboardOpen ? '24px' : '110px'}`,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 20,
+          flex: 1
+        }}>
+          {/* Cart Items */}
+          <section>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#8D93A5', marginBottom: 10 }}>
+              Товари в кошику ({items.reduce((s, i) => s + (i.quantity || 1), 0)} шт.)
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {items.map((item, idx) => (
+                <div key={idx} style={{
+                  background: '#181B22',
+                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                  borderRadius: 12,
+                  padding: 10,
+                  display: 'flex',
+                  gap: 12,
+                  alignItems: 'center'
+                }}>
+                  <div style={{ width: 52, height: 52, background: '#13151B', borderRadius: 9, overflow: 'hidden', flexShrink: 0 }}>
+                    {item.image_url && <img src={item.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h4 style={{ fontSize: 13, fontWeight: 600, color: '#F3F4F8', margin: '0 0 6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.name}
+                    </h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: '#13151B', border: '1px solid rgba(255, 255, 255, 0.07)', borderRadius: 8, height: 28 }}>
+                        <button type="button" onClick={() => onUpdateQuantity(idx, -1)} style={{ width: 26, height: '100%', border: 'none', background: 'transparent', color: '#8D93A5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={12} /></button>
+                        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#F3F4F8', minWidth: 20, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{item.quantity || 1}</span>
+                        <button type="button" onClick={() => onUpdateQuantity(idx, 1)} style={{ width: 26, height: '100%', border: 'none', background: 'transparent', color: '#93A2FA', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={12} /></button>
+                      </div>
+                      <div style={{ fontSize: 14.5, fontWeight: 700, color: '#F3F4F8', fontVariantNumeric: 'tabular-nums' }}>
+                        {(item.price * (1 - (item.discount || 0) / 100) * (item.quantity || 1)).toFixed(0)} ₴
+                      </div>
                     </div>
-                    <div style={{ fontSize: 16, fontWeight: 900, color: '#fff' }}>{(item.price * (1 - (item.discount || 0)/100) * (item.quantity || 1)).toFixed(0)} ₴</div>
+                  </div>
+                  <button type="button" onClick={() => onRemove(idx)} style={{ color: '#E66B72', border: 'none', background: 'transparent', cursor: 'pointer', padding: 4 }}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Bonuses */}
+          <section style={{
+            background: '#181B22',
+            border: '1px solid rgba(255, 255, 255, 0.07)',
+            borderRadius: 12,
+            padding: 14
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(244, 169, 123, 0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F4A97B' }}>
+                  <Coins size={16} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#F3F4F8' }}>Бонусні монети</div>
+                  <div style={{ fontSize: 11, color: '#8D93A5' }}>
+                    {bonuses > 0 ? `Доступно: ${bonuses} монет (1 монета = 1 ₴)` : 'Кешбек монетами нараховується після замовлення'}
                   </div>
                 </div>
-                <button onClick={() => onRemove(idx)} style={{ color: '#ef4444', opacity: 0.5, border: 'none', background: 'transparent' }}><Trash2 size={18}/></button>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Bonuses */}
-        <section style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.1)', borderRadius: 24, padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(251,191,36,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fbbf24' }}>
-                <Coins size={20} />
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 900, color: '#fff' }}>Використати бонуси</div>
-                <div style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 700 }}>
-                  {bonuses > 0 ? `У вас ${bonuses} монет (1 монета = 1 гривня)` : 'Наразі у вас немає бонусних монет'}
-                </div>
-              </div>
+              {bonuses > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseBonuses(!useBonuses);
+                    if (!useBonuses) setBonusInput(Math.min(bonuses, subtotal).toString());
+                  }}
+                  style={{
+                    width: 38, height: 21, borderRadius: 999,
+                    background: useBonuses ? '#93A2FA' : '#13151B',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    position: 'relative', cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ position: 'absolute', top: 2, left: useBonuses ? 19 : 2, width: 15, height: 15, background: useBonuses ? '#13151B' : '#8D93A5', borderRadius: '50%', transition: 'all 0.2s' }} />
+                </button>
+              )}
             </div>
-            {bonuses > 0 && (
-              <button 
-                onClick={() => {
-                  setUseBonuses(!useBonuses);
-                  if (!useBonuses) setBonusInput(Math.min(bonuses, subtotal).toString());
-                }}
-                style={{
-                  width: 44, height: 24, borderRadius: 12, background: useBonuses ? '#7c3aed' : 'rgba(255,255,255,0.05)',
-                  border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s'
-                }}
-              >
-                <div style={{ position: 'absolute', top: 3, left: useBonuses ? 23 : 3, width: 18, height: 18, background: '#fff', borderRadius: '50%', transition: 'all 0.3s' }} />
-              </button>
-            )}
-          </div>
-          {bonuses === 0 && (
-            <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(251,191,36,0.05)', borderRadius: 14, border: '1px dashed rgba(251,191,36,0.2)' }}>
-              <p style={{ fontSize: 11, color: '#fbbf24', fontWeight: 700, lineHeight: 1.4, margin: 0 }}>
-                ✨ Купуйте вироби та отримуйте кешбек монетами на наступні замовлення!
-              </p>
-            </div>
-          )}
-          {bonuses > 0 && useBonuses && (
-            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ position: 'relative' }}>
-                <input 
-                  type="number"
+            {bonuses > 0 && useBonuses && (
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
                   placeholder="Скільки монет списати?"
                   value={bonusInput}
-                  onChange={(e) => setBonusInput(e.target.value)}
-                  style={{ 
-                    width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', 
-                    borderRadius: 12, padding: '10px 16px', color: '#fff', fontSize: 13, outline: 'none',
-                    appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'textfield'
+                  onChange={(e) => setBonusInput(e.target.value.replace(/\D/g, ''))}
+                  style={{
+                    width: '100%', background: '#13151B', border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: 9, padding: '8px 12px', color: '#F3F4F8', fontSize: 13, outline: 'none'
                   }}
                 />
-                <style>{`
-                  input::-webkit-outer-spin-button,
-                  input::-webkit-inner-spin-button {
-                    -webkit-appearance: none;
-                    margin: 0;
-                  }
-                `}</style>
-                <span style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#6b6b8a', fontWeight: 800 }}>монет</span>
-              </div>
-              <div style={{ fontSize: 11, color: '#2dd4bf', fontWeight: 800 }}>
-                {bonusDiscount > 0 ? (
-                  <>✨ Ви отримуєте знижку {bonusDiscount.toFixed(0)} ₴ (максимум 10% від замовлення)</>
-                ) : (
-                  <>Вкажіть кількість монет</>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Payment */}
-        <section>
-          <h3 style={{ fontSize: 14, fontWeight: 900, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Оплата</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <SelectorItem 
-                active={paymentMethod === 'card_transfer'} 
-                onClick={() => setPaymentMethod('card_transfer')} 
-                icon={<CreditCard size={20}/>} 
-                title="Переказ на карту Mono" 
-                sub="Повна оплата замовлення на карту" 
-              />
-              <AnimatePresence>
-                {(paymentMethod === 'card_transfer' || paymentMethod === 'cash') && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                    style={{ overflow: 'hidden' }}
-                  >
-                    <div style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: 16, padding: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 900, color: '#fff' }}>4441 1110 5788 6511</span>
-                        <button 
-                          onClick={() => {
-                            navigator.clipboard.writeText('4441111057886511');
-                            setCopied(true);
-                            setTimeout(() => setCopied(false), 2000);
-                          }}
-                          style={{ 
-                            background: copied ? '#22c55e' : '#7c3aed', 
-                            border: 'none', borderRadius: 8, padding: '4px 10px', 
-                            color: '#fff', fontSize: 10, fontWeight: 900, 
-                            cursor: 'pointer', minWidth: 110, transition: 'all 0.3s' 
-                          }}
-                        >
-                          {copied ? 'СКОПІЙОВАНО ✅' : 'КОПІЮВАТИ'}
-                        </button>
-                      </div>
-                      <div style={{ fontSize: 12, color: '#6b6b8a', fontWeight: 700, marginBottom: 12 }}>Годимчук Денис Дмитрович</div>
-                      
-                      {paymentMethod === 'cash' && (
-                        <div style={{ paddingTop: 12, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
-                           <div style={{ fontSize: 11, color: '#f97316', fontWeight: 900, marginBottom: 4 }}>Необхідна передоплата 30%:</div>
-                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: 13, color: '#fff', fontWeight: 800 }}>{(total * 0.3).toFixed(0)} ₴</span>
-                              <span style={{ fontSize: 10, color: '#6b6b8a', fontWeight: 700 }}>Залишок {(total * 0.7).toFixed(0)} ₴ при отриманні</span>
-                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            <SelectorItem active={paymentMethod === 'cash'} onClick={() => setPaymentMethod('cash')} icon={<ReceiptText size={20}/>} title="Післяплата (наложка)" sub="30% передоплата, решта на пошті" />
-          </div>
-        </section>
-
-        {/* Delivery */}
-        <section>
-          <h3 style={{ fontSize: 14, fontWeight: 900, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Доставка</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <SelectorItem active={deliveryMethod === 'nova_poshta'} onClick={() => setDeliveryMethod('nova_poshta')} icon={<Truck size={20}/>} title="Нова Пошта" sub="Доставка у відділення або поштомат" color="#ef4444" />
-            <SelectorItem active={deliveryMethod === 'pickup'} onClick={() => setDeliveryMethod('pickup')} icon={<MapPin size={20}/>} title="Самовивіз" sub="Хмельницький, ТЦ Дитячий світ" color="#2dd4bf" />
-          </div>
-        </section>
-
-        {/* Receiver Details */}
-        <section>
-          <h3 style={{ fontSize: 14, fontWeight: 900, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Дані отримувача</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-               <Input icon={<User size={16}/>} placeholder="Ім'я" value={formData.firstName} onChange={v => setFormData({...formData, firstName: v})} />
-               <Input placeholder="Прізвище" value={formData.lastName} onChange={v => setFormData({...formData, lastName: v})} />
-            </div>
-            <Input 
-              icon={<Phone size={16}/>} 
-              placeholder="+380" 
-              value={formData.phone} 
-              onChange={v => {
-                // Тільки цифри та знак +
-                const cleaned = v.replace(/[^\d+]/g, '');
-                // Не дозволяємо видалити +380
-                if (cleaned.length < 4) {
-                  setFormData({...formData, phone: '+380'});
-                } else {
-                  setFormData({...formData, phone: cleaned});
-                }
-              }} 
-            />
-            
-            {deliveryMethod === 'nova_poshta' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {/* City Selection */}
-                <div style={{ position: 'relative' }}>
-                  <Input 
-                    icon={<MapPin size={16}/>} 
-                    placeholder="Населений пункт..." 
-                    value={cityQuery || formData.city} 
-                    onChange={v => { setCityQuery(v); setShowCityResults(true); }} 
-                  />
-                  {loadingCities && <Loader2 size={16} className="animate-spin" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', color: '#7c3aed' }} />}
-                  
-                  <AnimatePresence>
-                    {showCityResults && cities.length > 0 && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10 }} 
-                        animate={{ opacity: 1, y: 0 }} 
-                        exit={{ opacity: 0, y: -10 }}
-                        style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#161630', borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)', marginTop: 8, maxHeight: 200, overflowY: 'auto', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
-                      >
-                        {cities.map((city) => (
-                          <button
-                            key={city.Ref}
-                            onClick={() => {
-                              setFormData({...formData, city: city.Description, cityRef: city.Ref, warehouse: '', warehouseRef: ''});
-                              setCityQuery(city.Description);
-                              setShowCityResults(false);
-                            }}
-                            style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'transparent', border: 'none', color: '#fff', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer' }}
-                          >
-                            {city.Description} ({city.AreaDescription})
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                <div style={{ fontSize: 11.5, color: '#93A2FA', fontWeight: 500 }}>
+                  {bonusDiscount > 0 ? `Знижка: −${bonusDiscount.toFixed(0)} ₴ (до 10% вартості)` : 'Вкажіть кількість монет'}
                 </div>
+              </div>
+            )}
+          </section>
 
-                {/* Warehouse Selection */}
-                {formData.cityRef && (
+          {/* Payment */}
+          <section>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#8D93A5', marginBottom: 8 }}>Спосіб оплати</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <SelectorItem
+                active={paymentMethod === 'card_transfer'}
+                onClick={() => setPaymentMethod('card_transfer')}
+                icon={<CreditCard size={17} />}
+                title="Оплата на картку Monobank"
+                sub="Повна передоплата без комісії пошти за наложку"
+              />
+              <SelectorItem
+                active={paymentMethod === 'cash'}
+                onClick={() => setPaymentMethod('cash')}
+                icon={<ReceiptText size={17} />}
+                title="Післяплата (накладений платіж)"
+                sub="Аванс 30% на картку, залишок при отриманні на пошті"
+              />
+            </div>
+          </section>
+
+          {/* Delivery */}
+          <section>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#8D93A5', marginBottom: 8 }}>Служба доставки</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <SelectorItem
+                active={deliveryMethod === 'nova_poshta'}
+                onClick={() => setDeliveryMethod('nova_poshta')}
+                icon={<Truck size={17} />}
+                title="Нова Пошта"
+                sub="У відділення або поштомат по всій Україні"
+              />
+              <SelectorItem
+                active={deliveryMethod === 'pickup'}
+                onClick={() => setDeliveryMethod('pickup')}
+                icon={<MapPin size={17} />}
+                title="Самовивіз (м. Хмельницький)"
+                sub="ТЦ Дитячий світ"
+              />
+            </div>
+          </section>
+
+          {/* Receiver Details */}
+          <section>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#8D93A5', marginBottom: 8 }}>Дані отримувача</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <Input icon={<User size={15} />} placeholder="Ім'я" value={formData.firstName} onChange={v => setFormData({ ...formData, firstName: v })} />
+                <Input placeholder="Прізвище" value={formData.lastName} onChange={v => setFormData({ ...formData, lastName: v })} />
+              </div>
+              <Input
+                icon={<Phone size={15} />}
+                placeholder="+380"
+                value={formData.phone}
+                onChange={v => {
+                  const cleaned = v.replace(/[^\d+]/g, '');
+                  if (cleaned.length < 4) {
+                    setFormData({ ...formData, phone: '+380' });
+                  } else {
+                    setFormData({ ...formData, phone: cleaned });
+                  }
+                }}
+              />
+
+              {deliveryMethod === 'nova_poshta' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ position: 'relative' }}>
-                    <Input 
-                      icon={<Home size={16}/>} 
-                      placeholder="Виберіть відділення або поштомат..." 
-                      value={warehouseQuery || formData.warehouse} 
-                      onChange={v => { setWarehouseQuery(v); setShowWarehouseResults(true); }} 
-                      onFocus={() => setShowWarehouseResults(true)}
+                    <Input
+                      icon={<MapPin size={15} />}
+                      placeholder="Місто або населений пункт…"
+                      value={cityQuery || formData.city}
+                      onChange={v => { setCityQuery(v); setShowCityResults(true); }}
                     />
-                    
+                    {loadingCities && <Loader2 size={15} className="animate-spin" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#93A2FA' }} />}
+
                     <AnimatePresence>
-                      {showWarehouseResults && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: -10 }} 
-                          animate={{ opacity: 1, y: 0 }} 
-                          exit={{ opacity: 0, y: -10 }}
-                          style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 90, background: '#161630', borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)', marginTop: 8, maxHeight: 250, overflowY: 'auto', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+                      {showCityResults && cities.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#181B22', borderRadius: 11, border: '1px solid rgba(255, 255, 255, 0.1)', marginTop: 4, maxHeight: 190, overflowY: 'auto', boxShadow: '0 14px 34px rgba(0,0,0,0.6)' }}
                         >
-                          {loadingWarehouses ? (
-                            <div style={{ padding: 20, textAlign: 'center', color: '#6b6b8a', fontSize: 13 }}>Завантаження списку...</div>
-                          ) : filteredWarehouses.length > 0 ? (
-                            filteredWarehouses.map((wh) => (
-                              <button
-                                key={wh.Ref}
-                                onClick={() => {
-                                  setFormData({...formData, warehouse: wh.Description, warehouseRef: wh.Ref});
-                                  setWarehouseQuery(wh.Description);
-                                  setShowWarehouseResults(false);
-                                }}
-                                style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'transparent', border: 'none', color: '#fff', fontSize: 12, borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', lineHeight: 1.4 }}
-                              >
-                                {wh.Description}
-                              </button>
-                            ))
-                          ) : (
-                            <div style={{ padding: 20, textAlign: 'center', color: '#6b6b8a', fontSize: 13 }}>Нічого не знайдено</div>
-                          )}
+                          {cities.map((city) => (
+                            <button
+                              key={city.Ref}
+                              type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, city: city.Description, cityRef: city.Ref, warehouse: '', warehouseRef: '' });
+                                setCityQuery(city.Description);
+                                setShowCityResults(false);
+                              }}
+                              style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'transparent', border: 'none', color: '#F3F4F8', fontSize: 13, borderBottom: '1px solid rgba(255, 255, 255, 0.05)', cursor: 'pointer' }}
+                            >
+                              {city.Description} <span style={{ color: '#8D93A5', fontSize: 11.5 }}>({city.AreaDescription})</span>
+                            </button>
+                          ))}
                         </motion.div>
                       )}
                     </AnimatePresence>
-                    
-                    {loadingWarehouses && <Loader2 size={16} className="animate-spin" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', color: '#7c3aed' }} />}
                   </div>
-                )}
-              </div>
-            ) : (
-              <div style={{ 
-                padding: '14px 16px', background: 'rgba(45, 212, 191, 0.05)', 
-                border: '1px solid rgba(45, 212, 191, 0.2)', borderRadius: 16, 
-                display: 'flex', alignItems: 'center', gap: 12 
-              }}>
-                <MapPin size={18} color="#2dd4bf" />
-                <div style={{ fontSize: 14, color: '#fff', fontWeight: 700 }}>м. Хмельницький, ТЦ Дитячий світ</div>
-              </div>
-            )}
-            <div style={{ position: 'relative' }}>
-              <textarea 
-                placeholder="Додаткові побажання..." 
+
+                  {formData.cityRef && (
+                    <div style={{ position: 'relative' }}>
+                      <Input
+                        icon={<Home size={15} />}
+                        placeholder="Відділення або поштомат…"
+                        value={warehouseQuery || formData.warehouse}
+                        onChange={v => { setWarehouseQuery(v); setShowWarehouseResults(true); }}
+                        onFocus={() => setShowWarehouseResults(true)}
+                      />
+
+                      <AnimatePresence>
+                        {showWarehouseResults && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 90, background: '#181B22', borderRadius: 11, border: '1px solid rgba(255, 255, 255, 0.1)', marginTop: 4, maxHeight: 220, overflowY: 'auto', boxShadow: '0 14px 34px rgba(0,0,0,0.6)' }}
+                          >
+                            {loadingWarehouses ? (
+                              <div style={{ padding: 16, textAlign: 'center', color: '#8D93A5', fontSize: 12.5 }}>Завантаження відділень…</div>
+                            ) : filteredWarehouses.length > 0 ? (
+                              filteredWarehouses.map((wh) => (
+                                <button
+                                  key={wh.Ref}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData({ ...formData, warehouse: wh.Description, warehouseRef: wh.Ref });
+                                    setWarehouseQuery(wh.Description);
+                                    setShowWarehouseResults(false);
+                                  }}
+                                  style={{ width: '100%', padding: '10px 14px', textAlign: 'left', background: 'transparent', border: 'none', color: '#F3F4F8', fontSize: 12, borderBottom: '1px solid rgba(255, 255, 255, 0.05)', cursor: 'pointer', lineHeight: 1.35 }}
+                                >
+                                  {wh.Description}
+                                </button>
+                              ))
+                            ) : (
+                              <div style={{ padding: 16, textAlign: 'center', color: '#8D93A5', fontSize: 12.5 }}>Відділення не знайдено</div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{
+                  padding: '11px 14px',
+                  background: 'rgba(147, 162, 250, 0.1)',
+                  border: '1px solid rgba(147, 162, 250, 0.28)',
+                  borderRadius: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10
+                }}>
+                  <MapPin size={16} color="#93A2FA" />
+                  <div style={{ fontSize: 13, color: '#F3F4F8', fontWeight: 500 }}>м. Хмельницький, ТЦ Дитячий світ</div>
+                </div>
+              )}
+
+              <textarea
+                placeholder="Коментар до замовлення (бажаний колір, уточнення)…"
                 value={formData.comment}
-                onChange={e => setFormData({...formData, comment: e.target.value})}
-                style={{ width: '100%', height: 100, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 16, padding: '12px 16px', color: '#fff', fontSize: 16, outline: 'none', resize: 'none' }}
+                onChange={e => setFormData({ ...formData, comment: e.target.value })}
+                style={{
+                  width: '100%',
+                  height: 76,
+                  background: '#181B22',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: 10,
+                  padding: '10px 12px',
+                  color: '#F3F4F8',
+                  fontSize: 13.5,
+                  outline: 'none',
+                  resize: 'none'
+                }}
               />
+
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, noCall: !formData.noCall })}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 12px',
+                  background: '#181B22',
+                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                  borderRadius: 10,
+                  color: '#F3F4F8',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{
+                  width: 16,
+                  height: 16,
+                  border: '1.5px solid #93A2FA',
+                  borderRadius: 4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: formData.noCall ? '#93A2FA' : 'transparent'
+                }}>
+                  {formData.noCall && <Check size={11} style={{ color: '#13151B', strokeWidth: 3 }} />}
+                </div>
+                <span style={{ fontSize: 12.5, fontWeight: 500 }}>Не телефонувати для підтвердження</span>
+              </button>
             </div>
-            <button 
-              onClick={() => setFormData({...formData, noCall: !formData.noCall})}
-              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 16, color: '#fff', cursor: 'pointer' }}
-            >
-              <div style={{ width: 18, height: 18, border: '2px solid #7c3aed', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: formData.noCall ? '#7c3aed' : 'transparent' }}>
-                 {formData.noCall && <CheckCircle2 size={12}/>}
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 700 }}>Не телефонувати для підтвердження</span>
-            </button>
+          </section>
+        </div>
+
+        {/* Sticky Footer Summary */}
+        <footer style={{
+          position: isKeyboardOpen ? 'relative' : 'sticky',
+          bottom: 0,
+          padding: '14px 20px 20px',
+          background: 'rgba(24, 27, 34, 0.96)',
+          backdropFilter: 'blur(16px)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 13, color: '#8D93A5', fontWeight: 500 }}>Разом до сплати:</span>
+            <span style={{ fontSize: 22, color: '#F3F4F8', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+              {total.toFixed(0)} <span style={{ fontSize: 14, color: '#93A2FA', fontWeight: 500 }}>₴</span>
+            </span>
           </div>
-        </section>
-
-      </div>
-
-      {/* Sticky Footer Summary */}
-      <footer style={{
-        position: isKeyboardOpen ? 'relative' : 'sticky', 
-        bottom: 0, 
-        padding: '24px 16px 32px',
-        background: 'rgba(5,5,15,0.9)', backdropFilter: 'blur(30px)',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
-        display: 'flex', flexDirection: 'column', gap: 16
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 14, color: '#6b6b8a', fontWeight: 700 }}>Сума:</span>
-          <span style={{ fontSize: 16, color: '#fff', fontWeight: 800 }}>{subtotal.toFixed(0)} ₴</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 18, color: '#fff', fontWeight: 900 }}>До оплати:</span>
-          <span style={{ fontSize: 26, color: '#2dd4bf', fontWeight: 950 }}>{total.toFixed(0)} ₴</span>
-        </div>
-        <button 
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          style={{
-            width: '100%', padding: '18px', borderRadius: 20, border: 'none',
-            background: isSubmitting ? '#4a4a6a' : 'linear-gradient(135deg, #7c3aed, #ec4899)',
-            color: '#fff', fontWeight: 950, fontSize: 16, textTransform: 'uppercase', letterSpacing: '0.05em',
-            boxShadow: '0 10px 30px rgba(124,58,237,0.4)', cursor: isSubmitting ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {isSubmitting ? 'Обробка...' : 'Підтвердити замовлення'}
-        </button>
-      </footer>
-    </motion.div>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            style={{
+              width: '100%',
+              height: 44,
+              borderRadius: 11,
+              border: 'none',
+              background: isSubmitting ? '#2A2F3D' : '#93A2FA',
+              color: '#13151B',
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            {isSubmitting ? 'Оформлення…' : 'Підтвердити замовлення'}
+          </button>
+        </footer>
+      </motion.div>
+    </div>
   );
 }
 
-function SelectorItem({ active, onClick, icon, title, sub, color = "#7c3aed" }) {
+function SelectorItem({ active, onClick, icon, title, sub }) {
   return (
-    <button 
+    <button
+      type="button"
       onClick={onClick}
       style={{
-        width: '100%', padding: 16, borderRadius: 20, textAlign: 'left',
-        background: active ? `rgba(${active ? '124,58,237' : '255,255,255'}, 0.05)` : 'rgba(255,255,255,0.02)',
-        border: `1px solid ${active ? color : 'rgba(255,255,255,0.05)'}`,
-        display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', transition: 'all 0.2s'
+        width: '100%',
+        padding: '11px 13px',
+        borderRadius: 11,
+        textAlign: 'left',
+        background: active ? 'rgba(147, 162, 250, 0.12)' : '#181B22',
+        border: active ? '1px solid rgba(147, 162, 250, 0.42)' : '1px solid rgba(255, 255, 255, 0.07)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        cursor: 'pointer',
+        transition: 'all 0.15s ease'
       }}
     >
-      <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${active ? color : '#3a3a5a'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {active && <div style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />}
-      </div>
-      <div style={{ width: 40, height: 40, borderRadius: 12, background: active ? `${color}15` : 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: active ? color : '#6b6b8a' }}>
+      <div style={{
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        background: active ? 'rgba(147, 162, 250, 0.2)' : '#13151B',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: active ? '#93A2FA' : '#8D93A5',
+        flexShrink: 0
+      }}>
         {icon}
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 900, color: '#fff' }}>{title}</div>
-        <div style={{ fontSize: 11, color: '#6b6b8a', fontWeight: 700 }}>{sub}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#F3F4F8' }}>{title}</div>
+        <div style={{ fontSize: 11, color: '#8D93A5', marginTop: 1 }}>{sub}</div>
+      </div>
+      <div style={{
+        width: 16,
+        height: 16,
+        borderRadius: '50%',
+        border: `1.5px solid ${active ? '#93A2FA' : 'rgba(255, 255, 255, 0.2)'}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0
+      }}>
+        {active && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#93A2FA' }} />}
       </div>
     </button>
   );
@@ -760,16 +857,23 @@ function SelectorItem({ active, onClick, icon, title, sub, color = "#7c3aed" }) 
 function Input({ icon, placeholder, value, onChange, onFocus }) {
   return (
     <div style={{ flex: 1, position: 'relative' }}>
-      {icon && <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }}>{icon}</div>}
-      <input 
-        type="text" 
+      {icon && <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#8D93A5', pointerEvents: 'none' }}>{icon}</div>}
+      <input
+        type="text"
         placeholder={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
         onFocus={onFocus}
         style={{
-          width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
-          borderRadius: 16, padding: `14px 16px 14px ${icon ? 44 : 16}px`, color: '#fff', fontSize: 16, outline: 'none'
+          width: '100%',
+          height: 38,
+          background: '#181B22',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 10,
+          padding: `0 12px 0 ${icon ? 36 : 12}px`,
+          color: '#F3F4F8',
+          fontSize: 13.5,
+          outline: 'none'
         }}
       />
     </div>

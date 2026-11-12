@@ -477,8 +477,8 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* HEADER BAR */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(45,212,191,0.08))',
-        border: '1px solid rgba(168,85,247,0.25)',
+        background: 'var(--glass)',
+        border: '1px solid var(--color-accent-soft)',
         borderRadius: 24,
         padding: isMobile ? 16 : 24,
         display: 'flex',
@@ -493,7 +493,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
               🤝 Каталог Дропшипінгу
             </h1>
             <span style={{
-              background: 'rgba(45,212,191,0.15)', color: '#2dd4bf',
+              background: 'rgba(45,212,191,0.15)', color: 'oklch(76% 0.14 155)',
               border: '1px solid rgba(45,212,191,0.3)', borderRadius: 99,
               padding: '3px 10px', fontSize: 11, fontWeight: 900
             }}>
@@ -512,8 +512,8 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
             style={{
               padding: '10px 14px', borderRadius: 12,
               background: copiedLink ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)',
-              border: copiedLink ? '1px solid #22c55e' : '1px solid rgba(255,255,255,0.12)',
-              color: copiedLink ? '#4ade80' : '#fff',
+              border: copiedLink ? '1px solid oklch(76% 0.14 155)' : '1px solid rgba(255,255,255,0.12)',
+              color: copiedLink ? 'oklch(76% 0.14 155)' : '#fff',
               fontSize: 12, fontWeight: 850, cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 6
             }}
@@ -528,8 +528,8 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
             rel="noopener noreferrer"
             style={{
               padding: '10px 14px', borderRadius: 12,
-              background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.35)',
-              color: '#60a5fa', fontSize: 12, fontWeight: 850, textDecoration: 'none',
+              background: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-soft)',
+              color: 'var(--color-accent)', fontSize: 12, fontWeight: 850, textDecoration: 'none',
               display: 'flex', alignItems: 'center', gap: 6
             }}
           >
@@ -555,7 +555,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
               onClick={() => setShowImportStoreModal(true)}
               style={{
                 padding: '10px 14px', borderRadius: 12,
-                background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.35)',
+                background: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-soft)',
                 color: '#d8b4fe', fontSize: 12, fontWeight: 850, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 6
               }}
@@ -569,10 +569,10 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
             onClick={openAddModal}
             style={{
               padding: '10px 18px', borderRadius: 12, border: 'none',
-              background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              background: 'var(--color-accent)',
               color: '#fff', fontSize: 12.5, fontWeight: 900, cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 6,
-              boxShadow: '0 8px 20px rgba(124,58,237,0.35)'
+              boxShadow: '0 8px 20px var(--color-accent-soft)'
             }}
           >
             <Plus size={16} /> ДОДАТИ ТОВАР
@@ -629,7 +629,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
               type="submit"
               style={{
                 padding: '8px 14px', borderRadius: 12, border: '1px solid rgba(45,212,191,0.3)',
-                background: 'rgba(45,212,191,0.12)', color: '#2dd4bf',
+                background: 'rgba(45,212,191,0.12)', color: 'oklch(76% 0.14 155)',
                 fontSize: 12, fontWeight: 850, cursor: 'pointer', whiteSpace: 'nowrap',
                 display: 'flex', alignItems: 'center', gap: 6
               }}
@@ -653,7 +653,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                   padding: '6px 12px', borderRadius: 10,
-                  background: active ? 'linear-gradient(135deg, #7c3aed, #ec4899)' : 'rgba(255,255,255,0.04)',
+                  background: active ? 'var(--color-accent)' : 'rgba(255,255,255,0.04)',
                   border: active ? 'none' : '1px solid rgba(255,255,255,0.08)',
                   color: active ? '#fff' : '#94a3b8',
                   fontSize: 12, fontWeight: 800, cursor: 'pointer'
@@ -705,7 +705,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
             onClick={openAddModal}
             style={{
               padding: '12px 24px', borderRadius: 14, border: 'none',
-              background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              background: 'var(--color-accent)',
               color: '#fff', fontSize: 13, fontWeight: 900, cursor: 'pointer',
               display: 'inline-flex', alignItems: 'center', gap: 8
             }}
@@ -727,7 +727,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                 key={item.id}
                 style={{
                   background: 'rgba(255,255,255,0.03)',
-                  border: item.hidden ? '1px dashed rgba(239,68,68,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                  border: item.hidden ? '1px dashed var(--color-danger-soft)' : '1px solid rgba(255,255,255,0.07)',
                   borderRadius: 20,
                   overflow: 'hidden',
                   display: 'flex',
@@ -759,7 +759,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                       {item.category}
                     </span>
                     <span style={{
-                      background: 'rgba(124,58,237,0.85)', backdropFilter: 'blur(8px)',
+                      background: 'var(--color-accent-soft)', backdropFilter: 'blur(8px)',
                       color: '#fff', padding: '4px 9px', borderRadius: 8,
                       fontSize: 11, fontWeight: 850
                     }}>
@@ -770,7 +770,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                   {item.hidden && (
                     <div style={{
                       position: 'absolute', top: 10, right: 10,
-                      background: 'rgba(239,68,68,0.9)', color: '#fff',
+                      background: 'var(--color-danger-soft)', color: '#fff',
                       padding: '4px 9px', borderRadius: 8, fontSize: 10.5, fontWeight: 900
                     }}>
                       ПРИХОВАНО
@@ -792,7 +792,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                           alt=""
                           style={{
                             width: 34, height: 34, borderRadius: 6, objectFit: 'cover',
-                            border: idx === 0 ? '2px solid #2dd4bf' : '1px solid rgba(255,255,255,0.15)',
+                            border: idx === 0 ? '2px solid oklch(76% 0.14 155)' : '1px solid rgba(255,255,255,0.15)',
                             flexShrink: 0
                           }}
                         />
@@ -817,7 +817,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                       {item.name}
                     </h3>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 17, fontWeight: 950, color: '#2dd4bf' }}>
+                      <div style={{ fontSize: 17, fontWeight: 950, color: 'oklch(76% 0.14 155)' }}>
                         {item.dropPrice} ₴
                       </div>
                       {item.rrpPrice && (
@@ -843,8 +843,8 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                       onClick={() => openEditModal(item)}
                       style={{
                         flex: 1, minWidth: 95, padding: '8px 10px', borderRadius: 10,
-                        background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)',
-                        color: '#60a5fa', fontSize: 11.5, fontWeight: 850, cursor: 'pointer',
+                        background: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-soft)',
+                        color: 'var(--color-accent)', fontSize: 11.5, fontWeight: 850, cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5
                       }}
                     >
@@ -857,8 +857,8 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                       title="Створити копію та змінити дані"
                       style={{
                         flex: 1, minWidth: 95, padding: '8px 10px', borderRadius: 10,
-                        background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)',
-                        color: '#c084fc', fontSize: 11.5, fontWeight: 850, cursor: 'pointer',
+                        background: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-soft)',
+                        color: 'var(--color-accent)', fontSize: 11.5, fontWeight: 850, cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5
                       }}
                     >
@@ -884,8 +884,8 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                       title="Видалити"
                       style={{
                         padding: '8px 9px', borderRadius: 10,
-                        background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)',
-                        color: '#ef4444', cursor: 'pointer'
+                        background: 'var(--color-danger-soft)', border: '1px solid var(--color-danger-soft)',
+                        color: 'var(--color-danger)', cursor: 'pointer'
                       }}
                     >
                       <Trash2 size={14} />
@@ -917,7 +917,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
               style={{
                 width: '100%', maxWidth: 680,
                 maxHeight: isMobile ? '92vh' : '90vh',
-                background: '#0b1528',
+                background: 'var(--color-paper-2)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: isMobile ? '24px 24px 0 0' : 24,
                 display: 'flex', flexDirection: 'column', overflow: 'hidden',
@@ -946,11 +946,11 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
               <form id="dropship-item-form" onSubmit={handleSaveItem} style={{ padding: isMobile ? 14 : 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {/* 1. MAKERWORLD PARSER */}
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.1))',
+                  background: 'linear-gradient(135deg, rgba(16,185,129,0.1), var(--color-accent-soft))',
                   border: '1px solid rgba(16,185,129,0.3)',
                   borderRadius: 16, padding: 14, display: 'flex', flexDirection: 'column', gap: 8
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 900, color: '#34d399', textTransform: 'uppercase' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 900, color: 'oklch(76% 0.14 155)', textTransform: 'uppercase' }}>
                     <Sparkles size={14} /> 1. Швидкий імпорт фото з MakerWorld (парсяться тільки фото)
                   </div>
                   <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 8 }}>
@@ -970,7 +970,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                       disabled={isParsingMw}
                       style={{
                         padding: '10px 16px', borderRadius: 10, border: 'none',
-                        background: '#10b981', color: '#022c22', fontWeight: 950, fontSize: 12.5,
+                        background: 'oklch(76% 0.14 155)', color: '#022c22', fontWeight: 950, fontSize: 12.5,
                         cursor: isParsingMw ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                         whiteSpace: 'nowrap'
                       }}
@@ -996,13 +996,13 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                   borderRadius: 16, padding: 14, display: 'flex', flexDirection: 'column', gap: 12
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                    <span style={{ fontSize: 11.5, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: 11.5, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase' }}>
                       2. Фотографії товару ({formData.images.length} шт.)
                     </span>
 
                     <label style={{
                       padding: '7px 14px', borderRadius: 10,
-                      background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
+                      background: 'var(--color-accent)',
                       color: '#fff', fontSize: 12, fontWeight: 900, cursor: 'pointer',
                       display: 'inline-flex', alignItems: 'center', gap: 6
                     }}>
@@ -1056,7 +1056,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                           key={idx}
                           style={{
                             position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden',
-                            border: idx === 0 ? '2px solid #2dd4bf' : '1px solid rgba(255,255,255,0.12)',
+                            border: idx === 0 ? '2px solid oklch(76% 0.14 155)' : '1px solid rgba(255,255,255,0.12)',
                             background: '#020b18'
                           }}
                         >
@@ -1065,7 +1065,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                           {idx === 0 ? (
                             <span style={{
                               position: 'absolute', top: 6, left: 6,
-                              background: '#2dd4bf', color: '#020b18',
+                              background: 'oklch(76% 0.14 155)', color: '#020b18',
                               fontSize: 9.5, fontWeight: 950, padding: '2px 6px', borderRadius: 6
                             }}>
                               ★ ГОЛОВНЕ
@@ -1091,7 +1091,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                             style={{
                               position: 'absolute', top: 6, right: 6,
                               width: 24, height: 24, borderRadius: '50%',
-                              background: 'rgba(239,68,68,0.9)', color: '#fff',
+                              background: 'var(--color-danger-soft)', color: '#fff',
                               border: 'none', cursor: 'pointer',
                               display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }}
@@ -1177,7 +1177,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                   {/* Prices & Weight */}
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr', gap: 10 }}>
                     <div>
-                      <label style={{ fontSize: 10, fontWeight: 900, color: '#2dd4bf', display: 'block', marginBottom: 4 }}>ДРОП-ЦІНА (₴) *</label>
+                      <label style={{ fontSize: 10, fontWeight: 900, color: 'oklch(76% 0.14 155)', display: 'block', marginBottom: 4 }}>ДРОП-ЦІНА (₴) *</label>
                       <input
                         type="number"
                         required
@@ -1186,7 +1186,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                         onChange={e => setFormData({ ...formData, dropPrice: e.target.value })}
                         style={{
                           width: '100%', background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.35)',
-                          borderRadius: 10, padding: 10, color: '#2dd4bf', fontSize: 14, fontWeight: 900, outline: 'none'
+                          borderRadius: 10, padding: 10, color: 'oklch(76% 0.14 155)', fontSize: 14, fontWeight: 900, outline: 'none'
                         }}
                       />
                     </div>
@@ -1279,7 +1279,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                   disabled={saving}
                   style={{
                     padding: '11px 24px', borderRadius: 12, border: 'none',
-                    background: 'linear-gradient(135deg, #2dd4bf, #3b82f6)',
+                    background: 'var(--color-accent)',
                     color: '#020b18', fontSize: 13, fontWeight: 950, cursor: 'pointer'
                   }}
                 >
@@ -1307,7 +1307,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={e => e.stopPropagation()}
               style={{
-                width: '100%', maxWidth: 520, background: '#0b1528',
+                width: '100%', maxWidth: 520, background: 'var(--color-paper-2)',
                 border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, padding: 22,
                 display: 'flex', flexDirection: 'column', gap: 14
               }}
@@ -1371,7 +1371,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                     await saveCatalog(catalog, 'Налаштування сторінки збережено ✅');
                     setShowSettingsModal(false);
                   }}
-                  style={{ padding: '10px 20px', borderRadius: 10, background: '#7c3aed', border: 'none', color: '#fff', fontWeight: 900, cursor: 'pointer' }}
+                  style={{ padding: '10px 20px', borderRadius: 10, background: 'var(--color-accent)', border: 'none', color: '#fff', fontWeight: 900, cursor: 'pointer' }}
                 >
                   Зберегти
                 </button>
@@ -1397,7 +1397,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={e => e.stopPropagation()}
               style={{
-                width: '100%', maxWidth: 560, maxHeight: '80vh', background: '#0b1528',
+                width: '100%', maxWidth: 560, maxHeight: '80vh', background: 'var(--color-paper-2)',
                 border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, padding: 20,
                 display: 'flex', flexDirection: 'column', gap: 12
               }}
@@ -1439,7 +1439,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                           <div style={{ fontSize: 13, fontWeight: 850, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {prod.name}
                           </div>
-                          <div style={{ fontSize: 11, color: '#2dd4bf', fontWeight: 800 }}>
+                          <div style={{ fontSize: 11, color: 'oklch(76% 0.14 155)', fontWeight: 800 }}>
                             Роздріб: {prod.price} ₴ • Фото: {1 + (prod.image_urls?.length || 0)} шт.
                           </div>
                         </div>
@@ -1449,7 +1449,7 @@ export default function DropshippingAdmin({ showToast, storeProducts = [] }) {
                         onClick={() => handleImportStoreProduct(prod)}
                         style={{
                           padding: '7px 12px', borderRadius: 9, border: 'none',
-                          background: '#7c3aed', color: '#fff', fontSize: 11.5, fontWeight: 850,
+                          background: 'var(--color-accent)', color: '#fff', fontSize: 11.5, fontWeight: 850,
                           cursor: 'pointer', flexShrink: 0
                         }}
                       >

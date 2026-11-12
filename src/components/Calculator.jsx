@@ -46,14 +46,14 @@ const getColorStyle = (colorName) => {
     'світло-сірий': { background: '#cbd5e1' },
     'light grey': { background: '#cbd5e1' },
     'light gray': { background: '#cbd5e1' },
-    'червоний': { background: '#ef4444' },
-    'red': { background: '#ef4444' },
-    'рожевий': { background: '#ec4899' },
-    'pink': { background: '#ec4899' },
-    'фіолетовий': { background: '#8b5cf6' },
-    'purple': { background: '#8b5cf6' },
-    'violet': { background: '#8b5cf6' },
-    'бузковий': { background: '#a78bfa' },
+    'червоний': { background: 'var(--color-danger)' },
+    'red': { background: 'var(--color-danger)' },
+    'рожевий': { background: 'var(--color-accent-2)' },
+    'pink': { background: 'var(--color-accent-2)' },
+    'фіолетовий': { background: 'var(--color-accent)' },
+    'purple': { background: 'var(--color-accent)' },
+    'violet': { background: 'var(--color-accent)' },
+    'бузковий': { background: 'var(--color-accent)' },
     'синій': { background: '#2563eb' },
     'blue': { background: '#2563eb' },
     'блакитний': { background: '#06b6d4' },
@@ -63,8 +63,8 @@ const getColorStyle = (colorName) => {
     'green': { background: '#16a34a' },
     'салатовий': { background: '#84cc16' },
     'lime': { background: '#84cc16' },
-    'м\'ятний': { background: '#2dd4bf' },
-    'mint': { background: '#2dd4bf' },
+    'м\'ятний': { background: 'oklch(76% 0.14 155)' },
+    'mint': { background: 'oklch(76% 0.14 155)' },
     'жовтий': { background: '#eab308' },
     'yellow': { background: '#eab308' },
     'помаранчевий': { background: '#f97316' },
@@ -97,11 +97,11 @@ const getColorStyle = (colorName) => {
       backgroundSize: '8px 8px',
       border: '1px solid rgba(255,255,255,0.2)'
     },
-    'різнокольоровий': { background: 'linear-gradient(45deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6)' },
-    'rainbow': { background: 'linear-gradient(45deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6)' },
-    'multicolor': { background: 'linear-gradient(45deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6)' },
-    'мультиколор': { background: 'linear-gradient(45deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6)' },
-    'переливний': { background: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)' }
+    'різнокольоровий': { background: 'linear-gradient(45deg, var(--color-danger), #f97316, #eab308, oklch(76% 0.14 155), var(--color-accent), var(--color-accent))' },
+    'rainbow': { background: 'linear-gradient(45deg, var(--color-danger), #f97316, #eab308, oklch(76% 0.14 155), var(--color-accent), var(--color-accent))' },
+    'multicolor': { background: 'linear-gradient(45deg, var(--color-danger), #f97316, #eab308, oklch(76% 0.14 155), var(--color-accent), var(--color-accent))' },
+    'мультиколор': { background: 'linear-gradient(45deg, var(--color-danger), #f97316, #eab308, oklch(76% 0.14 155), var(--color-accent), var(--color-accent))' },
+    'переливний': { background: 'linear-gradient(45deg, var(--color-accent), var(--color-accent), var(--color-accent-2), var(--color-accent))' }
   };
   
   if (colorMap[name]) return colorMap[name];
@@ -634,8 +634,8 @@ export default function Calculator() {
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 16, marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ 
-                width: 48, height: 48, borderRadius: 16, background: 'rgba(124,58,237,0.1)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed'
+                width: 48, height: 48, borderRadius: 16, background: 'var(--color-accent-soft)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)'
               }}>
                 <CalcIcon size={24} />
               </div>
@@ -663,9 +663,9 @@ export default function Calculator() {
                 style={{ 
                   flex: isMobile ? 1 : 'none',
                   padding: '12px 24px', borderRadius: 14, border: 'none',
-                  background: 'linear-gradient(135deg, #7c3aed, #ec4899)', color: 'var(--text-main)',
+                  background: 'var(--color-accent)', color: 'var(--text-main)',
                   fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  boxShadow: '0 8px 16px rgba(124,58,237,0.2)', opacity: saving ? 0.7 : 1
+                  boxShadow: '0 8px 16px var(--color-accent-soft)', opacity: saving ? 0.7 : 1
                 }}
               >
                 {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
@@ -683,7 +683,7 @@ export default function Calculator() {
                   <img src={formData.image_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <button 
                     onClick={() => setFormData({...formData, image_url: ''})}
-                    style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: '50%', background: 'rgba(239,68,68,0.8)', border: 'none', color: '#fff', cursor: 'pointer' }}
+                    style={{ position: 'absolute', top: 5, right: 5, width: 24, height: 24, borderRadius: '50%', background: 'var(--color-danger-soft)', border: 'none', color: '#fff', cursor: 'pointer' }}
                   >
                     <X size={14} />
                   </button>
@@ -765,15 +765,15 @@ export default function Calculator() {
             {/* Material Presets */}
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <label style={{ fontSize: 11, fontWeight: 950, color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <label style={{ fontSize: 11, fontWeight: 950, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Sparkles size={14} /> Бібліотека матеріалів
                 </label>
                 <button 
                   onClick={() => setShowMaterialForm(!showMaterialForm)}
                   style={{ 
-                    background: showMaterialForm ? 'rgba(239,68,68,0.1)' : 'rgba(124,58,237,0.1)', 
-                    color: showMaterialForm ? '#ef4444' : '#a78bfa', 
-                    border: showMaterialForm ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(124,58,237,0.2)', 
+                    background: showMaterialForm ? 'var(--color-danger-soft)' : 'var(--color-accent-soft)', 
+                    color: showMaterialForm ? 'var(--color-danger)' : 'var(--color-accent)', 
+                    border: showMaterialForm ? '1px solid var(--color-danger-soft)' : '1px solid var(--color-accent-soft)', 
                     padding: '6px 14px', borderRadius: 10, fontSize: 11, fontWeight: 800, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s'
                   }}
@@ -786,7 +786,7 @@ export default function Calculator() {
               {showMaterialForm && (
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                  style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 16, border: '1px solid #7c3aed40', marginBottom: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12 }}
+                  style={{ background: 'var(--bg-card)', padding: 16, borderRadius: 16, border: '1px solid var(--color-accent-border)', marginBottom: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12 }}
                 >
                   <div style={{ gridColumn: '1/-1' }}>
                     <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Назва (автоматично)</label>
@@ -828,9 +828,9 @@ export default function Calculator() {
                         }
                       }} 
                       style={{ 
-                        padding: '12px 24px', background: 'linear-gradient(135deg, #7c3aed, #ec4899)', 
+                        padding: '12px 24px', background: 'var(--color-accent)', 
                         border: 'none', borderRadius: 100, color: '#fff', fontWeight: 900, fontSize: 12, 
-                        cursor: 'pointer', boxShadow: '0 10px 20px rgba(124,58,237,0.2)',
+                        cursor: 'pointer', boxShadow: '0 10px 20px var(--color-accent-soft)',
                         textTransform: 'uppercase', letterSpacing: '0.05em'
                       }}
                     >
@@ -895,9 +895,9 @@ export default function Calculator() {
                               borderRadius: 10,
                               fontSize: 11,
                               fontWeight: 800,
-                              border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
-                              background: isSelected ? 'rgba(124,58,237,0.15)' : 'rgba(0,0,0,0.1)',
-                              color: isSelected ? '#a78bfa' : 'var(--text-muted)',
+                              border: isSelected ? '1px solid var(--color-accent)' : '1px solid var(--border)',
+                              background: isSelected ? 'var(--color-accent-soft)' : 'rgba(0,0,0,0.1)',
+                              color: isSelected ? 'var(--color-accent)' : 'var(--text-muted)',
                               cursor: 'pointer',
                               transition: 'all 0.2s'
                             }}
@@ -927,9 +927,9 @@ export default function Calculator() {
                                 borderRadius: 10,
                                 fontSize: 11,
                                 fontWeight: 800,
-                                border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
-                                background: isSelected ? 'rgba(124,58,237,0.15)' : 'rgba(0,0,0,0.1)',
-                                color: isSelected ? '#a78bfa' : 'var(--text-muted)',
+                                border: isSelected ? '1px solid var(--color-accent)' : '1px solid var(--border)',
+                                background: isSelected ? 'var(--color-accent-soft)' : 'rgba(0,0,0,0.1)',
+                                color: isSelected ? 'var(--color-accent)' : 'var(--text-muted)',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s'
                               }}
@@ -977,11 +977,11 @@ export default function Calculator() {
                               transition: 'all 0.2s',
                               ...colorStyle,
                               border: isSelected 
-                                ? '2px solid #8b5cf6' 
+                                ? '2px solid var(--color-accent)' 
                                 : (colorStyle.border || '1px solid rgba(255,255,255,0.1)'),
                               transform: isSelected ? 'scale(1.15)' : 'none',
                               boxShadow: isSelected 
-                                ? '0 0 10px rgba(124,58,237,0.5)' 
+                                ? '0 0 10px var(--color-accent-soft)' 
                                 : 'none',
                               display: 'flex',
                               alignItems: 'center',
@@ -1008,7 +1008,7 @@ export default function Calculator() {
                             fontWeight: 900,
                             background: 'rgba(255,255,255,0.05)',
                             border: '1px solid rgba(255,255,255,0.1)',
-                            color: '#a78bfa',
+                            color: 'var(--color-accent)',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
                             height: 28,
@@ -1028,21 +1028,21 @@ export default function Calculator() {
               {/* Multi-select Summary Banner */}
               {selectedMaterialIds.length > 0 && (
                 <div style={{ 
-                  background: 'linear-gradient(135deg, rgba(124,58,237,0.08), rgba(236,72,153,0.08))',
-                  border: '1px solid rgba(124,58,237,0.25)',
+                  background: 'var(--color-accent-soft)',
+                  border: '1px solid var(--color-accent-soft)',
                   padding: 16, borderRadius: 20, marginBottom: 16,
                   display: 'flex', flexDirection: 'column', gap: 10
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <CheckCircle2 size={14} style={{ color: '#22c55e' }} /> Вибрано {selectedMaterialIds.length} {selectedMaterialIds.length === 1 ? 'матеріал' : selectedMaterialIds.length < 5 ? 'матеріали' : 'матеріалів'}
+                    <span style={{ fontSize: 11, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CheckCircle2 size={14} style={{ color: 'oklch(76% 0.14 155)' }} /> Вибрано {selectedMaterialIds.length} {selectedMaterialIds.length === 1 ? 'матеріал' : selectedMaterialIds.length < 5 ? 'матеріали' : 'матеріалів'}
                     </span>
                     <button 
                       onClick={() => {
                         setSelectedMaterialIds([]);
                         setFormData(f => ({ ...f, plastic_type: 'PLA', plastic_cost_roll: 750 }));
                       }}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-danger)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                     >
                       Скинути вибір
                     </button>
@@ -1062,7 +1062,7 @@ export default function Calculator() {
                         <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>({mat.cost_per_kg} ₴)</span>
                         <button 
                           onClick={(e) => { e.stopPropagation(); selectFromLibrary(mat); }}
-                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                          style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
                         >
                           <X size={12} />
                         </button>
@@ -1075,11 +1075,11 @@ export default function Calculator() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, fontSize: 12 }}>
                     <div>
                       <span style={{ color: 'var(--text-muted)' }}>Розрахункова ціна (середня): </span>
-                      <strong style={{ color: '#4ade80', fontSize: 13 }}>{formData.plastic_cost_roll} ₴/кг</strong>
+                      <strong style={{ color: 'oklch(76% 0.14 155)', fontSize: 13 }}>{formData.plastic_cost_roll} ₴/кг</strong>
                     </div>
                     <div>
                       <span style={{ color: 'var(--text-muted)' }}>Тип для калькулятора: </span>
-                      <strong style={{ color: '#a78bfa' }}>{formData.plastic_type}</strong>
+                      <strong style={{ color: 'var(--color-accent)' }}>{formData.plastic_type}</strong>
                     </div>
                   </div>
                 </div>
@@ -1106,9 +1106,9 @@ export default function Calculator() {
                             position: 'relative',
                             padding: '16px 14px', 
                             borderRadius: 20, 
-                            border: isSelected ? '1px solid #7c3aed' : '1px solid var(--border)',
-                            background: isSelected ? 'rgba(124,58,237,0.04)' : 'rgba(255,255,255,0.02)',
-                            boxShadow: isSelected ? '0 0 15px rgba(124,58,237,0.15)' : 'none',
+                            border: isSelected ? '1px solid var(--color-accent)' : '1px solid var(--border)',
+                            background: isSelected ? 'var(--color-accent-soft)' : 'rgba(255,255,255,0.02)',
+                            boxShadow: isSelected ? '0 0 15px var(--color-accent-soft)' : 'none',
                             cursor: 'pointer', 
                             textAlign: 'left', 
                             transition: 'all 0.2s ease-in-out',
@@ -1139,7 +1139,7 @@ export default function Calculator() {
                                 height: 18, 
                                 borderRadius: 6, 
                                 border: isSelected ? 'none' : '2px solid var(--border)',
-                                background: isSelected ? '#7c3aed' : 'transparent',
+                                background: isSelected ? 'var(--color-accent)' : 'transparent',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -1156,8 +1156,8 @@ export default function Calculator() {
                               <span style={{ 
                                 fontSize: 9, 
                                 fontWeight: 900, 
-                                background: 'rgba(124,58,237,0.15)', 
-                                color: '#c084fc', 
+                                background: 'var(--color-accent-soft)', 
+                                color: 'var(--color-accent)', 
                                 padding: '2px 6px', 
                                 borderRadius: 6,
                                 textTransform: 'uppercase'
@@ -1199,7 +1199,7 @@ export default function Calculator() {
                             borderTop: '1px solid rgba(255,255,255,0.03)',
                             paddingTop: 8
                           }}>
-                            <span style={{ fontWeight: 900, fontSize: 13, color: '#4ade80' }}>
+                            <span style={{ fontWeight: 900, fontSize: 13, color: 'oklch(76% 0.14 155)' }}>
                               {m.cost_per_kg} ₴<span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)' }}>/кг</span>
                             </span>
                             
@@ -1225,11 +1225,11 @@ export default function Calculator() {
                                 onClick={(e) => requestDeleteMaterial(m, e)} 
                                 title="Видалити матеріал"
                                 style={{ 
-                                  background: 'rgba(239,68,68,0.05)', 
+                                  background: 'var(--color-danger-soft)', 
                                   border: 'none', 
                                   padding: 6, 
                                   borderRadius: 8, 
-                                  color: 'rgba(239,68,68,0.7)', 
+                                  color: 'var(--color-danger-soft)', 
                                   cursor: 'pointer', 
                                   display: 'flex', 
                                   alignItems: 'center', 
@@ -1265,9 +1265,9 @@ export default function Calculator() {
                       <button
                         onClick={() => setShowAllMaterials(!showAllMaterials)}
                         style={{
-                          background: 'rgba(124,58,237,0.1)',
-                          color: '#a78bfa',
-                          border: '1px solid rgba(124,58,237,0.2)',
+                          background: 'var(--color-accent-soft)',
+                          color: 'var(--color-accent)',
+                          border: '1px solid var(--color-accent-soft)',
                           padding: '8px 20px',
                           borderRadius: 12,
                           fontSize: 12,
@@ -1278,8 +1278,8 @@ export default function Calculator() {
                           alignItems: 'center',
                           gap: 6
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(124,58,237,0.2)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(124,58,237,0.1)'}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-accent-soft)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-accent-soft)'}
                       >
                         {showAllMaterials ? 'Сховати список' : `Показати ще ${filteredMaterials.length - 6}`}
                       </button>
@@ -1337,7 +1337,7 @@ export default function Calculator() {
             {/* Printer Presets */}
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: 12, gap: 10 }}>
-                <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Обладнання та енергія</label>
+                <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase' }}>Обладнання та енергія</label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                   {printersList.map(p => (
                     <div 
@@ -1349,19 +1349,19 @@ export default function Calculator() {
                         fontSize: 9, 
                         padding: '4px 8px', 
                         borderRadius: 6, 
-                        background: 'rgba(59,130,246,0.1)',
-                        color: '#3b82f6', 
-                        border: '1px solid rgba(59,130,246,0.2)', 
+                        background: 'var(--color-accent-soft)',
+                        color: 'var(--color-accent)', 
+                        border: '1px solid var(--color-accent-soft)', 
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         userSelect: 'none'
                       }}
                       onClick={() => applyPrinterPreset(p)}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(59,130,246,0.18)';
+                        e.currentTarget.style.background = 'var(--color-accent-soft)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(59,130,246,0.1)';
+                        e.currentTarget.style.background = 'var(--color-accent-soft)';
                       }}
                     >
                       <span>{p.name}</span>
@@ -1377,7 +1377,7 @@ export default function Calculator() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#ef4444',
+                          color: 'var(--color-danger)',
                           opacity: 0.6,
                           borderRadius: 3,
                           transition: 'all 0.2s'
@@ -1402,7 +1402,7 @@ export default function Calculator() {
                       padding: '4px 8px', 
                       borderRadius: 6, 
                       background: 'rgba(74,222,128,0.1)',
-                      color: '#4ade80', 
+                      color: 'oklch(76% 0.14 155)', 
                       border: '1px solid rgba(74,222,128,0.2)', 
                       cursor: 'pointer',
                       transition: 'all 0.2s',
@@ -1420,7 +1420,7 @@ export default function Calculator() {
               {showAddPrinterForm && (
                 <div style={{
                   background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px dashed rgba(59, 130, 246, 0.3)',
+                  border: '1px dashed var(--color-accent-soft)',
                   padding: 14,
                   borderRadius: 16,
                   marginTop: 4,
@@ -1480,12 +1480,12 @@ export default function Calculator() {
                     <button
                       onClick={handleAddPrinter}
                       style={{
-                        padding: '6px 14px', borderRadius: 8, background: 'rgba(59, 130, 246, 0.2)',
-                        border: '1px solid rgba(59, 130, 246, 0.4)', color: '#60a5fa',
+                        padding: '6px 14px', borderRadius: 8, background: 'var(--color-accent-soft)',
+                        border: '1px solid var(--color-accent-soft)', color: 'var(--color-accent)',
                         fontSize: 10, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s'
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-accent-soft)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-accent-soft)'; }}
                     >
                       ЗБЕРЕГТИ
                     </button>
@@ -1518,8 +1518,8 @@ export default function Calculator() {
             </div>
 
             {/* AMS Section */}
-            <div style={{ background: 'rgba(236,72,153,0.05)', borderRadius: 20, padding: 20, border: '1px solid rgba(236,72,153,0.1)' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: '#ec4899', textTransform: 'uppercase', marginBottom: 16 }}>
+            <div style={{ background: 'var(--color-accent-2-soft)', borderRadius: 20, padding: 20, border: '1px solid var(--color-accent-2-soft)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: 'var(--color-accent-2)', textTransform: 'uppercase', marginBottom: 16 }}>
                 <Layers size={14} /> AMS / Multi-color
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
@@ -1542,7 +1542,7 @@ export default function Calculator() {
 
             {/* Margin Section */}
             <div style={{ background: 'rgba(34,197,94,0.05)', borderRadius: 20, padding: 20, border: '1px solid rgba(34,197,94,0.1)' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: '#22c55e', textTransform: 'uppercase', marginBottom: 16 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, fontWeight: 900, color: 'oklch(76% 0.14 155)', textTransform: 'uppercase', marginBottom: 16 }}>
                 <TrendingUp size={14} /> Рентабельність
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
@@ -1564,38 +1564,38 @@ export default function Calculator() {
             </div>
 
             {/* Labor, Extras & Discount Section */}
-            <div style={{ gridColumn: '1 / -1', background: 'rgba(59,130,246,0.05)', borderRadius: 24, padding: 24, border: '1px solid rgba(59,130,246,0.1)' }}>
+            <div style={{ gridColumn: '1 / -1', background: 'var(--color-accent-soft)', borderRadius: 24, padding: 24, border: '1px solid var(--color-accent-soft)' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 20 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Вартість роботи (грн)</label>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase' }}>Вартість роботи (грн)</label>
                   <div style={{ position: 'relative' }}>
                     <input 
                       type="number" value={formData.labor_cost} onChange={e => setFormData({...formData, labor_cost: e.target.value})}
                       style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 14px', color: 'var(--text-main)', outline: 'none', fontSize: 13, fontWeight: 800 }}
                     />
-                    <DollarSign size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(59,130,246,0.5)' }} />
+                    <DollarSign size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent-soft)' }} />
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase' }}>Дод. витрати (пакет, брілок)</label>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase' }}>Дод. витрати (пакет, брілок)</label>
                   <div style={{ position: 'relative' }}>
                     <input 
                       type="number" value={formData.additional_costs} onChange={e => setFormData({...formData, additional_costs: e.target.value})}
                       style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 14px', color: 'var(--text-main)', outline: 'none', fontSize: 13, fontWeight: 800 }}
                     />
-                    <Plus size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(59,130,246,0.5)' }} />
+                    <Plus size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent-soft)' }} />
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#ec4899', textTransform: 'uppercase' }}>Знижка (%)</label>
+                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent-2)', textTransform: 'uppercase' }}>Знижка (%)</label>
                   <div style={{ position: 'relative' }}>
                     <input 
                       type="number" value={formData.discount} onChange={e => setFormData({...formData, discount: parseFloat(e.target.value) || 0})}
                       style={{ 
-                        width: '100%', background: 'rgba(236,72,153,0.1)', border: '1px solid rgba(236,72,153,0.3)', 
-                        borderRadius: 12, padding: '12px 14px', color: '#ec4899', outline: 'none', 
+                        width: '100%', background: 'var(--color-accent-2-soft)', border: '1px solid var(--color-accent-2-soft)', 
+                        borderRadius: 12, padding: '12px 14px', color: 'var(--color-accent-2)', outline: 'none', 
                         fontSize: 13, fontWeight: 900, textAlign: 'center'
                       }}
                     />
@@ -1612,7 +1612,7 @@ export default function Calculator() {
       <div style={{ flex: '1 1 400px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 32 }}>
         {/* Results Card */}
         <div style={{ 
-          background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderRadius: 32, padding: 32,
+          background: 'var(--color-paper-2)', borderRadius: 32, padding: 32,
           boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
           boxSizing: 'border-box', width: '100%'
         }}>
@@ -1635,7 +1635,7 @@ export default function Calculator() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94a3b8', fontSize: 14 }}>Ризики (брак)</span>
-              <span style={{ color: '#ef4444', fontWeight: 700 }}>+ {results.failure} ₴</span>
+              <span style={{ color: 'var(--color-danger)', fontWeight: 700 }}>+ {results.failure} ₴</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94a3b8', fontSize: 14 }}>Дод. витрати</span>
@@ -1650,18 +1650,18 @@ export default function Calculator() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <ShieldCheck size={16} style={{ color: '#22c55e' }} />
+                <ShieldCheck size={16} style={{ color: 'oklch(76% 0.14 155)' }} />
                 <span style={{ color: 'var(--text-main)', fontWeight: 900, fontSize: 14, letterSpacing: '0.05em' }}>СОБІВАРТІСТЬ</span>
               </div>
-              <span style={{ color: '#22c55e', fontSize: 24, fontWeight: 950 }}>{results.prime} ₴</span>
+              <span style={{ color: 'oklch(76% 0.14 155)', fontSize: 24, fontWeight: 950 }}>{results.prime} ₴</span>
             </div>
 
 
             <div style={{ marginTop: 20, padding: 24, background: 'rgba(255,255,255,0.05)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)' }}>
-              <div style={{ fontSize: 10, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', marginBottom: 8 }}>Рекомендована ціна</div>
+              <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--color-accent)', textTransform: 'uppercase', marginBottom: 8 }}>Рекомендована ціна</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span style={{ fontSize: 42, fontWeight: 950, color: 'var(--text-main)', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>{results.suggested}</span>
-                <span style={{ fontSize: 18, fontWeight: 900, color: '#7c3aed' }}>₴</span>
+                <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--color-accent)' }}>₴</span>
               </div>
               <p style={{ fontSize: 11, color: '#6b6b8a', margin: '12px 0 0 0', lineHeight: 1.5 }}>
                 Враховуючи роботу та {formData.profit_margin}% маржі.
@@ -1721,25 +1721,25 @@ export default function Calculator() {
                   </div>
                   <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 950, color: '#22c55e' }}>{calc.suggested_price} ₴</div>
+                      <div style={{ fontSize: 13, fontWeight: 950, color: 'oklch(76% 0.14 155)' }}>{calc.suggested_price} ₴</div>
                       <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ціна</div>
                     </div>
                     <button 
                       onClick={() => handleShare(calc)}
-                      style={{ background: 'rgba(124,58,237,0.1)', border: 'none', padding: 8, borderRadius: 10, color: '#7c3aed', cursor: 'pointer' }}
+                      style={{ background: 'var(--color-accent-soft)', border: 'none', padding: 8, borderRadius: 10, color: 'var(--color-accent)', cursor: 'pointer' }}
                       title="Поділитися з клієнтом"
                     >
                       <Share2 size={14} />
                     </button>
                     <button 
                       onClick={() => startEditCalculation(calc)}
-                      style={{ background: 'rgba(59,130,246,0.1)', border: 'none', padding: 8, borderRadius: 10, color: '#3b82f6', cursor: 'pointer' }}
+                      style={{ background: 'var(--color-accent-soft)', border: 'none', padding: 8, borderRadius: 10, color: 'var(--color-accent)', cursor: 'pointer' }}
                     >
                       <CalcIcon size={14} />
                     </button>
                     <button 
                       onClick={() => handleDelete(calc.id)}
-                      style={{ background: 'rgba(239,68,68,0.1)', border: 'none', padding: 8, borderRadius: 10, color: '#ef4444', cursor: 'pointer' }}
+                      style={{ background: 'var(--color-danger-soft)', border: 'none', padding: 8, borderRadius: 10, color: 'var(--color-danger)', cursor: 'pointer' }}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -1754,7 +1754,7 @@ export default function Calculator() {
             )}
             {loading && (
               <div style={{ textAlign: 'center', padding: 40 }}>
-                <Loader2 size={24} className="animate-spin" style={{ color: '#7c3aed' }} />
+                <Loader2 size={24} className="animate-spin" style={{ color: 'var(--color-accent)' }} />
               </div>
             )}
           </div>
@@ -1770,7 +1770,7 @@ export default function Calculator() {
             style={{
               position: 'fixed', bottom: 40, left: '50%',
               padding: '16px 24px', borderRadius: 20,
-              background: notification.type === 'error' ? 'rgba(239,68,68,0.9)' : 'rgba(124,58,237,0.9)',
+              background: notification.type === 'error' ? 'var(--color-danger-soft)' : 'var(--color-accent-soft)',
               color: '#fff', fontWeight: 800, fontSize: 14,
               boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
               backdropFilter: 'blur(10px)',
@@ -1798,7 +1798,7 @@ export default function Calculator() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               style={{
-                background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'var(--color-paper-2)', border: '1px solid rgba(255, 255, 255, 0.08)',
                 padding: 28, borderRadius: 28, maxWidth: 400, width: '100%',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                 display: 'flex', flexDirection: 'column', gap: 20
@@ -1807,8 +1807,8 @@ export default function Calculator() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ 
-                  width: 42, height: 42, borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444'
+                  width: 42, height: 42, borderRadius: 12, background: 'var(--color-danger-soft)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-danger)'
                 }}>
                   <AlertCircle size={22} />
                 </div>
@@ -1840,10 +1840,10 @@ export default function Calculator() {
                   onClick={executeDeleteMaterial}
                   style={{
                     flex: 1, padding: '12px 18px', borderRadius: 14,
-                    background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff',
+                    background: 'linear-gradient(135deg, var(--color-danger), #dc2626)', color: '#fff',
                     border: 'none', fontWeight: 800, fontSize: 13,
                     cursor: 'pointer', transition: 'all 0.2s',
-                    boxShadow: '0 8px 16px rgba(239, 68, 68, 0.2)'
+                    boxShadow: '0 8px 16px var(--color-danger-soft)'
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.1)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
@@ -1889,7 +1889,7 @@ const ModernSelect = ({ label, value, options, onChange, onAdd, placeholder = "�
           width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', 
           color: value ? 'var(--text-main)' : 'var(--text-muted)', fontSize: 13, cursor: 'pointer',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s',
-          border: isOpen ? '1px solid #7c3aed' : '1px solid var(--border)'
+          border: isOpen ? '1px solid var(--color-accent)' : '1px solid var(--border)'
         }}
       >
         <span style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value || placeholder}</span>
@@ -1902,7 +1902,7 @@ const ModernSelect = ({ label, value, options, onChange, onAdd, placeholder = "�
             initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
             style={{ 
               position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 8, 
-              background: '#1e293b', border: '1px solid rgba(124, 58, 237, 0.4)', borderRadius: 16, 
+              background: 'var(--color-paper-2)', border: '1px solid var(--color-accent-soft)', borderRadius: 16, 
               boxShadow: '0 20px 40px rgba(0,0,0,0.5)', zIndex: 101, overflow: 'hidden', padding: 6
             }}
           >
@@ -1915,11 +1915,11 @@ const ModernSelect = ({ label, value, options, onChange, onAdd, placeholder = "�
                       onClick={(e) => { e.stopPropagation(); onChange(opt); setIsOpen(false); }}
                       style={{ 
                         padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontSize: 13, color: '#e6edf3',
-                        background: value === opt ? 'rgba(124,58,237,0.2)' : 'transparent',
+                        background: value === opt ? 'var(--color-accent-soft)' : 'transparent',
                         fontWeight: value === opt ? 800 : 500, transition: 'all 0.2s'
                       }}
                       onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
-                      onMouseLeave={(e) => e.target.style.background = value === opt ? 'rgba(124,58,237,0.2)' : 'transparent'}
+                      onMouseLeave={(e) => e.target.style.background = value === opt ? 'var(--color-accent-soft)' : 'transparent'}
                     >
                       {opt}
                     </div>
@@ -1929,7 +1929,7 @@ const ModernSelect = ({ label, value, options, onChange, onAdd, placeholder = "�
                   onClick={(e) => { e.stopPropagation(); setIsAddMode(true); }}
                   style={{ 
                     padding: '12px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.05)',
-                    color: '#7c3aed', fontSize: 12, fontWeight: 900, cursor: 'pointer', textAlign: 'center'
+                    color: 'var(--color-accent)', fontSize: 12, fontWeight: 900, cursor: 'pointer', textAlign: 'center'
                   }}
                 >
                   + ДОДАТИ НОВИЙ
@@ -1942,14 +1942,14 @@ const ModernSelect = ({ label, value, options, onChange, onAdd, placeholder = "�
                   placeholder={`Назва ${label.toLowerCase()}...`}
                   value={newValue}
                   onChange={e => setNewValue(e.target.value)}
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid #7c3aed40', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, outline: 'none', marginBottom: 12 }}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--color-accent-border)', borderRadius: 10, padding: '10px 12px', color: '#fff', fontSize: 13, outline: 'none', marginBottom: 12 }}
                 />
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button 
                     onClick={() => { if(newValue) { onAdd(newValue); onChange(newValue); } setIsAddMode(false); setNewValue(''); setIsOpen(false); }}
-                    style={{ flex: 1, height: 40, borderRadius: 10, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 900, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}
+                    style={{ flex: 1, height: 40, borderRadius: 10, background: 'var(--color-accent)', color: '#fff', border: 'none', fontWeight: 900, fontSize: 11, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}
                     onMouseEnter={(e) => e.target.style.background = '#6d28d9'}
-                    onMouseLeave={(e) => e.target.style.background = '#7c3aed'}
+                    onMouseLeave={(e) => e.target.style.background = 'var(--color-accent)'}
                   >
                     Зберегти
                   </button>

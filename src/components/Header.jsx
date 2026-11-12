@@ -1,116 +1,254 @@
 "use client";
-import React from 'react';
-import { ShoppingCart, Award, Search, Box, User, MessageSquare, Share2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShoppingCart, Award, Search, Box, User, MessageSquare, Share2, X } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, onOpenReviews, onSearch }) {
+  const [localQuery, setLocalQuery] = useState('');
+
+  const handleSearchChange = (val) => {
+    setLocalQuery(val);
+    onSearch?.(val);
+  };
+
   return (
     <header style={{
-      position: 'sticky', top: 0, zIndex: 100,
-      background: 'rgba(5,5,15,0.8)', backdropFilter: 'blur(30px)',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
-      width: '100%',
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
+      background: 'rgba(19, 21, 27, 0.86)',
+      backdropFilter: 'blur(20px) saturate(140%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+      width: '100%'
     }}>
-      <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px' }}>
-        
-        {/* PC Logo Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #7c3aed, #ec4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(124,58,237,0.3)' }}>
-            <Box className="text-white" size={24} />
+      <div style={{
+        maxWidth: 1360,
+        margin: '0 auto',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 20px',
+        gap: 16
+      }}>
+        {/* Brand Logo */}
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 11, flexShrink: 0 }}>
+          <div style={{
+            width: 38,
+            height: 38,
+            borderRadius: 11,
+            background: 'rgba(147, 162, 250, 0.14)',
+            border: '1px solid rgba(147, 162, 250, 0.32)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#93A2FA'
+          }}>
+            <Box size={20} strokeWidth={2} />
           </div>
           <div className="hidden sm:block">
-            <h1 style={{ fontSize: 18, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', margin: 0, lineHeight: 1 }}>BUBA STORE</h1>
-            <div style={{ fontSize: 10, fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.15em' }}>МАГАЗИН 3D ВИРОБІВ</div>
+            <div style={{
+              fontSize: 16,
+              fontWeight: 700,
+              color: '#F3F4F8',
+              letterSpacing: '-0.02em',
+              lineHeight: 1.15
+            }}>
+              BUBA Store
+            </div>
+            <div style={{
+              fontSize: 10.5,
+              fontWeight: 500,
+              color: '#8D93A5',
+              letterSpacing: '0.02em'
+            }}>
+              Майстерня 3D виробів
+            </div>
           </div>
-        </div>
+        </Link>
 
-        {/* Desktop Search Bar (Centered) */}
-        <div style={{ flex: 1, maxWidth: 500, margin: '0 40px' }} className="hidden md:block">
-          <div style={{ position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
-            <input 
-              type="text" 
-              placeholder="Який виріб шукаєте?..." 
-              onChange={(e) => onSearch?.(e.target.value)}
+        {/* Desktop Centered Search Bar */}
+        <div style={{ flex: 1, maxWidth: 460 }} className="hidden md:block">
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Search size={15} style={{ position: 'absolute', left: 13, color: '#8D93A5', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              value={localQuery}
+              placeholder="Пошук моделі за назвою або категорією…"
+              onChange={(e) => handleSearchChange(e.target.value)}
               style={{
-                width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 16, padding: '12px 16px 12px 48px', fontSize: 14, color: '#fff', outline: 'none',
-                transition: 'all 0.2s'
+                width: '100%',
+                height: 38,
+                background: '#181B22',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: 10,
+                padding: '0 34px 0 38px',
+                fontSize: 13.5,
+                color: '#F3F4F8',
+                outline: 'none',
+                transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
               }}
-              className="focus:border-[#7c3aed]/50 focus:bg-white/[0.05]"
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#93A2FA';
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(147, 162, 250, 0.16)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             />
+            {localQuery && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange('')}
+                style={{
+                  position: 'absolute',
+                  right: 10,
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#8D93A5',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 2
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Right Side Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Balance */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Bonuses Pill */}
           <Link href="/profile" style={{ textDecoration: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 16px', borderRadius: 14 }}>
-              <Award size={16} style={{ color: '#fbbf24' }} />
-              <span style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>{bonuses}</span>
+            <div
+              title="Бонусний рахунок"
+              style={{
+                height: 38,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                background: '#181B22',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                padding: '0 13px',
+                borderRadius: 10,
+                color: '#F3F4F8',
+                fontSize: 13,
+                fontWeight: 600,
+                fontVariantNumeric: 'tabular-nums'
+              }}
+            >
+              <Award size={15} style={{ color: '#F4A97B', flexShrink: 0 }} />
+              <span>{bonuses}</span>
             </div>
           </Link>
 
-          {/* Links / Socials Hub Button */}
-          <Link href="/links">
-            <button 
-              title="Соцмережі та посилання"
+          {/* Social Links Hub */}
+          <Link href="/links" style={{ textDecoration: 'none' }}>
+            <button
+              type="button"
+              title="Соцмережі та контакти"
               style={{
-                width: 48, height: 48, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', cursor: 'pointer', transition: 'all 0.2s'
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: '#181B22',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#B8BDCB',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
-              className="hover:bg-white/[0.05] hover:scale-105 active:scale-95"
             >
-              <Share2 size={20} />
+              <Share2 size={16} />
             </button>
           </Link>
 
           {/* Reviews Button */}
-          <button 
+          <button
+            type="button"
             onClick={onOpenReviews}
+            title="Відгуки покупців"
             style={{
-              width: 48, height: 48, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', cursor: 'pointer', transition: 'all 0.2s'
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: '#181B22',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#B8BDCB',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
             }}
-            className="hover:bg-white/[0.05] hover:scale-105 active:scale-95"
           >
-            <MessageSquare size={20} />
+            <MessageSquare size={16} />
           </button>
 
           {/* Profile Button */}
-          <Link href="/profile">
-            <button 
+          <Link href="/profile" style={{ textDecoration: 'none' }}>
+            <button
+              type="button"
+              title="Особистий кабінет"
               style={{
-                width: 48, height: 48, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', cursor: 'pointer', transition: 'all 0.2s'
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: '#181B22',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#B8BDCB',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
-              className="hover:bg-white/[0.05] hover:scale-105 active:scale-95"
             >
-              <User size={20} />
+              <User size={16} />
             </button>
           </Link>
 
           {/* Cart Button */}
-          <button 
+          <button
+            type="button"
             onClick={onOpenCart}
+            title="Кошик"
             style={{
-              width: 48, height: 48, borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)',
-              background: 'linear-gradient(135deg, #161630, #0a0a1a)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', cursor: 'pointer', position: 'relative', transition: 'all 0.2s'
+              height: 38,
+              padding: cartCount > 0 ? '0 13px' : '0 11px',
+              borderRadius: 10,
+              border: cartCount > 0 ? '1px solid rgba(147, 162, 250, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+              background: cartCount > 0 ? 'rgba(147, 162, 250, 0.14)' : '#181B22',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 7,
+              color: cartCount > 0 ? '#93A2FA' : '#F3F4F8',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'all 0.15s ease',
+              fontSize: 13,
+              fontWeight: 600,
+              fontVariantNumeric: 'tabular-nums'
             }}
-            className="hover:scale-105 active:scale-95"
           >
-            <ShoppingCart size={20} />
+            <ShoppingCart size={16} />
             {cartCount > 0 && (
               <span style={{
-                position: 'absolute', top: -6, right: -6, width: 22, height: 22,
-                background: 'linear-gradient(135deg, #7c3aed, #ec4899)', borderRadius: '50%',
-                fontSize: 10, fontWeight: 900, color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #05050f'
+                background: '#93A2FA',
+                color: '#13151B',
+                borderRadius: 999,
+                padding: '1px 7px',
+                fontSize: 11.5,
+                fontWeight: 700,
+                lineHeight: 1.3
               }}>
                 {cartCount}
               </span>
@@ -119,19 +257,44 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
         </div>
       </div>
 
-      {/* Mobile Search (Only visible on small screens) */}
-      <div className="md:hidden" style={{ padding: '0 24px 16px' }}>
-        <div style={{ position: 'relative' }}>
-          <Search size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#4a4a6a' }} />
-          <input 
-            type="text" 
-            placeholder="Пошук виробів..."
-            onChange={(e) => onSearch?.(e.target.value)}
+      {/* Mobile Search Bar */}
+      <div className="md:hidden" style={{ padding: '0 16px 12px' }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <Search size={14} style={{ position: 'absolute', left: 12, color: '#8D93A5', pointerEvents: 'none' }} />
+          <input
+            type="text"
+            value={localQuery}
+            placeholder="Пошук виробів…"
+            onChange={(e) => handleSearchChange(e.target.value)}
             style={{
-              width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 14, padding: '12px 14px 12px 42px', fontSize: 14, color: '#fff', outline: 'none',
+              width: '100%',
+              height: 36,
+              background: '#181B22',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 10,
+              padding: '0 32px 0 34px',
+              fontSize: 13,
+              color: '#F3F4F8',
+              outline: 'none'
             }}
           />
+          {localQuery && (
+            <button
+              type="button"
+              onClick={() => handleSearchChange('')}
+              style={{
+                position: 'absolute',
+                right: 10,
+                background: 'transparent',
+                border: 'none',
+                color: '#8D93A5',
+                cursor: 'pointer',
+                padding: 2
+              }}
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
       </div>
     </header>

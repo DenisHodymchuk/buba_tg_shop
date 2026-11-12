@@ -1,8 +1,10 @@
+// Hallmark Dusk Theme — AdvertisingDashboard
+'use client';
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Plus, Trash2, Search, Filter, CheckCircle, 
-  DollarSign, Package, TrendingUp, Calendar, Edit3, X, Loader2, RefreshCw, AlertCircle, Megaphone, MessageSquare, ChevronDown
+  Plus, Trash2, Search, Edit3, X, RefreshCw, Megaphone, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,14 +14,10 @@ export default function AdvertisingDashboard({ showToast }) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [platformFilter, setPlatformFilter] = useState('Всі');
+  const [roiFilter, setRoiFilter] = useState('all'); // 'all' | 'profitable' | 'loss' | 'shop_budget' | 'personal_budget'
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingAd, setEditingAd] = useState(null);
   const [quickRevenueModal, setQuickRevenueModal] = useState({ open: false, adId: null, currentRevenue: 0, addAmount: '' });
-  
-  // Custom dropdown states
-  const [isPlatformDropdownOpen, setIsPlatformDropdownOpen] = useState(false);
-  const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
-  const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -49,19 +47,14 @@ export default function AdvertisingDashboard({ showToast }) {
   async function fetchData() {
     setLoading(true);
     try {
-      // Fetch ads
       const { data: adsData, error: adsError } = await supabase
         .from('advertisements')
         .select('*')
         .order('ad_date', { ascending: false });
 
-      if (adsError) {
-        throw adsError;
-      }
-
+      if (adsError) throw adsError;
       setAds(adsData || []);
 
-      // Fetch products to link to
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('id, name, price')
@@ -72,13 +65,12 @@ export default function AdvertisingDashboard({ showToast }) {
       }
     } catch (err) {
       console.error('Error fetching ads data:', err);
-      showToast('Помилка: переконайтеся, що таблиця advertisements створена в Supabase', 'error');
+      showToast?.('Помилка завантаження рекламних кампаній', 'error');
     } finally {
       setLoading(false);
     }
   }
 
-  // Calculate statistics
   const stats = useMemo(() => {
     let totalCost = 0;
     let totalRevenue = 0;
@@ -110,13 +102,11 @@ export default function AdvertisingDashboard({ showToast }) {
     };
   }, [ads]);
 
-  // Unique platforms for filtering
   const uniquePlatforms = useMemo(() => {
     const list = ads.map(a => a.platform).filter(Boolean);
     return ['Всі', ...new Set(list)];
   }, [ads]);
 
-  // Filtered ads
   const filteredAds = useMemo(() => {
     return ads.filter(ad => {
       const matchPlatform = platformFilter === 'Всі' || ad.platform === platformFilter;
@@ -127,13 +117,21 @@ export default function AdvertisingDashboard({ showToast }) {
       const matchSearch = searchQuery === '' || 
         prodName.toLowerCase().includes(query) || 
         notes.toLowerCase().includes(query) || 
-        ad.platform.toLowerCase().includes(query);
+        (ad.platform || '').toLowerCase().includes(query);
+
+      const adCost = parseFloat(ad.cost || 0);
+      const adRev = parseFloat(ad.revenue || 0);
+      const adProfit = adRev - adCost;
+
+      if (roiFilter === 'profitable' && adProfit <= 0) return false;
+      if (roiFilter === 'loss' && adProfit >= 0) return false;
+      if (roiFilter === 'shop_budget' && ad.budget_source !== 'Кошти друкарні') return false;
+      if (roiFilter === 'personal_budget' && ad.budget_source === 'Кошти друкарні') return false;
 
       return matchPlatform && matchSearch;
     });
-  }, [ads, platformFilter, searchQuery]);
+  }, [ads, platformFilter, searchQuery, roiFilter]);
 
-  // Handle submit (create or update)
   async function handleSubmit(e) {
     e.preventDefault();
     
@@ -143,7 +141,7 @@ export default function AdvertisingDashboard({ showToast }) {
 
     let selectedProductName = 'Загальна реклама магазину';
     if (formData.product_id) {
-      const found = products.find(p => p.id === formData.product_id);
+      const found = products.find(p => String(p.id) === String(formData.product_id));
       if (found) {
         selectedProductName = found.name;
       }
@@ -162,23 +160,21 @@ export default function AdvertisingDashboard({ showToast }) {
 
     try {
       if (editingAd) {
-        // Update
         const { error } = await supabase
           .from('advertisements')
           .update(payload)
           .eq('id', editingAd.id);
 
         if (error) throw error;
-        showToast('Рекламу оновлено');
+        showToast?.('Рекламу оновлено');
         setEditingAd(null);
       } else {
-        // Create
         const { error } = await supabase
           .from('advertisements')
           .insert([payload]);
 
         if (error) throw error;
-        showToast('Рекламу додано');
+        showToast?.('Рекламу додано');
       }
 
       setShowAddForm(false);
@@ -186,7 +182,7 @@ export default function AdvertisingDashboard({ showToast }) {
       fetchData();
     } catch (err) {
       console.error(err);
-      showToast('Помилка збереження реклами', 'error');
+      showToast?.('Помилка збереження реклами', 'error');
     }
   }
 
@@ -201,12 +197,8 @@ export default function AdvertisingDashboard({ showToast }) {
       ad_date: new Date().toISOString().split('T')[0],
       notes: ''
     });
-    setIsPlatformDropdownOpen(false);
-    setIsProductDropdownOpen(false);
-    setIsSourceDropdownOpen(false);
   }
 
-  // Open edit form
   function handleEdit(ad) {
     setEditingAd(ad);
     const isStandardPlatform = platformsList.includes(ad.platform);
@@ -215,25 +207,21 @@ export default function AdvertisingDashboard({ showToast }) {
       platform: isStandardPlatform ? ad.platform : 'Other',
       custom_platform: isStandardPlatform ? '' : ad.platform,
       product_id: ad.product_id || '',
-      cost: ad.cost.toString(),
-      revenue: ad.revenue.toString(),
+      cost: ad.cost?.toString() || '0',
+      revenue: ad.revenue?.toString() || '0',
       budget_source: ad.budget_source || 'Особисті кошти',
       ad_date: ad.ad_date,
       notes: ad.notes || ''
     });
-    setIsPlatformDropdownOpen(false);
-    setIsProductDropdownOpen(false);
-    setIsSourceDropdownOpen(false);
     setShowAddForm(true);
   }
 
-  // Quick add revenue
   async function handleQuickRevenueSubmit(e) {
     e.preventDefault();
     const amount = parseFloat(quickRevenueModal.addAmount);
     if (isNaN(amount) || amount <= 0) return;
 
-    const newRevenue = parseFloat(quickRevenueModal.currentRevenue) + amount;
+    const newRevenue = parseFloat(quickRevenueModal.currentRevenue || 0) + amount;
 
     try {
       const { error } = await supabase
@@ -242,16 +230,15 @@ export default function AdvertisingDashboard({ showToast }) {
         .eq('id', quickRevenueModal.adId);
 
       if (error) throw error;
-      showToast(`Додано +${amount} ₴ до прибутку`);
+      showToast?.(`Додано +${amount} ₴ до доходу кампанії`);
       setQuickRevenueModal({ open: false, adId: null, currentRevenue: 0, addAmount: '' });
       fetchData();
     } catch (err) {
       console.error(err);
-      showToast('Помилка оновлення прибутку', 'error');
+      showToast?.('Помилка оновлення доходу', 'error');
     }
   }
 
-  // Delete ad campaign
   async function handleDelete(adId) {
     if (!window.confirm('Ви впевнені, що хочете видалити цей запис реклами?')) return;
 
@@ -262,723 +249,451 @@ export default function AdvertisingDashboard({ showToast }) {
         .eq('id', adId);
 
       if (error) throw error;
-      showToast('Запис видалено');
+      showToast?.('Запис видалено');
       fetchData();
     } catch (err) {
       console.error(err);
-      showToast('Помилка видалення', 'error');
+      showToast?.('Помилка видалення', 'error');
     }
   }
 
   return (
-    <div style={{ color: 'var(--text-main)' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, gap: 20, flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 950, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Megaphone size={32} style={{ color: '#ec4899' }} /> Кабінет Реклами
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Контроль рентабельності рекламних кампаній та маркетингу</p>
-        </div>
-        
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button 
-            onClick={() => {
-              setEditingAd(null);
-              resetForm();
-              setShowAddForm(true);
-            }}
-            style={{ padding: '12px 24px', borderRadius: 14, background: 'linear-gradient(135deg, #ec4899, #7c3aed)', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 20px rgba(236,72,153,0.2)' }}
-          >
-            <Plus size={18} /> ДОДАТИ РЕКЛАМУ
-          </button>
-          <button 
-            onClick={fetchData}
-            style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20, marginBottom: 40 }}>
-        {/* Spent */}
-        <div style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(249,115,22,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(239,68,68,0.2)' }}>
-          <div style={{ color: '#ef4444', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Витрачено на рекламу</div>
-          <div style={{ fontSize: 28, fontWeight: 950 }}>{stats.totalCost.toFixed(0)} <span style={{ fontSize: 16, color: '#ef4444' }}>₴</span></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-            Особисті: <span style={{ color: '#fff', fontWeight: 700 }}>{stats.personalCost.toFixed(0)} ₴</span> • Друк: <span style={{ color: '#fff', fontWeight: 700 }}>{stats.shopCost.toFixed(0)} ₴</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
+      
+      {/* Dusk Glass Header & Filter Command Bar */}
+      <div className="dusk-glass" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
+          <div>
+            <h1 className="dusk-heading" style={{ fontSize: isMobile ? 20 : 22 }}>
+              Кабінет реклами та маркетингу
+            </h1>
+            <p className="dusk-subheading" style={{ marginTop: 2 }}>
+              Облік рекламних бюджетів, окупність кампаній (ROMI) та атрибуція доходу по каналах
+            </p>
           </div>
-        </div>
 
-        {/* Revenue */}
-        <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.1), rgba(20,184,166,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(34,197,94,0.2)' }}>
-          <div style={{ color: '#4ade80', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Отриманий дохід</div>
-          <div style={{ fontSize: 28, fontWeight: 950 }}>{stats.totalRevenue.toFixed(0)} <span style={{ fontSize: 16, color: '#4ade80' }}>₴</span></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Сума продажів з реклами</div>
-        </div>
-
-        {/* Profit */}
-        <div style={{ 
-          background: stats.totalProfit >= 0 
-            ? 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.1))' 
-            : 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(153,27,27,0.1))', 
-          padding: 24, 
-          borderRadius: 24, 
-          border: stats.totalProfit >= 0 ? '1px solid rgba(59,130,246,0.2)' : '1px solid rgba(239,68,68,0.2)' 
-        }}>
-          <div style={{ color: stats.totalProfit >= 0 ? '#3b82f6' : '#ef4444', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Чистий прибуток</div>
-          <div style={{ fontSize: 28, fontWeight: 950, color: stats.totalProfit >= 0 ? '#fff' : '#ef4444' }}>
-            {stats.totalProfit.toFixed(0)} <span style={{ fontSize: 16 }}>₴</span>
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Дохід мінус витрати</div>
-        </div>
-
-        {/* ROMI */}
-        <div style={{ 
-          background: stats.romi >= 0 
-            ? 'linear-gradient(135deg, rgba(168,85,247,0.1), rgba(236,72,153,0.1))' 
-            : 'linear-gradient(135deg, rgba(249,115,22,0.1), rgba(239,68,68,0.1))', 
-          padding: 24, 
-          borderRadius: 24, 
-          border: stats.romi >= 0 ? '1px solid rgba(168,85,247,0.2)' : '1px solid rgba(249,115,22,0.2)' 
-        }}>
-          <div style={{ color: stats.romi >= 0 ? '#c084fc' : '#f97316', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Окупність реклами</div>
-          <div style={{ fontSize: 28, fontWeight: 950, color: stats.romi >= 0 ? '#4ade80' : '#f97316' }}>
-            {stats.romi >= 0 ? `+${stats.romi.toFixed(1)}%` : `${stats.romi.toFixed(1)}%`}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>Відсоток прибутку від витрат (ROMI)</div>
-        </div>
-      </div>
-
-      {/* Filters & Search */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {uniquePlatforms.map(plat => (
-            <button
-              key={plat}
-              onClick={() => setPlatformFilter(plat)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 10,
-                border: 'none',
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: 'pointer',
-                background: platformFilter === plat ? '#ec4899' : 'var(--bg-card)',
-                color: platformFilter === plat ? '#fff' : 'var(--text-muted)',
-                border: '1px solid var(--border)',
-                transition: 'all 0.2s'
-              }}
-            >
-              {plat.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '8px 16px', width: 280 }}>
-          <Search size={16} style={{ color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Пошук товару чи опису..." 
-            value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} 
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} 
-          />
-        </div>
-      </div>
-
-      {/* Ads List */}
-      {isMobile ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {filteredAds.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 14, background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)' }}>
-              Рекламних кампаній не знайдено. Натисніть "Додати рекламу", щоб створити перший запис.
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', minWidth: isMobile ? '100%' : 240 }}>
+              <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+              <input
+                type="text"
+                placeholder="Пошук товару, блогера, нотатки…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="dusk-input"
+                style={{ paddingLeft: 32, paddingRight: searchQuery ? 28 : 12, height: 34, fontSize: 12.5, borderRadius: 999 }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 2 }}
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
-          ) : (
-            filteredAds.map(ad => {
+
+            <button
+              type="button"
+              onClick={fetchData}
+              className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+              style={{ height: 34, padding: '0 10px' }}
+              title="Оновити"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEditingAd(null);
+                resetForm();
+                setShowAddForm(true);
+              }}
+              className="dusk-btn dusk-btn--primary"
+              style={{ height: 34 }}
+            >
+              <Plus size={15} />
+              <span>Додати рекламу</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Dusk Ruled Tally — 4 Key Marketing Figures */}
+        <div
+          className="dusk-tally"
+          style={{
+            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+            borderTop: '1px solid var(--color-rule)',
+            borderBottom: '1px solid var(--color-rule)',
+            background: 'var(--color-paper-2)',
+            borderRadius: 10
+          }}
+        >
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Витрачено на рекламу</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: 'var(--color-accent-2)' }}>
+              {stats.totalCost.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
+            </div>
+            <span className="dusk-tally__sub">
+              Особ: {stats.personalCost.toFixed(0)} ₴ · Друк: {stats.shopCost.toFixed(0)} ₴
+            </span>
+          </div>
+
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Отриманий дохід</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: 'var(--color-accent)' }}>
+              {stats.totalRevenue.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
+            </div>
+            <span className="dusk-tally__sub">Сума продажів з реклами</span>
+          </div>
+
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Чистий результат</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: stats.totalProfit >= 0 ? 'var(--color-ink)' : 'var(--color-danger)' }}>
+              {stats.totalProfit >= 0 ? `+${stats.totalProfit.toFixed(0)}` : stats.totalProfit.toFixed(0)} <span className="dusk-currency">₴</span>
+            </div>
+            <span className="dusk-tally__sub">Дохід мінус рекламний бюджет</span>
+          </div>
+
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Окупність (ROMI)</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: stats.romi >= 0 ? 'var(--color-accent)' : 'var(--color-accent-2)' }}>
+              {stats.romi >= 0 ? `+${stats.romi.toFixed(1)}%` : `${stats.romi.toFixed(1)}%`}
+            </div>
+            <span className="dusk-tally__sub">Рентабельність інвестицій</span>
+          </div>
+        </div>
+
+        {/* Platform Pipeline + ROI Facet Strip */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div className="dusk-pipeline hide-scrollbar">
+            {uniquePlatforms.map(plat => {
+              const active = platformFilter === plat;
+              const count = plat === 'Всі' ? ads.length : ads.filter(a => a.platform === plat).length;
+              return (
+                <button
+                  key={plat}
+                  type="button"
+                  onClick={() => setPlatformFilter(plat)}
+                  className={`dusk-pipeline__step ${active ? 'active' : ''}`}
+                >
+                  {active && <span className="dusk-dot dusk-dot--periwinkle" />}
+                  <span>{plat}</span>
+                  <span className="dusk-pipeline__count">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11.5, color: 'var(--color-muted)', fontWeight: 500, marginRight: 2 }}>Фільтр:</span>
+            {[
+              { id: 'all', label: 'Усі кампанії' },
+              { id: 'profitable', label: 'Окупилися (ROMI > 0)' },
+              { id: 'loss', label: 'Ще не окупилися', apricot: true },
+              { id: 'shop_budget', label: 'Бюджет друкарні' },
+              { id: 'personal_budget', label: 'Особисті кошти' }
+            ].map(f => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setRoiFilter(f.id)}
+                className={`dusk-facet-pill ${roiFilter === f.id ? (f.apricot ? 'active-apricot' : 'active') : ''}`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Campaigns List / Table */}
+      <div className="dusk-panel" style={{ overflow: 'hidden' }}>
+        {filteredAds.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--color-muted)', fontSize: 13 }}>
+            Рекламних кампаній за вибраними фільтрами не знайдено.
+          </div>
+        ) : isMobile ? (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {filteredAds.map((ad, idx) => {
               const adCost = parseFloat(ad.cost || 0);
               const adRev = parseFloat(ad.revenue || 0);
               const adProfit = adRev - adCost;
               const adRomi = adCost > 0 ? (adProfit / adCost) * 100 : 0;
 
               return (
-                <div key={ad.id} style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {/* Top: Date and Platform */}
+                <div
+                  key={ad.id}
+                  style={{
+                    padding: 16,
+                    borderBottom: idx < filteredAds.length - 1 ? '1px solid var(--color-rule)' : 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10
+                  }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700 }}>
+                    <span className="dusk-num" style={{ fontSize: 12, color: 'var(--color-muted)' }}>
                       {new Date(ad.ad_date).toLocaleDateString('uk-UA')}
                     </span>
-                    <span style={{ 
-                      fontSize: 10, 
-                      fontWeight: 900, 
-                      color: ad.platform.toLowerCase() === 'instagram' ? '#f43f5e' : 
-                             ad.platform.toLowerCase() === 'facebook' ? '#3b82f6' :
-                             ad.platform.toLowerCase() === 'telegram' ? '#0ea5e9' :
-                             ad.platform.toLowerCase() === 'tiktok' ? '#00f2fe' : 
-                             ad.platform.toLowerCase() === 'olx' ? '#23e5db' : '#fff',
-                      background: 'rgba(255,255,255,0.05)',
-                      padding: '4px 8px',
-                      borderRadius: 8
-                    }}>
-                      {ad.platform}
-                    </span>
+                    <span className="dusk-badge dusk-badge--periwinkle">{ad.platform}</span>
                   </div>
 
-                  {/* Product */}
-                  <div style={{ fontSize: 15, fontWeight: 900, color: '#fff' }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--color-ink)' }}>
                     {ad.product_name}
                   </div>
 
-                  {/* 2x2 Grid of Stats */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: 'rgba(0,0,0,0.15)', padding: 14, borderRadius: 16 }}>
+                  <div className="dusk-num" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, background: 'var(--color-paper)', padding: 12, borderRadius: 10, border: '1px solid var(--color-rule)' }}>
                     <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Витрати</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: '#ef4444' }}>
-                        {adCost.toFixed(0)} ₴ <span style={{ fontSize: 9, color: ad.budget_source === 'Кошти друкарні' ? '#c084fc' : 'var(--text-muted)' }}>({ad.budget_source === 'Кошти друкарні' ? 'друк' : 'особ'})</span>
-                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>Витрати</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-accent-2)' }}>{adCost.toFixed(0)} ₴</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Продажі</div>
+                      <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>Продажі</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: '#4ade80' }}>{adRev.toFixed(0)} ₴</span>
-                        <button 
+                        <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-accent)' }}>{adRev.toFixed(0)} ₴</span>
+                        <button
+                          type="button"
                           onClick={() => setQuickRevenueModal({ open: true, adId: ad.id, currentRevenue: adRev, addAmount: '' })}
-                          style={{ border: 'none', background: 'rgba(34,197,94,0.15)', color: '#4ade80', borderRadius: 4, width: 18, height: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 12 }}
+                          className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                          style={{ height: 22, padding: '0 6px', fontSize: 11 }}
                         >
-                          +
+                          +₴
                         </button>
                       </div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Прибуток</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: adProfit >= 0 ? '#4ade80' : '#ef4444' }}>
+                      <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>Прибуток</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: adProfit >= 0 ? 'var(--color-ink)' : 'var(--color-danger)' }}>
                         {adProfit >= 0 ? `+${adProfit.toFixed(0)}` : adProfit.toFixed(0)} ₴
                       </div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', marginBottom: 2 }}>Окупність</div>
-                      <div style={{ fontSize: 13, fontWeight: 900, color: adRomi >= 0 ? '#4ade80' : '#f97316' }}>
+                      <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>ROMI</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: adRomi >= 0 ? 'var(--color-accent)' : 'var(--color-accent-2)' }}>
                         {adRomi >= 0 ? `+${adRomi.toFixed(0)}%` : `${adRomi.toFixed(0)}%`}
                       </div>
                     </div>
                   </div>
 
-                  {/* Notes */}
                   {ad.notes && (
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 8 }}>
-                      <strong>Нотатки:</strong> {ad.notes}
+                    <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                      Нотатки: <span style={{ color: 'var(--color-ink-2)' }}>{ad.notes}</span>
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
-                    <button 
-                      onClick={() => handleEdit(ad)}
-                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 10, padding: '10px 16px', fontSize: 12, fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      <Edit3 size={14} /> Редагувати
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                    <button type="button" onClick={() => handleEdit(ad)} className="dusk-btn dusk-btn--ghost dusk-btn--sm" style={{ flex: 1 }}>
+                      <Edit3 size={13} />
+                      <span>Редагувати</span>
                     </button>
-                    <button 
-                      onClick={() => handleDelete(ad.id)}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, padding: '10px 16px', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={14} />
+                    <button type="button" onClick={() => handleDelete(ad.id)} className="dusk-btn dusk-btn--danger dusk-btn--sm">
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
               );
-            })
-          )}
-        </div>
-      ) : (
-        <div style={{ background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
+            })}
+          </div>
+        ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table className="dusk-table">
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДАТА</th>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПЛАТФОРМА</th>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ТОВАР</th>
-                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ВИТРАТИ</th>
-                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРОДАЖІ (ДОХІД)</th>
-                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРИБУТОК</th>
-                  <th style={{ textAlign: 'center', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ОКУПНІСТЬ (ROMI)</th>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>НОТАТКИ</th>
-                  <th style={{ textAlign: 'right', padding: '16px 20px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДІЇ</th>
+                <tr>
+                  <th>Дата</th>
+                  <th>Платформа</th>
+                  <th>Рекламований товар</th>
+                  <th style={{ textAlign: 'right' }}>Витрати</th>
+                  <th style={{ textAlign: 'right' }}>Дохід з реклами</th>
+                  <th style={{ textAlign: 'right' }}>Чистий результат</th>
+                  <th style={{ textAlign: 'center' }}>ROMI</th>
+                  <th>Нотатки</th>
+                  <th style={{ textAlign: 'right' }}>Дії</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredAds.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 14 }}>
-                      Рекламних кампаній не знайдено. Натисніть "Додати рекламу", щоб створити перший запис.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAds.map(ad => {
-                    const adCost = parseFloat(ad.cost || 0);
-                    const adRev = parseFloat(ad.revenue || 0);
-                    const adProfit = adRev - adCost;
-                    const adRomi = adCost > 0 ? (adProfit / adCost) * 100 : 0;
+                {filteredAds.map(ad => {
+                  const adCost = parseFloat(ad.cost || 0);
+                  const adRev = parseFloat(ad.revenue || 0);
+                  const adProfit = adRev - adCost;
+                  const adRomi = adCost > 0 ? (adProfit / adCost) * 100 : 0;
 
-                    return (
-                      <tr key={ad.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', transition: 'background 0.2s' }}>
-                        {/* Date */}
-                        <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 700 }}>
-                          {new Date(ad.ad_date).toLocaleDateString('uk-UA')}
-                        </td>
-                        {/* Platform */}
-                        <td style={{ padding: '16px 20px' }}>
-                          <span style={{ 
-                            fontSize: 11, 
-                            fontWeight: 900, 
-                            color: ad.platform.toLowerCase() === 'instagram' ? '#f43f5e' : 
-                                   ad.platform.toLowerCase() === 'facebook' ? '#3b82f6' :
-                                   ad.platform.toLowerCase() === 'telegram' ? '#0ea5e9' :
-                                   ad.platform.toLowerCase() === 'tiktok' ? '#00f2fe' : 
-                                   ad.platform.toLowerCase() === 'olx' ? '#23e5db' : '#fff',
-                            background: 'rgba(255,255,255,0.05)',
-                            padding: '4px 8px',
-                            borderRadius: 8
-                          }}>
-                            {ad.platform}
-                          </span>
-                        </td>
-                        {/* Product */}
-                        <td style={{ padding: '16px 20px', fontSize: 13, fontWeight: 800, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {ad.product_name}
-                        </td>
-                        {/* Cost */}
-                        <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: '#ef4444' }}>
-                            {adCost.toFixed(0)} ₴
-                          </div>
-                          <div style={{ fontSize: 10, color: ad.budget_source === 'Кошти друкарні' ? '#a855f7' : '#6b6b8a', marginTop: 4, fontWeight: 700 }}>
-                            {ad.budget_source === 'Кошти друкарні' ? 'друкарня' : 'особисті'}
-                          </div>
-                        </td>
-                        {/* Revenue */}
-                        <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                            <span style={{ fontSize: 13, fontWeight: 800, color: '#4ade80' }}>
-                              {adRev.toFixed(0)} ₴
-                            </span>
-                            <button 
-                              onClick={() => setQuickRevenueModal({ open: true, adId: ad.id, currentRevenue: adRev, addAmount: '' })}
-                              style={{ 
-                                border: 'none', background: 'rgba(34,197,94,0.1)', color: '#4ade80', 
-                                borderRadius: 6, width: 22, height: 22, cursor: 'pointer', 
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14 
-                              }}
-                              title="Швидко додати суму продажу"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </td>
-                        {/* Profit */}
-                        <td style={{ 
-                          padding: '16px 20px', textAlign: 'center', fontSize: 13, fontWeight: 800,
-                          color: adProfit >= 0 ? '#4ade80' : '#ef4444'
-                        }}>
-                          {adProfit >= 0 ? `+${adProfit.toFixed(0)}` : adProfit.toFixed(0)} ₴
-                        </td>
-                        {/* ROMI */}
-                        <td style={{ 
-                          padding: '16px 20px', textAlign: 'center', fontSize: 12, fontWeight: 900,
-                          color: adRomi >= 0 ? '#4ade80' : '#f97316'
-                        }}>
+                  return (
+                    <tr key={ad.id}>
+                      <td className="dusk-num" style={{ whiteSpace: 'nowrap', color: 'var(--color-muted)', fontSize: 12.5 }}>
+                        {new Date(ad.ad_date).toLocaleDateString('uk-UA')}
+                      </td>
+                      <td>
+                        <span className="dusk-badge dusk-badge--neutral">{ad.platform}</span>
+                      </td>
+                      <td style={{ fontWeight: 600, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {ad.product_name}
+                      </td>
+                      <td className="dusk-num" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--color-accent-2)' }}>{adCost.toFixed(0)} ₴</div>
+                        <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                          {ad.budget_source === 'Кошти друкарні' ? 'Друкарня' : 'Особисті'}
+                        </div>
+                      </td>
+                      <td className="dusk-num" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontWeight: 600, color: 'var(--color-accent)' }}>{adRev.toFixed(0)} ₴</span>
+                          <button 
+                            type="button"
+                            onClick={() => setQuickRevenueModal({ open: true, adId: ad.id, currentRevenue: adRev, addAmount: '' })}
+                            className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                            style={{ height: 24, padding: '0 7px', fontSize: 11 }}
+                            title="Швидко додати суму продажу"
+                          >
+                            +₴
+                          </button>
+                        </div>
+                      </td>
+                      <td className="dusk-num" style={{ textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap', color: adProfit >= 0 ? 'var(--color-ink)' : 'var(--color-danger)' }}>
+                        {adProfit >= 0 ? `+${adProfit.toFixed(0)}` : adProfit.toFixed(0)} ₴
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span className={`dusk-badge dusk-num ${adRomi >= 0 ? 'dusk-badge--periwinkle' : 'dusk-badge--apricot'}`}>
                           {adRomi >= 0 ? `+${adRomi.toFixed(0)}%` : `${adRomi.toFixed(0)}%`}
-                        </td>
-                        {/* Notes */}
-                        <td style={{ 
-                          padding: '16px 20px', fontSize: 12, color: 'var(--text-muted)', 
-                          maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' 
-                        }} title={ad.notes}>
-                          {ad.notes || '---'}
-                        </td>
-                        {/* Actions */}
-                        <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                            <button 
-                              onClick={() => handleEdit(ad)}
-                              style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 8, padding: 6, cursor: 'pointer' }}
-                              title="Редагувати"
-                            >
-                              <Edit3 size={14} />
-                            </button>
-                            <button 
-                              onClick={() => handleDelete(ad.id)}
-                              style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}
-                              title="Видалити"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: 12, color: 'var(--color-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ad.notes}>
+                        {ad.notes || '—'}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button 
+                            type="button"
+                            onClick={() => handleEdit(ad)}
+                            className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                            style={{ padding: '0 8px' }}
+                            title="Редагувати"
+                          >
+                            <Edit3 size={13} />
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => handleDelete(ad.id)}
+                            className="dusk-btn dusk-btn--danger dusk-btn--sm"
+                            style={{ padding: '0 8px' }}
+                            title="Видалити"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Add / Edit Form Modal */}
+      {/* Add / Edit Campaign Modal */}
       <AnimatePresence>
         {showAddForm && (
           <div 
-            onClick={() => {
-              setIsPlatformDropdownOpen(false);
-              setIsProductDropdownOpen(false);
-              setIsSourceDropdownOpen(false);
-            }}
+            onClick={() => setShowAddForm(false)}
             style={{ 
-              position: 'fixed', 
-              inset: 0, 
-              background: 'rgba(0,0,0,0.85)', 
-              backdropFilter: 'blur(10px)', 
-              zIndex: 1000, 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              padding: '40px 20px',
-              overflowY: 'auto'
+              position: 'fixed', inset: 0, zIndex: 1100,
+              background: 'oklch(10% 0.015 268 / 0.80)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
             }}
           >
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }} 
-              animate={{ opacity: 1, scale: 1 }} 
+              initial={{ opacity: 0, scale: 0.97, y: 8 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
               onClick={(e) => e.stopPropagation()}
+              className="dusk-panel"
               style={{ 
-                background: '#0a192f', 
-                borderRadius: 32, 
-                padding: 32, 
-                width: '100%', 
-                maxWidth: 480, 
-                border: '1px solid rgba(255,255,255,0.1)', 
-                color: '#fff', 
-                overflow: 'visible',
-                margin: 'auto 0'
+                width: '100%', maxWidth: 520, borderRadius: 18, overflow: 'hidden',
+                border: '1px solid var(--color-rule)', boxShadow: '0 24px 64px rgba(0,0,0,0.55)'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h2 style={{ fontSize: 22, fontWeight: 900 }}>{editingAd ? 'Редагувати рекламу' : 'Нова реклама'}</h2>
-                <button 
-                  onClick={() => setShowAddForm(false)} 
-                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-                >
-                  <X size={20} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--color-rule)', background: 'var(--color-paper-2)' }}>
+                <h2 className="dusk-heading" style={{ fontSize: 18 }}>{editingAd ? 'Редагувати рекламну кампанію' : 'Нова рекламна кампанія'}</h2>
+                <button type="button" onClick={() => setShowAddForm(false)} className="dusk-btn dusk-btn--ghost dusk-btn--sm" style={{ width: 30, height: 30, padding: 0 }}>
+                  <X size={15} />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {/* Platform */}
-                <div style={{ position: 'relative' }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Платформа / Сервіс</label>
-                  
-                  <div 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsPlatformDropdownOpen(!isPlatformDropdownOpen);
-                      setIsProductDropdownOpen(false);
-                      setIsSourceDropdownOpen(false);
-                    }}
-                    style={{ 
-                      width: '100%', 
-                      background: 'rgba(0,0,0,0.3)', 
-                      border: '1px solid var(--border)', 
-                      borderRadius: 12, 
-                      padding: 12, 
-                      color: '#fff', 
-                      fontSize: 14, 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center', 
-                      cursor: 'pointer',
-                      userSelect: 'none'
-                    }}
-                  >
-                    <span>{formData.platform}</span>
-                    <ChevronDown size={16} style={{ color: 'var(--text-muted)', transform: isPlatformDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                  </div>
-
-                  <AnimatePresence>
-                    {isPlatformDropdownOpen && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        style={{ 
-                          position: 'absolute', 
-                          top: 'calc(100% + 6px)', 
-                          left: 0, 
-                          right: 0, 
-                          background: '#0f172a', 
-                          border: '1px solid rgba(255,255,255,0.1)', 
-                          borderRadius: 12, 
-                          zIndex: 1100, 
-                          maxHeight: 250, 
-                          overflowY: 'auto', 
-                          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                          padding: 6
-                        }}
+              <form onSubmit={handleSubmit} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 6 }}>Платформа / Сервіс</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {platformsList.map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, platform: p })}
+                        className={`dusk-facet-pill ${formData.platform === p ? 'active' : ''}`}
                       >
-                        {platformsList.map(p => (
-                          <div 
-                            key={p}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setFormData({...formData, platform: p});
-                              setIsPlatformDropdownOpen(false);
-                            }}
-                            style={{ 
-                              padding: '10px 14px', 
-                              fontSize: 13, 
-                              color: formData.platform === p ? '#ec4899' : '#fff', 
-                              fontWeight: formData.platform === p ? 800 : 500, 
-                              borderRadius: 8, 
-                              cursor: 'pointer',
-                              background: formData.platform === p ? 'rgba(236,72,153,0.1)' : 'transparent',
-                              transition: 'background 0.2s'
-                            }}
-                            onMouseEnter={e => {
-                              if (formData.platform !== p) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                            }}
-                            onMouseLeave={e => {
-                              if (formData.platform !== p) e.currentTarget.style.background = 'transparent';
-                            }}
-                          >
-                            {p}
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        {p}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Custom Platform */}
                 {formData.platform === 'Other' && (
                   <div>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Власна назва сервісу</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>Власна назва сервісу / блогера</label>
                     <input 
                       type="text" 
                       placeholder="Наприклад: Блогер Тарас" 
                       value={formData.custom_platform} 
                       onChange={e => setFormData({...formData, custom_platform: e.target.value})} 
                       required
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                      className="dusk-input"
                     />
                   </div>
                 )}
 
-                {/* Target Product */}
-                <div style={{ position: 'relative' }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Товар для реклами</label>
-                  
-                  <div 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsProductDropdownOpen(!isProductDropdownOpen);
-                      setIsPlatformDropdownOpen(false);
-                      setIsSourceDropdownOpen(false);
-                    }}
-                    style={{ 
-                      width: '100%', 
-                      background: 'rgba(0,0,0,0.3)', 
-                      border: '1px solid var(--border)', 
-                      borderRadius: 12, 
-                      padding: 12, 
-                      color: '#fff', 
-                      fontSize: 14, 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center', 
-                      cursor: 'pointer',
-                      userSelect: 'none'
-                    }}
+                <div>
+                  <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>Рекламований товар</label>
+                  <select
+                    value={formData.product_id}
+                    onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
+                    className="dusk-select"
                   >
-                    <span>
-                      {formData.product_id 
-                        ? products.find(p => p.id === formData.product_id)?.name || 'Обраний товар' 
-                        : 'Загальна реклама магазину'}
-                    </span>
-                    <ChevronDown size={16} style={{ color: 'var(--text-muted)', transform: isProductDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                  </div>
-
-                  <AnimatePresence>
-                    {isProductDropdownOpen && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        style={{ 
-                          position: 'absolute', 
-                          top: 'calc(100% + 6px)', 
-                          left: 0, 
-                          right: 0, 
-                          background: '#0f172a', 
-                          border: '1px solid rgba(255,255,255,0.1)', 
-                          borderRadius: 12, 
-                          zIndex: 1100, 
-                          maxHeight: 220, 
-                          overflowY: 'auto', 
-                          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                          padding: 6
-                        }}
-                      >
-                        <div 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFormData({...formData, product_id: ''});
-                            setIsProductDropdownOpen(false);
-                          }}
-                          style={{ 
-                            padding: '10px 14px', 
-                            fontSize: 13, 
-                            color: !formData.product_id ? '#ec4899' : '#fff', 
-                            fontWeight: !formData.product_id ? 800 : 500, 
-                            borderRadius: 8, 
-                            cursor: 'pointer',
-                            background: !formData.product_id ? 'rgba(236,72,153,0.1)' : 'transparent',
-                            transition: 'background 0.2s'
-                          }}
-                          onMouseEnter={e => {
-                            if (formData.product_id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                          }}
-                          onMouseLeave={e => {
-                            if (formData.product_id) e.currentTarget.style.background = 'transparent';
-                          }}
-                        >
-                          Загальна реклама магазину
-                        </div>
-                        {products.map(p => (
-                          <div 
-                            key={p.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setFormData({...formData, product_id: p.id});
-                              setIsProductDropdownOpen(false);
-                            }}
-                            style={{ 
-                              padding: '10px 14px', 
-                              fontSize: 13, 
-                              color: formData.product_id === p.id ? '#ec4899' : '#fff', 
-                              fontWeight: formData.product_id === p.id ? 800 : 500, 
-                              borderRadius: 8, 
-                              cursor: 'pointer',
-                              background: formData.product_id === p.id ? 'rgba(236,72,153,0.1)' : 'transparent',
-                              transition: 'background 0.2s',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center'
-                            }}
-                            onMouseEnter={e => {
-                              if (formData.product_id !== p.id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                            }}
-                            onMouseLeave={e => {
-                              if (formData.product_id !== p.id) e.currentTarget.style.background = 'transparent';
-                            }}
-                          >
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 260 }}>{p.name}</span>
-                            <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8, flexShrink: 0 }}>{p.price} ₴</span>
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                    <option value="">Загальна реклама магазину</option>
+                    {products.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.price} ₴)</option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Budget Source Dropdown */}
-                <div style={{ position: 'relative' }}>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Джерело коштів</label>
-                  
-                  <div 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsSourceDropdownOpen(!isSourceDropdownOpen);
-                      setIsPlatformDropdownOpen(false);
-                      setIsProductDropdownOpen(false);
-                    }}
-                    style={{ 
-                      width: '100%', 
-                      background: 'rgba(0,0,0,0.3)', 
-                      border: '1px solid var(--border)', 
-                      borderRadius: 12, 
-                      padding: 12, 
-                      color: '#fff', 
-                      fontSize: 14, 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center', 
-                      cursor: 'pointer',
-                      userSelect: 'none'
-                    }}
-                  >
-                    <span>{formData.budget_source}</span>
-                    <ChevronDown size={16} style={{ color: 'var(--text-muted)', transform: isSourceDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                  </div>
-
-                  <AnimatePresence>
-                    {isSourceDropdownOpen && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        style={{ 
-                          position: 'absolute', 
-                          top: 'calc(100% + 6px)', 
-                          left: 0, 
-                          right: 0, 
-                          background: '#0f172a', 
-                          border: '1px solid rgba(255,255,255,0.1)', 
-                          borderRadius: 12, 
-                          zIndex: 1100, 
-                          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                          padding: 6
-                        }}
-                      >
-                        {['Особисті кошти', 'Кошти друкарні'].map(src => (
-                          <div 
-                            key={src}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setFormData({...formData, budget_source: src});
-                              setIsSourceDropdownOpen(false);
-                            }}
-                            style={{ 
-                              padding: '10px 14px', 
-                              fontSize: 13, 
-                              color: formData.budget_source === src ? '#ec4899' : '#fff', 
-                              fontWeight: formData.budget_source === src ? 800 : 500, 
-                              borderRadius: 8, 
-                              cursor: 'pointer',
-                              background: formData.budget_source === src ? 'rgba(236,72,153,0.1)' : 'transparent',
-                              transition: 'background 0.2s'
-                            }}
-                            onMouseEnter={e => {
-                              if (formData.budget_source !== src) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                            }}
-                            onMouseLeave={e => {
-                              if (formData.budget_source !== src) e.currentTarget.style.background = 'transparent';
-                            }}
-                          >
-                            {src}
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Cost & Revenue */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Вартість реклами (₴)</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>Джерело бюджету</label>
+                    <select
+                      value={formData.budget_source}
+                      onChange={(e) => setFormData({ ...formData, budget_source: e.target.value })}
+                      className="dusk-select"
+                    >
+                      <option value="Особисті кошти">Особисті кошти</option>
+                      <option value="Кошти друкарні">Кошти друкарні</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>Дата запуску</label>
+                    <input 
+                      type="date" 
+                      value={formData.ad_date} 
+                      onChange={e => setFormData({...formData, ad_date: e.target.value})} 
+                      required
+                      className="dusk-input dusk-num"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>Витрати на рекламу (₴) *</label>
                     <input 
                       type="number" 
                       step="0.01" 
@@ -986,59 +701,40 @@ export default function AdvertisingDashboard({ showToast }) {
                       value={formData.cost} 
                       onChange={e => setFormData({...formData, cost: e.target.value})} 
                       required
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                      className="dusk-input dusk-num"
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Сума продажів (₴)</label>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>Сума продажів (₴)</label>
                     <input 
                       type="number" 
                       step="0.01" 
                       placeholder="0"
                       value={formData.revenue} 
                       onChange={e => setFormData({...formData, revenue: e.target.value})} 
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                      className="dusk-input dusk-num"
                     />
                   </div>
                 </div>
 
-                {/* Date */}
                 <div>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Дата розміщення</label>
-                  <input 
-                    type="date" 
-                    value={formData.ad_date} 
-                    onChange={e => setFormData({...formData, ad_date: e.target.value})} 
-                    required
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
-                  />
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Нотатки / Посилання</label>
+                  <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>Нотатки / посилання</label>
                   <textarea 
-                    placeholder="Наприклад: Сторіз у блогера про Lego Crane..." 
+                    placeholder="Наприклад: Сторіз у блогера, таргет на Reels…" 
                     value={formData.notes} 
                     onChange={e => setFormData({...formData, notes: e.target.value})} 
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none', minHeight: 80, resize: 'none' }}
+                    className="dusk-textarea"
+                    style={{ minHeight: 76 }}
                   />
                 </div>
 
-                {/* Buttons */}
-                <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                  <button 
-                    type="submit" 
-                    style={{ flex: 1, padding: 14, borderRadius: 14, background: 'linear-gradient(135deg, #ec4899, #7c3aed)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}
-                  >
-                    ЗБЕРЕГТИ
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
+                  <button type="button" onClick={() => setShowAddForm(false)} className="dusk-btn dusk-btn--ghost">
+                    Скасувати
                   </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowAddForm(false)} 
-                    style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}
-                  >
-                    СКАСУВАТИ
+                  <button type="submit" className="dusk-btn dusk-btn--primary">
+                    <Check size={14} />
+                    <span>Зберегти кампанію</span>
                   </button>
                 </div>
               </form>
@@ -1050,51 +746,53 @@ export default function AdvertisingDashboard({ showToast }) {
       {/* Quick Add Revenue Modal */}
       <AnimatePresence>
         {quickRevenueModal.open && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, overflowY: 'auto' }}>
+          <div
+            onClick={() => setQuickRevenueModal({ open: false, adId: null, currentRevenue: 0, addAmount: '' })}
+            style={{ position: 'fixed', inset: 0, background: 'oklch(10% 0.015 268 / 0.80)', backdropFilter: 'blur(8px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          >
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }} 
+              initial={{ opacity: 0, scale: 0.97 }} 
               animate={{ opacity: 1, scale: 1 }} 
-              style={{ background: '#0a192f', borderRadius: 32, padding: 32, width: '100%', maxWidth: 400, border: '1px solid rgba(255,255,255,0.1)', color: '#fff', margin: 'auto 0' }}
+              onClick={(e) => e.stopPropagation()}
+              className="dusk-panel"
+              style={{ borderRadius: 16, padding: 20, width: '100%', maxWidth: 380, border: '1px solid var(--color-rule)' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 900 }}>Додати суму продажу</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h3 className="dusk-heading" style={{ fontSize: 16 }}>Додати суму продажу</h3>
                 <button 
+                  type="button"
                   onClick={() => setQuickRevenueModal({ open: false, adId: null, currentRevenue: 0, addAmount: '' })} 
-                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                  style={{ width: 28, height: 28, padding: 0 }}
                 >
-                  <X size={18} />
+                  <X size={14} />
                 </button>
               </div>
 
-              <form onSubmit={handleQuickRevenueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <form onSubmit={handleQuickRevenueSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>Поточний дохід від цієї реклами: <strong style={{ color: '#4ade80' }}>{quickRevenueModal.currentRevenue} ₴</strong></div>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>Сума нового продажу (₴)</label>
+                  <div style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 8 }}>
+                    Поточний дохід кампанії: <strong className="dusk-num" style={{ color: 'var(--color-accent)' }}>{quickRevenueModal.currentRevenue} ₴</strong>
+                  </div>
+                  <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>Сума нового продажу (₴)</label>
                   <input 
                     type="number" 
                     step="0.01" 
-                    placeholder="Введіть суму, наприклад: 450" 
+                    placeholder="Наприклад: 450" 
                     value={quickRevenueModal.addAmount} 
                     onChange={e => setQuickRevenueModal({...quickRevenueModal, addAmount: e.target.value})} 
                     required
                     autoFocus
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, outline: 'none' }}
+                    className="dusk-input dusk-num"
                   />
                 </div>
 
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button 
-                    type="submit" 
-                    style={{ flex: 1, padding: 12, borderRadius: 12, background: '#4ade80', color: '#020b18', border: 'none', fontWeight: 900, cursor: 'pointer' }}
-                  >
-                    ДОДАТИ
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button type="button" onClick={() => setQuickRevenueModal({ open: false, adId: null, currentRevenue: 0, addAmount: '' })} className="dusk-btn dusk-btn--ghost">
+                    Скасувати
                   </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setQuickRevenueModal({ open: false, adId: null, currentRevenue: 0, addAmount: '' })} 
-                    style={{ flex: 1, padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}
-                  >
-                    СКАСУВАТИ
+                  <button type="submit" className="dusk-btn dusk-btn--primary">
+                    Додати дохід
                   </button>
                 </div>
               </form>

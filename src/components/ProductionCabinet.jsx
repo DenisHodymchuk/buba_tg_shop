@@ -1,86 +1,105 @@
-"use client";
+// Hallmark Dusk Theme — ProductionCabinet
+'use client';
+
 import React, { useState, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
 import { 
-  Hammer, Search, Check, Clock, 
-  ClipboardList, Printer, Truck, Send, 
-  ChevronDown, ChevronUp, AlertCircle, Palette, Star
+  Hammer, CheckCircle2, Clock, Printer, Palette, ClipboardList, 
+  Truck, Search, Star, AlertCircle, Check, ChevronDown, ChevronUp, X,
+  ExternalLink, Phone, MapPin, Copy, CreditCard, MessageSquare, Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getColorMeta } from '@/lib/orderHelpers';
+import { getColorMeta, FILAMENT_COLORS, getChannelMeta } from '@/lib/orderHelpers';
 
-// Meta definitions for order statuses
 const STATUS_META = {
-  new: { label: 'Нові замовлення', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: Clock },
-  printing: { label: 'Друк', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', icon: Printer },
-  painting: { label: 'Склейка/розфарбування', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: Palette },
-  preparing: { label: 'Пакування', color: '#a855f7', bg: 'rgba(168,85,247,0.1)', icon: ClipboardList },
-  shipping: { label: 'Готово до відправлення', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', icon: Truck },
-  shipped: { label: 'В дорозі', color: '#06b6d4', bg: 'rgba(6,182,212,0.1)', icon: Send }
+  new: { label: 'Нове', signal: 'apricot', icon: Clock },
+  printing: { label: 'Друк', signal: 'apricot', icon: Printer },
+  painting: { label: 'Склейка / Розфарб.', signal: 'apricot', icon: Palette },
+  preparing: { label: 'Пакування', signal: 'apricot', icon: ClipboardList },
+  shipping: { label: 'До відправки', signal: 'apricot', icon: Truck }
 };
 
-export default function ProductionCabinet({ orders, setOrders, showToast, isMobile }) {
+export default function ProductionCabinet({ orders = [], setOrders, supabase, showToast, isMobile, onOpenOrderInSales }) {
+  const [selectedStatuses, setSelectedStatuses] = useState(['new', 'printing', 'painting']);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState(['new', 'printing', 'painting', 'preparing', 'shipping']);
   const [expandedProductNames, setExpandedProductNames] = useState([]);
+  const [specFilter, setSpecFilter] = useState('all'); // 'all' | 'priority' | 'custom_colors' | 'pending_only'
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
-  // Aggregate items from active orders
+  const selectedOrder = useMemo(() => {
+    if (!selectedOrderId) return null;
+    return orders.find(o => o.id === selectedOrderId) || null;
+  }, [orders, selectedOrderId]);
+
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    if (!supabase) return;
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+      if (error) throw error;
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      if (showToast) showToast(`Статус замовлення змінено на "${STATUS_META[newStatus]?.label || newStatus}"`);
+    } catch (e) {
+      console.error('Error updating order status:', e);
+      if (showToast) showToast('Помилка зміни статусу замовлення', 'error');
+    }
+  };
+
+  // Extract and group products that need to be manufactured
   const productionList = useMemo(() => {
-    const itemsMap = {};
-    const query = searchQuery.toLowerCase();
+    const map = {};
 
-    const activeOrders = orders.filter(o => 
-      o.status !== 'completed' && 
-      o.status !== 'cancelled' && 
-      (selectedStatuses.length === 0 || selectedStatuses.includes(o.status))
-    );
+    orders.forEach(order => {
+      if (!selectedStatuses.includes(order.status)) return;
 
-    activeOrders.forEach(order => {
       const details = order.shipping_details || {};
       const items = Array.isArray(details.items) ? details.items : [];
       const clientName = `${details.firstName || ''} ${details.lastName || ''} ${order.customers?.first_name || ''} ${order.customers?.last_name || ''}`.trim() || 'Гість';
       const isPriority = !!details.is_priority;
-      
-      items.forEach((item, itemIdx) => {
-        const name = item.name || 'Невідомий виріб';
+      const orderNum = order.order_number ? order.order_number.replace(/^MAN-[A-Z]+-/, '#') : `#${String(order.id).slice(0, 6)}`;
+      const orderNotes = details.notes || '';
+
+      items.forEach((item, idx) => {
+        if (!item.name) return;
+        const nameKey = item.name.trim();
+        const qty = parseInt(item.quantity || 1, 10);
+        const isManufactured = !!item.is_manufactured;
         const itemColors = Array.isArray(item.colors) ? item.colors : (item.color ? [item.color] : []);
         const itemNote = item.item_note || item.color_details || item.note || '';
-        const orderNotes = details.notes || '';
 
-        const searchText = `${name} ${clientName} ${itemColors.join(' ')} ${itemNote} ${orderNotes}`.toLowerCase();
-        if (query && !searchText.includes(query)) return;
-
-        if (!itemsMap[name]) {
-          itemsMap[name] = {
-            name,
+        if (!map[nameKey]) {
+          map[nameKey] = {
+            name: nameKey,
             totalQuantity: 0,
             manufacturedQuantity: 0,
+            orders: [],
             hasPriority: false,
-            hasCustomSpecs: false,
-            orders: []
+            hasCustomSpecs: false
           };
         }
 
-        const isItemManufactured = !!item.is_manufactured;
-        const qty = parseInt(item.quantity) || 1;
-        itemsMap[name].totalQuantity += qty;
-        if (isItemManufactured) {
-          itemsMap[name].manufacturedQuantity += qty;
+        map[nameKey].totalQuantity += qty;
+        if (isManufactured) {
+          map[nameKey].manufacturedQuantity += qty;
         }
-        if (isPriority) itemsMap[name].hasPriority = true;
+        if (isPriority && !isManufactured) {
+          map[nameKey].hasPriority = true;
+        }
         if (itemColors.length > 0 || itemNote || orderNotes) {
-          itemsMap[name].hasCustomSpecs = true;
+          map[nameKey].hasCustomSpecs = true;
         }
 
-        itemsMap[name].orders.push({
+        map[nameKey].orders.push({
           orderId: order.id,
-          itemIdx,
-          orderNumber: order.order_number ? order.order_number.replace(/^MAN-[A-Z]+-/, '#') : `#${order.id.slice(0, 8)}`,
+          itemIdx: idx,
+          orderNumber: orderNum,
           clientName,
           quantity: qty,
           status: order.status,
-          isManufactured: isItemManufactured,
           isPriority,
+          createdAt: order.created_at,
+          isManufactured,
           colors: itemColors,
           itemNote,
           orderNotes
@@ -88,71 +107,94 @@ export default function ProductionCabinet({ orders, setOrders, showToast, isMobi
       });
     });
 
-    return Object.values(itemsMap).sort((a, b) => {
+    let list = Object.values(map);
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(p => 
+        p.name.toLowerCase().includes(q) || 
+        p.orders.some(o => 
+          o.clientName.toLowerCase().includes(q) || 
+          o.orderNumber.toLowerCase().includes(q) ||
+          o.itemNote.toLowerCase().includes(q) ||
+          o.orderNotes.toLowerCase().includes(q) ||
+          o.colors.some(c => getColorMeta(c).label.toLowerCase().includes(q))
+        )
+      );
+    }
+
+    if (specFilter === 'priority') {
+      list = list.filter(p => p.hasPriority);
+    } else if (specFilter === 'custom_colors') {
+      list = list.filter(p => p.hasCustomSpecs);
+    } else if (specFilter === 'pending_only') {
+      list = list.filter(p => p.manufacturedQuantity < p.totalQuantity);
+    }
+
+    // Sort: priority first, then highest remaining quantity
+    return list.sort((a, b) => {
+      const aDone = a.manufacturedQuantity >= a.totalQuantity && a.totalQuantity > 0;
+      const bDone = b.manufacturedQuantity >= b.totalQuantity && b.totalQuantity > 0;
+      if (aDone !== bDone) return aDone ? 1 : -1;
       if (a.hasPriority !== b.hasPriority) return b.hasPriority ? 1 : -1;
-      return b.totalQuantity - a.totalQuantity;
+      return (b.totalQuantity - b.manufacturedQuantity) - (a.totalQuantity - a.manufacturedQuantity);
     });
-  }, [orders, selectedStatuses, searchQuery]);
+  }, [orders, selectedStatuses, searchQuery, specFilter]);
 
   const checkedProducts = useMemo(() => {
-    const checked = {};
+    const map = {};
     productionList.forEach(item => {
-      checked[item.name] = item.manufacturedQuantity === item.totalQuantity && item.totalQuantity > 0;
+      map[item.name] = item.totalQuantity > 0 && item.manufacturedQuantity >= item.totalQuantity;
     });
-    return checked;
+    return map;
   }, [productionList]);
+
+  const statusOrderCounts = useMemo(() => {
+    const counts = {};
+    Object.keys(STATUS_META).forEach(k => { counts[k] = 0; });
+    orders.forEach(o => {
+      if (counts[o.status] !== undefined) counts[o.status] += 1;
+    });
+    return counts;
+  }, [orders]);
 
   const totals = useMemo(() => {
-    let totalItems = 0;
-    let checkedCount = 0;
-
-    productionList.forEach(item => {
-      totalItems += item.totalQuantity;
-      checkedCount += item.manufacturedQuantity;
-    });
-
-    return {
-      totalItems,
-      checkedCount,
-      uniqueProducts: productionList.length
-    };
+    const totalItems = productionList.reduce((acc, item) => acc + item.totalQuantity, 0);
+    const uniqueProducts = productionList.length;
+    const checkedCount = productionList.reduce((acc, item) => acc + item.manufacturedQuantity, 0);
+    const priorityModels = productionList.filter(i => i.hasPriority).length;
+    return { totalItems, uniqueProducts, checkedCount, remainingCount: Math.max(0, totalItems - checkedCount), priorityModels };
   }, [productionList]);
 
-  // Toggle manufactured state of a product across ALL filtered active orders
+  // Toggle manufactured state of all instances of a product in active orders
   const toggleCheckProduct = async (productName, currentChecked) => {
     if (!supabase) return;
+    const newCheckedState = !currentChecked;
+
     try {
-      const activeOrders = orders.filter(o => 
-        o.status !== 'completed' && 
-        o.status !== 'cancelled' && 
-        (selectedStatuses.length === 0 || selectedStatuses.includes(o.status))
-      );
-
-      const newCheckedState = !currentChecked;
-
-      const updatePromises = activeOrders.map(async (order) => {
+      const relevantOrders = orders.filter(order => selectedStatuses.includes(order.status));
+      const updatePromises = relevantOrders.map(async (order) => {
         const details = order.shipping_details || {};
         const items = Array.isArray(details.items) ? details.items : [];
 
-        const hasItem = items.some(item => item.name === productName);
-        if (!hasItem) return null;
-
+        let modified = false;
         const updatedItems = items.map(item => {
-          if (item.name === productName) {
+          if (item.name && item.name.trim() === productName) {
+            modified = true;
             return { ...item, is_manufactured: newCheckedState };
           }
           return item;
         });
 
-        const updatedDetails = { ...details, items: updatedItems };
+        if (!modified) return null;
 
+        const updatedDetails = { ...details, items: updatedItems };
         const { error } = await supabase
           .from('orders')
           .update({ shipping_details: updatedDetails })
           .eq('id', order.id);
 
         if (error) throw error;
-
         return { orderId: order.id, updatedDetails };
       });
 
@@ -203,7 +245,7 @@ export default function ProductionCabinet({ orders, setOrders, showToast, isMobi
 
       setOrders(orders.map(o => o.id === orderId ? { ...o, shipping_details: updatedDetails } : o));
       if (showToast) {
-        showToast(newCheckedState ? 'Виріб відмічено як виготовлений ✅' : 'Відмітку виготовлення знято');
+        showToast(newCheckedState ? 'Виріб відмічено як виготовлений' : 'Відмітку виготовлення знято');
       }
     } catch (e) {
       console.error('Error toggling order item manufactured state:', e);
@@ -273,118 +315,173 @@ export default function ProductionCabinet({ orders, setOrders, showToast, isMobi
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 24, width: '100%', paddingBottom: isMobile ? 70 : 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', paddingBottom: isMobile ? 70 : 0 }}>
       
-      {/* Top Header */}
-      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 950, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Hammer size={26} style={{ color: '#a78bfa' }} /> Черга Виготовлення
-          </h1>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-            Список виробів, кольори друку та уточнення по кожному замовленню
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {productionList.length > 0 && (
-            <>
+      {/* Dusk Glass Header & Filter Command Bar */}
+      <div className="dusk-glass" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        
+        {/* Top Row: Title + Search + Expand/Collapse Actions */}
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
+          <div>
+            <h1 className="dusk-heading" style={{ fontSize: isMobile ? 20 : 22 }}>
+              Черга виготовлення
+            </h1>
+            <p className="dusk-subheading" style={{ marginTop: 2 }}>
+              Чек-лист моделей до 3D-друку, кольори пластику та уточнення по кожному замовленню
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {/* Search Input */}
+            <div style={{ position: 'relative', minWidth: isMobile ? '100%' : 250 }}>
+              <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+              <input
+                type="text"
+                placeholder="Пошук виробу, кольору, клієнта..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="dusk-input"
+                style={{ paddingLeft: 32, paddingRight: searchQuery ? 28 : 12, height: 34, fontSize: 12.5, borderRadius: 999 }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 2 }}
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            {productionList.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setExpandedProductNames(productionList.map(p => p.name))}
+                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                >
+                  Розгорнути всі
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExpandedProductNames([])}
+                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                >
+                  Згорнути всі
+                </button>
+              </>
+            )}
+
+            {totals.checkedCount > 0 && (
               <button
-                onClick={() => setExpandedProductNames(productionList.map(p => p.name))}
-                style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                type="button"
+                onClick={clearChecklist}
+                className="dusk-btn dusk-btn--danger dusk-btn--sm"
               >
-                Розгорнути всі
+                Скинути відмітки
               </button>
-              <button
-                onClick={() => setExpandedProductNames([])}
-                style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
-              >
-                Згорнути всі
-              </button>
-            </>
-          )}
-          {totals.checkedCount > 0 && (
-            <button 
-              onClick={clearChecklist}
-              style={{ 
-                padding: '8px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.2)',
-                background: 'rgba(239,68,68,0.08)', color: '#ef4444',
-                fontWeight: 800, fontSize: 11, cursor: 'pointer'
-              }}
-            >
-              Скинути відмітки
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? 8 : 20 }}>
-        <div style={{ background: 'var(--bg-card)', borderRadius: isMobile ? 16 : 24, border: '1px solid var(--border)', padding: isMobile ? 12 : 20 }}>
-          <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Моделей</div>
-          <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 950, color: '#fff' }}>{totals.uniqueProducts}</div>
-        </div>
-
-        <div style={{ background: 'var(--bg-card)', borderRadius: isMobile ? 16 : 24, border: '1px solid var(--border)', padding: isMobile ? 12 : 20 }}>
-          <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>До друку</div>
-          <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 950, color: '#a78bfa' }}>{totals.totalItems} шт</div>
-        </div>
-
-        <div style={{ background: 'var(--bg-card)', borderRadius: isMobile ? 16 : 24, border: '1px solid var(--border)', padding: isMobile ? 12 : 20 }}>
-          <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Готово</div>
-          <div style={{ fontSize: isMobile ? 18 : 24, fontWeight: 950, color: '#2dd4bf', display: 'flex', alignItems: 'baseline', gap: 4 }}>
-            {totals.checkedCount} <span style={{ fontSize: isMobile ? 11 : 14, color: 'var(--text-muted)', fontWeight: 700 }}>/ {totals.totalItems}</span>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Filters Cabinet */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: isMobile ? 18 : 24, padding: isMobile ? 14 : 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px' }}>
-          <Search size={16} style={{ color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Шукати виріб, клієнта або колір..." 
-            value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} 
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: 13, outline: 'none', width: '100%' }} 
-          />
+        {/* Dusk Ruled Tally — 4 Key Production Figures */}
+        <div
+          className="dusk-tally"
+          style={{
+            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+            borderTop: '1px solid var(--color-rule)',
+            borderBottom: '1px solid var(--color-rule)',
+            background: 'var(--color-paper-2)',
+            borderRadius: 10
+          }}
+        >
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Унікальних моделей</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22 }}>
+              {totals.uniqueProducts} <span className="dusk-currency"> поз.</span>
+            </div>
+            <span className="dusk-tally__sub">У вибраних етапах</span>
+          </div>
+
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Залишилось виготовити</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: totals.remainingCount > 0 ? 'var(--color-accent-2)' : 'var(--color-ink)' }}>
+              {totals.remainingCount} <span className="dusk-currency"> шт.</span>
+            </div>
+            <span className="dusk-tally__sub">Із {totals.totalItems} шт. загалом</span>
+          </div>
+
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Вже готово</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: totals.checkedCount > 0 ? 'var(--color-accent)' : 'var(--color-ink)' }}>
+              {totals.checkedCount} <span className="dusk-currency">/ {totals.totalItems} шт.</span>
+            </div>
+            <span className="dusk-tally__sub">
+              {totals.totalItems > 0 ? `${Math.round((totals.checkedCount / totals.totalItems) * 100)}% виконано` : 'Немає в черзі'}
+            </span>
+          </div>
+
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Пріоритетні моделі</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: totals.priorityModels > 0 ? 'var(--color-accent-2)' : 'var(--color-ink)' }}>
+              {totals.priorityModels}
+            </div>
+            <span className="dusk-tally__sub">Термінові замовлення</span>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <label style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Статуси замовлень для обліку:</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {/* Filter Strip: Stage Multi-Select + Spec Quick Filters */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11.5, color: 'var(--color-muted)', fontWeight: 500, marginRight: 2 }}>Етапи в обліку:</span>
             {Object.keys(STATUS_META).map(key => {
               const meta = STATUS_META[key];
               const active = selectedStatuses.includes(key);
-              const Icon = meta.icon;
+              const count = statusOrderCounts[key] || 0;
               return (
-                <button 
-                  key={key} 
-                  onClick={() => toggleStatusFilter(key)} 
-                  style={{ 
-                    padding: '7px 12px', borderRadius: 10, fontSize: 11, fontWeight: 800, 
-                    background: active ? meta.bg : 'rgba(255,255,255,0.03)', 
-                    color: active ? meta.color : 'var(--text-muted)', 
-                    border: active ? `1px solid ${meta.color}44` : '1px solid transparent', 
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
-                    transition: 'all 0.2s'
-                  }}
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleStatusFilter(key)}
+                  className={`dusk-facet-pill ${active ? 'active' : ''}`}
                 >
-                  {Icon && <Icon size={12} />}
-                  {meta.label}
+                  <span className={`dusk-dot ${active ? 'dusk-dot--periwinkle' : 'dusk-dot--muted'}`} style={{ width: 6, height: 6 }} />
+                  <span>{meta.label}</span>
+                  <span className="dusk-num" style={{ fontSize: 10.5, opacity: 0.7 }}>({count})</span>
                 </button>
               );
             })}
+          </div>
+
+          {/* Quick Spec Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11.5, color: 'var(--color-muted)', fontWeight: 500, marginRight: 2 }}>Фільтр:</span>
+            {[
+              { id: 'all', label: 'Усі моделі' },
+              { id: 'pending_only', label: 'Тільки не виготовлені' },
+              { id: 'priority', label: 'Пріоритетні', apricot: true },
+              { id: 'custom_colors', label: 'З кольорами / уточненням' }
+            ].map(f => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setSpecFilter(f.id)}
+                className={`dusk-facet-pill ${specFilter === f.id ? (f.apricot ? 'active-apricot' : 'active') : ''}`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Production List Items */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {productionList.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted)', fontSize: 14, background: 'var(--bg-card)', borderRadius: 24, border: '1px solid var(--border)' }}>
-            <AlertCircle size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 12px auto' }} />
-            Немає активних виробів для виготовлення за вибраними статусами.
+          <div className="dusk-panel" style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--color-muted)', fontSize: 13 }}>
+            <AlertCircle size={28} style={{ color: 'var(--color-muted)', margin: '0 auto 10px auto', opacity: 0.6 }} />
+            Немає активних виробів для виготовлення за вибраними фільтрами.
           </div>
         ) : (
           productionList.map(item => {
@@ -394,78 +491,79 @@ export default function ProductionCabinet({ orders, setOrders, showToast, isMobi
             return (
               <div 
                 key={item.name}
+                className="dusk-panel"
                 style={{ 
-                  background: 'var(--bg-card)', 
-                  borderRadius: 20, 
-                  border: item.hasPriority && !isChecked ? '1px solid rgba(251, 191, 36, 0.35)' : '1px solid var(--border)', 
-                  padding: isMobile ? 14 : 18, 
+                  border: item.hasPriority && !isChecked
+                    ? '1px solid var(--color-accent-2-border)'
+                    : '1px solid var(--color-rule)', 
+                  padding: isMobile ? 14 : 16, 
                   display: 'flex', 
                   flexDirection: 'column', 
-                  gap: isExpanded ? 14 : 8,
-                  position: 'relative', 
-                  overflow: 'hidden',
+                  gap: isExpanded ? 12 : 8,
                   opacity: isChecked ? 0.55 : 1,
-                  transition: 'all 0.2s'
+                  transition: 'all 0.16s ease'
                 }}
               >
                 {/* Header Row */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
                     <div 
                       onClick={() => toggleCheckProduct(item.name, isChecked)}
                       style={{ 
-                        width: 22, height: 22, border: isChecked ? 'none' : '2px solid var(--text-muted)', 
+                        width: 20, height: 20,
+                        border: isChecked ? 'none' : '1.5px solid var(--color-muted)', 
                         borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        background: isChecked ? '#2dd4bf' : 'transparent', cursor: 'pointer', transition: 'all 0.2s',
+                        background: isChecked ? 'var(--color-accent)' : 'transparent',
+                        cursor: 'pointer', transition: 'all 0.16s ease',
                         flexShrink: 0
                       }}
+                      title={isChecked ? 'Зняти відмітку з усіх' : 'Відмітити всі як виготовлені'}
                     >
-                      {isChecked && <Check size={14} style={{ color: '#000', fontWeight: 900 }} />}
+                      {isChecked && <Check size={13} style={{ color: 'var(--color-accent-ink)', strokeWidth: 2.5 }} />}
                     </div>
                     
                     <div 
                       onClick={() => toggleProductExpand(item.name)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, cursor: 'pointer' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0, cursor: 'pointer' }}
                     >
-                      {item.hasPriority && <Star size={14} fill="#fbbf24" stroke="#fbbf24" style={{ flexShrink: 0 }} />}
+                      {item.hasPriority && (
+                        <Star size={14} fill="var(--color-accent-2)" stroke="var(--color-accent-2)" style={{ flexShrink: 0 }} />
+                      )}
                       <span style={{ 
-                        fontSize: isMobile ? 13.5 : 15, fontWeight: 850, color: isChecked ? 'var(--text-muted)' : '#fff', 
+                        fontSize: isMobile ? 13.5 : 14.5, fontWeight: 600,
+                        color: isChecked ? 'var(--color-muted)' : 'var(--color-ink)', 
                         textDecoration: isChecked ? 'line-through' : 'none',
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
                         {item.name}
                       </span>
+                      <span className="dusk-num" style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                        ({item.orders.length} замовл.)
+                      </span>
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <span style={{ 
-                      fontSize: 12, fontWeight: 900, 
-                      color: isChecked ? 'var(--text-muted)' : '#a78bfa',
-                      background: isChecked ? 'rgba(255,255,255,0.03)' : 'rgba(167,139,250,0.12)', 
-                      padding: '4px 10px', borderRadius: 8
-                    }}>
-                      {item.manufacturedQuantity > 0 && item.manufacturedQuantity < item.totalQuantity ? (
-                        `${item.manufacturedQuantity} / ${item.totalQuantity} шт`
-                      ) : (
-                        `${item.totalQuantity} шт`
-                      )}
+                    <span className={`dusk-badge dusk-num ${isChecked ? 'dusk-badge--neutral' : 'dusk-badge--periwinkle'}`} style={{ fontSize: 12, padding: '3px 10px' }}>
+                      {item.manufacturedQuantity > 0 && item.manufacturedQuantity < item.totalQuantity
+                        ? `${item.manufacturedQuantity} / ${item.totalQuantity} шт.`
+                        : `${item.totalQuantity} шт.`}
                     </span>
                     <button 
+                      type="button"
                       onClick={() => toggleProductExpand(item.name)}
-                      style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
                     >
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                   </div>
                 </div>
 
-                {/* Inline Preview of Colors / Notes even when collapsed! */}
+                {/* Inline Preview of Colors / Notes when collapsed */}
                 {!isExpanded && item.hasCustomSpecs && (
                   <div 
                     onClick={() => toggleProductExpand(item.name)}
-                    style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingLeft: 32, cursor: 'pointer' }}
+                    style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingLeft: 30, cursor: 'pointer' }}
                   >
                     {item.orders.map((ord, idx) => {
                       if (ord.colors.length === 0 && !ord.itemNote && !ord.orderNotes) return null;
@@ -473,27 +571,27 @@ export default function ProductionCabinet({ orders, setOrders, showToast, isMobi
                         <div 
                           key={idx}
                           style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 5, flexWrap: 'wrap',
-                            background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)',
-                            borderRadius: 8, padding: '3px 8px', fontSize: 10.5,
+                            display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+                            background: 'var(--color-paper)', border: '1px solid var(--color-rule)',
+                            borderRadius: 6, padding: '4px 9px', fontSize: 11.5, lineHeight: 1,
                             opacity: ord.isManufactured ? 0.45 : 1
                           }}
                         >
-                          <span style={{ fontWeight: 800, color: '#94a3b8' }}>x{ord.quantity}:</span>
+                          <span className="dusk-num" style={{ fontWeight: 600, color: 'var(--color-muted)', lineHeight: 1 }}>×{ord.quantity}:</span>
                           {ord.colors.map((cName, cIdx) => {
                             const cMeta = getColorMeta(cName);
                             return (
-                              <span key={cIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontWeight: 800, color: '#fff' }}>
-                                <span style={{ width: 7, height: 7, borderRadius: '50%', background: cMeta.gradient || cMeta.hex, border: `1px solid ${cMeta.border || '#fff'}` }} />
-                                {cMeta.label}
+                              <span key={cIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontWeight: 500, color: 'var(--color-ink)', lineHeight: 1 }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: cMeta.gradient || cMeta.hex, border: cMeta.border ? `1px solid ${cMeta.border}` : '1px solid rgba(255,255,255,0.18)', flexShrink: 0 }} />
+                                <span>{cMeta.label}</span>
                               </span>
                             );
                           })}
                           {ord.itemNote && (
-                            <span style={{ color: '#38bdf8', fontWeight: 750 }}>({ord.itemNote})</span>
+                            <span style={{ color: 'var(--color-accent-2)', fontWeight: 500 }}>({ord.itemNote})</span>
                           )}
                           {ord.orderNotes && !ord.itemNote && (
-                            <span style={{ color: '#fbbf24', fontWeight: 750 }}>⚠️ {ord.orderNotes}</span>
+                            <span style={{ color: 'var(--color-accent-2)', fontWeight: 500 }}>• {ord.orderNotes}</span>
                           )}
                         </div>
                       );
@@ -508,96 +606,133 @@ export default function ProductionCabinet({ orders, setOrders, showToast, isMobi
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
+                      transition={{ duration: 0.18 }}
                       style={{ overflow: 'hidden' }}
                     >
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', margin: '2px 0 10px 0' }} />
-                      <div style={{ fontSize: 10, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.05em' }}>
-                        Замовлення з цим виробом ({item.orders.length}):
+                      <div style={{ borderTop: '1px solid var(--color-rule)', margin: '4px 0 10px 0' }} />
+                      <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', marginBottom: 8 }}>
+                        Замовлення з цим виробом ({item.orders.length}) — клікніть на замовлення для перегляду деталей:
                       </div>
                       
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {item.orders.map((ord, idx) => {
                           const statusMeta = STATUS_META[ord.status] || STATUS_META.new;
-                          const StatusIcon = statusMeta.icon;
-                          
                           return (
                             <div 
                               key={idx} 
                               style={{ 
                                 display: 'flex', flexDirection: 'column',
-                                background: 'rgba(0,0,0,0.2)', padding: '10px 14px', borderRadius: 12,
-                                fontSize: 12, gap: 8, border: '1px solid rgba(255,255,255,0.04)',
+                                background: 'var(--color-paper)', padding: '10px 14px', borderRadius: 10,
+                                fontSize: 12.5, gap: 8, border: '1px solid var(--color-rule)',
                                 opacity: ord.isManufactured ? 0.55 : 1,
-                                transition: 'opacity 0.2s'
+                                transition: 'opacity 0.16s ease, border-color 0.16s ease'
                               }}
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 150 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 180 }}>
                                   <div 
-                                    onClick={() => toggleOrderItemCheck(ord.orderId, ord.itemIdx, item.name, ord.isManufactured)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleOrderItemCheck(ord.orderId, ord.itemIdx, item.name, ord.isManufactured);
+                                    }}
+                                    title={ord.isManufactured ? 'Зняти відмітку виготовлення' : 'Відмітити як виготовлено'}
                                     style={{ 
-                                      width: 18, height: 18, border: ord.isManufactured ? 'none' : '2px solid var(--text-muted)', 
+                                      width: 18, height: 18,
+                                      border: ord.isManufactured ? 'none' : '1.5px solid var(--color-muted)', 
                                       borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                                      background: ord.isManufactured ? '#2dd4bf' : 'transparent', cursor: 'pointer', transition: 'all 0.2s',
-                                      flexShrink: 0
+                                      background: ord.isManufactured ? 'var(--color-accent)' : 'transparent',
+                                      cursor: 'pointer', flexShrink: 0
                                     }}
                                   >
-                                    {ord.isManufactured && <Check size={12} style={{ color: '#000', fontWeight: 900 }} />}
+                                    {ord.isManufactured && <Check size={11} style={{ color: 'var(--color-accent-ink)', strokeWidth: 2.5 }} />}
                                   </div>
                                   
-                                  {ord.isPriority && <Star size={12} fill="#fbbf24" stroke="#fbbf24" />}
-                                  <strong style={{ color: '#fff', textDecoration: ord.isManufactured ? 'line-through' : 'none' }}>{ord.orderNumber}</strong>
-                                  <span style={{ color: 'var(--text-muted)' }}>—</span>
-                                  <span style={{ color: '#e2e8f0', fontWeight: 700, textDecoration: ord.isManufactured ? 'line-through' : 'none' }}>{ord.clientName}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedOrderId(ord.orderId)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 8,
+                                      background: 'transparent',
+                                      border: 'none',
+                                      padding: '2px 6px',
+                                      marginLeft: -6,
+                                      borderRadius: 6,
+                                      cursor: 'pointer',
+                                      color: 'var(--color-ink)',
+                                      textAlign: 'left',
+                                      transition: 'background-color 0.14s ease'
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.background = 'oklch(100% 0 0 / 0.05)'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                                    title="Відкрити картку замовлення"
+                                  >
+                                    {ord.isPriority && <Star size={12} fill="var(--color-accent-2)" stroke="var(--color-accent-2)" style={{ flexShrink: 0 }} />}
+                                    <span className="dusk-mono" style={{ fontWeight: 600, color: 'var(--color-accent)', textDecoration: ord.isManufactured ? 'line-through' : 'underline', textUnderlineOffset: 3 }}>
+                                      {ord.orderNumber}
+                                    </span>
+                                    <span style={{ color: 'var(--color-muted)' }}>—</span>
+                                    <span style={{ color: 'var(--color-ink)', fontWeight: 500, textDecoration: ord.isManufactured ? 'line-through' : 'none' }}>
+                                      {ord.clientName}
+                                    </span>
+                                  </button>
                                 </div>
                                 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                  <span style={{ fontWeight: 900, color: '#a78bfa', background: 'rgba(167,139,250,0.12)', padding: '2px 8px', borderRadius: 6 }}>
-                                    x{ord.quantity}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                  <span className="dusk-badge dusk-badge--periwinkle dusk-num" style={{ padding: '4px 9px', fontSize: 11.5 }}>
+                                    ×{ord.quantity}
                                   </span>
                                   
-                                  <span style={{ 
-                                    padding: '3px 8px', borderRadius: 6, fontSize: 10, fontWeight: 900, 
-                                    background: statusMeta.bg, color: statusMeta.color,
-                                    display: 'inline-flex', alignItems: 'center', gap: 4
-                                  }}>
-                                    {StatusIcon && <StatusIcon size={10} />}
-                                    {statusMeta.label}
+                                  <span className="dusk-badge dusk-badge--neutral" style={{ padding: '4px 10px', fontSize: 11.5 }}>
+                                    <span className="dusk-dot dusk-dot--apricot" style={{ width: 6, height: 6 }} />
+                                    <span>{statusMeta.label}</span>
                                   </span>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedOrderId(ord.orderId)}
+                                    className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                                    style={{ height: 26, padding: '0 9px', fontSize: 11.5 }}
+                                  >
+                                    <span>Замовлення</span>
+                                    <ExternalLink size={11} />
+                                  </button>
                                 </div>
                               </div>
 
                               {/* Color Chips & Clarifications for this specific order item */}
                               {(ord.colors.length > 0 || ord.itemNote || ord.orderNotes) && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 28 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 28 }}>
                                   {ord.colors.length > 0 && (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
-                                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 800 }}>🎨 Кольори:</span>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+                                      <span style={{ fontSize: 11.5, color: 'var(--color-muted)', lineHeight: 1 }}>Кольори:</span>
                                       {ord.colors.map((cName, cIdx) => {
                                         const cMeta = getColorMeta(cName);
                                         return (
                                           <span key={cIdx} style={{
-                                            display: 'inline-flex', alignItems: 'center', gap: 4,
-                                            padding: '2px 8px', borderRadius: 6, fontSize: 10.5, fontWeight: 800,
-                                            background: 'rgba(255,255,255,0.06)', color: '#fff',
-                                            border: '1px solid rgba(255,255,255,0.12)'
+                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                            padding: '4px 9px', borderRadius: 999, fontSize: 11.5, fontWeight: 500, lineHeight: 1,
+                                            background: 'var(--color-paper-2)', color: 'var(--color-ink)',
+                                            border: '1px solid var(--color-rule)'
                                           }}>
-                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: cMeta.gradient || cMeta.hex, border: `1px solid ${cMeta.border || '#fff'}` }} />
-                                            {cMeta.label}
+                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: cMeta.gradient || cMeta.hex, border: cMeta.border ? `1px solid ${cMeta.border}` : '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }} />
+                                            <span>{cMeta.label}</span>
                                           </span>
                                         );
                                       })}
                                     </div>
                                   )}
                                   {ord.itemNote && (
-                                    <div style={{ fontSize: 11, color: '#38bdf8', fontWeight: 750, background: 'rgba(56,189,248,0.08)', padding: '4px 8px', borderRadius: 7, alignSelf: 'flex-start' }}>
-                                      🎨 Уточнення по виробу: <strong>{ord.itemNote}</strong>
+                                    <div className="dusk-apricot-strip">
+                                      <span>Уточнення по виробу:</span>
+                                      <strong style={{ color: 'var(--color-ink)' }}>{ord.itemNote}</strong>
                                     </div>
                                   )}
                                   {ord.orderNotes && (
-                                    <div style={{ fontSize: 11, color: '#fbbf24', fontWeight: 750, background: 'rgba(245,158,11,0.08)', padding: '4px 8px', borderRadius: 7, alignSelf: 'flex-start' }}>
-                                      ⚠️ До замовлення: <strong>{ord.orderNotes}</strong>
+                                    <div className="dusk-apricot-strip">
+                                      <span>До замовлення:</span>
+                                      <strong style={{ color: 'var(--color-ink)' }}>{ord.orderNotes}</strong>
                                     </div>
                                   )}
                                 </div>
@@ -609,12 +744,290 @@ export default function ProductionCabinet({ orders, setOrders, showToast, isMobi
                     </motion.div>
                   )}
                 </AnimatePresence>
-
               </div>
             );
           })
         )}
       </div>
+
+      {/* Order Quick-View & Management Modal right inside ProductionCabinet */}
+      <AnimatePresence>
+        {selectedOrder && (() => {
+          const details = selectedOrder.shipping_details || {};
+          const items = Array.isArray(details.items) ? details.items : [];
+          const clientName = `${details.firstName || ''} ${details.lastName || ''} ${selectedOrder.customers?.first_name || ''} ${selectedOrder.customers?.last_name || ''}`.trim() || 'Гість';
+          const clientPhone = details.phone || selectedOrder.customers?.phone || '';
+          const orderNum = selectedOrder.order_number ? selectedOrder.order_number.replace(/^MAN-[A-Z]+-/, '#') : `#${String(selectedOrder.id).slice(0, 6)}`;
+          const channelMeta = getChannelMeta(details.channel || 'manual');
+          const totalAmount = Number(selectedOrder.total_price || 0);
+          const prepayment = Number(details.prepayment || 0);
+          const codAmount = details.payment_status === 'paid' ? 0 : Math.max(0, totalAmount - prepayment);
+
+          return (
+            <div
+              onClick={() => setSelectedOrderId(null)}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 1100,
+                background: 'oklch(10% 0.014 268 / 0.78)',
+                backdropFilter: 'blur(8px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: isMobile ? 12 : 24
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97, y: 8 }}
+                transition={{ duration: 0.16 }}
+                onClick={(e) => e.stopPropagation()}
+                className="dusk-panel"
+                style={{
+                  width: '100%', maxWidth: 640, maxHeight: '90vh',
+                  display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                  border: '1px solid var(--color-rule)',
+                  boxShadow: '0 24px 60px rgba(0,0,0,0.55)'
+                }}
+              >
+                {/* Modal Header */}
+                <div style={{
+                  padding: '16px 20px',
+                  borderBottom: '1px solid var(--color-rule)',
+                  background: 'var(--color-paper-2)',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span className="dusk-mono" style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-ink)' }}>
+                      Замовлення {orderNum}
+                    </span>
+                    <span className="dusk-badge dusk-badge--periwinkle">
+                      {channelMeta.label}
+                    </span>
+                    {details.is_priority && (
+                      <span className="dusk-badge dusk-badge--apricot">
+                        <Star size={11} fill="currentColor" /> Пріоритетне
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOrderId(null)}
+                    className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                    style={{ width: 30, height: 30, padding: 0 }}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div style={{ padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* Stage Switcher */}
+                  <div>
+                    <div style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--color-muted)', marginBottom: 8 }}>
+                      Етап виробництва / замовлення:
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {Object.entries(STATUS_META).map(([stKey, stMeta]) => {
+                        const active = selectedOrder.status === stKey;
+                        return (
+                          <button
+                            key={stKey}
+                            type="button"
+                            onClick={() => handleUpdateOrderStatus(selectedOrder.id, stKey)}
+                            className={`dusk-facet-pill ${active ? 'active' : ''}`}
+                          >
+                            <span className={`dusk-dot ${active ? 'dusk-dot--periwinkle' : 'dusk-dot--muted'}`} style={{ width: 6, height: 6 }} />
+                            <span>{stMeta.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Customer & Delivery Summary */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                    gap: 12,
+                    padding: 14,
+                    borderRadius: 12,
+                    background: 'var(--color-paper-2)',
+                    border: '1px solid var(--color-rule)'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>Клієнт</span>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)' }}>{clientName}</div>
+                      {clientPhone && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--color-ink-2)' }}>
+                          <Phone size={12} style={{ color: 'var(--color-muted)' }} />
+                          <span className="dusk-mono">{clientPhone}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(clientPhone);
+                              if (showToast) showToast('Телефон скопійовано');
+                            }}
+                            style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', padding: 2 }}
+                            title="Скопіювати телефон"
+                          >
+                            <Copy size={12} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>Доставка та Оплата</span>
+                      <div style={{ fontSize: 12.5, color: 'var(--color-ink)', display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                        <MapPin size={13} style={{ color: 'var(--color-muted)', marginTop: 2, flexShrink: 0 }} />
+                        <span>
+                          {details.city ? `${details.city}${details.warehouse ? `, ${details.warehouse}` : ''}` : 'Самовивіз / Без адреси'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12.5, color: 'var(--color-ink-2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <CreditCard size={12} style={{ color: 'var(--color-muted)' }} />
+                        <span className="dusk-num" style={{ fontWeight: 600, color: 'var(--color-ink)' }}>{totalAmount.toLocaleString('uk-UA')} ₴</span>
+                        {codAmount > 0 ? (
+                          <span className="dusk-badge dusk-badge--apricot" style={{ fontSize: 11, padding: '2px 8px' }}>
+                            Наложка: {codAmount} ₴
+                          </span>
+                        ) : (
+                          <span className="dusk-badge dusk-badge--periwinkle" style={{ fontSize: 11, padding: '2px 8px' }}>
+                            Оплачено
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Order Note if present */}
+                  {details.notes && (
+                    <div className="dusk-apricot-strip">
+                      <MessageSquare size={14} style={{ color: 'var(--color-accent-2)', flexShrink: 0 }} />
+                      <span>Коментар до замовлення:</span>
+                      <strong style={{ color: 'var(--color-ink)' }}>{details.notes}</strong>
+                    </div>
+                  )}
+
+                  {/* All Items in this Order */}
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink-2)', marginBottom: 8 }}>
+                      Склад замовлення ({items.length} поз.):
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {items.map((it, idx) => {
+                        const isManuf = !!it.is_manufactured;
+                        const itColors = Array.isArray(it.colors) ? it.colors : (it.color ? [it.color] : []);
+                        const itNote = it.item_note || it.color_details || it.note || '';
+                        return (
+                          <div
+                            key={idx}
+                            style={{
+                              padding: '10px 12px',
+                              borderRadius: 10,
+                              background: 'var(--color-paper-2)',
+                              border: '1px solid var(--color-rule)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 6
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                              <div
+                                onClick={() => toggleOrderItemCheck(selectedOrder.id, idx, it.name, isManuf)}
+                                style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', flex: 1 }}
+                              >
+                                <div style={{
+                                  width: 18, height: 18, borderRadius: 5,
+                                  border: isManuf ? 'none' : '1.5px solid var(--color-muted)',
+                                  background: isManuf ? 'var(--color-accent)' : 'transparent',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                                }}>
+                                  {isManuf && <Check size={11} style={{ color: 'var(--color-accent-ink)', strokeWidth: 2.5 }} />}
+                                </div>
+                                <span style={{
+                                  fontSize: 13.5, fontWeight: 600,
+                                  color: isManuf ? 'var(--color-muted)' : 'var(--color-ink)',
+                                  textDecoration: isManuf ? 'line-through' : 'none'
+                                }}>
+                                  {it.name}
+                                </span>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span className="dusk-badge dusk-badge--periwinkle dusk-num">
+                                  ×{it.quantity || 1} шт.
+                                </span>
+                                <span className="dusk-num" style={{ fontSize: 12.5, color: 'var(--color-muted)' }}>
+                                  {Number(it.price || 0).toLocaleString('uk-UA')} ₴
+                                </span>
+                              </div>
+                            </div>
+
+                            {(itColors.length > 0 || itNote) && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingLeft: 27, alignItems: 'center' }}>
+                                {itColors.map((cName, cIdx) => {
+                                  const cMeta = getColorMeta(cName);
+                                  return (
+                                    <span key={cIdx} style={{
+                                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                                      padding: '3px 9px', borderRadius: 999, fontSize: 11.5, fontWeight: 500, lineHeight: 1,
+                                      background: 'var(--color-paper)', color: 'var(--color-ink)',
+                                      border: '1px solid var(--color-rule)'
+                                    }}>
+                                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: cMeta.gradient || cMeta.hex, flexShrink: 0 }} />
+                                      <span>{cMeta.label}</span>
+                                    </span>
+                                  );
+                                })}
+                                {itNote && (
+                                  <span style={{ fontSize: 12, color: 'var(--color-accent-2)', fontWeight: 500 }}>
+                                    Уточнення: {itNote}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div style={{
+                  padding: '14px 20px',
+                  borderTop: '1px solid var(--color-rule)',
+                  background: 'var(--color-paper-2)',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOrderId(null)}
+                    className="dusk-btn dusk-btn--ghost"
+                  >
+                    Закрити
+                  </button>
+
+                  {onOpenOrderInSales && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ordToOpen = selectedOrder;
+                        setSelectedOrderId(null);
+                        onOpenOrderInSales(ordToOpen);
+                      }}
+                      className="dusk-btn dusk-btn--primary"
+                    >
+                      <span>Відкрити та редагувати в Продажах</span>
+                      <ExternalLink size={14} />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
+      </AnimatePresence>
 
     </div>
   );

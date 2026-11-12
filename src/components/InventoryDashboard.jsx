@@ -1,27 +1,63 @@
+"use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { 
-  Plus, Trash2, Search, Filter, CheckCircle, 
-  ChevronDown, ChevronRight, DollarSign, Package, 
-  TrendingUp, Users, Calendar, Edit3, Save, X, Loader2, RefreshCw, MoveHorizontal, Printer, CheckCircle2, AlertCircle
+import {
+  Plus, Minus, Trash2, Search, Package, ArrowDownLeft, ArrowUpRight,
+  RefreshCw, Edit3, Check, X, AlertCircle, Layers, History, Box, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  WAREHOUSE_CATEGORIES,
+  loadWarehouseData,
+  saveWarehouseData
+} from '@/lib/warehouseStore';
+
+const QUICK_MATERIAL_TEMPLATES = [
+  { name: 'Коробка Нова Пошта 0.5 кг', category: 'packaging', unit: 'шт.', min_quantity: 10, cost_unit: 10 },
+  { name: 'Коробка 15×15×10 см', category: 'packaging', unit: 'шт.', min_quantity: 15, cost_unit: 12 },
+  { name: 'Коробка 20×20×15 см', category: 'packaging', unit: 'шт.', min_quantity: 10, cost_unit: 16 },
+  { name: 'Цукерка до замовлення', category: 'gifts', unit: 'шт.', min_quantity: 30, cost_unit: 3.5 },
+  { name: 'Листівка-подяка / Візитка', category: 'gifts', unit: 'шт.', min_quantity: 50, cost_unit: 2 },
+  { name: 'Наліпка брендована (стікер)', category: 'gifts', unit: 'шт.', min_quantity: 50, cost_unit: 1.5 },
+  { name: 'Кільце для брелка з ланцюжком', category: 'hardware', unit: 'шт.', min_quantity: 30, cost_unit: 4 },
+  { name: 'Магніт неодимовий', category: 'hardware', unit: 'шт.', min_quantity: 20, cost_unit: 5 },
+  { name: 'LED-підсвітка / USB модуль', category: 'hardware', unit: 'шт.', min_quantity: 5, cost_unit: 85 },
+  { name: 'Пластик PLA Базовий (котушка 1 кг)', category: 'filament', unit: 'шт.', min_quantity: 3, cost_unit: 580 }
+];
 
 export default function InventoryDashboard({ showToast }) {
-  const [batches, setBatches] = useState([]);
+  const [items, setItems] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'archived'
-  const [expandedBatches, setExpandedBatches] = useState({});
-  const [showBatchForm, setShowBatchForm] = useState(false);
-  const [newBatch, setNewBatch] = useState({ batch_date: new Date().toISOString().split('T')[0], notes: '' });
-  const [editingItem, setEditingItem] = useState(null);
-  const [newItem, setNewItem] = useState({ batch_id: null, name: '', maker: '', quantity: 1, price_unit: 50, sold_count: 0, paid_amount: 0 });
-  const [moveMenu, setMoveMenu] = useState({ open: false, itemId: null, oldBatchId: null, x: 0, y: 0 });
-  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
-  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
-  const [showMakerSuggestions, setShowMakerSuggestions] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('all'); // 'all' | category id | 'low_stock'
+  const [viewTab, setViewTab] = useState('stock'); // 'stock' | 'history'
   const [isMobile, setIsMobile] = useState(false);
+
+  // Add / Edit Material Modal
+  const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [materialForm, setMaterialForm] = useState({
+    name: '',
+    category: 'packaging',
+    unit: 'шт.',
+    quantity: '',
+    min_quantity: '10',
+    cost_unit: '',
+    pack_total_cost: '',
+    quick_sale: true
+  });
+
+  // Quick Receive (+ Прийняти) or Write-Off (- Списати) Modal
+  const [stockActionModal, setStockActionModal] = useState({
+    open: false,
+    mode: 'in', // 'in' (прихід) | 'out' (списання)
+    item: null,
+    quantity: '',
+    cost_unit: '',
+    total_pack_price: '',
+    note: ''
+  });
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -30,899 +66,1070 @@ export default function InventoryDashboard({ showToast }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const uniqueNames = useMemo(() => {
-    const names = batches.flatMap(b => b.inventory_items?.map(i => i.name) || []);
-    return [...new Set(names)].filter(Boolean).sort();
-  }, [batches]);
-
-  const uniqueMakers = useMemo(() => {
-    const makers = batches.flatMap(b => b.inventory_items?.map(i => i.maker) || []);
-    return [...new Set(makers)].filter(Boolean).sort();
-  }, [batches]);
+  const fetchWarehouse = async () => {
+    setLoading(true);
+    const data = await loadWarehouseData(supabase);
+    setItems(data.items || []);
+    setLogs(data.logs || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    fetchData();
+    fetchWarehouse();
+    const onUpdated = (e) => {
+      if (e.detail) {
+        setItems(e.detail.items || []);
+        setLogs(e.detail.logs || []);
+      }
+    };
+    window.addEventListener('buba_warehouse_updated', onUpdated);
+    return () => window.removeEventListener('buba_warehouse_updated', onUpdated);
   }, []);
 
-  async function fetchData() {
-    setLoading(true);
-    try {
-      const { data: bData, error: bError } = await supabase
-        .from('inventory_batches')
-        .select(`
-          *,
-          inventory_items (*)
-        `)
-        .order('batch_date', { ascending: false });
-      
-      if (bError) throw bError;
-      setBatches(bData || []);
-      
-      // Auto-expand the most recent batch
-      if (bData?.length > 0) {
-        setExpandedBatches({ [bData[0].id]: true });
-      }
-    } catch (err) {
-      console.error('Error fetching inventory:', err);
-      showToast('Помилка завантаження: ' + (err.message || err.details || 'Невідома помилка'), 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  // KPI Metrics
   const stats = useMemo(() => {
-    let totalValue = 0;
-    let totalSold = 0;
-    let totalPaid = 0;
-    let itemsCount = 0;
-    let pendingSalesCount = 0;
-    let pendingPaymentsCount = 0;
-    let makerDebt = {};
+    let totalStockValue = 0;
+    let totalUnits = 0;
+    let lowStockCount = 0;
 
-    batches.forEach(b => {
-      b.inventory_items?.forEach(i => {
-        const itemTotalSold = (i.sold_count || 0) * (i.price_unit || 0);
-        const itemPaid = Number(i.paid_amount || 0);
-        const itemDebt = itemTotalSold - itemPaid;
-
-        totalValue += (i.quantity || 0) * (i.price_unit || 0);
-        totalSold += itemTotalSold;
-        totalPaid += itemPaid;
-        itemsCount += (i.quantity || 0);
-
-        if ((i.quantity || 0) > (i.sold_count || 0)) {
-          pendingSalesCount += (i.quantity - i.sold_count);
-        }
-        if (itemDebt > 0) {
-          pendingPaymentsCount += 1;
-        }
-
-        if (i.maker) {
-          if (!makerDebt[i.maker]) makerDebt[i.maker] = 0;
-          makerDebt[i.maker] += itemDebt;
-        }
-      });
+    items.forEach(item => {
+      const qty = Number(item.quantity) || 0;
+      const cost = Number(item.cost_unit) || 0;
+      const minQty = Number(item.min_quantity) || 0;
+      totalStockValue += qty * cost;
+      totalUnits += qty;
+      if (qty <= minQty) lowStockCount += 1;
     });
 
-    let totalDebtToMakers = 0;
-    let totalOverpaidToMakers = 0;
-    Object.values(makerDebt).forEach(d => {
-      if (d > 0) totalDebtToMakers += d;
-      else totalOverpaidToMakers += Math.abs(d);
-    });
+    const writtenOffLogs = logs.filter(l => l.type === 'sale_out' || l.type === 'manual_out');
+    const totalWrittenOffCost = writtenOffLogs.reduce((s, l) => s + (Number(l.total_cost) || 0), 0);
+    const totalWrittenOffUnits = writtenOffLogs.reduce((s, l) => s + (Number(l.quantity) || 0), 0);
 
-    return { 
-      totalValue, totalSold, totalPaid, itemsCount, 
-      debt: totalSold - totalPaid, 
-      totalDebtToMakers,
-      totalOverpaidToMakers,
-      makerDebt, 
-      pendingSalesCount, 
-      pendingPaymentsCount 
+    return {
+      totalItems: items.length,
+      totalUnits: Math.round(totalUnits * 100) / 100,
+      totalStockValue: Math.round(totalStockValue),
+      lowStockCount,
+      totalWrittenOffCost: Math.round(totalWrittenOffCost),
+      totalWrittenOffUnits: Math.round(totalWrittenOffUnits * 100) / 100
     };
-  }, [batches]);
+  }, [items, logs]);
 
-  const toggleBatch = (id) => {
-    setExpandedBatches(prev => ({ ...prev, [id]: !prev[id] }));
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      if (categoryFilter === 'low_stock') {
+        if ((Number(item.quantity) || 0) > (Number(item.min_quantity) || 0)) return false;
+      } else if (categoryFilter !== 'all' && item.category !== categoryFilter) {
+        return false;
+      }
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (item.name || '').toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [items, categoryFilter, searchQuery]);
+
+  const filteredLogs = useMemo(() => {
+    if (!searchQuery.trim()) return logs;
+    const q = searchQuery.toLowerCase();
+    return logs.filter(l =>
+      (l.item_name || '').toLowerCase().includes(q) ||
+      (l.note || '').toLowerCase().includes(q)
+    );
+  }, [logs, searchQuery]);
+
+  const openCreateModal = () => {
+    setEditingItem(null);
+    setMaterialForm({
+      name: '',
+      category: 'packaging',
+      unit: 'шт.',
+      quantity: '',
+      min_quantity: '10',
+      cost_unit: '',
+      pack_total_cost: '',
+      quick_sale: true
+    });
+    setShowMaterialModal(true);
   };
 
-  async function handleAddBatch() {
-    try {
-      const { data, error } = await supabase.from('inventory_batches').insert([newBatch]).select();
-      if (error) throw error;
-      setBatches([ { ...data[0], inventory_items: [] }, ...batches]);
-      setShowBatchForm(false);
-      showToast('Партію створено');
-    } catch (err) { 
-      console.error('Add batch error:', err);
-      showToast('Помилка створення партії: ' + (err.message || 'Перевірте SQL запит у Supabase'), 'error'); 
-    }
-  }
-
-  async function handleAddItem(batchId) {
-    try {
-      const itemToSave = { ...newItem, batch_id: batchId };
-      const { data, error } = await supabase.from('inventory_items').insert([itemToSave]).select();
-      if (error) throw error;
-      
-      setBatches(batches.map(b => 
-        b.id === batchId ? { ...b, inventory_items: [...(b.inventory_items || []), data[0]] } : b
-      ));
-      setNewItem({ batch_id: null, name: '', maker: '', quantity: 1, price_unit: 50, sold_count: 0, paid_amount: 0 });
-      showToast('Товар додано');
-    } catch (err) { 
-      console.error('Add item error:', err);
-      showToast('Помилка додавання: ' + (err.message || 'Перевірте SQL'), 'error'); 
-    }
-  }
-
-  async function handleUpdateItem(item) {
-    try {
-      const { error } = await supabase.from('inventory_items').update(item).eq('id', item.id);
-      if (error) throw error;
-      setBatches(batches.map(b => ({
-        ...b,
-        inventory_items: b.inventory_items?.map(i => i.id === item.id ? item : i)
-      })));
-      setEditingItem(null);
-      showToast('Оновлено');
-    } catch (err) { showToast('Помилка оновлення', 'error'); }
-  }
-
-  async function handleDeleteItem(batchId, itemId) {
-    setConfirmModal({
-      open: true,
-      title: 'Видалити товар?',
-      message: 'Цю дію неможливо буде скасувати.',
-      onConfirm: async () => {
-        try {
-          const { error } = await supabase.from('inventory_items').delete().eq('id', itemId);
-          if (error) throw error;
-          setBatches(batches.map(b => 
-            b.id === batchId ? { ...b, inventory_items: b.inventory_items.filter(i => i.id !== itemId) } : b
-          ));
-          showToast('Видалено');
-          setConfirmModal({ ...confirmModal, open: false });
-        } catch (err) { showToast('Помилка видалення', 'error'); }
-      }
+  const openEditModal = (item) => {
+    setEditingItem(item);
+    setMaterialForm({
+      name: item.name || '',
+      category: item.category || 'packaging',
+      unit: item.unit || 'шт.',
+      quantity: String(item.quantity ?? 0),
+      min_quantity: String(item.min_quantity ?? 10),
+      cost_unit: String(item.cost_unit ?? 0),
+      pack_total_cost: '',
+      quick_sale: item.quick_sale !== false
     });
-  }
-
-  async function handleDeleteBatch(batchId) {
-    setConfirmModal({
-      open: true,
-      title: 'Видалити партію?',
-      message: 'Ви впевнені, що хочете видалити цю порожню партію?',
-      onConfirm: async () => {
-        try {
-          const { error } = await supabase.from('inventory_batches').delete().eq('id', batchId);
-          if (error) throw error;
-          setBatches(batches.filter(b => b.id !== batchId));
-          showToast('Партію видалено');
-          setConfirmModal({ ...confirmModal, open: false });
-        } catch (err) { showToast('Помилка видалення', 'error'); }
-      }
-    });
-  }
-
-  async function handleUpdateBatchStatus(batchId, status) {
-    try {
-      const { error } = await supabase.from('inventory_batches').update({ status }).eq('id', batchId);
-      if (error) throw error;
-      setBatches(batches.map(b => b.id === batchId ? { ...b, status } : b));
-      showToast(status === 'archived' ? 'Партію архівовано' : 'Партію відновлено');
-    } catch (err) { showToast('Помилка оновлення статусу', 'error'); }
-  }
-
-  async function handleMoveItem(itemId, oldBatchId, newBatchId) {
-    if (!newBatchId) return;
-    try {
-      const { error } = await supabase.from('inventory_items').update({ batch_id: newBatchId }).eq('id', itemId);
-      if (error) throw error;
-      
-      const itemToMove = batches.find(b => b.id === oldBatchId)?.inventory_items?.find(i => i.id === itemId);
-      
-      setBatches(batches.map(b => {
-        if (b.id === oldBatchId) return { ...b, inventory_items: b.inventory_items.filter(i => i.id !== itemId) };
-        if (b.id === newBatchId) return { ...b, inventory_items: [...(b.inventory_items || []), itemToMove] };
-        return b;
-      }));
-      setMoveMenu({ open: false, itemId: null, oldBatchId: null, x: 0, y: 0 });
-      showToast('Товар перенесено');
-    } catch (err) { showToast('Помилка перенесення', 'error'); }
-  }
-
-  const printBatch = (batch) => {
-    const printWindow = window.open('', '_blank');
-    const itemsHtml = batch.inventory_items?.map(i => `
-      <tr>
-        <td style="padding: 12px 10px; border-bottom: 1px solid #eee;">${i.name}</td>
-        <td style="padding: 12px 10px; border-bottom: 1px solid #eee; text-align: center;">${i.quantity} шт.</td>
-        <td style="padding: 12px 10px; border-bottom: 1px solid #eee; text-align: center;">${i.price_unit} ₴</td>
-        <td style="padding: 12px 10px; border-bottom: 1px solid #eee; text-align: right;">${i.quantity * i.price_unit} ₴</td>
-      </tr>
-    `).join('');
-
-    const total = batch.inventory_items?.reduce((acc, i) => acc + (i.quantity * i.price_unit), 0);
-    const invoiceNum = `${new Date(batch.batch_date).getTime().toString().slice(-6)}${batch.id.slice(0,2).toUpperCase()}`;
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Накладна №${invoiceNum}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-            body { font-family: 'Inter', sans-serif; padding: 50px; color: #1a1a1a; line-height: 1.5; }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 3px solid #1a1a1a; padding-bottom: 20px; }
-            .store-name { font-size: 28px; font-weight: 900; letter-spacing: -0.02em; }
-            .batch-info { color: #666; font-size: 14px; margin-top: 5px; }
-            .invoice-details { text-align: right; }
-            .invoice-label { font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; }
-            .invoice-number { font-size: 20px; font-weight: 900; }
-            table { width: 100%; border-collapse: collapse; margin-top: 30px; }
-            th { text-align: left; padding: 15px 10px; border-bottom: 2px solid #1a1a1a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #666; }
-            td { font-size: 14px; }
-            .total-row { margin-top: 40px; text-align: right; padding-top: 20px; border-top: 2px solid #1a1a1a; }
-            .total-label { font-size: 14px; color: #666; font-weight: 700; text-transform: uppercase; }
-            .total-amount { font-size: 24px; font-weight: 900; margin-top: 5px; }
-            @media print { body { padding: 20px; } .header { border-bottom-width: 2px; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <div class="store-name">СІМЕЙНА ДРУКАРНЯ</div>
-              <div class="batch-info">Партія від: ${new Date(batch.batch_date).toLocaleDateString('uk-UA')}</div>
-              <div class="batch-info">${batch.notes || ''}</div>
-            </div>
-            <div class="invoice-details">
-              <div class="invoice-label">Накладна</div>
-              <div class="invoice-number">№${invoiceNum}</div>
-            </div>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 50%">Найменування товару</th>
-                <th style="text-align: center">Кількість</th>
-                <th style="text-align: center">Ціна за од.</th>
-                <th style="text-align: right">Сума</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-          <div class="total-row">
-            <div class="total-label">Разом до сплати</div>
-            <div class="total-amount">${total} ₴</div>
-          </div>
-          <script>window.print();</script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    setShowMaterialModal(true);
   };
 
-  const filteredBatches = batches.filter(b => b.status === activeTab || (!b.status && activeTab === 'active'));
+  const handleSaveMaterial = async (e) => {
+    e.preventDefault();
+    if (!materialForm.name.trim()) {
+      showToast?.('Введіть назву матеріалу', 'error');
+      return;
+    }
+
+    const qty = parseFloat(materialForm.quantity) || 0;
+    const minQty = parseFloat(materialForm.min_quantity) || 0;
+    const costUnit = parseFloat(materialForm.cost_unit) || 0;
+
+    let updatedItems;
+    let updatedLogs = [...logs];
+
+    if (editingItem) {
+      const prevQty = Number(editingItem.quantity) || 0;
+      const diff = qty - prevQty;
+      updatedItems = items.map(it =>
+        it.id === editingItem.id
+          ? {
+              ...it,
+              name: materialForm.name.trim(),
+              category: materialForm.category,
+              unit: materialForm.unit || 'шт.',
+              quantity: qty,
+              min_quantity: minQty,
+              cost_unit: costUnit,
+              quick_sale: materialForm.quick_sale
+            }
+          : it
+      );
+
+      if (diff !== 0) {
+        updatedLogs.unshift({
+          id: `log_${Date.now()}`,
+          created_at: new Date().toISOString(),
+          type: diff > 0 ? 'in' : 'manual_out',
+          item_id: editingItem.id,
+          item_name: materialForm.name.trim(),
+          unit: materialForm.unit || 'шт.',
+          quantity: Math.abs(diff),
+          cost_unit: costUnit,
+          total_cost: Math.round(Math.abs(diff) * costUnit * 100) / 100,
+          note: 'Коригування залишку при редагуванні'
+        });
+      }
+      showToast?.('Матеріал оновлено');
+    } else {
+      const newItemObj = {
+        id: `wh_${Date.now()}`,
+        name: materialForm.name.trim(),
+        category: materialForm.category,
+        unit: materialForm.unit || 'шт.',
+        quantity: qty,
+        min_quantity: minQty,
+        cost_unit: costUnit,
+        quick_sale: materialForm.quick_sale
+      };
+      updatedItems = [newItemObj, ...items];
+
+      if (qty > 0) {
+        updatedLogs.unshift({
+          id: `log_${Date.now()}`,
+          created_at: new Date().toISOString(),
+          type: 'in',
+          item_id: newItemObj.id,
+          item_name: newItemObj.name,
+          unit: newItemObj.unit,
+          quantity: qty,
+          cost_unit: costUnit,
+          total_cost: Math.round(qty * costUnit * 100) / 100,
+          note: 'Початковий прихід на склад'
+        });
+      }
+      showToast?.(`Додано на склад: ${newItemObj.name}`);
+    }
+
+    setItems(updatedItems);
+    setLogs(updatedLogs);
+    setShowMaterialModal(false);
+    await saveWarehouseData(supabase, updatedItems, updatedLogs);
+  };
+
+  const handleOpenStockAction = (item, mode) => {
+    setStockActionModal({
+      open: true,
+      mode,
+      item,
+      quantity: mode === 'out' ? '1' : '',
+      cost_unit: String(item.cost_unit ?? 0),
+      total_pack_price: '',
+      note: ''
+    });
+  };
+
+  const handleExecuteStockAction = async (e) => {
+    e.preventDefault();
+    const { mode, item, quantity, cost_unit, note } = stockActionModal;
+    if (!item) return;
+
+    const delta = parseFloat(quantity);
+    if (!delta || delta <= 0) {
+      showToast?.('Вкажіть кількість більше 0', 'error');
+      return;
+    }
+
+    const unitCostVal = parseFloat(cost_unit) >= 0 ? parseFloat(cost_unit) : (Number(item.cost_unit) || 0);
+    const currentQty = Number(item.quantity) || 0;
+    const newQty = mode === 'in'
+      ? Number((currentQty + delta).toFixed(2))
+      : Math.max(0, Number((currentQty - delta).toFixed(2)));
+
+    const updatedItems = items.map(it =>
+      it.id === item.id
+        ? {
+            ...it,
+            quantity: newQty,
+            cost_unit: mode === 'in' && unitCostVal > 0 ? unitCostVal : it.cost_unit
+          }
+        : it
+    );
+
+    const newLog = {
+      id: `log_${Date.now()}`,
+      created_at: new Date().toISOString(),
+      type: mode === 'in' ? 'in' : 'manual_out',
+      item_id: item.id,
+      item_name: item.name,
+      unit: item.unit || 'шт.',
+      quantity: delta,
+      cost_unit: unitCostVal,
+      total_cost: Math.round(delta * unitCostVal * 100) / 100,
+      note: note.trim() || (mode === 'in' ? 'Прихід матеріалів на склад' : 'Ручне списання зі складу')
+    };
+
+    const updatedLogs = [newLog, ...logs];
+    setItems(updatedItems);
+    setLogs(updatedLogs);
+    setStockActionModal({ open: false, mode: 'in', item: null, quantity: '', cost_unit: '', total_pack_price: '', note: '' });
+    await saveWarehouseData(supabase, updatedItems, updatedLogs);
+    showToast?.(mode === 'in' ? `Прийнято +${delta} ${item.unit} (${item.name})` : `Списано −${delta} ${item.unit} (${item.name})`);
+  };
+
+  const toggleQuickSale = async (item) => {
+    const updatedItems = items.map(it =>
+      it.id === item.id ? { ...it, quick_sale: !it.quick_sale } : it
+    );
+    setItems(updatedItems);
+    await saveWarehouseData(supabase, updatedItems, logs);
+    showToast?.(!item.quick_sale ? `«${item.name}» додано у швидкі списання в продажах` : `«${item.name}» приховано з швидких кнопок продажу`);
+  };
+
+  const handleDeleteMaterial = async (item) => {
+    const updatedItems = items.filter(it => it.id !== item.id);
+    setItems(updatedItems);
+    await saveWarehouseData(supabase, updatedItems, logs);
+    showToast?.(`Матеріал «${item.name}» видалено`);
+  };
+
+  const getCategoryLabel = (catId) => {
+    return WAREHOUSE_CATEGORIES.find(c => c.id === catId)?.label || 'Інше';
+  };
 
   return (
-    <div style={{ color: 'var(--text-main)' }}>
-      {/* Header & Stats */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, gap: 20, flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 950, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Package size={32} style={{ color: '#7c3aed' }} /> Склад та Реалізація
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Облік товарів у магазинах та виплати майстрам</p>
-        </div>
-        
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button 
-            onClick={() => setShowBatchForm(true)}
-            style={{ padding: '12px 24px', borderRadius: 14, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 20px rgba(124,58,237,0.2)' }}
-          >
-            <Plus size={18} /> НОВА ПАРТІЯ
-          </button>
-          <button 
-            onClick={fetchData}
-            style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 40 }}>
-        <div style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(236,72,153,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(124,58,237,0.2)' }}>
-          <div style={{ color: '#a78bfa', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Загальна вартість</div>
-          <div style={{ fontSize: 28, fontWeight: 950 }}>{stats.totalValue} <span style={{ fontSize: 16, color: '#a78bfa' }}>₴</span></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>{stats.itemsCount} одиниць товару</div>
-        </div>
-        <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.1), rgba(20,184,166,0.1))', padding: 24, borderRadius: 24, border: '1px solid rgba(34,197,94,0.2)' }}>
-          <div style={{ color: '#4ade80', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Продано на суму</div>
-          <div style={{ fontSize: 28, fontWeight: 950 }}>{stats.totalSold} <span style={{ fontSize: 16, color: '#4ade80' }}>₴</span></div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-            Очікує продажу: <span style={{ color: '#fff', fontWeight: 800 }}>{stats.pendingSalesCount}</span> шт.
-          </div>
-        </div>
-        <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.05), rgba(34,197,94,0.05))', padding: 24, borderRadius: 24, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-            {(stats.totalDebtToMakers > 0 || (stats.totalDebtToMakers === 0 && stats.totalOverpaidToMakers === 0)) && (
-              <div>
-                <div style={{ color: '#fbbf24', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fbbf24' }}></div> Ми винні
-                </div>
-                <div style={{ fontSize: 28, fontWeight: 950, color: '#fbbf24' }}>
-                  {stats.totalDebtToMakers} <span style={{ fontSize: 16 }}>₴</span>
-                </div>
-              </div>
-            )}
-            {stats.totalOverpaidToMakers > 0 && (
-              <div>
-                <div style={{ color: '#4ade80', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80' }}></div> Наш аванс
-                </div>
-                <div style={{ fontSize: 28, fontWeight: 950, color: '#4ade80' }}>
-                  {stats.totalOverpaidToMakers} <span style={{ fontSize: 16 }}>₴</span>
-                </div>
-              </div>
-            )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
+      {/* Dusk Glass Header & Command Bar */}
+      <div className="dusk-glass" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
+          <div>
+            <h1 className="dusk-heading" style={{ fontSize: isMobile ? 20 : 22 }}>
+              Склад матеріалів та пакування
+            </h1>
+            <p className="dusk-subheading" style={{ marginTop: 2 }}>
+              Прийом коробок, цукерок, пластику й фурнітури та автоматичне списання у продажах
+            </p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-            {Object.entries(stats.makerDebt).map(([maker, debt]) => (
-              debt !== 0 && (
-                <div key={maker} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
-                  <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{maker}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: debt > 0 ? 'rgba(251,191,36,0.5)' : 'rgba(74,222,128,0.5)', textTransform: 'uppercase' }}>
-                      {debt > 0 ? 'борг' : 'аванс'}
-                    </span>
-                    <span style={{ fontWeight: 900, color: debt > 0 ? '#fbbf24' : '#4ade80' }}>
-                      {debt > 0 ? `${debt} ₴` : `+${Math.abs(debt)} ₴`}
-                    </span>
-                  </div>
-                </div>
-              )
-            ))}
-            {stats.totalDebtToMakers === 0 && stats.totalOverpaidToMakers === 0 && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#4ade80', fontSize: 12, fontWeight: 800 }}>
-                <CheckCircle2 size={16} /> Розрахунки завершені
-              </div>
-            )}
-          </div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 600 }}>Оплачено: <span style={{ color: '#fff' }}>{stats.totalPaid} ₴</span></span>
-            <div style={{ 
-              display: 'flex', alignItems: 'center', gap: 6, 
-              background: stats.pendingPaymentsCount > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)', 
-              color: stats.pendingPaymentsCount > 0 ? '#f59e0b' : '#22c55e',
-              padding: '4px 10px', borderRadius: 8, fontWeight: 900, fontSize: 9,
-              border: stats.pendingPaymentsCount > 0 ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(34,197,94,0.2)',
-              textTransform: 'uppercase'
-            }}>
-              {stats.pendingPaymentsCount > 0 ? <AlertCircle size={10} /> : <CheckCircle2 size={10} />}
-              {stats.pendingPaymentsCount} неопл. тов.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs for Archive */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, padding: 4, background: 'rgba(255,255,255,0.02)', borderRadius: 12, width: 'fit-content', border: '1px solid var(--border)' }}>
-        <button 
-          onClick={() => setActiveTab('active')}
-          style={{ padding: '8px 20px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer', background: activeTab === 'active' ? '#7c3aed' : 'transparent', color: activeTab === 'active' ? '#fff' : 'var(--text-muted)', transition: 'all 0.2s' }}
-        >
-          АКТИВНІ
-        </button>
-        <button 
-          onClick={() => setActiveTab('archived')}
-          style={{ padding: '8px 20px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer', background: activeTab === 'archived' ? '#4a4a6a' : 'transparent', color: activeTab === 'archived' ? '#fff' : 'var(--text-muted)', transition: 'all 0.2s' }}
-        >
-          АРХІВ
-        </button>
-      </div>
-
-      {/* Batch Form Modal */}
-      <AnimatePresence>
-        {showBatchForm && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ background: '#0f172a', borderRadius: 32, padding: 32, width: '100%', maxWidth: 450, border: '1px solid rgba(255,255,255,0.1)' }}>
-              <h2 style={{ fontSize: 22, fontWeight: 900, marginBottom: 24 }}>Нова партія</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', display: 'block', marginBottom: 8 }}>ДАТА ПАРТІЇ</label>
-                  <input type="date" value={newBatch.batch_date} onChange={e => setNewBatch({...newBatch, batch_date: e.target.value})} style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 14, color: '#fff' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a', display: 'block', marginBottom: 8 }}>НОТАТКИ</label>
-                  <textarea placeholder="Наприклад: Поставка в ТЦ 'Метро'" value={newBatch.notes} onChange={e => setNewBatch({...newBatch, notes: e.target.value})} style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 14, color: '#fff', minHeight: 100 }} />
-                </div>
-                <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                  <button onClick={handleAddBatch} style={{ flex: 1, padding: 14, borderRadius: 14, background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}>СТВОРИТИ</button>
-                  <button onClick={() => setShowBatchForm(false)} style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}>СКАСУВАТИ</button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Main List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {filteredBatches.map(batch => {
-          const isFullyDone = batch.inventory_items?.every(i => (i.sold_count >= i.quantity) && (i.paid_amount >= (i.sold_count * i.price_unit)));
-          
-          return (
-          <div key={batch.id} style={{ background: 'var(--bg-card)', borderRadius: 24, border: batch.status === 'archived' ? '1px solid rgba(255,255,255,0.02)' : '1px solid var(--border)', overflow: 'hidden', opacity: batch.status === 'archived' ? 0.7 : 1 }}>
-            {/* Batch Header */}
-            <div 
-              onClick={() => toggleBatch(batch.id)}
-              style={{ padding: '20px 24px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: expandedBatches[batch.id] ? 'rgba(255,255,255,0.02)' : 'transparent' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: isFullyDone ? 'rgba(34,197,94,0.1)' : 'rgba(124,58,237,0.1)', color: isFullyDone ? '#22c55e' : '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {isFullyDone ? <CheckCircle size={20} /> : <Calendar size={20} />}
-                </div>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {new Date(batch.batch_date).toLocaleDateString('uk-UA')}
-                    {isFullyDone && batch.status !== 'archived' && (
-                      <span style={{ fontSize: 9, background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '2px 8px', borderRadius: 6, fontWeight: 900 }}>ГОТОВО ДО АРХІВУ ✅</span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{batch.notes || 'Без нотаток'} • {batch.inventory_items?.length || 0} позицій</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                <button 
-                   onClick={(e) => { e.stopPropagation(); printBatch(batch); }}
-                   style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                   title="Друкувати накладну"
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', minWidth: isMobile ? '100%' : 240 }}>
+              <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+              <input
+                type="text"
+                placeholder="Пошук матеріалу (коробка, цукерка)…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="dusk-input"
+                style={{ paddingLeft: 32, paddingRight: searchQuery ? 28 : 12, height: 34, fontSize: 12.5, borderRadius: 999 }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', padding: 2 }}
                 >
-                  <Printer size={18} />
+                  <X size={13} />
                 </button>
-
-                {batch.status === 'active' ? (
-                   <button 
-                      disabled={!isFullyDone}
-                      onClick={(e) => { e.stopPropagation(); handleUpdateBatchStatus(batch.id, 'archived'); }}
-                      style={{ 
-                        padding: '8px 16px', borderRadius: 10, 
-                        background: isFullyDone ? '#22c55e' : 'rgba(255,255,255,0.05)', 
-                        color: isFullyDone ? '#fff' : 'rgba(255,255,255,0.2)', 
-                        border: 'none', fontSize: 10, fontWeight: 900, 
-                        cursor: isFullyDone ? 'pointer' : 'not-allowed',
-                        transition: 'all 0.3s'
-                      }}
-                    >
-                      {isFullyDone ? 'В АРХІВ' : 'АРХІВУВАТИ'}
-                    </button>
-                ) : (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleUpdateBatchStatus(batch.id, 'active'); }}
-                    style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.2)', fontSize: 10, fontWeight: 900, cursor: 'pointer' }}
-                  >
-                    ВІДНОВИТИ
-                  </button>
-                )}
-                
-                <div style={{ textAlign: 'right', minWidth: 80 }}>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: '#6b6b8a' }}>СУМА</div>
-                  <div style={{ fontSize: 14, fontWeight: 800 }}>{batch.inventory_items?.reduce((acc, i) => acc + (i.quantity * i.price_unit), 0)} ₴</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {batch.inventory_items?.length === 0 && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleDeleteBatch(batch.id); }}
-                      style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 10, width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  )}
-                  {expandedBatches[batch.id] ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Batch Content */}
-            <AnimatePresence>
-              {expandedBatches[batch.id] && (
-                <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} style={{ overflow: 'hidden' }}>
-                  <div style={{ padding: isMobile ? '16px 12px' : '0 24px 24px 24px', borderTop: '1px solid var(--border)' }}>
-                    {isMobile ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 12 }}>
-                        {batch.inventory_items?.map(item => {
-                          const soldAmount = item.sold_count * item.price_unit;
-                          const totalAmount = item.quantity * item.price_unit;
-                          
-                          return (
-                            <div key={item.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                              {/* Title & Maker */}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                                <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{item.name}</div>
-                                <div style={{ fontSize: 10, fontWeight: 700, color: '#7c3aed', background: 'rgba(124,58,237,0.1)', padding: '4px 8px', borderRadius: 6, flexShrink: 0 }}>{item.maker}</div>
-                              </div>
+            <button
+              type="button"
+              onClick={fetchWarehouse}
+              className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+              style={{ height: 34, padding: '0 10px' }}
+              title="Оновити склад"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            </button>
 
-                              {/* Info Grid */}
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, background: 'rgba(0,0,0,0.15)', padding: 10, borderRadius: 12 }}>
-                                <div>
-                                  <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>ЦІНА</div>
-                                  <div style={{ fontSize: 12, fontWeight: 800 }}>{item.price_unit} ₴</div>
-                                </div>
-                                <div>
-                                  <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>КІЛЬКІСТЬ</div>
-                                  <div style={{ fontSize: 12, fontWeight: 800 }}>{item.quantity} шт</div>
-                                </div>
-                                <div>
-                                  <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>ЗАЛИШОК</div>
-                                  <div style={{ fontSize: 12, fontWeight: 800, color: (item.quantity - item.sold_count) === 0 ? '#ef4444' : '#fff' }}>{item.quantity - item.sold_count} шт</div>
-                                </div>
-                                <div>
-                                  <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>ПРОДАНО</div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span style={{ fontSize: 12, fontWeight: 900, color: '#4ade80' }}>{item.sold_count}</span>
-                                    <div style={{ display: 'flex', gap: 4 }}>
-                                      <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.max(0, item.sold_count - 1) })} style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 4, width: 20, height: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>-</button>
-                                      <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.min(item.quantity, item.sold_count + 1) })} style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', borderRadius: 4, width: 20, height: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>+</button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Pay status and Actions */}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 10 }}>
-                                <div 
-                                  onClick={() => {
-                                    let newVal = 0;
-                                    if (item.paid_amount === 0) {
-                                      newVal = soldAmount > 0 ? soldAmount : totalAmount;
-                                    } else if (item.paid_amount === soldAmount && soldAmount < totalAmount) {
-                                      newVal = totalAmount;
-                                    } else {
-                                      newVal = 0;
-                                    }
-                                    handleUpdateItem({ ...item, paid_amount: newVal });
-                                  }}
-                                  style={{ 
-                                    fontSize: 9, fontWeight: 900, padding: '6px 10px', borderRadius: 8, cursor: 'pointer',
-                                    background: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
-                                      ? 'rgba(34,197,94,0.15)' 
-                                      : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
-                                        ? 'rgba(34,197,94,0.08)' 
-                                        : 'rgba(245,158,11,0.08)'),
-                                    color: item.paid_amount >= (item.sold_count * item.price_unit) && (item.sold_count > 0 || item.paid_amount > 0) ? '#4ade80' : '#fbbf24',
-                                    border: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0 
-                                      ? '1px solid rgba(74,222,128,0.3)' 
-                                      : '1px solid transparent'
-                                  }}
-                                >
-                                  {item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
-                                    ? 'ВСЕ ОПЛАЧЕНО' 
-                                    : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
-                                      ? 'ПРОДАНЕ ОПЛ.' 
-                                      : `${item.paid_amount} ₴`)}
-                                </div>
-
-                                <div style={{ display: 'flex', gap: 6 }}>
-                                  <button 
-                                    onClick={(e) => {
-                                      const rect = e.currentTarget.getBoundingClientRect();
-                                      setMoveMenu({ 
-                                        open: true, 
-                                        itemId: item.id, 
-                                        oldBatchId: batch.id,
-                                        x: rect.left - 200, 
-                                        y: rect.top + window.scrollY + 30 
-                                      });
-                                    }}
-                                    style={{ border: 'none', background: 'rgba(139,92,246,0.15)', color: '#c4b5fd', borderRadius: 8, padding: '6px 10px', fontSize: 9, fontWeight: 900, cursor: 'pointer' }}
-                                  >
-                                    ПЕРЕНЕСТИ
-                                  </button>
-                                  <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}><Trash2 size={12}/></button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-
-                        {/* Add Item form on mobile */}
-                        <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
-                          <div style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Новий товар у партію</div>
-                          <div style={{ position: 'relative' }}>
-                            <input 
-                              placeholder="Назва товару..." 
-                              value={newItem.name} 
-                              onChange={e => setNewItem({...newItem, name: e.target.value})} 
-                              onFocus={() => setShowNameSuggestions(true)}
-                              onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
-                              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} 
-                            />
-                            <AnimatePresence>
-                              {showNameSuggestions && uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).length > 0 && (
-                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 0, right: 0, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 150, overflowY: 'auto' }}>
-                                  {uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).map(n => (
-                                    <div key={n} onClick={() => setNewItem({ ...newItem, name: n })} style={{ padding: '8px 12px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{n}</div>
-                                  ))}
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                          
-                          <div style={{ position: 'relative' }}>
-                            <input 
-                              placeholder="Хто зробив..." 
-                              value={newItem.maker} 
-                              onChange={e => setNewItem({...newItem, maker: e.target.value})} 
-                              onFocus={() => setShowMakerSuggestions(true)}
-                              onBlur={() => setTimeout(() => setShowMakerSuggestions(false), 200)}
-                              style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} 
-                            />
-                            <AnimatePresence>
-                              {showMakerSuggestions && uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).length > 0 && (
-                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 0, right: 0, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 150, overflowY: 'auto' }}>
-                                  {uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).map(m => (
-                                    <div key={m} onClick={() => setNewItem({ ...newItem, maker: m })} style={{ padding: '8px 12px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{m}</div>
-                                  ))}
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                            <div>
-                              <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Кількість</label>
-                              <input type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value) || 0})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} />
-                            </div>
-                            <div>
-                              <label style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Ціна (₴)</label>
-                              <input type="number" value={newItem.price_unit} onChange={e => setNewItem({...newItem, price_unit: parseInt(e.target.value) || 0})} style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} />
-                            </div>
-                          </div>
-
-                          <button onClick={() => handleAddItem(batch.id)} style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '10px', fontSize: 12, fontWeight: 900, cursor: 'pointer', marginTop: 4 }}>
-                            ДОДАТИ ТОВАР
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 16 }}>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                            <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ТОВАР</th>
-                            <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ВИРОБНИК</th>
-                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>К-СТЬ</th>
-                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ЦІНА</th>
-                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ПРОДАНО</th>
-                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ЗАЛИШОК</th>
-                            <th style={{ textAlign: 'center', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ОПЛАЧЕНО</th>
-                            <th style={{ textAlign: 'right', padding: '12px 8px', fontSize: 10, color: 'var(--text-muted)', fontWeight: 900 }}>ДІЇ</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {batch.inventory_items?.map(item => (
-                            <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                              <td style={{ padding: '14px 8px' }}>
-                                <div style={{ fontSize: 13, fontWeight: 800 }}>{item.name}</div>
-                              </td>
-                              <td style={{ padding: '14px 8px' }}>
-                                <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', background: 'rgba(124,58,237,0.1)', padding: '4px 8px', borderRadius: 6, display: 'inline-block' }}>{item.maker}</div>
-                              </td>
-                              <td style={{ padding: '14px 8px', textAlign: 'center', fontSize: 13, fontWeight: 700 }}>{item.quantity}</td>
-                              <td style={{ padding: '14px 8px', textAlign: 'center', fontSize: 13, fontWeight: 700 }}>{item.price_unit} ₴</td>
-                              <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                                  <span style={{ fontSize: 14, fontWeight: 900, color: '#4ade80' }}>{item.sold_count}</span>
-                                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.min(item.quantity, item.sold_count + 1) })} style={{ border: 'none', background: 'none', color: '#6b6b8a', cursor: 'pointer', padding: 0 }}><ChevronDown size={12} style={{ transform: 'rotate(180deg)' }} /></button>
-                                    <button onClick={() => handleUpdateItem({ ...item, sold_count: Math.max(0, item.sold_count - 1) })} style={{ border: 'none', background: 'none', color: '#6b6b8a', cursor: 'pointer', padding: 0 }}><ChevronDown size={12} /></button>
-                                  </div>
-                                </div>
-                              </td>
-                              <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                                <span style={{ fontSize: 13, fontWeight: 700, color: (item.quantity - item.sold_count) === 0 ? '#ef4444' : '#fff' }}>
-                                  {item.quantity - item.sold_count}
-                                </span>
-                              </td>
-                              <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                                <div 
-                                  onClick={() => {
-                                    const soldAmount = item.sold_count * item.price_unit;
-                                    const totalAmount = item.quantity * item.price_unit;
-                                    let newVal = 0;
-                                    
-                                    if (item.paid_amount === 0) {
-                                      newVal = soldAmount > 0 ? soldAmount : totalAmount;
-                                    } else if (item.paid_amount === soldAmount && soldAmount < totalAmount) {
-                                      newVal = totalAmount;
-                                    } else {
-                                      newVal = 0;
-                                    }
-                                    
-                                    handleUpdateItem({ ...item, paid_amount: newVal });
-                                  }}
-                                  style={{ 
-                                    fontSize: 10, fontWeight: 900, padding: '6px 10px', borderRadius: 8, cursor: 'pointer', display: 'inline-block',
-                                    transition: 'all 0.2s',
-                                    background: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
-                                      ? 'rgba(34,197,94,0.15)' 
-                                      : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
-                                        ? 'rgba(34,197,94,0.08)' 
-                                        : 'rgba(245,158,11,0.08)'),
-                                    color: item.paid_amount >= (item.sold_count * item.price_unit) && (item.sold_count > 0 || item.paid_amount > 0) ? '#4ade80' : '#fbbf24',
-                                    border: item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0 
-                                      ? '1px solid rgba(74,222,128,0.3)' 
-                                      : '1px solid transparent'
-                                  }}
-                                >
-                                  {item.paid_amount >= (item.quantity * item.price_unit) && item.quantity > 0
-                                    ? 'ВСЕ ОПЛАЧЕНО' 
-                                    : (item.paid_amount >= (item.sold_count * item.price_unit) && item.sold_count > 0 
-                                      ? 'ПРОДАНЕ ОПЛ.' 
-                                      : `${item.paid_amount} ₴`)}
-                                </div>
-                              </td>
-                              <td style={{ padding: '14px 8px', textAlign: 'right' }}>
-                                <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                                  <div style={{ position: 'relative' }}>
-                                    <button 
-                                      onClick={(e) => {
-                                        const rect = e.currentTarget.getBoundingClientRect();
-                                        setMoveMenu({ 
-                                          open: true, 
-                                          itemId: item.id, 
-                                          oldBatchId: batch.id,
-                                          x: rect.left - 200, 
-                                          y: rect.top + 40 
-                                        });
-                                      }}
-                                      style={{ border: 'none', background: 'rgba(139,92,246,0.2)', color: '#c4b5fd', borderRadius: 8, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 900, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 0 15px rgba(139,92,246,0.1)' }}
-                                    >
-                                      <MoveHorizontal size={12} /> ПЕРЕНЕСТИ
-                                    </button>
-                                  </div>
-                                  <button onClick={() => handleDeleteItem(batch.id, item.id)} style={{ border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 8, padding: 6, cursor: 'pointer' }}><Trash2 size={14}/></button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                          {/* Add Item Row */}
-                          <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
-                            <td style={{ padding: '14px 8px', position: 'relative' }}>
-                              <input 
-                                placeholder="Назва товару..." 
-                                value={newItem.name} 
-                                onChange={e => setNewItem({...newItem, name: e.target.value})} 
-                                onFocus={() => setShowNameSuggestions(true)}
-                                onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
-                                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} 
-                              />
-                              <AnimatePresence>
-                                {showNameSuggestions && uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).length > 0 && (
-                                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 8, right: 8, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
-                                    {uniqueNames.filter(n => n.toLowerCase().includes(newItem.name.toLowerCase())).map(n => (
-                                      <div key={n} onClick={() => setNewItem({ ...newItem, name: n })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{n}</div>
-                                    ))}
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </td>
-                            <td style={{ padding: '14px 8px', position: 'relative' }}>
-                              <input 
-                                placeholder="Хто зробив..." 
-                                value={newItem.maker} 
-                                onChange={e => setNewItem({...newItem, maker: e.target.value})} 
-                                onFocus={() => setShowMakerSuggestions(true)}
-                                onBlur={() => setTimeout(() => setShowMakerSuggestions(false), 200)}
-                                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12 }} 
-                              />
-                              <AnimatePresence>
-                                {showMakerSuggestions && uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).length > 0 && (
-                                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: 8, right: 8, background: '#1e293b', borderRadius: 12, zIndex: 100, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 -10px 30px rgba(0,0,0,0.5)', maxHeight: 200, overflowY: 'auto' }} className="hide-scrollbar">
-                                    {uniqueMakers.filter(m => m.toLowerCase().includes(newItem.maker.toLowerCase())).map(m => (
-                                      <div key={m} onClick={() => setNewItem({ ...newItem, maker: m })} style={{ padding: '10px 16px', fontSize: 11, color: '#fff', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', fontWeight: 700 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>{m}</div>
-                                    ))}
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </td>
-                            <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                              <input type="number" value={newItem.quantity} onChange={e => setNewItem({...newItem, quantity: parseInt(e.target.value) || 0})} style={{ width: 50, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12, textAlign: 'center' }} />
-                            </td>
-                            <td style={{ padding: '14px 8px', textAlign: 'center' }}>
-                              <input type="number" value={newItem.price_unit} onChange={e => setNewItem({...newItem, price_unit: parseInt(e.target.value) || 0})} style={{ width: 60, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, color: '#fff', fontSize: 12, textAlign: 'center' }} />
-                            </td>
-                            <td colSpan={3}></td>
-                            <td style={{ padding: '14px 8px', textAlign: 'right' }}>
-                              <button onClick={() => handleAddItem(batch.id)} style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 11, fontWeight: 900, cursor: 'pointer' }}>ДОДАТИ</button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="dusk-btn dusk-btn--primary"
+              style={{ height: 34 }}
+            >
+              <Plus size={15} />
+              <span>Прийняти новий матеріал</span>
+            </button>
           </div>
-        )})}
+        </div>
+
+        {/* Dusk Ruled Tally — 4 Key Warehouse Metrics */}
+        <div
+          className="dusk-tally"
+          style={{
+            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+            borderTop: '1px solid var(--color-rule)',
+            borderBottom: '1px solid var(--color-rule)',
+            background: 'var(--color-paper-2)',
+            borderRadius: 10
+          }}
+        >
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Позицій на складі</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22 }}>
+              {stats.totalItems} <span className="dusk-currency">найм.</span>
+            </div>
+            <span className="dusk-tally__sub">Загалом: {stats.totalUnits} од.</span>
+          </div>
+
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Вартість запасів</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: 'var(--color-accent)' }}>
+              {stats.totalStockValue.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
+            </div>
+            <span className="dusk-tally__sub">За закупівельною собівартістю</span>
+          </div>
+
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Закінчуються</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22, color: stats.lowStockCount > 0 ? 'var(--color-accent-2)' : 'var(--color-ink)' }}>
+              {stats.lowStockCount} <span className="dusk-currency">поз.</span>
+            </div>
+            <span className="dusk-tally__sub">Нижче мінімального залишку</span>
+          </div>
+
+          <div className="dusk-tally__cell" style={{ padding: '12px 16px' }}>
+            <span className="dusk-tally__label">Списано у продажі</span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 22 }}>
+              {stats.totalWrittenOffCost.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
+            </div>
+            <span className="dusk-tally__sub">Усього списано: {stats.totalWrittenOffUnits} од.</span>
+          </div>
+        </div>
+
+        {/* View Switcher + Category Pipeline Strip */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setCategoryFilter('all')}
+              className={`dusk-facet-pill ${categoryFilter === 'all' ? 'active' : ''}`}
+            >
+              Усі ({items.length})
+            </button>
+            {WAREHOUSE_CATEGORIES.map(cat => {
+              const count = items.filter(i => i.category === cat.id).length;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setCategoryFilter(cat.id)}
+                  className={`dusk-facet-pill ${categoryFilter === cat.id ? 'active' : ''}`}
+                >
+                  <span>{cat.label.split(' (')[0]}</span>
+                  <span className="dusk-num" style={{ opacity: 0.7 }}>{count}</span>
+                </button>
+              );
+            })}
+            {stats.lowStockCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setCategoryFilter('low_stock')}
+                className={`dusk-facet-pill ${categoryFilter === 'low_stock' ? 'active-apricot' : ''}`}
+              >
+                <span className="dusk-dot dusk-dot--apricot" style={{ width: 6, height: 6 }} />
+                <span>Закінчуються ({stats.lowStockCount})</span>
+              </button>
+            )}
+          </div>
+
+          <div className="dusk-segmented">
+            <button
+              type="button"
+              onClick={() => setViewTab('stock')}
+              className={`dusk-segmented__item ${viewTab === 'stock' ? 'active' : ''}`}
+            >
+              <Layers size={13} style={{ marginRight: 5 }} />
+              Запаси ({items.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewTab('history')}
+              className={`dusk-segmented__item ${viewTab === 'history' ? 'active' : ''}`}
+            >
+              <History size={13} style={{ marginRight: 5 }} />
+              Історія руху ({logs.length})
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Custom Confirmation Modal */}
+      {/* ================= VIEW 1: WAREHOUSE STOCK ITEMS ================= */}
+      {viewTab === 'stock' ? (
+        <div className="dusk-panel" style={{ overflow: 'hidden' }}>
+          {filteredItems.length === 0 ? (
+            <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--color-muted)' }}>
+              <Box size={28} style={{ margin: '0 auto 10px', opacity: 0.5 }} />
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)', marginBottom: 4 }}>
+                Матеріалів у цій категорії немає
+              </div>
+              <div style={{ fontSize: 12.5, marginBottom: 14 }}>
+                Додайте коробки, цукерки, листівки або пластик, щоб вести облік і списувати їх у продажах
+              </div>
+              <button type="button" onClick={openCreateModal} className="dusk-btn dusk-btn--primary dusk-btn--sm">
+                <Plus size={14} /> Додати матеріал
+              </button>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="dusk-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', paddingLeft: 18 }}>Матеріал / Витратник</th>
+                    <th style={{ textAlign: 'left' }}>Категорія</th>
+                    <th style={{ textAlign: 'center' }}>У формі продажу</th>
+                    <th style={{ textAlign: 'right' }}>Залишок на складі</th>
+                    <th style={{ textAlign: 'right' }}>Собівартість</th>
+                    <th style={{ textAlign: 'right' }}>Сума запасу</th>
+                    <th style={{ textAlign: 'right', paddingRight: 18 }}>Швидкий прихід / списання</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredItems.map(item => {
+                    const qty = Number(item.quantity) || 0;
+                    const minQty = Number(item.min_quantity) || 0;
+                    const isLow = qty <= minQty && qty > 0;
+                    const isEmpty = qty <= 0;
+                    const costUnit = Number(item.cost_unit) || 0;
+                    const totalVal = Math.round(qty * costUnit);
+
+                    return (
+                      <tr key={item.id}>
+                        <td style={{ paddingLeft: 18 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{
+                              width: 32, height: 32, borderRadius: 8,
+                              background: isEmpty
+                                ? 'var(--color-danger-soft)'
+                                : isLow
+                                  ? 'var(--color-accent-2-soft)'
+                                  : 'var(--color-accent-soft)',
+                              border: isEmpty
+                                ? '1px solid var(--color-danger-border)'
+                                : isLow
+                                  ? '1px solid var(--color-accent-2-border)'
+                                  : '1px solid var(--color-accent-border)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: isEmpty ? 'var(--color-danger)' : isLow ? 'var(--color-accent-2)' : 'var(--color-accent)',
+                              flexShrink: 0
+                            }}>
+                              <Package size={15} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-ink)' }}>
+                                {item.name}
+                              </div>
+                              <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 1 }}>
+                                Мін. норма: {minQty} {item.unit || 'шт.'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td>
+                          <span className="dusk-badge dusk-badge--neutral" style={{ fontSize: 11, padding: '3px 9px' }}>
+                            {getCategoryLabel(item.category).split(' (')[0]}
+                          </span>
+                        </td>
+
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => toggleQuickSale(item)}
+                            className={`dusk-facet-pill ${item.quick_sale !== false ? 'active' : ''}`}
+                            style={{ padding: '3px 10px', fontSize: 11 }}
+                            title="Показувати як кнопку швидкого списання у вікні оформлення продажу"
+                          >
+                            <span className={`dusk-dot ${item.quick_sale !== false ? 'dusk-dot--periwinkle' : 'dusk-dot--muted'}`} style={{ width: 5, height: 5 }} />
+                            <span>{item.quick_sale !== false ? 'Активно в продажах' : 'Приховано'}</span>
+                          </button>
+                        </td>
+
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            {(isLow || isEmpty) && (
+                              <span className={`dusk-badge ${isEmpty ? 'dusk-badge--danger' : 'dusk-badge--apricot'}`} style={{ fontSize: 10, padding: '2px 7px' }}>
+                                {isEmpty ? 'Немає' : 'Мало'}
+                              </span>
+                            )}
+                            <span className="dusk-num" style={{
+                              fontSize: 15,
+                              fontWeight: 700,
+                              color: isEmpty ? 'var(--color-danger)' : isLow ? 'var(--color-accent-2)' : 'var(--color-ink)'
+                            }}>
+                              {qty} <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--color-muted)' }}>{item.unit || 'шт.'}</span>
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="dusk-num" style={{ textAlign: 'right', fontSize: 13, color: 'var(--color-ink-2)' }}>
+                          {costUnit} <span className="dusk-currency">₴</span>
+                          <span style={{ fontSize: 11, color: 'var(--color-muted)' }}> / {item.unit || 'шт.'}</span>
+                        </td>
+
+                        <td className="dusk-num" style={{ textAlign: 'right', fontSize: 13.5, fontWeight: 600, color: 'var(--color-ink)' }}>
+                          {totalVal.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
+                        </td>
+
+                        <td style={{ textAlign: 'right', paddingRight: 18 }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenStockAction(item, 'in')}
+                              className="dusk-btn dusk-btn--primary dusk-btn--sm"
+                              style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
+                              title="Оприбуткувати нову поставку на склад"
+                            >
+                              <Plus size={12} />
+                              <span>Прийняти</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenStockAction(item, 'out')}
+                              className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                              style={{ height: 28, padding: '0 9px', fontSize: 11.5 }}
+                              title="Списати зі складу"
+                            >
+                              <Minus size={12} />
+                              <span>Списати</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(item)}
+                              className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                              style={{ height: 28, width: 28, padding: 0 }}
+                              title="Редагувати"
+                            >
+                              <Edit3 size={12} />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMaterial(item)}
+                              className="dusk-btn dusk-btn--danger dusk-btn--sm"
+                              style={{ height: 28, width: 28, padding: 0 }}
+                              title="Видалити"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ================= VIEW 2: MOVEMENT & WRITE-OFF LOGS ================= */
+        <div className="dusk-panel" style={{ overflow: 'hidden' }}>
+          {filteredLogs.length === 0 ? (
+            <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
+              Історія руху матеріалів порожня. Прийміть матеріали на склад або спишіть їх у замовленні.
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="dusk-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', paddingLeft: 18 }}>Дата та час</th>
+                    <th style={{ textAlign: 'left' }}>Операція</th>
+                    <th style={{ textAlign: 'left' }}>Матеріал</th>
+                    <th style={{ textAlign: 'right' }}>Кількість</th>
+                    <th style={{ textAlign: 'right' }}>Сума</th>
+                    <th style={{ textAlign: 'left', paddingRight: 18 }}>Примітка / Замовлення</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLogs.map(log => {
+                    const isIn = log.type === 'in' || log.type === 'sale_return';
+                    return (
+                      <tr key={log.id}>
+                        <td className="dusk-mono" style={{ paddingLeft: 18, fontSize: 11.5, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>
+                          {log.created_at ? new Date(log.created_at).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+                        </td>
+                        <td>
+                          <span className={`dusk-badge ${isIn ? 'dusk-badge--periwinkle' : 'dusk-badge--apricot'}`} style={{ fontSize: 11, padding: '2px 8px' }}>
+                            {isIn ? <ArrowDownLeft size={11} /> : <ArrowUpRight size={11} />}
+                            <span>
+                              {log.type === 'in' ? 'Прихід' : log.type === 'sale_out' ? 'У продаж' : log.type === 'sale_return' ? 'Повернення' : 'Списання'}
+                            </span>
+                          </span>
+                        </td>
+                        <td style={{ fontWeight: 600, fontSize: 13, color: 'var(--color-ink)' }}>
+                          {log.item_name}
+                        </td>
+                        <td className="dusk-num" style={{ textAlign: 'right', fontWeight: 600, fontSize: 13.5, color: isIn ? 'var(--color-accent)' : 'var(--color-accent-2)' }}>
+                          {isIn ? '+' : '−'}{log.quantity} <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>{log.unit || 'шт.'}</span>
+                        </td>
+                        <td className="dusk-num" style={{ textAlign: 'right', fontSize: 12.5, color: 'var(--color-ink-2)' }}>
+                          {log.total_cost ? `${log.total_cost} ₴` : '—'}
+                        </td>
+                        <td style={{ paddingRight: 18, fontSize: 12.5, color: 'var(--color-ink-2)' }}>
+                          {log.note || '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ================= MODAL 1: RECEIVE (+Прийняти) OR WRITE-OFF (-Списати) ================= */}
       <AnimatePresence>
-        {confirmModal.open && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ background: '#0f172a', borderRadius: 32, padding: 32, width: '100%', maxWidth: 400, border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center' }}>
-              <div style={{ width: 64, height: 64, background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-                <Trash2 size={32} />
+        {stockActionModal.open && stockActionModal.item && (
+          <div
+            onClick={() => setStockActionModal({ ...stockActionModal, open: false })}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1200,
+              background: 'oklch(10% 0.015 268 / 0.80)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
+              onClick={e => e.stopPropagation()}
+              className="dusk-panel"
+              style={{ width: '100%', maxWidth: 440, borderRadius: 16, overflow: 'hidden', border: '1px solid var(--color-rule)' }}
+            >
+              <div style={{
+                padding: '14px 18px',
+                background: 'var(--color-paper-2)',
+                borderBottom: '1px solid var(--color-rule)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+              }}>
+                <div>
+                  <h3 className="dusk-heading" style={{ fontSize: 16, margin: 0 }}>
+                    {stockActionModal.mode === 'in' ? 'Прийняти поставку на склад' : 'Списати зі складу'}
+                  </h3>
+                  <p style={{ fontSize: 11.5, color: 'var(--color-muted)', margin: '2px 0 0' }}>
+                    {stockActionModal.item.name} (поточний залишок: {stockActionModal.item.quantity} {stockActionModal.item.unit})
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStockActionModal({ ...stockActionModal, open: false })}
+                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                  style={{ width: 28, height: 28, padding: 0 }}
+                >
+                  <X size={15} />
+                </button>
               </div>
-              <h3 style={{ fontSize: 20, fontWeight: 900, marginBottom: 12 }}>{confirmModal.title}</h3>
-              <p style={{ color: '#6b6b8a', fontSize: 14, marginBottom: 32 }}>{confirmModal.message}</p>
-              
-              <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={confirmModal.onConfirm} style={{ flex: 1, padding: 14, borderRadius: 14, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}>ТАК, ВИДАЛИТИ</button>
-                <button onClick={() => setConfirmModal({ ...confirmModal, open: false })} style={{ flex: 1, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', fontWeight: 900, cursor: 'pointer' }}>СКАСУВАТИ</button>
-              </div>
+
+              <form onSubmit={handleExecuteStockAction} style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 6 }}>
+                    {stockActionModal.mode === 'in' ? `Кількість для оприбуткування (${stockActionModal.item.unit})` : `Кількість для списання (${stockActionModal.item.unit})`}
+                  </label>
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                    {(stockActionModal.mode === 'in' ? [5, 10, 25, 50, 100] : [1, 2, 5, 10]).map(preset => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          const totalPack = parseFloat(stockActionModal.total_pack_price);
+                          const nextCost = totalPack > 0 ? String(Math.round((totalPack / preset) * 100) / 100) : stockActionModal.cost_unit;
+                          setStockActionModal({ ...stockActionModal, quantity: String(preset), cost_unit: nextCost });
+                        }}
+                        className={`dusk-facet-pill ${Number(stockActionModal.quantity) === preset ? 'active' : ''}`}
+                        style={{ padding: '4px 10px', fontSize: 11.5 }}
+                      >
+                        {stockActionModal.mode === 'in' ? `+${preset}` : `−${preset}`} {stockActionModal.item.unit}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    autoFocus
+                    placeholder="Введіть кількість…"
+                    value={stockActionModal.quantity}
+                    onChange={e => {
+                      const val = e.target.value.replace(/[^0-9.]/g, '');
+                      const qtyNum = parseFloat(val);
+                      const totalPack = parseFloat(stockActionModal.total_pack_price);
+                      const nextCost = (totalPack > 0 && qtyNum > 0) ? String(Math.round((totalPack / qtyNum) * 100) / 100) : stockActionModal.cost_unit;
+                      setStockActionModal({ ...stockActionModal, quantity: val, cost_unit: nextCost });
+                    }}
+                    className="dusk-input dusk-num"
+                    style={{ height: 38, fontSize: 15, fontWeight: 600 }}
+                  />
+                </div>
+
+                {stockActionModal.mode === 'in' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div>
+                      <label style={{ fontSize: 11, color: 'var(--color-muted)', display: 'block', marginBottom: 4 }}>
+                        Ціна за 1 {stockActionModal.item.unit} (₴)
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0"
+                        value={stockActionModal.cost_unit}
+                        onChange={e => setStockActionModal({ ...stockActionModal, cost_unit: e.target.value.replace(/[^0-9.]/g, ''), total_pack_price: '' })}
+                        className="dusk-input dusk-num"
+                        style={{ height: 34, fontSize: 13 }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, color: 'var(--color-muted)', display: 'block', marginBottom: 4 }}>
+                        Або сума за всю пачку (₴)
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Авторозрахунок за 1 шт"
+                        value={stockActionModal.total_pack_price}
+                        onChange={e => {
+                          const packVal = e.target.value.replace(/[^0-9.]/g, '');
+                          const packNum = parseFloat(packVal);
+                          const qtyNum = parseFloat(stockActionModal.quantity);
+                          const calcUnit = (packNum > 0 && qtyNum > 0) ? String(Math.round((packNum / qtyNum) * 100) / 100) : stockActionModal.cost_unit;
+                          setStockActionModal({ ...stockActionModal, total_pack_price: packVal, cost_unit: calcUnit });
+                        }}
+                        className="dusk-input dusk-num"
+                        style={{ height: 34, fontSize: 13 }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 4 }}>
+                    Примітка ({stockActionModal.mode === 'in' ? 'постачальник, накладна' : 'причина списання'})
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={stockActionModal.mode === 'in' ? 'Напр. Закупівля коробок Нова Пошта…' : 'Напр. Пакування замовлення / брак…'}
+                    value={stockActionModal.note}
+                    onChange={e => setStockActionModal({ ...stockActionModal, note: e.target.value })}
+                    className="dusk-input"
+                    style={{ height: 34, fontSize: 12.5 }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => setStockActionModal({ ...stockActionModal, open: false })}
+                    className="dusk-btn dusk-btn--ghost"
+                  >
+                    Скасувати
+                  </button>
+                  <button type="submit" className="dusk-btn dusk-btn--primary">
+                    <Check size={14} />
+                    <span>{stockActionModal.mode === 'in' ? 'Оприбуткувати на склад' : 'Підтвердити списання'}</span>
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Custom Move Menu */}
+      {/* ================= MODAL 2: CREATE / EDIT WAREHOUSE MATERIAL ================= */}
       <AnimatePresence>
-        {moveMenu.open && (
-          <>
-            <div 
-              style={{ position: 'fixed', inset: 0, zIndex: 999 }} 
-              onClick={() => setMoveMenu({ ...moveMenu, open: false })}
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+        {showMaterialModal && (
+          <div
+            onClick={() => setShowMaterialModal(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 1200,
+              background: 'oklch(10% 0.015 268 / 0.80)', backdropFilter: 'blur(8px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              style={{ 
-                position: 'fixed', left: moveMenu.x, top: moveMenu.y, 
-                width: 250, background: '#1e293b', borderRadius: 16, 
-                border: '1px solid rgba(255,255,255,0.1)', 
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)', zIndex: 1000,
-                padding: '8px', overflow: 'hidden', backdropFilter: 'blur(20px)'
-              }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
+              onClick={e => e.stopPropagation()}
+              className="dusk-panel"
+              style={{ width: '100%', maxWidth: 540, borderRadius: 16, overflow: 'hidden', border: '1px solid var(--color-rule)' }}
             >
-              <div style={{ padding: '8px 12px', fontSize: 10, fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 8 }}>
-                Перенести в партію:
+              <div style={{
+                padding: '14px 20px',
+                background: 'var(--color-paper-2)',
+                borderBottom: '1px solid var(--color-rule)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+              }}>
+                <div>
+                  <h3 className="dusk-heading" style={{ fontSize: 17, margin: 0 }}>
+                    {editingItem ? 'Редагувати матеріал' : 'Новий матеріал / витратник на склад'}
+                  </h3>
+                  <p style={{ fontSize: 11.5, color: 'var(--color-muted)', margin: '2px 0 0' }}>
+                    Коробки, цукерки, листівки, кільця для брелків, пластик або будь-які комплектуючі
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMaterialModal(false)}
+                  className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                  style={{ width: 28, height: 28, padding: 0 }}
+                >
+                  <X size={15} />
+                </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 300, overflowY: 'auto' }} className="hide-scrollbar">
-                {batches
-                  .filter(b => b.id !== moveMenu.oldBatchId && b.status !== 'archived')
-                  .map(b => (
-                    <button
-                      key={b.id}
-                      onClick={() => handleMoveItem(moveMenu.itemId, moveMenu.oldBatchId, b.id)}
-                      style={{ 
-                        width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', 
-                        background: 'transparent', color: '#e2e8f0', textAlign: 'left', 
-                        cursor: 'pointer', transition: 'all 0.2s', fontSize: 12, fontWeight: 700,
-                        display: 'flex', flexDirection: 'column'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                    >
-                      <span>{new Date(b.batch_date).toLocaleDateString('uk-UA')}</span>
-                      {b.notes && <span style={{ fontSize: 10, color: '#64748b', fontWeight: 500 }}>{b.notes.slice(0, 25)}</span>}
-                    </button>
-                  ))}
-                {batches.filter(b => b.id !== moveMenu.oldBatchId && b.status !== 'archived').length === 0 && (
-                  <div style={{ padding: 20, textAlign: 'center', fontSize: 11, color: '#64748b' }}>
-                    Немає інших активних партій
+
+              <form onSubmit={handleSaveMaterial} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '82vh', overflowY: 'auto' }}>
+                {!editingItem && (
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--color-muted)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <Sparkles size={12} style={{ color: 'var(--color-accent)' }} />
+                      <span>Швидкі шаблони (клікніть для заповнення):</span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      {QUICK_MATERIAL_TEMPLATES.map(tpl => (
+                        <button
+                          key={tpl.name}
+                          type="button"
+                          onClick={() => setMaterialForm({
+                            ...materialForm,
+                            name: tpl.name,
+                            category: tpl.category,
+                            unit: tpl.unit,
+                            min_quantity: String(tpl.min_quantity),
+                            cost_unit: String(tpl.cost_unit)
+                          })}
+                          className="dusk-facet-pill"
+                          style={{ fontSize: 11, padding: '3px 8px' }}
+                        >
+                          + {tpl.name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </div>
+
+                <div>
+                  <label style={{ fontSize: 11.5, color: 'var(--color-ink-2)', fontWeight: 500, display: 'block', marginBottom: 5 }}>
+                    Назва матеріалу *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Напр. Коробка 20×15×10 см, Цукерка, Листівка…"
+                    value={materialForm.name}
+                    onChange={e => setMaterialForm({ ...materialForm, name: e.target.value })}
+                    className="dusk-input"
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>
+                      Категорія
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      {WAREHOUSE_CATEGORIES.map(cat => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setMaterialForm({ ...materialForm, category: cat.id })}
+                          className={`dusk-facet-pill ${materialForm.category === cat.id ? 'active' : ''}`}
+                          style={{ padding: '4px 9px', fontSize: 11 }}
+                        >
+                          {cat.label.split(' (')[0]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 5 }}>
+                      Од. виміру
+                    </label>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                      {['шт.', 'уп.', 'кг', 'м'].map(u => (
+                        <button
+                          key={u}
+                          type="button"
+                          onClick={() => setMaterialForm({ ...materialForm, unit: u })}
+                          className={`dusk-facet-pill ${materialForm.unit === u ? 'active' : ''}`}
+                          style={{ padding: '4px 8px', fontSize: 11 }}
+                        >
+                          {u}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 4 }}>
+                      Кількість зараз ({materialForm.unit})
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="50"
+                      value={materialForm.quantity}
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^0-9.]/g, '');
+                        const qNum = parseFloat(val);
+                        const packNum = parseFloat(materialForm.pack_total_cost);
+                        const calcUnit = (packNum > 0 && qNum > 0) ? String(Math.round((packNum / qNum) * 100) / 100) : materialForm.cost_unit;
+                        setMaterialForm({ ...materialForm, quantity: val, cost_unit: calcUnit });
+                      }}
+                      className="dusk-input dusk-num"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 4 }}>
+                      Ціна за 1 {materialForm.unit} (₴)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="12"
+                      value={materialForm.cost_unit}
+                      onChange={e => setMaterialForm({ ...materialForm, cost_unit: e.target.value.replace(/[^0-9.]/g, ''), pack_total_cost: '' })}
+                      className="dusk-input dusk-num"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 11.5, color: 'var(--color-muted)', display: 'block', marginBottom: 4 }}>
+                      Мін. залишок
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="10"
+                      value={materialForm.min_quantity}
+                      onChange={e => setMaterialForm({ ...materialForm, min_quantity: e.target.value.replace(/[^0-9.]/g, '') })}
+                      className="dusk-input dusk-num"
+                    />
+                  </div>
+                </div>
+
+                {/* Optional Pack Calculator */}
+                <div style={{
+                  background: 'var(--color-paper-2)',
+                  border: '1px solid var(--color-rule)',
+                  borderRadius: 10,
+                  padding: '8px 12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10
+                }}>
+                  <span style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                    Купили упаковкою? Введіть суму за всю пачку, і ціна за 1 {materialForm.unit} порахується автоматично:
+                  </span>
+                  <div style={{ position: 'relative', width: 120, flexShrink: 0 }}>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Сума пачки"
+                      value={materialForm.pack_total_cost}
+                      onChange={e => {
+                        const packVal = e.target.value.replace(/[^0-9.]/g, '');
+                        const packNum = parseFloat(packVal);
+                        const qNum = parseFloat(materialForm.quantity);
+                        const calcUnit = (packNum > 0 && qNum > 0) ? String(Math.round((packNum / qNum) * 100) / 100) : materialForm.cost_unit;
+                        setMaterialForm({ ...materialForm, pack_total_cost: packVal, cost_unit: calcUnit });
+                      }}
+                      className="dusk-input dusk-num"
+                      style={{ height: 30, fontSize: 12, paddingRight: 22 }}
+                    />
+                    <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--color-muted)' }}>₴</span>
+                  </div>
+                </div>
+
+                {/* Toggle Quick Sale Button */}
+                <div
+                  onClick={() => setMaterialForm({ ...materialForm, quick_sale: !materialForm.quick_sale })}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                    padding: '10px 12px', borderRadius: 10, cursor: 'pointer', userSelect: 'none',
+                    background: materialForm.quick_sale ? 'var(--color-accent-soft)' : 'var(--color-paper-2)',
+                    border: materialForm.quick_sale ? '1px solid var(--color-accent-border)' : '1px solid var(--color-rule)'
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--color-ink)' }}>
+                      Показувати у вікні «Новий продаж» для швидкого списання
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 1 }}>
+                      Дозволяє в 1 клік додавати цей матеріал (коробку, цукерку тощо) до замовлення клієнта
+                    </div>
+                  </div>
+                  <div style={{
+                    width: 34, height: 19, borderRadius: 999,
+                    background: materialForm.quick_sale ? 'var(--color-accent)' : 'var(--color-paper)',
+                    border: '1px solid var(--color-rule)', position: 'relative', flexShrink: 0
+                  }}>
+                    <span style={{
+                      position: 'absolute', top: 2, left: materialForm.quick_sale ? 16 : 2,
+                      width: 13, height: 13, borderRadius: '50%',
+                      background: materialForm.quick_sale ? 'var(--color-accent-ink)' : 'var(--color-muted)',
+                      transition: 'left 0.16s ease'
+                    }} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 6 }}>
+                  <button type="button" onClick={() => setShowMaterialModal(false)} className="dusk-btn dusk-btn--ghost">
+                    Скасувати
+                  </button>
+                  <button type="submit" className="dusk-btn dusk-btn--primary">
+                    <Check size={14} />
+                    <span>{editingItem ? 'Зберегти зміни' : 'Додати на склад'}</span>
+                  </button>
+                </div>
+              </form>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </div>
