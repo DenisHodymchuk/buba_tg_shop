@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -271,13 +272,24 @@ export default function OrderCalendar({
     return items[0]?.name || items[0]?.title || 'Замовлення';
   };
 
+  const formatCalendarItemName = (rawName) => {
+    const cleaned = String(rawName || 'Фігурка')
+      .replace(/^(Колекційна\s+фігурка|Фігурка)\s+/i, '')
+      .trim();
+    return cleaned.replace(/^["«](.+)["»]$/, '$1').trim() || rawName || 'Фігурка';
+  };
+
   const getOrderItemsList = (order) => {
     const items = Array.isArray(order.shipping_details?.items) ? order.shipping_details.items : [];
-    if (items.length === 0) return [{ name: 'Замовлення', qty: 1 }];
-    return items.map(it => ({
-      name: it?.name || it?.title || 'Фігурка',
-      qty: Number(it?.quantity) || 1
-    }));
+    if (items.length === 0) return [{ name: 'Замовлення', shortName: 'Замовлення', qty: 1 }];
+    return items.map(it => {
+      const full = it?.name || it?.title || 'Фігурка';
+      return {
+        name: full,
+        shortName: formatCalendarItemName(full),
+        qty: Number(it?.quantity) || 1
+      };
+    });
   };
 
   const getMultiDayBadgeText = (order) => {
@@ -297,76 +309,89 @@ export default function OrderCalendar({
   }, [cursorDate, viewType, calendarDays]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', paddingBottom: isMobile ? 76 : 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 14, width: '100%', paddingBottom: isMobile ? 76 : 12 }}>
       {/* Top Glass Header & Controls */}
-      <div className="dusk-glass" style={{ padding: isMobile ? 14 : '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12 }}>
-          <div>
-            <h1 className="dusk-heading" style={{ fontSize: isMobile ? 20 : 22, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <CalendarIcon size={20} style={{ color: 'var(--color-accent)' }} />
-              <span>Календар замовлень</span>
-            </h1>
-            <p className="dusk-subheading" style={{ marginTop: 2 }}>
-              Планування дедлайнів, завантаження по днях та перетягування замовлень між датами
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {/* Daily Capacity Control */}
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'var(--color-paper-2)', border: '1px solid var(--color-rule)',
-              borderRadius: 999, padding: '3px 8px 3px 12px', height: 34
-            }}>
-              <span style={{ fontSize: 11.5, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>Ліміт/день:</span>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <button
-                  type="button"
-                  onClick={() => setDailyCapacity(c => Math.max(1, c - 1))}
-                  style={{ width: 22, height: 22, borderRadius: 999, border: '1px solid var(--color-rule)', background: 'var(--color-paper)', color: 'var(--color-ink)', cursor: 'pointer', fontSize: 13 }}
-                >
-                  −
-                </button>
-                <span className="dusk-num" style={{ minWidth: 20, textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--color-accent)' }}>
-                  {dailyCapacity}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setDailyCapacity(c => Math.min(50, c + 1))}
-                  style={{ width: 22, height: 22, borderRadius: 999, border: '1px solid var(--color-rule)', background: 'var(--color-paper)', color: 'var(--color-ink)', cursor: 'pointer', fontSize: 13 }}
-                >
-                  +
-                </button>
-              </div>
+      <div className="dusk-glass" style={{ padding: isMobile ? '10px 12px' : '16px 20px', display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 14 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <div>
+              <h1 className="dusk-heading" style={{ fontSize: isMobile ? 16 : 22, display: 'flex', alignItems: 'center', gap: 7, margin: 0 }}>
+                <CalendarIcon size={isMobile ? 16 : 20} style={{ color: 'var(--color-accent)' }} />
+                <span>{isMobile ? 'Календар' : 'Календар замовлень'}</span>
+              </h1>
+              {!isMobile && (
+                <p className="dusk-subheading" style={{ marginTop: 2 }}>
+                  Планування дедлайнів, завантаження по днях та перетягування замовлень між датами
+                </p>
+              )}
             </div>
 
-            {/* Show/Hide Completed Toggle */}
-            <button
-              type="button"
-              onClick={() => setShowDoneOrders(!showDoneOrders)}
-              className={`dusk-facet-pill ${showDoneOrders ? 'active' : ''}`}
-              style={{ height: 34, padding: '0 12px', fontSize: 12 }}
-            >
-              <CheckCircle2 size={13} />
-              <span>Готові</span>
-            </button>
+            {isMobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowDoneOrders(!showDoneOrders)}
+                  className={`dusk-facet-pill ${showDoneOrders ? 'active' : ''}`}
+                  style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
+                >
+                  <CheckCircle2 size={12} />
+                  <span>Готові</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, flexWrap: 'wrap', justifyContent: isMobile ? 'space-between' : 'flex-end' }}>
+            {!isMobile && (
+              <button
+                type="button"
+                onClick={() => setShowDoneOrders(!showDoneOrders)}
+                className={`dusk-facet-pill ${showDoneOrders ? 'active' : ''}`}
+                style={{ height: 34, padding: '0 12px', fontSize: 12 }}
+              >
+                <CheckCircle2 size={13} />
+                <span>Готові</span>
+              </button>
+            )}
 
             {/* Month / Week Switcher */}
             <div className="dusk-segmented">
-              <button
-                type="button"
-                onClick={() => setViewType('month')}
-                className={`dusk-segmented__item ${viewType === 'month' ? 'active' : ''}`}
-              >
-                Місяць
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewType('week')}
-                className={`dusk-segmented__item ${viewType === 'week' ? 'active' : ''}`}
-              >
-                Тиждень
-              </button>
+              {[
+                { id: 'month', label: 'Місяць' },
+                { id: 'week', label: 'Тиждень' }
+              ].map(({ id, label }) => {
+                const isActive = viewType === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setViewType(id)}
+                    className={`dusk-segmented__item ${isActive ? 'active' : ''}`}
+                    style={{
+                      position: 'relative',
+                      background: 'transparent',
+                      boxShadow: 'none',
+                      ...(isMobile ? { height: 26, padding: '0 9px', fontSize: 11 } : {})
+                    }}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="calendarViewSlider"
+                        transition={{ type: 'spring', stiffness: 450, damping: 34 }}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: 7,
+                          background: 'var(--color-paper-3)',
+                          boxShadow: 'inset 0 0 0 1px var(--color-accent-border)',
+                          zIndex: 0
+                        }}
+                      />
+                    )}
+                    <span style={{ position: 'relative', zIndex: 1 }}>{label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Period Navigation */}
@@ -375,15 +400,15 @@ export default function OrderCalendar({
                 type="button"
                 onClick={() => navigatePeriod(-1)}
                 className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                style={{ width: 32, height: 32, padding: 0, justifyContent: 'center' }}
+                style={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, padding: 0, justifyContent: 'center' }}
               >
-                <ChevronLeft size={15} />
+                <ChevronLeft size={14} />
               </button>
               <button
                 type="button"
                 onClick={() => jumpToDate(todayKey)}
                 className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                style={{ height: 32, padding: '0 10px', fontSize: 12 }}
+                style={{ height: isMobile ? 28 : 32, padding: isMobile ? '0 8px' : '0 10px', fontSize: isMobile ? 11 : 12 }}
               >
                 Сьогодні
               </button>
@@ -391,13 +416,13 @@ export default function OrderCalendar({
                 type="button"
                 onClick={() => navigatePeriod(1)}
                 className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                style={{ width: 32, height: 32, padding: 0, justifyContent: 'center' }}
+                style={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32, padding: 0, justifyContent: 'center' }}
               >
-                <ChevronRight size={15} />
+                <ChevronRight size={14} />
               </button>
             </div>
 
-            <span className="dusk-heading" style={{ fontSize: 15, minWidth: 130, textAlign: 'right' }}>
+            <span className="dusk-heading" style={{ fontSize: isMobile ? 13 : 15, minWidth: isMobile ? '100%' : 130, textAlign: isMobile ? 'left' : 'right' }}>
               {headerLabel}
             </span>
           </div>
@@ -414,43 +439,53 @@ export default function OrderCalendar({
             borderRadius: 10
           }}
         >
-          <div className="dusk-tally__cell" style={{ padding: '11px 16px' }}>
-            <span className="dusk-tally__label">На сьогодні / прострочені</span>
-            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 21, color: metrics.dueTodayOrOverdue > 0 ? 'var(--color-accent-2)' : 'var(--color-ink)' }}>
+          <div className="dusk-tally__cell" style={{ padding: isMobile ? '6px 10px' : '11px 16px' }}>
+            <span className="dusk-tally__label" style={isMobile ? { fontSize: 10 } : undefined}>
+              {isMobile ? 'Сьогодні / простр.' : 'На сьогодні / прострочені'}
+            </span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 15 : 21, color: metrics.dueTodayOrOverdue > 0 ? 'var(--color-accent-2)' : 'var(--color-ink)' }}>
               {metrics.dueTodayOrOverdue} <span className="dusk-currency">зам.</span>
             </div>
-            <span className="dusk-tally__sub">Потребують уваги зараз</span>
+            {!isMobile && <span className="dusk-tally__sub">Потребують уваги зараз</span>}
           </div>
 
-          <div className="dusk-tally__cell" style={{ padding: '11px 16px' }}>
-            <span className="dusk-tally__label">Заплановано в роботі</span>
-            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 21, color: 'var(--color-accent)' }}>
+          <div className="dusk-tally__cell" style={{ padding: isMobile ? '6px 10px' : '11px 16px' }}>
+            <span className="dusk-tally__label" style={isMobile ? { fontSize: 10 } : undefined}>
+              {isMobile ? 'В роботі' : 'Заплановано в роботі'}
+            </span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 15 : 21, color: 'var(--color-accent)' }}>
               {metrics.totalScheduledActive} <span className="dusk-currency">зам.</span>
             </div>
-            <span className="dusk-tally__sub">Мають дату готовності</span>
+            {!isMobile && <span className="dusk-tally__sub">Мають дату готовності</span>}
           </div>
 
           <div
             className="dusk-tally__cell"
             onClick={() => jumpToDate(nearestFreeDay)}
-            style={{ padding: '11px 16px', cursor: 'pointer' }}
+            style={{ padding: isMobile ? '6px 10px' : '11px 16px', cursor: 'pointer' }}
             title="Клікніть, щоб перейти до найближчого вільного дня"
           >
-            <span className="dusk-tally__label">Найближчий вільний день</span>
-            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 21, color: 'var(--color-accent)' }}>
+            <span className="dusk-tally__label" style={isMobile ? { fontSize: 10 } : undefined}>
+              {isMobile ? 'Вільний день' : 'Найближчий вільний день'}
+            </span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 15 : 21, color: 'var(--color-accent)' }}>
               {nearestFreeDay === todayKey ? 'Сьогодні' : formatShortDateUa(nearestFreeDay)}
             </div>
-            <span className="dusk-tally__sub">
-              Завантаження: {workloadMap[nearestFreeDay]?.activeCount || 0} / {dailyCapacity}
-            </span>
+            {!isMobile && (
+              <span className="dusk-tally__sub">
+                Заплановано: {workloadMap[nearestFreeDay]?.activeCount || 0} зам.
+              </span>
+            )}
           </div>
 
-          <div className="dusk-tally__cell" style={{ padding: '11px 16px' }}>
-            <span className="dusk-tally__label">Без дати (не розплановані)</span>
-            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 18 : 21, color: metrics.unscheduledCount > 0 ? 'var(--color-accent-2)' : 'var(--color-ink)' }}>
+          <div className="dusk-tally__cell" style={{ padding: isMobile ? '6px 10px' : '11px 16px' }}>
+            <span className="dusk-tally__label" style={isMobile ? { fontSize: 10 } : undefined}>
+              {isMobile ? 'Без дати' : 'Без дати (не розплановані)'}
+            </span>
+            <div className="dusk-tally__value" style={{ fontSize: isMobile ? 15 : 21, color: metrics.unscheduledCount > 0 ? 'var(--color-accent-2)' : 'var(--color-ink)' }}>
               {metrics.unscheduledCount} <span className="dusk-currency">зам.</span>
             </div>
-            <span className="dusk-tally__sub">Перетягніть у календар</span>
+            {!isMobile && <span className="dusk-tally__sub">Перетягніть у календар</span>}
           </div>
         </div>
       </div>
@@ -463,18 +498,18 @@ export default function OrderCalendar({
         alignItems: 'start'
       }}>
         {/* LEFT: CALENDAR GRID */}
-        <div className="dusk-panel" style={{ padding: isMobile ? 10 : 14, overflow: 'hidden' }}>
+        <div className="dusk-panel" style={{ padding: isMobile ? 8 : 14, overflow: 'hidden' }}>
           {/* Weekday Headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, marginBottom: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: isMobile ? 3 : 6, marginBottom: isMobile ? 4 : 8 }}>
             {WEEKDAYS_UA.map((wd, idx) => (
               <div
                 key={wd}
                 style={{
                   textAlign: 'center',
-                  fontSize: 11.5,
+                  fontSize: isMobile ? 10.5 : 11.5,
                   fontWeight: 600,
                   color: idx >= 5 ? 'var(--color-muted)' : 'var(--color-ink-2)',
-                  padding: '4px 0'
+                  padding: '3px 0'
                 }}
               >
                 {wd}
@@ -483,7 +518,7 @@ export default function OrderCalendar({
           </div>
 
           {/* Days Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: isMobile ? 3 : 6 }}>
             {calendarDays.map(cell => {
               const dayData = workloadMap[cell.key] || { orders: [], activeCount: 0, totalCount: 0 };
               const visibleOrders = (dayData.orders || []).filter(o =>
@@ -494,6 +529,7 @@ export default function OrderCalendar({
               const tone = getWorkloadTone(dayData.activeCount, dailyCapacity);
               const isDragTarget = dragOverDateKey === cell.key;
               const loadPct = Math.min(100, Math.round((dayData.activeCount / Math.max(1, dailyCapacity)) * 100));
+              const isSelectedMobile = isMobile && selectedDayMobile === cell.key;
 
               return (
                 <div
@@ -509,40 +545,44 @@ export default function OrderCalendar({
                   onDrop={(e) => handleDropOnDay(e, cell.key)}
                   onClick={() => isMobile && setSelectedDayMobile(cell.key)}
                   style={{
-                    minHeight: viewType === 'week' ? 320 : (isMobile ? 74 : 132),
-                    borderRadius: 10,
-                    padding: isMobile ? 6 : 8,
+                    minHeight: isMobile ? (viewType === 'week' ? 76 : 56) : (viewType === 'week' ? 320 : 132),
+                    borderRadius: isMobile ? 8 : 10,
+                    padding: isMobile ? '5px 4px' : 8,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 6,
+                    justifyContent: isMobile ? 'space-between' : 'flex-start',
+                    gap: isMobile ? 3 : 6,
                     background: isDragTarget
                       ? 'var(--color-accent-soft)'
-                      : isToday
-                        ? 'rgba(164, 174, 248, 0.06)'
-                        : cell.inCurrentMonth
-                          ? 'var(--color-paper-2)'
-                          : 'var(--color-paper)',
+                      : isSelectedMobile
+                        ? 'var(--color-accent-soft)'
+                        : isToday
+                          ? 'rgba(164, 174, 248, 0.06)'
+                          : cell.inCurrentMonth
+                            ? 'var(--color-paper-2)'
+                            : 'var(--color-paper)',
                     border: isDragTarget
                       ? '1.5px dashed var(--color-accent)'
-                      : isToday
-                        ? '1px solid var(--color-accent-border)'
-                        : (isMobile && selectedDayMobile === cell.key)
-                          ? '1px solid var(--color-accent)'
+                      : isSelectedMobile
+                        ? '1px solid var(--color-accent)'
+                        : isToday
+                          ? '1px solid var(--color-accent-border)'
                           : '1px solid var(--color-rule)',
-                    opacity: cell.inCurrentMonth ? 1 : 0.45,
-                    transition: 'all 0.14s ease',
-                    position: 'relative'
+                    opacity: cell.inCurrentMonth ? 1 : 0.42,
+                    transition: 'background-color 140ms ease, border-color 140ms ease',
+                    position: 'relative',
+                    cursor: isMobile ? 'pointer' : 'default'
                   }}
                 >
                   {/* Day Header: Number + Workload Indicator + Quick Add */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: isMobile ? 'center' : 'space-between', alignItems: 'center', gap: 4 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       <span
                         className="dusk-num"
                         style={{
                           fontSize: isMobile ? 12 : 13,
-                          fontWeight: isToday ? 700 : 600,
-                          color: isToday ? 'var(--color-accent)' : (isPast ? 'var(--color-muted)' : 'var(--color-ink)')
+                          fontWeight: isToday || isSelectedMobile ? 700 : 600,
+                          color: isToday || isSelectedMobile ? 'var(--color-accent)' : (isPast ? 'var(--color-muted)' : 'var(--color-ink)')
                         }}
                       >
                         {cell.date.getDate()}
@@ -554,6 +594,7 @@ export default function OrderCalendar({
                       )}
                     </div>
 
+                    {!isMobile && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       {dayData.activeCount > 0 ? (
                         <span
@@ -563,16 +604,17 @@ export default function OrderCalendar({
                             fontWeight: 600,
                             padding: '1px 6px',
                             borderRadius: 999,
-                            background: tone === 'full' ? 'var(--color-accent-2-soft)' : 'var(--color-accent-soft)',
-                            color: tone === 'full' ? 'var(--color-accent-2)' : 'var(--color-accent)',
-                            border: `1px solid ${tone === 'full' ? 'var(--color-accent-2-border)' : 'var(--color-accent-border)'}`
+                            whiteSpace: 'nowrap',
+                            background: 'var(--color-accent-soft)',
+                            color: 'var(--color-accent)',
+                            border: '1px solid var(--color-accent-border)'
                           }}
-                          title={`Активних замовлень: ${dayData.activeCount} із ${dailyCapacity} · Фігурок: ${dayData.itemsCount} шт.`}
+                          title={`Активних замовлень: ${dayData.activeCount} · Фігурок: ${dayData.itemsCount} шт.`}
                         >
-                          {dayData.activeCount}/{dailyCapacity} · {dayData.itemsCount}шт
+                          {dayData.activeCount}з · {dayData.itemsCount}шт
                         </span>
                       ) : (
-                        !isPast && !isMobile && (
+                        !isPast && (
                           <span style={{ fontSize: 9.5, color: 'var(--color-muted)', opacity: 0.7 }}>
                             вільно
                           </span>
@@ -595,17 +637,33 @@ export default function OrderCalendar({
                         </button>
                       )}
                     </div>
+                    )}
                   </div>
 
-                  {/* Thin Capacity Progress Bar */}
-                  {dayData.activeCount > 0 && (
-                    <div style={{ height: 3, borderRadius: 999, background: 'var(--color-paper)', overflow: 'hidden' }}>
-                      <div style={{
-                        width: `${loadPct}%`,
-                        height: '100%',
-                        background: tone === 'full' ? 'var(--color-accent-2)' : 'var(--color-accent)',
-                        transition: 'width 0.2s ease'
-                      }} />
+                  {/* Mobile Compact Orders & Figurines Indicator */}
+                  {isMobile && dayData.activeCount > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, lineHeight: 1.15 }}>
+                      <span
+                        className="dusk-num"
+                        style={{
+                          fontSize: 9.5,
+                          fontWeight: 700,
+                          color: 'var(--color-accent)',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {dayData.activeCount} зам
+                      </span>
+                      <span
+                        className="dusk-num"
+                        style={{
+                          fontSize: 8.5,
+                          color: 'var(--color-muted)',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {dayData.itemsCount} шт
+                      </span>
                     </div>
                   )}
 
@@ -630,34 +688,36 @@ export default function OrderCalendar({
                             onDragStart={(e) => handleDragStart(e, order.id)}
                             onClick={(e) => { e.stopPropagation(); onEditOrder?.(order); }}
                             style={{
-                              padding: '5px 7px',
-                              borderRadius: 7,
-                              background: isOverdue
+                              padding: '7px 8px',
+                              borderRadius: 8,
+                              background: (isOverdue || (isPriority && !isDone))
                                 ? 'var(--color-accent-2-soft)'
                                 : isDone
                                   ? 'oklch(100% 0 0 / 0.02)'
                                   : isMultiDay
                                     ? 'oklch(75% 0.08 265 / 0.07)'
                                     : 'var(--color-paper)',
-                              border: isOverdue
+                              border: (isOverdue || (isPriority && !isDone))
                                 ? '1px solid var(--color-accent-2-border)'
                                 : isMultiDay
                                   ? '1px solid var(--color-accent-border)'
                                   : '1px solid var(--color-rule)',
-                              borderLeft: isMultiDay
-                                ? `3px solid ${isOverdue ? 'var(--color-accent-2)' : 'var(--color-accent)'}`
-                                : undefined,
+                              borderLeft: (isPriority && !isDone) || (isMultiDay && isOverdue)
+                                ? '3px solid var(--color-accent-2)'
+                                : isMultiDay
+                                  ? '3px solid var(--color-accent)'
+                                  : undefined,
                               cursor: 'grab',
                               opacity: isDone ? 0.55 : 1,
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: 3
+                              gap: 4
                             }}
                             title="Перетягніть на інший день або клікніть для редагування"
                           >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
                               <span style={{
-                                fontSize: 11, fontWeight: 600, color: 'var(--color-ink)',
+                                fontSize: 11.5, fontWeight: 600, color: 'var(--color-ink)',
                                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                                 display: 'inline-flex', alignItems: 'center', gap: 4
                               }}>
@@ -666,31 +726,32 @@ export default function OrderCalendar({
                                 <span>{getOrderDisplayTitle(order)}</span>
                               </span>
 
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-                                {multiDayBadge && (
-                                  <span
-                                    className="dusk-num"
-                                    style={{
-                                      fontSize: 9,
-                                      fontWeight: 600,
-                                      color: 'var(--color-accent)',
-                                      background: 'var(--color-accent-soft)',
-                                      border: '1px solid var(--color-accent-border)',
-                                      padding: '0 4px',
-                                      borderRadius: 4
-                                    }}
-                                    title={`Замовлення на ${order._spanTotalDays} дн.: ${formatShortDateUa(spanStartKey)} – ${formatShortDateUa(spanEndKey)}`}
-                                  >
-                                    {multiDayBadge}
-                                  </span>
-                                )}
-                                <span className="dusk-num" style={{ fontSize: 10, color: 'var(--color-muted)' }}>
-                                  ×{itemsQty}
-                                </span>
+                              <span className="dusk-num" style={{ fontSize: 10, color: 'var(--color-muted)', flexShrink: 0 }}>
+                                ×{itemsQty}
                               </span>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            {multiDayBadge && (
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <span
+                                  className="dusk-num"
+                                  style={{
+                                    fontSize: 9.5,
+                                    fontWeight: 600,
+                                    color: 'var(--color-accent)',
+                                    background: 'var(--color-accent-soft)',
+                                    border: '1px solid var(--color-accent-border)',
+                                    padding: '1px 6px',
+                                    borderRadius: 5,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  {multiDayBadge} · {formatShortDateUa(spanStartKey)}–{formatShortDateUa(spanEndKey)}
+                                </span>
+                              </div>
+                            )}
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 2, borderTop: '1px solid var(--color-rule-soft)' }}>
                               {itemsList.map((it, idx) => (
                                 <div
                                   key={idx}
@@ -699,17 +760,17 @@ export default function OrderCalendar({
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     gap: 4,
-                                    fontSize: 10,
-                                    color: 'var(--color-muted)',
+                                    fontSize: 10.5,
+                                    color: 'var(--color-ink-2)',
                                     lineHeight: 1.25
                                   }}
                                   title={`${it.name} ×${it.qty}`}
                                 >
                                   <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {itemsList.length > 1 ? `• ${it.name}` : it.name}
+                                    {itemsList.length > 1 ? `• ${it.shortName}` : it.shortName}
                                   </span>
                                   {(itemsList.length > 1 || it.qty > 1) && (
-                                    <span className="dusk-num" style={{ flexShrink: 0, fontSize: 9.5, color: 'var(--color-ink-2)' }}>
+                                    <span className="dusk-num" style={{ flexShrink: 0, fontSize: 9.5, color: 'var(--color-muted)' }}>
                                       ×{it.qty}
                                     </span>
                                   )}
@@ -717,11 +778,7 @@ export default function OrderCalendar({
                               ))}
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                              <span className="dusk-num" style={{ fontSize: 9, color: isMultiDay ? 'var(--color-accent)' : 'transparent', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {isMultiDay ? `${formatShortDateUa(spanStartKey)}–${formatShortDateUa(spanEndKey)}` : ''}
-                              </span>
-
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4, marginTop: 1 }}>
                               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
                                 {!isDone && (
                                   <>
@@ -792,84 +849,109 @@ export default function OrderCalendar({
 
           {/* Mobile Selected Day Details */}
           {isMobile && (
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--color-rule)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
-                  Замовлення на {formatShortDateUa(selectedDayMobile)}
-                </span>
-                {onCreateOrderWithDate && (
-                  <button
-                    type="button"
-                    onClick={() => onCreateOrderWithDate(selectedDayMobile)}
-                    className="dusk-btn dusk-btn--primary dusk-btn--sm"
-                    style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
-                  >
-                    <Plus size={12} /> Додати на день
-                  </button>
-                )}
-              </div>
-              {(workloadMap[selectedDayMobile]?.orders || []).length === 0 ? (
-                <div style={{ padding: 14, textAlign: 'center', fontSize: 12, color: 'var(--color-muted)', background: 'var(--color-paper-2)', borderRadius: 10 }}>
-                  Цей день вільний
-                </div>
-              ) : (
-                (workloadMap[selectedDayMobile]?.orders || []).map(order => {
-                  const itemsList = getOrderItemsList(order);
-                  const multiDayBadge = getMultiDayBadgeText(order);
-                  const isMultiDay = (order._spanTotalDays || 1) > 1;
-                  return (
-                    <div
-                      key={order.id}
-                      onClick={() => onEditOrder?.(order)}
-                      style={{
-                        padding: 10, borderRadius: 10,
-                        background: isMultiDay ? 'oklch(75% 0.08 265 / 0.07)' : 'var(--color-paper-2)',
-                        border: isMultiDay ? '1px solid var(--color-accent-border)' : '1px solid var(--color-rule)',
-                        borderLeft: isMultiDay ? '3px solid var(--color-accent)' : undefined,
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8
-                      }}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={selectedDayMobile}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.16, ease: 'easeOut' }}
+                style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--color-rule)', display: 'flex', flexDirection: 'column', gap: 8 }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>
+                    Замовлення на {formatShortDateUa(selectedDayMobile)}
+                  </span>
+                  {onCreateOrderWithDate && (
+                    <button
+                      type="button"
+                      onClick={() => onCreateOrderWithDate(selectedDayMobile)}
+                      className="dusk-btn dusk-btn--primary dusk-btn--sm"
+                      style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
                     >
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>{getOrderDisplayTitle(order)}</span>
-                          {multiDayBadge && (
-                            <span className="dusk-num" style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-accent)', background: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-border)', padding: '0 5px', borderRadius: 4 }}>
-                              {multiDayBadge}
-                            </span>
-                          )}
+                      <Plus size={12} /> Додати на день
+                    </button>
+                  )}
+                </div>
+                {(workloadMap[selectedDayMobile]?.orders || []).length === 0 ? (
+                  <div style={{ padding: 14, textAlign: 'center', fontSize: 12, color: 'var(--color-muted)', background: 'var(--color-paper-2)', borderRadius: 10 }}>
+                    Цей день вільний
+                  </div>
+                ) : (
+                  (workloadMap[selectedDayMobile]?.orders || []).map(order => {
+                    const itemsList = getOrderItemsList(order);
+                    const multiDayBadge = getMultiDayBadgeText(order);
+                    const isMultiDay = (order._spanTotalDays || 1) > 1;
+                    const isPriority = !!order.shipping_details?.is_priority;
+                    const isDone = DONE_OR_SHIPPED_STATUSES.includes(order.status);
+                    return (
+                      <div
+                        key={order.id}
+                        onClick={() => onEditOrder?.(order)}
+                        style={{
+                          padding: 10, borderRadius: 10,
+                          background: (isPriority && !isDone)
+                            ? 'var(--color-accent-2-soft)'
+                            : isMultiDay
+                              ? 'oklch(75% 0.08 265 / 0.07)'
+                              : 'var(--color-paper-2)',
+                          border: (isPriority && !isDone)
+                            ? '1px solid var(--color-accent-2-border)'
+                            : isMultiDay
+                              ? '1px solid var(--color-accent-border)'
+                              : '1px solid var(--color-rule)',
+                          borderLeft: (isPriority && !isDone)
+                            ? '3px solid var(--color-accent-2)'
+                            : isMultiDay
+                              ? '3px solid var(--color-accent)'
+                              : undefined,
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+                          opacity: isDone ? 0.55 : 1
+                        }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            {isPriority && <Star size={12} fill="var(--color-accent-2)" stroke="var(--color-accent-2)" style={{ flexShrink: 0 }} />}
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink)' }}>{getOrderDisplayTitle(order)}</span>
+                            {multiDayBadge && (
+                              <span className="dusk-num" style={{ fontSize: 10, fontWeight: 600, color: 'var(--color-accent)', background: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-border)', padding: '0 5px', borderRadius: 4 }}>
+                                {multiDayBadge}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 3 }}>
+                            {itemsList.map((it, idx) => (
+                              <div key={idx} style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                                {itemsList.length > 1 ? `• ${it.name}` : it.name} ×{it.qty}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 3 }}>
-                          {itemsList.map((it, idx) => (
-                            <div key={idx} style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
-                              {itemsList.length > 1 ? `• ${it.name}` : it.name} ×{it.qty}
-                            </div>
-                          ))}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); updateOrderDueDate(order.id, addDaysToKey(selectedDayMobile, 1)); }}
+                            className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                            style={{ height: 26, padding: '0 8px', fontSize: 11 }}
+                          >
+                            +1 день
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); updateOrderDueDate(order.id, ''); }}
+                            className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                            style={{ width: 26, height: 26, padding: 0, justifyContent: 'center' }}
+                            title="Прибрати дату"
+                          >
+                            <X size={12} />
+                          </button>
                         </div>
                       </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); updateOrderDueDate(order.id, addDaysToKey(selectedDayMobile, 1)); }}
-                        className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                        style={{ height: 26, padding: '0 8px', fontSize: 11 }}
-                      >
-                        +1 день
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); updateOrderDueDate(order.id, ''); }}
-                        className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                        style={{ width: 26, height: 26, padding: 0, justifyContent: 'center' }}
-                        title="Прибрати дату"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  </div>
-                  );
-                })
-              )}
-            </div>
+                    );
+                  })
+                )}
+              </motion.div>
+            </AnimatePresence>
           )}
         </div>
 

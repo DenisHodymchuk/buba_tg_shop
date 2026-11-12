@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { novaPoshta } from '@/lib/novaposhta';
 import OrderKanbanBoard from '@/components/OrderKanbanBoard';
+import LabelPrintModal from '@/components/LabelPrintModal';
 import { 
   Coins, Search, Plus, Trash2, ShoppingBag, 
   Edit3, X, ChevronDown, ChevronUp, 
@@ -351,6 +352,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
   const [onlyWithNotes, setOnlyWithNotes] = useState(false);
   const [multiStatusMode, setMultiStatusMode] = useState(false);
   const [showPresetInput, setShowPresetInput] = useState(false);
+  const [printLabelOrder, setPrintLabelOrder] = useState(null);
 
   const [salesFilterTemplates, setSalesFilterTemplates] = useState([]);
   const [newSalesTemplateName, setNewSalesTemplateName] = useState('');
@@ -1963,6 +1965,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
             onEditSale={handleEdit}
             onDeleteSale={handleDelete}
             onDuplicateSale={handleDuplicate}
+            onPrintLabel={setPrintLabelOrder}
             onAddSaleInStatus={(colStatus) => {
               resetForm();
               setFormData(prev => ({ ...prev, status: colStatus || 'new' }));
@@ -2125,6 +2128,14 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                           </div>
 
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', borderTop: '1px solid var(--color-rule)', paddingTop: 10 }}>
+                            <button 
+                              onClick={() => setPrintLabelOrder(sale)}
+                              className="dusk-btn-ghost"
+                              style={{ color: 'var(--color-accent)', borderColor: 'var(--color-accent-border)' }}
+                              title="Надрукувати наклейку 58×40"
+                            >
+                              <Printer size={14} /> Надрукувати
+                            </button>
                             <button 
                               onClick={() => handleEdit(sale)}
                               className="dusk-btn-ghost"
@@ -2384,6 +2395,15 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                           {/* Row Actions */}
                           <td style={{ textAlign: 'right', verticalAlign: 'top' }}>
                             <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                              <button 
+                                type="button"
+                                onClick={() => setPrintLabelOrder(sale)}
+                                title="Надрукувати наклейку 58×40"
+                                className="dusk-btn-ghost"
+                                style={{ minHeight: 30, padding: '0 8px', borderRadius: 8, color: 'var(--color-accent)', borderColor: 'var(--color-accent-border)' }}
+                              >
+                                <Printer size={13} />
+                              </button>
                               <button 
                                 type="button"
                                 onClick={() => handleEdit(sale)}
@@ -4124,6 +4144,12 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
         </AnimatePresence>,
         document.body
       )}
+
+      <LabelPrintModal
+        order={printLabelOrder}
+        onClose={() => setPrintLabelOrder(null)}
+        showToast={showToast}
+      />
 
     </div>
   );

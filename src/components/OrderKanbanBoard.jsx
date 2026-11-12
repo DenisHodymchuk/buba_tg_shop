@@ -70,6 +70,7 @@ export default function OrderKanbanBoard({
   onDeleteSale,
   onDuplicateSale,
   onAddSaleInStatus,
+  onPrintLabel,
   showToast
 }) {
   const [activeMobileCol, setActiveMobileCol] = useState('new');
@@ -380,6 +381,19 @@ export default function OrderKanbanBoard({
             <span className="dusk-num" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-ink)', whiteSpace: 'nowrap', marginRight: 2 }}>
               {totalAmount.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
             </span>
+            {onPrintLabel && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onPrintLabel(sale); }}
+                style={{
+                  background: 'var(--color-paper-2)', border: '1px solid var(--color-rule)', color: 'var(--color-accent)',
+                  borderRadius: 6, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+                }}
+                title="Надрукувати наклейку 58×40"
+              >
+                <Printer size={11.5} />
+              </button>
+            )}
             {onEditSale && (
               <button
                 type="button"
@@ -696,6 +710,17 @@ export default function OrderKanbanBoard({
                     title="Дублювати замовлення"
                   >
                     <Copy size={11} />
+                  </button>
+                )}
+                {onPrintLabel && (
+                  <button
+                    type="button"
+                    onClick={() => onPrintLabel(sale)}
+                    className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                    style={{ height: 26, padding: '0 9px', fontSize: 11, color: 'var(--color-accent)', borderColor: 'var(--color-accent-border)' }}
+                    title="Надрукувати наклейку 58×40"
+                  >
+                    <Printer size={11} /> Надрукувати
                   </button>
                 )}
               </div>

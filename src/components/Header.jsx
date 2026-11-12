@@ -2,9 +2,19 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Award, Search, Box, User, MessageSquare, Share2, X } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, onOpenReviews, onSearch }) {
+const NAV_LINKS = [
+  { href: '/hits', label: 'Хіти' },
+  { href: '/catalog', label: 'Каталог' },
+  { href: '/custom-modeling', label: '3D-друк' },
+  { href: '/delivery', label: 'Доставка' },
+  { href: '/faq', label: 'FAQ' }
+];
+
+export default function Header({ cartCount, bonuses, isAuthorized = false, onOpenCart, onOpenHistory, onOpenReviews, onSearch }) {
   const [localQuery, setLocalQuery] = useState('');
+  const pathname = usePathname();
 
   const handleSearchChange = (val) => {
     setLocalQuery(val);
@@ -68,8 +78,35 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
           </div>
         </Link>
 
+        {/* Desktop Anchor Nav */}
+        <nav className="hidden lg:flex" style={{ alignItems: 'center', gap: 4 }}>
+          {NAV_LINKS.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  padding: '6px 11px',
+                  borderRadius: 8,
+                  fontSize: 12.5,
+                  fontWeight: active ? 600 : 500,
+                  color: active ? '#F3F4F8' : '#B8BDCB',
+                  background: active ? 'rgba(147, 162, 250, 0.14)' : 'transparent',
+                  border: active ? '1px solid rgba(147, 162, 250, 0.32)' : '1px solid transparent',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  transition: 'color 0.14s ease, background-color 0.14s ease, border-color 0.14s ease'
+                }}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
         {/* Desktop Centered Search Bar */}
-        <div style={{ flex: 1, maxWidth: 460 }} className="hidden md:block">
+        <div style={{ flex: 1, maxWidth: 380 }} className="hidden md:block">
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <Search size={15} style={{ position: 'absolute', left: 13, color: '#8D93A5', pointerEvents: 'none' }} />
             <input
@@ -123,74 +160,31 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
 
         {/* Right Side Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Bonuses Pill */}
-          <Link href="/profile" style={{ textDecoration: 'none' }}>
-            <div
-              title="Бонусний рахунок"
-              style={{
-                height: 38,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 7,
-                background: '#181B22',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                padding: '0 13px',
-                borderRadius: 10,
-                color: '#F3F4F8',
-                fontSize: 13,
-                fontWeight: 600,
-                fontVariantNumeric: 'tabular-nums'
-              }}
-            >
-              <Award size={15} style={{ color: '#F4A97B', flexShrink: 0 }} />
-              <span>{bonuses}</span>
-            </div>
-          </Link>
-
-          {/* Social Links Hub */}
-          <Link href="/links" style={{ textDecoration: 'none' }}>
-            <button
-              type="button"
-              title="Соцмережі та контакти"
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: '#181B22',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#B8BDCB',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Share2 size={16} />
-            </button>
-          </Link>
-
-          {/* Reviews Button */}
-          <button
-            type="button"
-            onClick={onOpenReviews}
-            title="Відгуки покупців"
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              background: '#181B22',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#B8BDCB',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <MessageSquare size={16} />
-          </button>
+          {/* Bonuses Pill (only when authorized) */}
+          {isAuthorized && (
+            <Link href="/profile" style={{ textDecoration: 'none' }}>
+              <div
+                title="Бонусний рахунок"
+                style={{
+                  height: 38,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  background: '#181B22',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  padding: '0 13px',
+                  borderRadius: 10,
+                  color: '#F3F4F8',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontVariantNumeric: 'tabular-nums'
+                }}
+              >
+                <Award size={15} style={{ color: '#F4A97B', flexShrink: 0 }} />
+                <span>{bonuses}</span>
+              </div>
+            </Link>
+          )}
 
           {/* Profile Button */}
           <Link href="/profile" style={{ textDecoration: 'none' }}>
@@ -257,9 +251,9 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
         </div>
       </div>
 
-      {/* Mobile Search Bar */}
-      <div className="md:hidden" style={{ padding: '0 16px 12px' }}>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      {/* Mobile Search Bar + Page Nav */}
+      <div className="lg:hidden flex flex-col gap-2" style={{ padding: '0 16px 10px' }}>
+        <div className="md:hidden relative flex items-center">
           <Search size={14} style={{ position: 'absolute', left: 12, color: '#8D93A5', pointerEvents: 'none' }} />
           <input
             type="text"
@@ -296,6 +290,31 @@ export default function Header({ cartCount, bonuses, onOpenCart, onOpenHistory, 
             </button>
           )}
         </div>
+
+        <nav className="no-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: 6, overflowX: 'auto' }}>
+          {NAV_LINKS.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  whiteSpace: 'nowrap',
+                  padding: '5px 11px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: active ? 600 : 500,
+                  textDecoration: 'none',
+                  color: active ? '#F3F4F8' : '#8D93A5',
+                  background: active ? 'rgba(147, 162, 250, 0.14)' : '#181B22',
+                  border: active ? '1px solid rgba(147, 162, 250, 0.35)' : '1px solid rgba(255, 255, 255, 0.07)'
+                }}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </header>
   );

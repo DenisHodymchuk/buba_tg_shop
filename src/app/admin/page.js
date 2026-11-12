@@ -22,6 +22,7 @@ import { getTodayKey, DONE_OR_SHIPPED_STATUSES } from '@/lib/calendarHelpers';
 import LampStudio from '@/components/LampStudio';
 import BioLinksEditor from '@/components/BioLinksEditor';
 import DropshippingAdmin from '@/components/DropshippingAdmin';
+import BannersAdmin from '@/components/BannersAdmin';
 
 
 const scrollbarHide = `
@@ -1649,6 +1650,7 @@ export default function AdminPanel() {
               title: 'Каталог і склад',
               items: [
                 { id: 'products', label: 'Товари каталогу', icon: <Package size={15} />, count: products.length || null },
+                { id: 'banners', label: 'Банери магазину', icon: <ImageIcon size={15} /> },
                 { id: 'inventory', label: 'Склад (Облік)', icon: <Box size={15} /> },
                 { id: 'calculator', label: 'Калькулятор друку', icon: <Calculator size={15} /> },
                 { id: 'dropshipping', label: 'Дропшипінг', icon: <ShoppingBag size={15} /> },
@@ -2903,6 +2905,8 @@ export default function AdminPanel() {
                 </div>
               </div>
             </div>
+          ) : activeTab === 'banners' ? (
+            <BannersAdmin products={products} categories={categories} isMobile={isMobile} />
           ) : activeTab === 'links_editor' ? (
             <BioLinksEditor />
           ) : null}
