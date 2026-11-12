@@ -56,6 +56,22 @@ const formatCleanPhone = (phoneStr) => {
   return digits || String(phoneStr).trim();
 };
 
+const getSaleDueDateKey = (sale) => {
+  const raw = sale?.shipping_details?.due_date || sale?.due_date;
+  if (!raw) return '';
+  if (typeof raw === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    const d = new Date(raw);
+    if (!Number.isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+  }
+  return String(raw);
+};
+
 export default function OrderKanbanBoard({
   sales = [],
   isMobile = false,
@@ -226,10 +242,28 @@ export default function OrderKanbanBoard({
 
     Object.keys(map).forEach(colId => {
       map[colId].sort((a, b) => {
+        // 1. Пріоритетні завжди з самого верху
         const aPrio = a.shipping_details?.is_priority ? 1 : 0;
         const bPrio = b.shipping_details?.is_priority ? 1 : 0;
         if (aPrio !== bPrio) return bPrio - aPrio;
-        return new Date(b.created_at) - new Date(a.created_at);
+
+        // 2. Сортування за встановленою датою (due_date):
+        // найближчі дати зверху, на найдальше число — з самого низу
+        const aDate = getSaleDueDateKey(a);
+        const bDate = getSaleDueDateKey(b);
+
+        if (aDate && bDate) {
+          if (aDate !== bDate) return aDate.localeCompare(bDate);
+        } else if (aDate && !bDate) {
+          return -1; // Замовлення з датою вище за ті, де дата не встановлена
+        } else if (!aDate && bDate) {
+          return 1;  // Замовлення без дати опускаються донизу
+        }
+
+        // 3. Якщо дати однакові (або в обох відсутні) — свіжіші замовлення зверху
+        const aCreated = new Date(a.created_at || 0).getTime();
+        const bCreated = new Date(b.created_at || 0).getTime();
+        return bCreated - aCreated;
       });
     });
 
