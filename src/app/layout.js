@@ -11,6 +11,14 @@ export const metadata = {
   description: "Преміальні 3D вироби та аксесуари в Telegram",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="uk" className="h-full antialiased" suppressHydrationWarning>

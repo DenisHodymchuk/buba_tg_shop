@@ -923,3 +923,13 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Prevent iOS Safari auto-zoom on input focus */
+@media (max-width: 768px) {
+  .dusk-admin-scope input,
+  .dusk-admin-scope select,
+  .dusk-admin-scope textarea,
+  .dusk-admin-scope .dusk-input {
+    font-size: 16px !important;
+  }
+}
