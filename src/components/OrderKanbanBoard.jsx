@@ -69,6 +69,7 @@ export default function OrderKanbanBoard({
   onEditSale,
   onDeleteSale,
   onDuplicateSale,
+  onAddSaleInStatus,
   showToast
 }) {
   const [activeMobileCol, setActiveMobileCol] = useState('new');
@@ -865,9 +866,26 @@ export default function OrderKanbanBoard({
                       <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-ink)' }}>{currentCol.title}</span>
                       <span className="dusk-num" style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>({colOrders.length})</span>
                     </div>
-                    <span className="dusk-num" style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--color-ink-2)' }}>
-                      {colSum.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className="dusk-num" style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--color-ink-2)' }}>
+                        {colSum.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
+                      </span>
+                      {onAddSaleInStatus && currentCol.id !== 'cancelled' && (
+                        <button
+                          type="button"
+                          onClick={() => onAddSaleInStatus(currentCol.id)}
+                          title={`Створити продаж у стадії «${currentCol.title}»`}
+                          style={{
+                            width: 26, height: 26, borderRadius: 7,
+                            border: '1px solid var(--color-rule)', background: 'var(--color-paper-2)',
+                            color: 'var(--color-ink)', cursor: 'pointer',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {colOrders.length === 0 ? (
@@ -951,11 +969,32 @@ export default function OrderKanbanBoard({
                     </span>
                   </div>
 
-                  {colOrders.length > 0 && (
-                    <span className="dusk-num" style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink-2)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {colSum.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
-                    </span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    {colOrders.length > 0 && (
+                      <span className="dusk-num" style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink-2)', whiteSpace: 'nowrap' }}>
+                        {colSum.toLocaleString('uk-UA')} <span className="dusk-currency">₴</span>
+                      </span>
+                    )}
+                    {onAddSaleInStatus && col.id !== 'cancelled' && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddSaleInStatus(col.id);
+                        }}
+                        title={`Створити продаж у стадії «${col.title}»`}
+                        style={{
+                          width: 24, height: 24, borderRadius: 7,
+                          border: '1px solid var(--color-rule)', background: 'var(--color-paper)',
+                          color: 'var(--color-ink)', cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'background-color 0.14s, border-color 0.14s'
+                        }}
+                      >
+                        <Plus size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Column Cards Container */}

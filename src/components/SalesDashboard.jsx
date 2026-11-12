@@ -1963,6 +1963,11 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
             onEditSale={handleEdit}
             onDeleteSale={handleDelete}
             onDuplicateSale={handleDuplicate}
+            onAddSaleInStatus={(colStatus) => {
+              resetForm();
+              setFormData(prev => ({ ...prev, status: colStatus || 'new' }));
+              setShowAddForm(true);
+            }}
             showToast={showToast}
           />
         ) : isMobile ? (
