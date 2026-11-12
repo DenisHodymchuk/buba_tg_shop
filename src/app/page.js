@@ -22,6 +22,7 @@ export default function Home() {
               onProductClick={setSelectedProduct}
               cart={cart}
               onProductsLoaded={setStoreProducts}
+              homeMode
             />
           </Suspense>
         </>

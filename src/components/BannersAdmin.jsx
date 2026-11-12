@@ -30,6 +30,8 @@ export default function BannersAdmin({ products = [], categories = [], isMobile 
   const [editingIndex, setEditingIndex] = useState(null); // null = list, -1 = new, >=0 = edit index
   const [form, setForm] = useState(EMPTY_FORM);
   const [productSearch, setProductSearch] = useState('');
+  const [collectionCovers, setCollectionCovers] = useState({});
+  const [uploadingCollection, setUploadingCollection] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -40,16 +42,61 @@ export default function BannersAdmin({ products = [], categories = [], isMobile 
       }
       const { data } = await supabase
         .from('settings')
-        .select('value')
-        .eq('key', 'store_banners')
-        .single();
-      if (data && Array.isArray(data.value)) {
-        setBanners(data.value);
+        .select('key, value')
+        .in('key', ['store_banners', 'collection_covers']);
+      if (Array.isArray(data)) {
+        const bannersRow = data.find(r => r.key === 'store_banners');
+        const coversRow = data.find(r => r.key === 'collection_covers');
+        if (bannersRow && Array.isArray(bannersRow.value)) {
+          setBanners(bannersRow.value);
+        }
+        if (coversRow && coversRow.value && typeof coversRow.value === 'object') {
+          setCollectionCovers(coversRow.value);
+        }
       }
       setLoading(false);
     }
     load();
   }, []);
+
+  const persistCollectionCovers = async (nextCovers) => {
+    setCollectionCovers(nextCovers);
+    if (!supabase) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from('settings')
+      .upsert({ key: 'collection_covers', value: nextCovers }, { onConflict: 'key' });
+    setSaving(false);
+    if (!error) {
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 2200);
+    } else {
+      alert('Помилка збереження обкладинок: ' + error.message);
+    }
+  };
+
+  const handleCollectionPhotoUpload = async (catName, e) => {
+    const file = e.target.files?.[0];
+    if (!file || !supabase) return;
+    setUploadingCollection(catName);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const fileName = `collections/col-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(fileName, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from('products')
+        .getPublicUrl(fileName);
+      await persistCollectionCovers({ ...collectionCovers, [catName]: publicUrl });
+    } catch (err) {
+      alert('Не вдалося завантажити фото колекції: ' + (err.message || err));
+    } finally {
+      setUploadingCollection('');
+      e.target.value = '';
+    }
+  };
 
   const persistBanners = async (nextBanners) => {
     setBanners(nextBanners);
@@ -644,6 +691,106 @@ export default function BannersAdmin({ products = [], categories = [], isMobile 
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Collection Covers Section */}
+      {editingIndex === null && categoryNames.length > 0 && (
+        <div className="dusk-panel" style={{ padding: isMobile ? '14px 16px' : '18px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>
+              Фото колекцій (категорій)
+            </h3>
+            <p style={{ fontSize: 12.5, color: 'var(--color-muted)', margin: '4px 0 0' }}>
+              За замовчуванням береться фото першого товару з категорії. Тут можна завантажити власну обкладинку для будь-якої колекції.
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+            gap: 10
+          }}>
+            {categoryNames.map((catName) => {
+              const catProducts = products.filter(p => !p.is_hidden && p.category === catName);
+              const autoImg = catProducts.find(p => p.image_url)?.image_url || '';
+              const customImg = collectionCovers[catName] || '';
+              const previewImg = customImg || autoImg;
+              const isUploadingThis = uploadingCollection === catName;
+
+              return (
+                <div
+                  key={catName}
+                  style={{
+                    background: 'var(--color-paper)',
+                    border: '1px solid var(--color-rule)',
+                    borderRadius: 12,
+                    padding: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                    <div style={{
+                      width: 56,
+                      height: 44,
+                      borderRadius: 8,
+                      overflow: 'hidden',
+                      background: '#13151B',
+                      border: '1px solid var(--color-rule)',
+                      flexShrink: 0
+                    }}>
+                      {previewImg ? (
+                        <img src={previewImg} alt={catName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <ImageIcon size={16} style={{ color: 'var(--color-muted)' }} />
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {catName}
+                      </div>
+                      <div style={{ fontSize: 11, color: customImg ? 'var(--color-accent)' : 'var(--color-muted)' }}>
+                        {customImg ? 'Власне фото' : `Авто (${catProducts.length} шт.)`}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    <label className="dusk-btn" style={{ cursor: 'pointer', height: 32, fontSize: 12, padding: '0 10px' }}>
+                      {isUploadingThis ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                      <span>{isUploadingThis ? '...' : 'Фото'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleCollectionPhotoUpload(catName, e)}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                    {customImg && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = { ...collectionCovers };
+                          delete next[catName];
+                          persistCollectionCovers(next);
+                        }}
+                        className="dusk-btn"
+                        title="Скинути на авто"
+                        style={{ height: 32, padding: '0 8px', color: 'var(--color-danger)' }}
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

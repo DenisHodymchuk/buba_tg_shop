@@ -1650,7 +1650,7 @@ export default function AdminPanel() {
               title: 'Каталог і склад',
               items: [
                 { id: 'products', label: 'Товари каталогу', icon: <Package size={15} />, count: products.length || null },
-                { id: 'banners', label: 'Банери магазину', icon: <ImageIcon size={15} /> },
+                { id: 'banners', label: 'Банери і колекції', icon: <ImageIcon size={15} /> },
                 { id: 'inventory', label: 'Склад (Облік)', icon: <Box size={15} /> },
                 { id: 'calculator', label: 'Калькулятор друку', icon: <Calculator size={15} /> },
                 { id: 'dropshipping', label: 'Дропшипінг', icon: <ShoppingBag size={15} /> },
