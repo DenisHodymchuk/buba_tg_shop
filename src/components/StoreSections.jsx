@@ -689,18 +689,23 @@ export function StoreFooter({ isMobile, onOpenReviews }) {
     <footer style={{
       borderTop: '1px solid rgba(255, 255, 255, 0.07)',
       background: '#111319',
-      marginTop: 40,
+      marginTop: isMobile ? 24 : 40,
       flexShrink: 0
     }}>
       <div style={{
         maxWidth: 1360,
         margin: '0 auto',
-        padding: isMobile ? '28px 14px 90px' : '40px 20px 32px',
+        padding: isMobile ? '20px 14px 18px' : '40px 20px 32px',
         display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr 1fr',
-        gap: isMobile ? 22 : 36
+        gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : '1.4fr 1fr 1fr',
+        gap: isMobile ? 16 : 36
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          gridColumn: isMobile ? '1 / -1' : 'auto'
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 34,
@@ -761,7 +766,7 @@ export function StoreFooter({ isMobile, onOpenReviews }) {
 
       <div style={{
         borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-        padding: '16px 20px',
+        padding: isMobile ? '12px 14px' : '16px 20px',
         textAlign: 'center'
       }}>
         <p style={{ fontSize: 11.5, color: '#8D93A5', fontWeight: 500, margin: 0 }}>

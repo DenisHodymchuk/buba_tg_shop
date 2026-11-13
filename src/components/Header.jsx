@@ -31,34 +31,36 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
       borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
       width: '100%'
     }}>
-      <div style={{
-        maxWidth: 1360,
-        margin: '0 auto',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 20px',
-        gap: 16
-      }}>
+      <div
+        style={{
+          maxWidth: 1360,
+          margin: '0 auto',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          gap: 12
+        }}
+      >
         {/* Brand Logo */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 11, flexShrink: 0 }}>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <div style={{
-            width: 38,
-            height: 38,
-            borderRadius: 11,
+            width: 36,
+            height: 36,
+            borderRadius: 10,
             background: 'rgba(147, 162, 250, 0.14)',
             border: '1px solid rgba(147, 162, 250, 0.32)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#93A2FA'
+            color: '#93A2FA',
+            flexShrink: 0
           }}>
-            <Box size={20} strokeWidth={2} />
+            <Box size={19} strokeWidth={2} />
           </div>
-          <div className="hidden sm:block">
-            <div style={{
-              fontSize: 16,
+          <div>
+            <div className="text-[14.5px] sm:text-[16px]" style={{
               fontWeight: 700,
               color: '#F3F4F8',
               letterSpacing: '-0.02em',
@@ -252,7 +254,7 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
       </div>
 
       {/* Mobile Search Bar + Page Nav */}
-      <div className="lg:hidden flex flex-col gap-2" style={{ padding: '0 16px 10px' }}>
+      <div className="lg:hidden flex flex-col" style={{ padding: '2px 16px 12px', gap: 10 }}>
         <div className="md:hidden relative flex items-center">
           <Search size={14} style={{ position: 'absolute', left: 12, color: '#8D93A5', pointerEvents: 'none' }} />
           <input

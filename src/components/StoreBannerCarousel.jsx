@@ -76,8 +76,7 @@ export default function StoreBannerCarousel({ isMobile, products = [], onProduct
   const hasOverlayText = Boolean(
     activeBanner.title?.trim() ||
     activeBanner.accent_title?.trim() ||
-    activeBanner.subtitle?.trim() ||
-    activeBanner.button_text?.trim()
+    activeBanner.subtitle?.trim()
   );
 
   const handleBannerAction = async () => {
@@ -130,7 +129,7 @@ export default function StoreBannerCarousel({ isMobile, products = [], onProduct
         style={{
           position: 'relative',
           width: '100%',
-          height: isMobile ? 210 : 320,
+          height: isMobile ? (hasOverlayText ? 200 : 'auto') : 320,
           borderRadius: isMobile ? 16 : 22,
           overflow: 'hidden',
           background: '#181B22',
@@ -153,20 +152,28 @@ export default function StoreBannerCarousel({ isMobile, products = [], onProduct
             animate={{ opacity: 1 }}
             exit={{ opacity: 0.35 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            style={{ position: 'absolute', inset: 0 }}
+            style={isMobile && !hasOverlayText ? { position: 'relative', width: '100%' } : { position: 'absolute', inset: 0 }}
           >
             {activeBanner.image_url && (
               <img
                 src={activeBanner.image_url}
                 alt={fullTitle || 'Банер магазину'}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  objectPosition: 'center',
-                  transform: isHovered && !isMobile ? 'scale(1.015)' : 'scale(1)',
-                  transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)'
-                }}
+                style={isMobile && !hasOverlayText
+                  ? {
+                      width: '100%',
+                      height: 'auto',
+                      display: 'block'
+                    }
+                  : {
+                      position: hasOverlayText ? 'absolute' : 'relative',
+                      inset: hasOverlayText ? 0 : 'auto',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                      transform: isHovered && !isMobile ? 'scale(1.015)' : 'scale(1)',
+                      transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)'
+                    }}
               />
             )}
 
