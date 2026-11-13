@@ -2481,21 +2481,6 @@ export default function AdminPanel() {
             </div>
           ) : activeTab === 'farm' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="dusk-glass" style={{ padding: isMobile ? 14 : 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                <div>
-                  <h1 className="dusk-heading" style={{ fontSize: isMobile ? 20 : 22 }}>
-                    3D-друкарська ферма ({printers.length})
-                  </h1>
-                  <p className="dusk-subheading" style={{ marginTop: 2 }}>Моніторинг принтерів Bambu Lab, енергоспоживання, амортизації та активних завдань</p>
-                </div>
-                <button 
-                  onClick={() => setShowAddPrinterForm(!showAddPrinterForm)}
-                  className="dusk-btn dusk-btn--primary"
-                >
-                  <Plus size={15} /> Додати принтер
-                </button>
-              </div>
-
               <BambuCloudPanel
                 printers={printers}
                 savePrinters={savePrinters}
