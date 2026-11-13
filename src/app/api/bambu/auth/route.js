@@ -87,6 +87,13 @@ export async function POST(req) {
       }
 
       if (data?.loginType === 'verifyCode' || (!data?.accessToken && data?.loginType)) {
+        // Bambu Lab requires an explicit sendemail/code request to dispatch the 6-digit email code
+        await fetch(`${baseUrl}/v1/user-service/user/sendemail/code`, {
+          method: 'POST',
+          headers: getBambuHeaders(),
+          body: JSON.stringify({ email: email.trim(), type: 'codeLogin' })
+        }).catch(() => {});
+
         return NextResponse.json({
           ok: true,
           step: 'verify_code',
