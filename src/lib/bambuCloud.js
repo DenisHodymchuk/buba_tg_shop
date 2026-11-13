@@ -118,9 +118,85 @@ export function disconnectBambuMqtt() {
   globalMgr.lastPushAll = {};
 }
 
+function normalizeTrayHexColor(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const clean = raw.replace(/^#/, '').trim();
+  if (/^[0-9a-fA-F]{6,8}$/.test(clean)) {
+    return `#${clean.slice(0, 6).toUpperCase()}`;
+  }
+  return null;
+}
+
+export function extractAmsInfo(telemetry) {
+  if (!telemetry) return { ams_units: [], external_spool: null };
+  const amsRaw = telemetry.ams || {};
+  const trayNow = amsRaw.tray_now != null ? String(amsRaw.tray_now) : null;
+
+  const unitsList = Array.isArray(amsRaw.ams) ? amsRaw.ams : [];
+  const ams_units = unitsList.map((unit, uIdx) => {
+    const unitId = unit?.id != null ? String(unit.id) : String(uIdx);
+    const traysRaw = Array.isArray(unit?.tray) ? unit.tray : [];
+    const trays = traysRaw.map((tr, tIdx) => {
+      const trayId = tr?.id != null ? String(tr.id) : String(tIdx);
+      const globalIdx = String(Number(unitId) * 4 + Number(trayId));
+      const type = String(tr?.tray_type || '').trim();
+      const brand = String(tr?.tray_sub_brands || '').trim();
+      const color = normalizeTrayHexColor(tr?.tray_color);
+      const empty = !type;
+      const remain = typeof tr?.remain === 'number' && tr.remain >= 0 ? tr.remain : null;
+      return {
+        id: trayId,
+        slot: Number(trayId) + 1,
+        type,
+        brand,
+        color: empty ? null : color,
+        remain,
+        empty,
+        active: !empty && trayNow === globalIdx
+      };
+    });
+
+    return {
+      id: unitId,
+      humidity: unit?.humidity != null ? String(unit.humidity) : null,
+      temp: unit?.temp != null ? String(unit.temp) : null,
+      trays
+    };
+  });
+
+  const vt = telemetry.vt_tray;
+  let external_spool = null;
+  if (vt && typeof vt === 'object' && String(vt.tray_type || '').trim()) {
+    external_spool = {
+      type: String(vt.tray_type).trim(),
+      brand: String(vt.tray_sub_brands || '').trim(),
+      color: normalizeTrayHexColor(vt.tray_color),
+      active: trayNow === '254'
+    };
+  }
+
+  return { ams_units, external_spool };
+}
+
 function mergePrintTelemetry(serial, printData) {
   if (!printData || typeof printData !== 'object') return;
   const prev = globalMgr.telemetry[serial] || {};
+
+  let nextAms = prev.ams;
+  if (printData.ams && typeof printData.ams === 'object') {
+    const prevAms = prev.ams || {};
+    nextAms = {
+      ...prevAms,
+      ...printData.ams,
+      ams: Array.isArray(printData.ams.ams) ? printData.ams.ams : prevAms.ams
+    };
+  }
+
+  let nextVtTray = prev.vt_tray;
+  if (printData.vt_tray && typeof printData.vt_tray === 'object') {
+    nextVtTray = { ...(prev.vt_tray || {}), ...printData.vt_tray };
+  }
+
   const next = {
     ...prev,
     gcode_state: printData.gcode_state ?? prev.gcode_state ?? 'IDLE',
@@ -136,6 +212,8 @@ function mergePrintTelemetry(serial, printData) {
     total_layer_num: typeof printData.total_layer_num === 'number' ? printData.total_layer_num : prev.total_layer_num,
     print_error: typeof printData.print_error === 'number' ? printData.print_error : (prev.print_error ?? 0),
     wifi_signal: printData.wifi_signal ?? prev.wifi_signal,
+    ams: nextAms,
+    vt_tray: nextVtTray,
     updatedAt: Date.now()
   };
   globalMgr.telemetry[serial] = next;

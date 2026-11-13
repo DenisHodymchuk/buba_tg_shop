@@ -2654,7 +2654,7 @@ export default function AdminPanel() {
                         </span>
                       </div>
 
-                      {liveBambu && status !== 'repair' && (isLivePrinting || isLivePaused || liveBambu.nozzle_temper != null) && (
+                      {liveBambu && status !== 'repair' && (isLivePrinting || isLivePaused || liveBambu.nozzle_temper != null || liveBambu.ams_units?.length > 0 || liveBambu.external_spool) && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--color-paper)', padding: 11, borderRadius: 10, border: '1px solid var(--color-rule)' }}>
                           {(liveBambu.subtask_name || liveBambu.gcode_file) && (
                             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -2688,6 +2688,97 @@ export default function AdminPanel() {
                               {liveBambu.bed_temper != null && (
                                 <span>Стіл: <b>{liveBambu.bed_temper}°</b>{liveBambu.bed_target_temper ? `/${liveBambu.bed_target_temper}°` : ''}</span>
                               )}
+                            </div>
+                          )}
+
+                          {Array.isArray(liveBambu.ams_units) && liveBambu.ams_units.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 6, borderTop: '1px solid var(--color-rule)' }}>
+                              {liveBambu.ams_units.map((unit, uIdx) => (
+                                <div key={unit.id || uIdx} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                  <div className="dusk-num" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: 'var(--color-muted)' }}>
+                                    <span style={{ fontWeight: 600, letterSpacing: '0.03em' }}>
+                                      {liveBambu.ams_units.length > 1 ? `AMS ${Number(unit.id) + 1}` : 'AMS'}
+                                    </span>
+                                    {unit.humidity != null && (
+                                      <span>Вологість: {unit.humidity}/5{unit.temp ? ` • ${Math.round(Number(unit.temp))}°` : ''}</span>
+                                    )}
+                                  </div>
+                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 5 }}>
+                                    {(unit.trays || []).map((tray) => (
+                                      <div
+                                        key={tray.id}
+                                        title={
+                                          tray.empty
+                                            ? `Слот ${tray.slot}: порожньо`
+                                            : `Слот ${tray.slot}: ${tray.brand || tray.type}${tray.remain != null ? ` (${tray.remain}%)` : ''}${tray.active ? ' • активний' : ''}`
+                                        }
+                                        style={{
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                          alignItems: 'center',
+                                          gap: 4,
+                                          padding: '6px 4px',
+                                          borderRadius: 8,
+                                          background: tray.active ? 'rgba(147, 162, 250, 0.12)' : 'var(--color-paper-2)',
+                                          border: tray.active ? '1px solid var(--color-accent)' : '1px solid var(--color-rule)',
+                                          opacity: tray.empty ? 0.45 : 1,
+                                          minWidth: 0
+                                        }}
+                                      >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                          <span
+                                            style={{
+                                              width: 12,
+                                              height: 12,
+                                              borderRadius: '50%',
+                                              background: tray.empty ? 'transparent' : (tray.color || 'var(--color-muted)'),
+                                              border: tray.empty
+                                                ? '1px dashed var(--color-muted)'
+                                                : '1px solid rgba(255, 255, 255, 0.25)',
+                                              boxShadow: tray.active && tray.color ? `0 0 6px ${tray.color}88` : 'none',
+                                              flexShrink: 0
+                                            }}
+                                          />
+                                          <span className="dusk-num" style={{ fontSize: 9.5, color: 'var(--color-muted)' }}>
+                                            {tray.slot}
+                                          </span>
+                                        </div>
+                                        <span
+                                          style={{
+                                            fontSize: 10,
+                                            fontWeight: tray.active ? 700 : 500,
+                                            color: tray.empty ? 'var(--color-muted)' : 'var(--color-ink)',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            maxWidth: '100%'
+                                          }}
+                                        >
+                                          {tray.empty ? 'Пусто' : tray.type}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {(!liveBambu.ams_units || liveBambu.ams_units.length === 0) && liveBambu.external_spool && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingTop: 6, borderTop: '1px solid var(--color-rule)', fontSize: 11 }}>
+                              <span style={{ color: 'var(--color-muted)' }}>Котушка:</span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--color-ink)', fontWeight: 500 }}>
+                                <span
+                                  style={{
+                                    width: 10,
+                                    height: 10,
+                                    borderRadius: '50%',
+                                    background: liveBambu.external_spool.color || 'var(--color-muted)',
+                                    border: '1px solid rgba(255, 255, 255, 0.25)'
+                                  }}
+                                />
+                                {liveBambu.external_spool.brand || liveBambu.external_spool.type}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -2733,7 +2824,7 @@ export default function AdminPanel() {
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 64, background: 'var(--color-paper)', border: '1px dashed var(--color-rule)', borderRadius: 10, fontSize: 11.5, color: 'var(--color-danger)' }}>
                           Обладнання на обслуговуванні
                         </div>
-                      ) : (!liveBambu || (!isLivePrinting && !isLivePaused && liveBambu.nozzle_temper == null)) ? (
+                      ) : (!liveBambu || (!isLivePrinting && !isLivePaused && liveBambu.nozzle_temper == null && !liveBambu.ams_units?.length && !liveBambu.external_spool)) ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center', minHeight: 64 }}>
                           <div style={{ fontSize: 11.5, color: 'var(--color-muted)', textAlign: 'center' }}>
                             {isLiveOffline ? 'Принтер не в мережі' : 'Немає активних завдань'}

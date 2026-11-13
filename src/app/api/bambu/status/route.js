@@ -4,7 +4,8 @@ import {
   saveBambuAuth,
   fetchBambuProfile,
   fetchBambuBindDevices,
-  ensureMqttAndSync
+  ensureMqttAndSync,
+  extractAmsInfo
 } from '@/lib/bambuCloud';
 
 export const dynamic = 'force-dynamic';
@@ -45,6 +46,7 @@ export async function GET() {
 
     const devices = rawDevices.map((d) => {
       const t = mqttState.telemetry?.[d.dev_id] || null;
+      const amsInfo = extractAmsInfo(t);
       return {
         serial: d.dev_id,
         name: d.name || d.dev_product_name || 'Bambu Lab',
@@ -63,6 +65,8 @@ export async function GET() {
         layer_num: t?.layer_num ?? null,
         total_layer_num: t?.total_layer_num ?? null,
         print_error: t?.print_error ?? 0,
+        ams_units: amsInfo.ams_units,
+        external_spool: amsInfo.external_spool,
         updatedAt: t?.updatedAt || null
       };
     });
