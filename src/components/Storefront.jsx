@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Plus, Package, Sparkles, Percent, Flame, X, Check, Eye, Box, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { parseProductSizes } from '@/lib/productSizes';
 
 const COLOR_SWATCH_MAP = {
   'білий': '#ffffff',
@@ -131,8 +132,10 @@ function CollectionCard({ col, isMobile, onClick }) {
       }}>
         <div style={{ minWidth: 0 }}>
           <div style={{
-            fontSize: isMobile ? 13 : 14.5,
+            fontSize: isMobile ? 15 : 17,
             fontWeight: 700,
+            lineHeight: 1.25,
+            letterSpacing: '-0.01em',
             color: '#F3F4F8',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
@@ -141,9 +144,9 @@ function CollectionCard({ col, isMobile, onClick }) {
             {col.name}
           </div>
           <div style={{
-            fontSize: isMobile ? 11 : 12,
+            fontSize: isMobile ? 12 : 13,
             color: '#8D93A5',
-            marginTop: 2,
+            marginTop: 3,
             fontVariantNumeric: 'tabular-nums'
           }}>
             {col.count} {col.count === 1 ? 'виріб' : col.count < 5 ? 'вироби' : 'виробів'}
@@ -167,9 +170,14 @@ function CollectionCard({ col, isMobile, onClick }) {
 function ProductCard({ toy, inCartQty, isMobile, onProductClick, addToCart, compact = false }) {
   const [hovered, setHovered] = useState(false);
   const [btnHovered, setBtnHovered] = useState(false);
+  const [sizeIdx, setSizeIdx] = useState(0);
+
+  const sizes = useMemo(() => parseProductSizes(toy), [toy]);
+  const activeSize = sizes[Math.min(sizeIdx, Math.max(0, sizes.length - 1))] || null;
+  const activeBasePrice = activeSize ? activeSize.price : (Number(toy.price) || 0);
 
   const hasDiscount = Number(toy.discount) > 0;
-  const finalPrice = Math.round(toy.price * (1 - (toy.discount || 0) / 100));
+  const finalPrice = Math.round(activeBasePrice * (1 - (toy.discount || 0) / 100));
   const isActiveHover = hovered && !isMobile;
 
   return (
@@ -383,7 +391,36 @@ function ProductCard({ toy, inCartQty, isMobile, onProductClick, addToCart, comp
           </h3>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, width: '100%', marginTop: 2 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%', marginTop: 2 }}>
+          {sizes.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 5 }}>
+              {sizes.map((s, idx) => {
+                const isSel = idx === Math.min(sizeIdx, sizes.length - 1);
+                return (
+                  <button
+                    key={`${s.label}-${idx}`}
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setSizeIdx(idx); }}
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: 999,
+                      border: `1px solid ${isSel ? '#93A2FA' : 'rgba(255,255,255,0.12)'}`,
+                      background: isSel ? 'rgba(147, 162, 250, 0.18)' : 'rgba(255,255,255,0.03)',
+                      color: isSel ? '#F3F4F8' : '#8D93A5',
+                      fontSize: 10.5,
+                      fontWeight: isSel ? 700 : 500,
+                      cursor: 'pointer',
+                      lineHeight: 1.4,
+                      fontVariantNumeric: 'tabular-nums'
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div style={{
             display: 'flex',
             alignItems: 'baseline',
@@ -408,7 +445,7 @@ function ProductCard({ toy, inCartQty, isMobile, onProductClick, addToCart, comp
                 fontWeight: 500,
                 lineHeight: 1
               }}>
-                {toy.price}
+                {activeBasePrice}
               </span>
             )}
           </div>
@@ -417,7 +454,14 @@ function ProductCard({ toy, inCartQty, isMobile, onProductClick, addToCart, comp
             type="button"
             onMouseEnter={() => !isMobile && setBtnHovered(true)}
             onMouseLeave={() => !isMobile && setBtnHovered(false)}
-            onClick={(e) => { e.stopPropagation(); addToCart(toy); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              addToCart({
+                ...toy,
+                selectedSize: activeSize?.label || '',
+                price: activeBasePrice
+              });
+            }}
             style={{
               height: isMobile ? 34 : 37,
               padding: isMobile ? '0 16px' : '0 22px',

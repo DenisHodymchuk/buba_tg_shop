@@ -7,7 +7,7 @@ import {
   Plus, Trash2, Package, LayoutDashboard, ShoppingBag, 
   Search, Bell, LogOut, Box, BarChart3, Settings,
   Upload, Image as ImageIcon, X, Edit3, Filter, CheckCircle, Globe, Tag, Percent, User, Coins, Award, Send, MessageSquare, Star, Calculator, ShieldCheck, Sparkles, Loader2, Sun, Moon, CheckCircle2, AlertCircle, Megaphone, Menu,
-  Clock, ClipboardList, Printer, Truck, XCircle, ChevronDown, ChevronUp, Hammer, Lightbulb, Palette, Check, Calendar
+  Clock, ClipboardList, Printer, Truck, XCircle, ChevronDown, ChevronUp, Hammer, Lightbulb, Palette, Check, Calendar, Wand2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalculatorComp from '@/components/Calculator';
@@ -24,6 +24,9 @@ import BioLinksEditor from '@/components/BioLinksEditor';
 import DropshippingAdmin from '@/components/DropshippingAdmin';
 import BannersAdmin from '@/components/BannersAdmin';
 import BulkMakerWorldImportModal from '@/components/BulkMakerWorldImportModal';
+import StudioStyleModal from '@/components/StudioStyleModal';
+import BulkPriceModal from '@/components/BulkPriceModal';
+import { parseProductSizes, embedProductSizes, normalizeSizes } from '@/lib/productSizes';
 
 
 const scrollbarHide = `
@@ -86,6 +89,10 @@ export default function AdminPanel() {
   const [productSort, setProductSort] = useState('newest'); // 'newest' | 'price_asc' | 'price_desc' | 'name'
   const [newCategoryName, setNewCategoryName] = useState('');
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [showStudioModal, setShowStudioModal] = useState(false);
+  const [showBulkPriceModal, setShowBulkPriceModal] = useState(false);
+  const [isGeneratingStudio, setIsGeneratingStudio] = useState(false);
+  const [studioStage, setStudioStage] = useState('');
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const [reassignDropdownOpen, setReassignDropdownOpen] = useState(false);
   const [reassignModal, setReassignModal] = useState({
@@ -354,7 +361,7 @@ export default function AdminPanel() {
     name: '', description: '', price: '', discount: 0, status: 'in_stock', 
     model_3d: '', image_url: '', image_urls: [], category: '',
     plastic_type: '', safety_info: '', weight: '', color: '',
-    is_trending: false
+    is_trending: false, sizes: []
   });
 
   useEffect(() => {
@@ -1200,6 +1207,45 @@ export default function AdminPanel() {
     }
   }
 
+  async function handleSingleStudioPhoto() {
+    if (!formData.image_url || isGeneratingStudio) return;
+    setIsGeneratingStudio(true);
+    setStudioStage('Обробка на сервері...');
+    try {
+      const res = await fetch('/api/studio-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'single',
+          imageUrl: formData.image_url,
+          aspectRatio: '1:1'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Помилка генерації');
+      }
+      const studioUrl = data.url;
+
+      const oldMain = formData.image_url;
+      const existingExtras = Array.isArray(formData.image_urls) ? formData.image_urls : [];
+      const nextExtras = oldMain && !oldMain.includes('/studio-') && !existingExtras.includes(oldMain)
+        ? [oldMain, ...existingExtras]
+        : existingExtras;
+
+      setFormData(prev => ({
+        ...prev,
+        image_url: studioUrl,
+        image_urls: nextExtras
+      }));
+    } catch (e) {
+      alert('Помилка ШІ-студії: ' + e.message);
+    } finally {
+      setIsGeneratingStudio(false);
+      setStudioStage('');
+    }
+  }
+
   async function handleImportFromMakerWorld() {
     if (!importUrl.trim() || !importUrl.includes('makerworld.com')) {
       alert('Будь ласка, вставте коректне посилання на MakerWorld');
@@ -1386,9 +1432,13 @@ export default function AdminPanel() {
       return;
     }
     try {
+      const cleanSizes = normalizeSizes(formData.sizes);
+      const fallbackPrice = cleanSizes.length > 0 ? Math.min(...cleanSizes.map(s => s.price)) : 0;
+      const { sizes: _omitSizes, ...restForm } = formData;
       const dataToSave = {
-        ...formData,
-        price: parseFloat(formData.price),
+        ...restForm,
+        description: embedProductSizes(formData.description, cleanSizes),
+        price: parseFloat(formData.price) || fallbackPrice,
         discount: parseFloat(formData.discount) || 0
       };
 
@@ -1411,9 +1461,11 @@ export default function AdminPanel() {
 
   function openEdit(product) {
     setEditingId(product.id);
+    const parsedSizes = parseProductSizes(product);
+    const cleanDescForInput = (product.description || '').replace(/\|\|\|SIZES\|\|\|[\s\S]*?(\|\|\|END_SIZES\|\|\||$)/, '').trim();
     setFormData({
       name: product.name || '',
-      description: product.description || '',
+      description: cleanDescForInput,
       price: product.price || '',
       discount: product.discount || 0,
       status: product.status || 'in_stock',
@@ -1425,7 +1477,8 @@ export default function AdminPanel() {
       color: product.color || '',
       weight: product.weight || '',
       safety_info: product.safety_info || '',
-      is_trending: product.is_trending || false
+      is_trending: product.is_trending || false,
+      sizes: parsedSizes
     });
     setShowForm(true);
   }
@@ -1437,7 +1490,7 @@ export default function AdminPanel() {
       name: '', description: '', price: '', discount: 0, status: 'in_stock', 
       model_3d: '', image_url: '', image_urls: [], category: '',
       plastic_type: '', color: '', weight: '', safety_info: '',
-      is_trending: false
+      is_trending: false, sizes: []
     });
   }
 
@@ -1992,6 +2045,24 @@ export default function AdminPanel() {
                       <option value="price_desc">Дорожчі спочатку</option>
                       <option value="name">За алфавітом (А–Я)</option>
                     </select>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowBulkPriceModal(true)}
+                      className="dusk-btn dusk-btn--ghost"
+                      style={{ height: 34 }}
+                    >
+                      <Tag size={14} style={{ color: 'var(--color-accent)' }} /> Масові ціни
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowStudioModal(true)}
+                      className="dusk-btn dusk-btn--ghost"
+                      style={{ height: 34 }}
+                    >
+                      <Wand2 size={14} style={{ color: 'var(--color-accent-2)' }} /> ШІ-студія
+                    </button>
 
                     <button
                       type="button"
@@ -3094,6 +3165,69 @@ export default function AdminPanel() {
                         </div>
                       </div>
 
+                      {/* Size Variants */}
+                      <div style={{ padding: 12, borderRadius: 12, background: 'var(--color-paper-2)', border: '1px solid var(--color-rule)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: (formData.sizes?.length > 0) ? 10 : 0 }}>
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink)' }}>
+                              Варіанти розмірів (опціонально)
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                              Наприклад: 15 см — 500 грн, 20 см — 700 грн
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, sizes: [...(prev.sizes || []), { label: '', price: prev.price || '' }] }))}
+                            className="dusk-btn dusk-btn--ghost"
+                            style={{ height: 30, fontSize: 11.5, padding: '0 10px' }}
+                          >
+                            <Plus size={13} /> Додати розмір
+                          </button>
+                        </div>
+
+                        {formData.sizes?.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {formData.sizes.map((sz, idx) => (
+                              <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <input
+                                  type="text"
+                                  value={sz.label}
+                                  onChange={e => {
+                                    const next = [...formData.sizes];
+                                    next[idx] = { ...next[idx], label: e.target.value };
+                                    setFormData({ ...formData, sizes: next });
+                                  }}
+                                  placeholder="Напр. 15 см"
+                                  className="dusk-input"
+                                  style={{ flex: 1, height: 34, fontSize: 12.5 }}
+                                />
+                                <input
+                                  type="number"
+                                  value={sz.price}
+                                  onChange={e => {
+                                    const next = [...formData.sizes];
+                                    next[idx] = { ...next[idx], price: e.target.value };
+                                    setFormData({ ...formData, sizes: next });
+                                  }}
+                                  placeholder="Ціна (грн)"
+                                  className="dusk-input dusk-num"
+                                  style={{ width: 120, height: 34, fontSize: 12.5 }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setFormData(prev => ({ ...prev, sizes: prev.sizes.filter((_, i) => i !== idx) }))}
+                                  className="dusk-btn dusk-btn--danger"
+                                  style={{ width: 34, height: 34, padding: 0, justifyContent: 'center' }}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
                       {/* Category Selection */}
                       <div>
                         <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-ink-2)', display: 'block', marginBottom: 6 }}>
@@ -3214,14 +3348,28 @@ export default function AdminPanel() {
                             </span>
                           </div>
                           <input type="file" id="gallery-file-upload" accept="image/*" hidden onChange={handleGalleryUpload} />
-                          <button 
-                            type="button"
-                            onClick={() => document.getElementById('gallery-file-upload').click()}
-                            className="dusk-btn dusk-btn--primary dusk-btn--sm"
-                          >
-                            <Upload size={13} />
-                            <span>{uploading ? 'Завантаження...' : 'Додати фото'}</span>
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {formData.image_url && (
+                              <button
+                                type="button"
+                                onClick={handleSingleStudioPhoto}
+                                disabled={isGeneratingStudio}
+                                className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                                title="Обробити перше фото в єдиному темному студійному стилі"
+                              >
+                                {isGeneratingStudio ? <Loader2 size={13} className="animate-spin" /> : <Wand2 size={13} style={{ color: 'var(--color-accent)' }} />}
+                                <span>{isGeneratingStudio ? (studioStage || 'ШІ...') : 'ШІ-студія'}</span>
+                              </button>
+                            )}
+                            <button 
+                              type="button"
+                              onClick={() => document.getElementById('gallery-file-upload').click()}
+                              className="dusk-btn dusk-btn--primary dusk-btn--sm"
+                            >
+                              <Upload size={13} />
+                              <span>{uploading ? 'Завантаження...' : 'Додати фото'}</span>
+                            </button>
+                          </div>
                         </div>
 
                         {(() => {
@@ -3615,6 +3763,28 @@ export default function AdminPanel() {
           if (newCategoryObj) {
             setDbCategories(prev => [...prev, newCategoryObj].sort((a, b) => a.name.localeCompare(b.name)));
           }
+        }}
+      />
+      <StudioStyleModal
+        open={showStudioModal}
+        onClose={() => setShowStudioModal(false)}
+        products={products}
+        dbCategories={dbCategories}
+        isMobile={isMobile}
+        onProductUpdated={(updatedProduct) => {
+          setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+        }}
+      />
+      <BulkPriceModal
+        open={showBulkPriceModal}
+        onClose={() => setShowBulkPriceModal(false)}
+        products={products}
+        dbCategories={dbCategories}
+        isMobile={isMobile}
+        onProductsUpdated={(updatedList) => {
+          const map = new Map(updatedList.map(u => [u.id, u]));
+          setProducts(prev => prev.map(p => map.get(p.id) || p));
+          showToast(`Оновлено ціни для ${updatedList.length} товарів`);
         }}
       />
     </div>

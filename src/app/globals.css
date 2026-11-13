@@ -74,10 +74,20 @@ body::before {
   pointer-events: none;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--accent-purple); border-radius: 100px; }
+/* Scrollbar (Hallmark Dusk) */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(147, 162, 250, 0.28) #0F1117;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0F1117; }
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 162, 250, 0.28);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 162, 250, 0.52);
+}
 
 /* No scrollbar for horizontal scroll */
 .no-scrollbar::-webkit-scrollbar { display: none; }

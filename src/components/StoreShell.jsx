@@ -10,8 +10,9 @@ import { StoreFooter } from '@/components/StoreSections';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ShoppingCart, X, ChevronLeft, ChevronRight,
-  Droplets, ShieldCheck, Info, Weight
+  Droplets, ShieldCheck, Info, Weight, Ruler
 } from 'lucide-react';
+import { parseProductSizes, stripProductMeta } from '@/lib/productSizes';
 
 const CART_STORAGE_KEY = 'buba_store_cart_v1';
 
@@ -25,7 +26,12 @@ export default function StoreShell({ children }) {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedSizeIdx, setSelectedSizeIdx] = useState(0);
   const [storeProducts, setStoreProducts] = useState([]);
+
+  useEffect(() => {
+    setSelectedSizeIdx(0);
+  }, [selectedProduct?.id]);
   const [activeImgIndex, setActiveImgIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -153,13 +159,32 @@ export default function StoreShell({ children }) {
   };
 
   const addToCart = (toy) => {
+    const sizes = parseProductSizes(toy);
+    const chosenSize = toy.selectedSize || (sizes[0]?.label ?? '');
+    const unitPrice = toy.selectedSize
+      ? (parseFloat(toy.price) || 0)
+      : (sizes[0]?.price ?? (parseFloat(toy.price) || 0));
+    const displayName = chosenSize ? `${toy.name} (${chosenSize})` : toy.name;
+
     let updated;
-    const existingIndex = cart.findIndex(item => item.id === toy.id);
+    const existingIndex = cart.findIndex(
+      item => item.id === toy.id && (item.selectedSize || '') === chosenSize
+    );
     if (existingIndex !== -1) {
       updated = [...cart];
       updated[existingIndex] = { ...updated[existingIndex], quantity: (updated[existingIndex].quantity || 1) + 1 };
     } else {
-      updated = [...cart, { ...toy, price: parseFloat(toy.price) || 0, discount: parseFloat(toy.discount) || 0, quantity: 1 }];
+      updated = [
+        ...cart,
+        {
+          ...toy,
+          name: displayName,
+          selectedSize: chosenSize,
+          price: unitPrice,
+          discount: parseFloat(toy.discount) || 0,
+          quantity: 1
+        }
+      ];
     }
     setCart(updated);
     syncCartToDB(updated);
@@ -513,6 +538,52 @@ export default function StoreShell({ children }) {
                     {selectedProduct.name}
                   </h2>
 
+                  {(() => {
+                    const modalSizes = parseProductSizes(selectedProduct);
+                    if (modalSizes.length === 0) return null;
+                    const activeIdx = Math.min(selectedSizeIdx, modalSizes.length - 1);
+                    return (
+                      <div style={{ marginBottom: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#8D93A5', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>
+                          <Ruler size={12} style={{ color: '#93A2FA' }} /> Оберіть розмір
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                          {modalSizes.map((s, idx) => {
+                            const isActive = idx === activeIdx;
+                            const discounted = Math.round(s.price * (1 - (selectedProduct.discount || 0) / 100));
+                            return (
+                              <button
+                                key={`${s.label}-${idx}`}
+                                type="button"
+                                onClick={() => setSelectedSizeIdx(idx)}
+                                style={{
+                                  padding: '8px 13px',
+                                  borderRadius: 10,
+                                  border: `1px solid ${isActive ? '#93A2FA' : 'rgba(255, 255, 255, 0.1)'}`,
+                                  background: isActive ? 'rgba(147, 162, 250, 0.16)' : '#13151B',
+                                  color: isActive ? '#F3F4F8' : '#B8BDCB',
+                                  fontSize: 12.5,
+                                  fontWeight: isActive ? 700 : 500,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  fontVariantNumeric: 'tabular-nums',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                <span>{s.label}</span>
+                                <span style={{ color: isActive ? '#93A2FA' : '#8D93A5', fontWeight: 600 }}>
+                                  · {discounted} ₴
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
                     <div style={{
                       background: '#13151B',
@@ -580,66 +651,84 @@ export default function StoreShell({ children }) {
                       margin: 0,
                       whiteSpace: 'pre-line'
                     }}>
-                      {(selectedProduct.description || '').split('|||ADMIN_NOTES|||')[0]?.trim() || 'Якісний 3D-друкований виріб власного виробництва.'}
+                      {stripProductMeta(selectedProduct.description) || 'Якісний 3D-друкований виріб власного виробництва.'}
                     </p>
                   </div>
                 </div>
 
-                <div style={{
-                  padding: isMobile ? '14px 16px' : '16px 24px',
-                  background: '#181B22',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.07)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 16
-                }}>
-                  <div>
-                    <div style={{ fontSize: 10.5, color: '#8D93A5', marginBottom: 2, fontWeight: 500 }}>Вартість</div>
-                    <div style={{
-                      fontSize: 24,
-                      fontWeight: 700,
-                      color: '#F3F4F8',
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 5,
-                      fontVariantNumeric: 'tabular-nums'
-                    }}>
-                      {(selectedProduct.price * (1 - (selectedProduct.discount || 0) / 100)).toFixed(0)}
-                      <span style={{ fontSize: 15, color: '#8D93A5', fontWeight: 500 }}>₴</span>
-                      {Number(selectedProduct.discount) > 0 && (
-                        <span style={{ fontSize: 13, color: '#8D93A5', textDecoration: 'line-through', fontWeight: 500, marginLeft: 4 }}>
-                          {selectedProduct.price} ₴
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                {(() => {
+                  const modalSizes = parseProductSizes(selectedProduct);
+                  const activeSize = modalSizes[Math.min(selectedSizeIdx, Math.max(0, modalSizes.length - 1))] || null;
+                  const basePrice = activeSize ? activeSize.price : (Number(selectedProduct.price) || 0);
+                  const finalPrice = Math.round(basePrice * (1 - (selectedProduct.discount || 0) / 100));
 
-                  <button
-                    type="button"
-                    onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
-                    style={{
-                      flex: 1,
-                      maxWidth: 220,
-                      height: 44,
-                      borderRadius: 11,
-                      background: '#93A2FA',
-                      color: '#13151B',
-                      border: 'none',
-                      fontWeight: 600,
-                      fontSize: 14,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
+                  return (
+                    <div style={{
+                      padding: isMobile ? '14px 16px' : '16px 24px',
+                      background: '#181B22',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.07)',
+                      display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <ShoppingCart size={16} />
-                    <span>Додати в кошик</span>
-                  </button>
-                </div>
+                      justifyContent: 'space-between',
+                      gap: 16
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 10.5, color: '#8D93A5', marginBottom: 2, fontWeight: 500 }}>
+                          {activeSize ? `Вартість (${activeSize.label})` : 'Вартість'}
+                        </div>
+                        <div style={{
+                          fontSize: 24,
+                          fontWeight: 700,
+                          color: '#F3F4F8',
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          gap: 5,
+                          fontVariantNumeric: 'tabular-nums'
+                        }}>
+                          {finalPrice}
+                          <span style={{ fontSize: 15, color: '#8D93A5', fontWeight: 500 }}>₴</span>
+                          {Number(selectedProduct.discount) > 0 && (
+                            <span style={{ fontSize: 13, color: '#8D93A5', textDecoration: 'line-through', fontWeight: 500, marginLeft: 4 }}>
+                              {basePrice} ₴
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          addToCart({
+                            ...selectedProduct,
+                            selectedSize: activeSize?.label || '',
+                            price: basePrice
+                          });
+                          setSelectedProduct(null);
+                        }}
+                        style={{
+                          flex: 1,
+                          maxWidth: 220,
+                          height: 44,
+                          borderRadius: 11,
+                          background: '#93A2FA',
+                          color: '#13151B',
+                          border: 'none',
+                          fontWeight: 600,
+                          fontSize: 14,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <ShoppingCart size={16} />
+                        <span>Додати в кошик</span>
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </motion.div>
           </div>
