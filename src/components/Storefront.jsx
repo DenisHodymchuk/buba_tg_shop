@@ -596,27 +596,55 @@ export default function Storefront({
   }, [products]);
 
   const bestsellersScrollRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const updateBestsellersScrollState = useCallback(() => {
-    const el = bestsellersScrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  }, []);
+  const bestsellersPausedRef = useRef(false);
+  const bestsellersManualTimeoutRef = useRef(null);
+  const shouldLoopBestsellers = bestsellers.length > (isMobile ? 2 : 5);
+  const displayedBestsellers = useMemo(
+    () => (shouldLoopBestsellers ? [...bestsellers, ...bestsellers] : bestsellers),
+    [bestsellers, shouldLoopBestsellers]
+  );
 
   useEffect(() => {
-    updateBestsellersScrollState();
-    window.addEventListener('resize', updateBestsellersScrollState);
-    return () => window.removeEventListener('resize', updateBestsellersScrollState);
-  }, [bestsellers.length, isMobile, updateBestsellersScrollState]);
+    if (!shouldLoopBestsellers) return;
+    let rafId;
+    let lastTime = performance.now();
+    const speedPxPerSec = isMobile ? 28 : 36;
+
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      const el = bestsellersScrollRef.current;
+      if (el && !bestsellersPausedRef.current) {
+        el.scrollLeft += speedPxPerSec * dt;
+        const halfWidth = el.scrollWidth / 2;
+        if (halfWidth > 0 && el.scrollLeft >= halfWidth) {
+          el.scrollLeft -= halfWidth;
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [shouldLoopBestsellers, isMobile]);
 
   const scrollBestsellers = (dir) => {
     const el = bestsellersScrollRef.current;
     if (!el) return;
-    const step = Math.max(240, el.clientWidth * 0.8);
+    bestsellersPausedRef.current = true;
+    clearTimeout(bestsellersManualTimeoutRef.current);
+
+    const halfWidth = el.scrollWidth / 2;
+    if (shouldLoopBestsellers && dir < 0 && el.scrollLeft < 20 && halfWidth > 0) {
+      el.scrollLeft += halfWidth;
+    }
+
+    const step = Math.max(240, el.clientWidth * 0.65);
     el.scrollBy({ left: dir * step, behavior: 'smooth' });
+
+    bestsellersManualTimeoutRef.current = setTimeout(() => {
+      bestsellersPausedRef.current = false;
+    }, 2200);
   };
 
   const showCollections = !onlyTrending && !selectedIdsSet && activeCategory === 'Всі' && !(searchQuery && searchQuery.trim()) && collections.length > 0;
@@ -694,7 +722,6 @@ export default function Storefront({
               <button
                 type="button"
                 onClick={() => scrollBestsellers(-1)}
-                disabled={!canScrollLeft}
                 aria-label="Попередні хіти"
                 style={{
                   width: 32,
@@ -702,12 +729,11 @@ export default function Storefront({
                   borderRadius: 999,
                   background: '#181B22',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
-                  color: canScrollLeft ? '#F3F4F8' : '#8D93A5',
-                  opacity: canScrollLeft ? 1 : 0.4,
+                  color: '#F3F4F8',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: canScrollLeft ? 'pointer' : 'default',
+                  cursor: 'pointer',
                   transition: 'opacity 0.15s ease, background-color 0.15s ease'
                 }}
               >
@@ -716,7 +742,6 @@ export default function Storefront({
               <button
                 type="button"
                 onClick={() => scrollBestsellers(1)}
-                disabled={!canScrollRight}
                 aria-label="Наступні хіти"
                 style={{
                   width: 32,
@@ -724,12 +749,11 @@ export default function Storefront({
                   borderRadius: 999,
                   background: '#181B22',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
-                  color: canScrollRight ? '#F3F4F8' : '#8D93A5',
-                  opacity: canScrollRight ? 1 : 0.4,
+                  color: '#F3F4F8',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: canScrollRight ? 'pointer' : 'default',
+                  cursor: 'pointer',
                   transition: 'opacity 0.15s ease, background-color 0.15s ease'
                 }}
               >
@@ -741,26 +765,31 @@ export default function Storefront({
 
           <div
             ref={bestsellersScrollRef}
-            onScroll={updateBestsellersScrollState}
+            onMouseEnter={() => { bestsellersPausedRef.current = true; }}
+            onMouseLeave={() => { bestsellersPausedRef.current = false; }}
+            onTouchStart={() => { bestsellersPausedRef.current = true; }}
+            onTouchEnd={() => {
+              clearTimeout(bestsellersManualTimeoutRef.current);
+              bestsellersManualTimeoutRef.current = setTimeout(() => {
+                bestsellersPausedRef.current = false;
+              }, 2000);
+            }}
             className="no-scrollbar"
             style={{
               display: 'flex',
               gap: isMobile ? 10 : 12,
               overflowX: 'auto',
-              scrollSnapType: 'x mandatory',
-              scrollBehavior: 'smooth',
               paddingBottom: 2
             }}
           >
-            {bestsellers.map((toy) => (
+            {displayedBestsellers.map((toy, idx) => (
               <div
-                key={`hit-${toy.id}`}
+                key={`hit-${toy.id}-${idx}`}
                 style={{
                   flex: isMobile
                     ? '0 0 calc((100% - 10px) / 2)'
                     : '0 0 calc((100% - 48px) / 5)',
-                  minWidth: 0,
-                  scrollSnapAlign: 'start'
+                  minWidth: 0
                 }}
               >
                 <ProductCard
