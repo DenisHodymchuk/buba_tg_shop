@@ -230,7 +230,7 @@ function ProductCard({ toy, inCartQty, isMobile, onProductClick, addToCart, comp
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
+                objectFit: 'contain',
                 transform: isActiveHover ? 'scale(1.045)' : 'scale(1)',
                 transition: 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)'
               }}
