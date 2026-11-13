@@ -49,6 +49,23 @@ export async function POST(req) {
 
     const baseUrl = getBambuBaseUrl(region);
 
+    if (action === 'token') {
+      const rawToken = String(body?.token || '').trim().replace(/^Bearer\s+/i, '');
+      if (!rawToken) {
+        return NextResponse.json({ error: 'Вставте access token Bambu Lab' }, { status: 400 });
+      }
+      const profile = await fetchBambuProfile(rawToken, region);
+      if (!profile) {
+        return NextResponse.json({ error: 'Токен недійсний або прострочений' }, { status: 400 });
+      }
+      return finalizeBambuLogin({
+        accessToken: rawToken,
+        refreshToken: '',
+        email: profile?.email || profile?.name || 'Google / Apple акаунт',
+        region
+      });
+    }
+
     if (action === 'login') {
       if (!email || !password) {
         return NextResponse.json({ error: 'Введіть email та пароль Bambu Lab' }, { status: 400 });

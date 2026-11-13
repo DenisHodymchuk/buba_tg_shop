@@ -30,9 +30,11 @@ export default function BambuCloudPanel({ printers, savePrinters, showToast, isM
   const [devices, setDevices] = useState([]);
 
   const [showAuthForm, setShowAuthForm] = useState(false);
+  const [authMode, setAuthMode] = useState('password'); // 'password' | 'token'
   const [step, setStep] = useState('login'); // 'login' | 'verify_code'
   const [formEmail, setFormEmail] = useState('');
   const [formPassword, setFormPassword] = useState('');
+  const [formToken, setFormToken] = useState('');
   const [formCode, setFormCode] = useState('');
   const [region, setRegion] = useState('global');
   const [submitting, setSubmitting] = useState(false);
@@ -80,13 +82,17 @@ export default function BambuCloudPanel({ printers, savePrinters, showToast, isM
       const res = await fetch('/api/bambu/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: step === 'verify_code' ? 'verify_code' : 'login',
-          email: formEmail,
-          password: formPassword,
-          code: formCode,
-          region
-        })
+        body: JSON.stringify(
+          authMode === 'token'
+            ? { action: 'token', token: formToken, region }
+            : {
+                action: step === 'verify_code' ? 'verify_code' : 'login',
+                email: formEmail,
+                password: formPassword,
+                code: formCode,
+                region
+              }
+        )
       });
       const data = await res.json();
       if (!res.ok) {
@@ -279,40 +285,88 @@ export default function BambuCloudPanel({ printers, savePrinters, showToast, isM
               }}
             >
               {step === 'login' ? (
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1.2fr 0.8fr', gap: 10 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Email акаунту Bambu Lab</label>
-                    <input
-                      type="email"
-                      required
-                      value={formEmail}
-                      onChange={(e) => setFormEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className="dusk-input"
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Пароль</label>
-                    <input
-                      type="password"
-                      required
-                      value={formPassword}
-                      onChange={(e) => setFormPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="dusk-input"
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Регіон</label>
-                    <select
-                      value={region}
-                      onChange={(e) => setRegion(e.target.value)}
-                      className="dusk-input"
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('password')}
+                      className={`dusk-facet-pill ${authMode === 'password' ? 'is-active' : ''}`}
                     >
-                      <option value="global">Global (EU/US)</option>
-                      <option value="cn">China</option>
-                    </select>
+                      Email + пароль
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('token')}
+                      className={`dusk-facet-pill ${authMode === 'token' ? 'is-active' : ''}`}
+                    >
+                      Через токен (Google / Apple)
+                    </button>
                   </div>
+
+                  {authMode === 'password' ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1.2fr 0.8fr', gap: 10 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Email акаунту Bambu Lab</label>
+                        <input
+                          type="email"
+                          required
+                          value={formEmail}
+                          onChange={(e) => setFormEmail(e.target.value)}
+                          placeholder="your@email.com"
+                          className="dusk-input"
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Пароль</label>
+                        <input
+                          type="password"
+                          required
+                          value={formPassword}
+                          onChange={(e) => setFormPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="dusk-input"
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Регіон</label>
+                        <select
+                          value={region}
+                          onChange={(e) => setRegion(e.target.value)}
+                          className="dusk-input"
+                        >
+                          <option value="global">Global (EU/US)</option>
+                          <option value="cn">China</option>
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 0.8fr', gap: 10 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                          Access Token (з файлу %APPDATA%\BambuStudio\BambuStudio.conf або cookies bambulab.com)
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formToken}
+                          onChange={(e) => setFormToken(e.target.value)}
+                          placeholder="Вставте токен…"
+                          className="dusk-input dusk-mono"
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>Регіон</label>
+                        <select
+                          value={region}
+                          onChange={(e) => setRegion(e.target.value)}
+                          className="dusk-input"
+                        >
+                          <option value="global">Global (EU/US)</option>
+                          <option value="cn">China</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
