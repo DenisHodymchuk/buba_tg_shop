@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import {
   loadBambuAuth,
+  saveBambuAuth,
+  fetchBambuProfile,
   fetchBambuBindDevices,
   ensureMqttAndSync
 } from '@/lib/bambuCloud';
@@ -9,9 +11,18 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const auth = await loadBambuAuth();
+    let auth = await loadBambuAuth();
     if (!auth) {
       return NextResponse.json({ connected: false, devices: [] });
+    }
+
+    if (!auth.uid) {
+      const profile = await fetchBambuProfile(auth.accessToken, auth.region || 'global').catch(() => null);
+      const foundUid = profile?.uid || profile?.uidStr || profile?.id;
+      if (foundUid) {
+        auth = { ...auth, uid: String(foundUid) };
+        await saveBambuAuth(auth);
+      }
     }
 
     let rawDevices = [];

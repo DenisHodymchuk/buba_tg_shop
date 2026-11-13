@@ -16,11 +16,8 @@ export function getBambuMqttUrl(region = 'global') {
 export function getBambuHeaders(token) {
   const headers = {
     'Content-Type': 'application/json',
-    'User-Agent': 'bambu_network_agent/01.09.05.01',
-    'X-BBL-Client-Name': 'OrcaSlicer',
-    'X-BBL-Client-Type': 'slicer',
-    'X-BBL-Client-Version': '01.09.05.51',
-    'X-BBL-Language': 'en-US'
+    'Accept': 'application/json',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
