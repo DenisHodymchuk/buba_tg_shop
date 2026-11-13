@@ -717,36 +717,20 @@ export default function Storefront({
         <section id="bestsellers" style={{ paddingTop: isMobile ? 16 : 24, paddingBottom: isMobile ? 10 : 14 }}>
           <div style={{
             display: 'flex',
-            alignItems: 'flex-end',
+            alignItems: 'center',
             justifyContent: 'space-between',
             gap: 12,
             marginBottom: isMobile ? 10 : 14
           }}>
-            <div>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 10.5,
-                fontWeight: 600,
-                color: '#F4A97B',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                marginBottom: 3
-              }}>
-                <Flame size={12} />
-                <span>Топ вибір покупців</span>
-              </div>
-              <h2 style={{
-                fontSize: isMobile ? 19 : 22,
-                fontWeight: 800,
-                color: '#F3F4F8',
-                margin: 0,
-                letterSpacing: '-0.02em'
-              }}>
-                Хіти продажів
-              </h2>
-            </div>
+            <h2 style={{
+              fontSize: isMobile ? 19 : 22,
+              fontWeight: 800,
+              color: '#F3F4F8',
+              margin: 0,
+              letterSpacing: '-0.02em'
+            }}>
+              Хіти продажів
+            </h2>
 
             <SectionActionLink href="/hits" label="Дивитись усі" />
           </div>
