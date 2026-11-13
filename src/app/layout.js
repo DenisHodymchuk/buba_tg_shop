@@ -7,8 +7,14 @@ const geist = Geist({
 });
 
 export const metadata = {
-  title: "ANDE3D STORE — Студія 3D Друку",
-  description: "Преміальні 3D вироби та аксесуари в Telegram",
+  title: "ANDE3D STORE — Куточок 3D виробів",
+  description: "Авторські 3D-друковані фігурки, декор та подарунки з доставкою по Україні та за кордон.",
+  openGraph: {
+    title: "ANDE3D STORE — Куточок 3D виробів",
+    description: "Авторські 3D-друковані фігурки, декор та подарунки з доставкою по Україні та за кордон.",
+    siteName: "ANDE3D STORE",
+    type: "website",
+  },
 };
 
 export const viewport = {
