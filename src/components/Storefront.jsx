@@ -1,8 +1,8 @@
 "use client";
-import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Plus, Package, Sparkles, Percent, Flame, X, Check, Eye, Box, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Package, Sparkles, Percent, Flame, X, Check, Eye, Box, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const COLOR_SWATCH_MAP = {
@@ -628,25 +628,6 @@ export default function Storefront({
     return () => cancelAnimationFrame(rafId);
   }, [shouldLoopBestsellers, isMobile]);
 
-  const scrollBestsellers = (dir) => {
-    const el = bestsellersScrollRef.current;
-    if (!el) return;
-    bestsellersPausedRef.current = true;
-    clearTimeout(bestsellersManualTimeoutRef.current);
-
-    const halfWidth = el.scrollWidth / 2;
-    if (shouldLoopBestsellers && dir < 0 && el.scrollLeft < 20 && halfWidth > 0) {
-      el.scrollLeft += halfWidth;
-    }
-
-    const step = Math.max(240, el.clientWidth * 0.65);
-    el.scrollBy({ left: dir * step, behavior: 'smooth' });
-
-    bestsellersManualTimeoutRef.current = setTimeout(() => {
-      bestsellersPausedRef.current = false;
-    }, 2200);
-  };
-
   const showCollections = !onlyTrending && !selectedIdsSet && activeCategory === 'Всі' && !(searchQuery && searchQuery.trim()) && collections.length > 0;
   const showBestsellers = !onlyTrending && !hideBestsellers && activeCategory === 'Всі' && !onlyDiscounted && !(searchQuery && searchQuery.trim()) && bestsellers.length > 0;
 
@@ -718,49 +699,7 @@ export default function Storefront({
               </h2>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button
-                type="button"
-                onClick={() => scrollBestsellers(-1)}
-                aria-label="Попередні хіти"
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 999,
-                  background: '#181B22',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  color: '#F3F4F8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'opacity 0.15s ease, background-color 0.15s ease'
-                }}
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollBestsellers(1)}
-                aria-label="Наступні хіти"
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 999,
-                  background: '#181B22',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  color: '#F3F4F8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'opacity 0.15s ease, background-color 0.15s ease'
-                }}
-              >
-                <ChevronRight size={16} />
-              </button>
-              <SectionActionLink href="/hits" label="Дивитись усі" />
-            </div>
+            <SectionActionLink href="/hits" label="Дивитись усі" />
           </div>
 
           <div
