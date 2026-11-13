@@ -340,29 +340,29 @@ export default function CartDrawer({
               gap: 10
             }}
           >
-            {/* Free shipping progress (> 3000 UAH) */}
+            {/* Free shipping progress (>= 3000 UAH) */}
             <div style={{
               padding: '9px 12px',
               borderRadius: 10,
-              background: subtotal > 3000 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(147, 162, 250, 0.08)',
-              border: subtotal > 3000 ? '1px solid rgba(74, 222, 128, 0.28)' : '1px solid rgba(147, 162, 250, 0.2)',
+              background: subtotal >= 3000 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(147, 162, 250, 0.08)',
+              border: subtotal >= 3000 ? '1px solid rgba(74, 222, 128, 0.28)' : '1px solid rgba(147, 162, 250, 0.2)',
               display: 'flex',
               flexDirection: 'column',
               gap: 6
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: subtotal > 3000 ? '#4ADE80' : '#B8BDCB' }}>
-                <Truck size={14} style={{ color: subtotal > 3000 ? '#4ADE80' : '#93A2FA', flexShrink: 0 }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: subtotal >= 3000 ? '#4ADE80' : '#B8BDCB' }}>
+                <Truck size={14} style={{ color: subtotal >= 3000 ? '#4ADE80' : '#93A2FA', flexShrink: 0 }} />
                 <span>
-                  {subtotal > 3000
+                  {subtotal >= 3000
                     ? 'Безкоштовна доставка по Україні активована!'
-                    : `До безкоштовної доставки ще ${3001 - subtotal} ₴`}
+                    : `До безкоштовної доставки ще ${3000 - subtotal} ₴`}
                 </span>
               </div>
               <div style={{ height: 4, borderRadius: 999, background: 'rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
                 <div style={{
                   height: '100%',
-                  width: `${Math.min(100, Math.round((subtotal / 3001) * 100))}%`,
-                  background: subtotal > 3000 ? '#4ADE80' : '#93A2FA',
+                  width: `${Math.min(100, Math.round((subtotal / 3000) * 100))}%`,
+                  background: subtotal >= 3000 ? '#4ADE80' : '#93A2FA',
                   borderRadius: 999,
                   transition: 'width 0.25s ease'
                 }} />

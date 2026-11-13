@@ -213,7 +213,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
             bonus_used: useBonuses ? bonusDiscount : 0,
             items: items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1 })),
             is_cod: paymentMethod === 'cash',
-            cod_amount: paymentMethod === 'cash' ? Math.round(total * 0.7) : 0
+            cod_amount: paymentMethod === 'cash' ? Math.round(total * 0.5) : 0
           },
           order_number: newOrderNumber
         }])
@@ -317,7 +317,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div>
                   <div style={{ fontSize: 11, color: '#8D93A5', fontWeight: 500, marginBottom: 6 }}>
-                    {paymentMethod === 'card_transfer' ? 'Реквізити для повної оплати:' : 'Реквізити для передоплати 30%:'}
+                    {paymentMethod === 'card_transfer' ? 'Реквізити для повної оплати:' : 'Реквізити для передоплати 50%:'}
                   </div>
                   <div style={{ fontSize: 17, fontWeight: 700, color: '#F3F4F8', marginBottom: 4, fontFamily: 'monospace' }}>
                     4441 1110 5788 6511
@@ -346,7 +346,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                 </button>
               </div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#F4A97B', paddingTop: 12, borderTop: '1px solid rgba(255, 255, 255, 0.07)' }}>
-                Сума до сплати зараз: {paymentMethod === 'card_transfer' ? finalAmount.toFixed(0) : (finalAmount * 0.3).toFixed(0)} ₴
+                Сума до сплати зараз: {paymentMethod === 'card_transfer' ? finalAmount.toFixed(0) : (finalAmount * 0.5).toFixed(0)} ₴
               </div>
             </motion.div>
           )}
@@ -605,7 +605,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                 onClick={() => setPaymentMethod('cash')}
                 icon={<ReceiptText size={17} />}
                 title="Післяплата (накладений платіж)"
-                sub="Аванс 30% на картку, залишок при отриманні на пошті"
+                sub="Аванс 50% на картку, залишок при отриманні на пошті"
               />
             </div>
           </section>
@@ -617,9 +617,9 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
               <span style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: total > 3000 ? '#4ADE80' : '#93A2FA'
+                color: total >= 3000 ? '#4ADE80' : '#93A2FA'
               }}>
-                {total > 3000 ? 'Безкоштовна доставка по Україні!' : 'Понад 3 000 ₴ — доставка безкоштовна'}
+                {total >= 3000 ? 'Безкоштовна доставка по Україні!' : 'Від 3 000 ₴ — доставка безкоштовна'}
               </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -877,14 +877,14 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
             <span style={{ color: '#8D93A5' }}>Доставка:</span>
             <span style={{
               fontWeight: 600,
-              color: deliveryMethod === 'pickup' || (!deliveryMethod.startsWith('international_') && total > 3000) ? '#4ADE80' : '#B8BDCB'
+              color: deliveryMethod === 'pickup' || (!deliveryMethod.startsWith('international_') && total >= 3000) ? '#4ADE80' : '#B8BDCB'
             }}>
               {deliveryMethod === 'pickup'
                 ? 'Безкоштовно (самовивіз)'
                 : deliveryMethod.startsWith('international_')
                   ? 'За тарифами перевізника (міжнародна)'
-                  : total > 3000
-                    ? 'Безкоштовно (замовлення > 3 000 ₴)'
+                  : total >= 3000
+                    ? 'Безкоштовно (замовлення від 3 000 ₴)'
                     : 'За тарифами перевізника'}
             </span>
           </div>
