@@ -1,8 +1,8 @@
 "use client";
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Plus, Package, Sparkles, Percent, Flame, X, Check, Eye, Box, ArrowRight } from 'lucide-react';
+import { Plus, Package, Sparkles, Percent, Flame, X, Check, Eye, Box, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const COLOR_SWATCH_MAP = {
@@ -592,8 +592,32 @@ export default function Storefront({
 
   const bestsellers = useMemo(() => {
     const trending = products.filter(p => p.is_trending);
-    return (trending.length > 0 ? trending : products).slice(0, isMobile ? 4 : 5);
-  }, [products, isMobile]);
+    return trending.length > 0 ? trending : products.slice(0, 20);
+  }, [products]);
+
+  const bestsellersScrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateBestsellersScrollState = useCallback(() => {
+    const el = bestsellersScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    updateBestsellersScrollState();
+    window.addEventListener('resize', updateBestsellersScrollState);
+    return () => window.removeEventListener('resize', updateBestsellersScrollState);
+  }, [bestsellers.length, isMobile, updateBestsellersScrollState]);
+
+  const scrollBestsellers = (dir) => {
+    const el = bestsellersScrollRef.current;
+    if (!el) return;
+    const step = Math.max(240, el.clientWidth * 0.8);
+    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+  };
 
   const showCollections = !onlyTrending && !selectedIdsSet && activeCategory === 'Всі' && !(searchQuery && searchQuery.trim()) && collections.length > 0;
   const showBestsellers = !onlyTrending && !hideBestsellers && activeCategory === 'Всі' && !onlyDiscounted && !(searchQuery && searchQuery.trim()) && bestsellers.length > 0;
@@ -666,26 +690,88 @@ export default function Storefront({
               </h2>
             </div>
 
-            <SectionActionLink href="/hits" label="Дивитись усі" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => scrollBestsellers(-1)}
+                disabled={!canScrollLeft}
+                aria-label="Попередні хіти"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 999,
+                  background: '#181B22',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  color: canScrollLeft ? '#F3F4F8' : '#8D93A5',
+                  opacity: canScrollLeft ? 1 : 0.4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: canScrollLeft ? 'pointer' : 'default',
+                  transition: 'opacity 0.15s ease, background-color 0.15s ease'
+                }}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollBestsellers(1)}
+                disabled={!canScrollRight}
+                aria-label="Наступні хіти"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 999,
+                  background: '#181B22',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  color: canScrollRight ? '#F3F4F8' : '#8D93A5',
+                  opacity: canScrollRight ? 1 : 0.4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: canScrollRight ? 'pointer' : 'default',
+                  transition: 'opacity 0.15s ease, background-color 0.15s ease'
+                }}
+              >
+                <ChevronRight size={16} />
+              </button>
+              <SectionActionLink href="/hits" label="Дивитись усі" />
+            </div>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile
-              ? 'repeat(2, minmax(0, 1fr))'
-              : 'repeat(5, minmax(0, 1fr))',
-            gap: isMobile ? 10 : 12
-          }}>
+          <div
+            ref={bestsellersScrollRef}
+            onScroll={updateBestsellersScrollState}
+            className="no-scrollbar"
+            style={{
+              display: 'flex',
+              gap: isMobile ? 10 : 12,
+              overflowX: 'auto',
+              scrollSnapType: 'x mandatory',
+              scrollBehavior: 'smooth',
+              paddingBottom: 2
+            }}
+          >
             {bestsellers.map((toy) => (
-              <ProductCard
+              <div
                 key={`hit-${toy.id}`}
-                toy={toy}
-                inCartQty={cartQtyMap[toy.id] || 0}
-                isMobile={isMobile}
-                onProductClick={onProductClick}
-                addToCart={addToCart}
-                compact
-              />
+                style={{
+                  flex: isMobile
+                    ? '0 0 calc((100% - 10px) / 2)'
+                    : '0 0 calc((100% - 48px) / 5)',
+                  minWidth: 0,
+                  scrollSnapAlign: 'start'
+                }}
+              >
+                <ProductCard
+                  toy={toy}
+                  inCartQty={cartQtyMap[toy.id] || 0}
+                  isMobile={isMobile}
+                  onProductClick={onProductClick}
+                  addToCart={addToCart}
+                  compact
+                />
+              </div>
             ))}
           </div>
         </section>
