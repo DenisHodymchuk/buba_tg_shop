@@ -98,7 +98,6 @@ export async function POST(req) {
 
     const plasticType = firstInstance?.instanceFilaments?.[0]?.type || 'PLA';
     const color = firstInstance?.instanceFilaments?.[0]?.color || '';
-    const licenseInfo = data.license ? `Ліцензія: ${data.license}` : 'Безпечно для дому';
 
     const costNote = `Орієнтовна собівартість:\n` +
                      `⚡ Електрика: ~${electricityCost.toFixed(2)} грн (${(printTimeHours).toFixed(1)} год)\n` +
@@ -151,7 +150,7 @@ export async function POST(req) {
       weight: weightG ? `${weightG}г` : '',
       plastic_type: plasticType,
       color: color,
-      safety_info: licenseInfo,
+      safety_info: '',
       source: 'MakerWorld (Clean API)'
     });
 

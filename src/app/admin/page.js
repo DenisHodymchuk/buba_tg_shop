@@ -23,6 +23,7 @@ import LampStudio from '@/components/LampStudio';
 import BioLinksEditor from '@/components/BioLinksEditor';
 import DropshippingAdmin from '@/components/DropshippingAdmin';
 import BannersAdmin from '@/components/BannersAdmin';
+import BulkMakerWorldImportModal from '@/components/BulkMakerWorldImportModal';
 
 
 const scrollbarHide = `
@@ -84,6 +85,7 @@ export default function AdminPanel() {
   const [productStockFilter, setProductStockFilter] = useState('all'); // 'all' | 'in_stock' | 'discount' | 'trending' | '3d'
   const [productSort, setProductSort] = useState('newest'); // 'newest' | 'price_asc' | 'price_desc' | 'name'
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [showBulkImport, setShowBulkImport] = useState(false);
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const [reassignDropdownOpen, setReassignDropdownOpen] = useState(false);
   const [reassignModal, setReassignModal] = useState({
@@ -1993,6 +1995,15 @@ export default function AdminPanel() {
 
                     <button
                       type="button"
+                      onClick={() => setShowBulkImport(true)}
+                      className="dusk-btn dusk-btn--ghost"
+                      style={{ height: 34 }}
+                    >
+                      <Sparkles size={14} style={{ color: 'var(--color-accent)' }} /> Масовий імпорт
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => setShowForm(true)}
                       className="dusk-btn dusk-btn--primary"
                       style={{ height: 34 }}
@@ -3592,6 +3603,20 @@ export default function AdminPanel() {
           </motion.div>
         )}
       </AnimatePresence>
+      <BulkMakerWorldImportModal
+        open={showBulkImport}
+        onClose={() => setShowBulkImport(false)}
+        dbCategories={dbCategories}
+        isMobile={isMobile}
+        onCreated={(createdProducts, newCategoryObj) => {
+          if (createdProducts?.length) {
+            setProducts(prev => [...createdProducts, ...prev]);
+          }
+          if (newCategoryObj) {
+            setDbCategories(prev => [...prev, newCategoryObj].sort((a, b) => a.name.localeCompare(b.name)));
+          }
+        }}
+      />
     </div>
   );
 }

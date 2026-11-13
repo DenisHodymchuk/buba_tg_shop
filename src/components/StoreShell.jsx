@@ -513,7 +513,7 @@ export default function StoreShell({ children }) {
                     {selectedProduct.name}
                   </h2>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
                     <div style={{
                       background: '#13151B',
                       padding: '10px 12px',
@@ -524,18 +524,6 @@ export default function StoreShell({ children }) {
                         <Droplets size={12} style={{ color: '#93A2FA' }} /> Матеріал
                       </div>
                       <div style={{ color: '#F3F4F8', fontWeight: 600, fontSize: 13 }}>{selectedProduct.plastic_type || 'PLA Eco'}</div>
-                    </div>
-
-                    <div style={{
-                      background: '#13151B',
-                      padding: '10px 12px',
-                      borderRadius: 11,
-                      border: '1px solid rgba(255, 255, 255, 0.06)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#8D93A5', fontSize: 10.5, fontWeight: 500, marginBottom: 4 }}>
-                        <ShieldCheck size={12} style={{ color: '#93A2FA' }} /> Безпека
-                      </div>
-                      <div style={{ color: '#F3F4F8', fontWeight: 600, fontSize: 13 }}>{selectedProduct.safety_info || '100% Безпечно'}</div>
                     </div>
 
                     <div style={{
