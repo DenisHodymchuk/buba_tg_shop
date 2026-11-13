@@ -26,6 +26,7 @@ import BannersAdmin from '@/components/BannersAdmin';
 import BulkMakerWorldImportModal from '@/components/BulkMakerWorldImportModal';
 import StudioStyleModal from '@/components/StudioStyleModal';
 import BulkPriceModal from '@/components/BulkPriceModal';
+import BambuCloudPanel from '@/components/BambuCloudPanel';
 import { parseProductSizes, embedProductSizes, normalizeSizes } from '@/lib/productSizes';
 
 
@@ -195,6 +196,7 @@ export default function AdminPanel() {
   const [showFarmMonitor, setShowFarmMonitor] = useState(true);
   const [showAddPrinterForm, setShowAddPrinterForm] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [bambuDevices, setBambuDevices] = useState([]);
 
   const fetchPrinters = async () => {
     const defaultPrinters = [
@@ -2494,6 +2496,14 @@ export default function AdminPanel() {
                 </button>
               </div>
 
+              <BambuCloudPanel
+                printers={printers}
+                savePrinters={savePrinters}
+                showToast={showToast}
+                isMobile={isMobile}
+                onDevicesUpdate={setBambuDevices}
+              />
+
               {showAddPrinterForm && (
                 <div className="dusk-panel" style={{ padding: 20 }}>
                   <h3 className="dusk-heading" style={{ fontSize: 15, marginBottom: 12 }}>Нове обладнання</h3>
@@ -2595,6 +2605,44 @@ export default function AdminPanel() {
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
                 {printerLoads.map(load => {
                   const status = load.status;
+                  const liveBambu = bambuDevices.find(d =>
+                    (load.printer.serial_number && d.serial === load.printer.serial_number) ||
+                    (!load.printer.serial_number && d.name && load.printer.name && d.name.toLowerCase().includes(load.printer.name.toLowerCase().replace('bambu lab ', '')))
+                  );
+                  const liveState = liveBambu?.gcode_state || '';
+                  const isLivePrinting = status !== 'repair' && (liveState === 'RUNNING' || liveState === 'PREPARE');
+                  const isLivePaused = status !== 'repair' && liveState === 'PAUSE';
+                  const isLiveFailed = status !== 'repair' && liveState === 'FAILED';
+                  const isLiveOffline = status !== 'repair' && liveBambu && !liveBambu.online;
+
+                  const badgeClass = status === 'repair' || isLiveFailed
+                    ? 'dusk-badge--danger'
+                    : isLivePrinting || isLivePaused || status === 'printing'
+                      ? 'dusk-badge--apricot'
+                      : 'dusk-badge--periwinkle';
+                  const dotClass = status === 'repair' || isLiveFailed || isLiveOffline
+                    ? 'dusk-dot--muted'
+                    : isLivePrinting || isLivePaused || status === 'printing'
+                      ? 'dusk-dot--apricot'
+                      : 'dusk-dot--periwinkle';
+                  const badgeLabel = status === 'repair'
+                    ? 'Ремонт'
+                    : isLiveOffline
+                      ? 'Офлайн'
+                      : isLiveFailed
+                        ? 'Помилка'
+                        : isLivePaused
+                          ? 'Пауза'
+                          : isLivePrinting
+                            ? 'Друкує'
+                            : liveState === 'FINISH'
+                              ? 'Завершено'
+                              : liveBambu
+                                ? 'Вільний'
+                                : status === 'printing'
+                                  ? 'У друці'
+                                  : 'Вільний';
+
                   return (
                     <div 
                       key={load.printer.id} 
@@ -2607,19 +2655,58 @@ export default function AdminPanel() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Printer size={16} style={{ color: status === 'printing' ? 'var(--color-accent-2)' : status === 'repair' ? 'var(--color-danger)' : 'var(--color-accent)' }} />
+                            <Printer size={16} style={{ color: isLivePrinting || status === 'printing' ? 'var(--color-accent-2)' : status === 'repair' || isLiveFailed ? 'var(--color-danger)' : 'var(--color-accent)' }} />
                             <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-ink)' }}>{load.printer.name}</span>
                           </div>
                           <div className="dusk-num" style={{ fontSize: 11.5, color: 'var(--color-muted)', marginTop: 4 }}>
-                            {load.printer.wattage} Вт • {load.printer.wear} ₴/год
+                            {load.printer.wattage} Вт • {load.printer.wear} ₴/год{load.printer.serial_number ? ` • SN ${load.printer.serial_number.slice(-6)}` : ''}
                           </div>
                         </div>
 
-                        <span className={`dusk-badge ${status === 'printing' ? 'dusk-badge--apricot' : status === 'repair' ? 'dusk-badge--danger' : 'dusk-badge--periwinkle'}`}>
-                          <span className={`dusk-dot ${status === 'printing' ? 'dusk-dot--apricot' : status === 'repair' ? 'dusk-dot--muted' : 'dusk-dot--periwinkle'}`} style={{ width: 5, height: 5 }} />
-                          {status === 'printing' ? 'У друці' : status === 'repair' ? 'Ремонт' : 'Вільний'}
+                        <span className={`dusk-badge ${badgeClass}`}>
+                          <span className={`dusk-dot ${dotClass}`} style={{ width: 5, height: 5 }} />
+                          {badgeLabel}
                         </span>
                       </div>
+
+                      {liveBambu && status !== 'repair' && (isLivePrinting || isLivePaused || liveBambu.nozzle_temper != null) && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--color-paper)', padding: 11, borderRadius: 10, border: '1px solid var(--color-rule)' }}>
+                          {(liveBambu.subtask_name || liveBambu.gcode_file) && (
+                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {liveBambu.subtask_name || liveBambu.gcode_file}
+                            </div>
+                          )}
+
+                          {(isLivePrinting || isLivePaused || liveState === 'FINISH') && typeof liveBambu.mc_percent === 'number' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div style={{ position: 'relative', width: '100%', height: 5, background: 'var(--color-paper-3)', borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ width: `${Math.min(100, Math.max(0, liveBambu.mc_percent))}%`, height: '100%', background: isLivePaused ? 'var(--color-accent-2)' : 'var(--color-accent)', borderRadius: 3, transition: 'width 0.35s ease' }} />
+                              </div>
+                              <div className="dusk-num" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--color-muted)' }}>
+                                <span>{liveBambu.mc_percent}%{liveBambu.total_layer_num ? ` • шар ${liveBambu.layer_num || 0}/${liveBambu.total_layer_num}` : ''}</span>
+                                {typeof liveBambu.mc_remaining_time === 'number' && liveBambu.mc_remaining_time > 0 && (
+                                  <span>
+                                    {liveBambu.mc_remaining_time >= 60
+                                      ? `~${Math.floor(liveBambu.mc_remaining_time / 60)} г ${liveBambu.mc_remaining_time % 60} хв`
+                                      : `~${liveBambu.mc_remaining_time} хв`}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {(liveBambu.nozzle_temper != null || liveBambu.bed_temper != null) && (
+                            <div className="dusk-num" style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--color-ink-2)' }}>
+                              {liveBambu.nozzle_temper != null && (
+                                <span>Сопло: <b>{liveBambu.nozzle_temper}°</b>{liveBambu.nozzle_target_temper ? `/${liveBambu.nozzle_target_temper}°` : ''}</span>
+                              )}
+                              {liveBambu.bed_temper != null && (
+                                <span>Стіл: <b>{liveBambu.bed_temper}°</b>{liveBambu.bed_target_temper ? `/${liveBambu.bed_target_temper}°` : ''}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {status === 'printing' && load.order ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--color-paper)', padding: 12, borderRadius: 10, border: '1px solid var(--color-rule)' }}>
@@ -2661,11 +2748,13 @@ export default function AdminPanel() {
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 64, background: 'var(--color-paper)', border: '1px dashed var(--color-rule)', borderRadius: 10, fontSize: 11.5, color: 'var(--color-danger)' }}>
                           Обладнання на обслуговуванні
                         </div>
-                      ) : (
+                      ) : (!liveBambu || (!isLivePrinting && !isLivePaused && liveBambu.nozzle_temper == null)) ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center', minHeight: 64 }}>
-                          <div style={{ fontSize: 11.5, color: 'var(--color-muted)', textAlign: 'center' }}>Немає активних завдань</div>
+                          <div style={{ fontSize: 11.5, color: 'var(--color-muted)', textAlign: 'center' }}>
+                            {isLiveOffline ? 'Принтер не в мережі' : 'Немає активних завдань'}
+                          </div>
                         </div>
-                      )}
+                      ) : null}
 
                       <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--color-rule)', display: 'flex', gap: 8 }}>
                         <button 
