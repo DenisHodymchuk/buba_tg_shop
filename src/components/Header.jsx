@@ -112,7 +112,7 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
             <input
               type="text"
               value={localQuery}
-              placeholder="Пошук моделі за назвою або категорією…"
+              placeholder="Пошук товару…"
               onChange={(e) => handleSearchChange(e.target.value)}
               style={{
                 width: '100%',
