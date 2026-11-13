@@ -2015,6 +2015,50 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
         </AnimatePresence>
       </div>
 
+      {/* New Website Orders Callout */}
+      {(() => {
+        const newSiteOrdersCount = sales.filter(
+          s => (!s.source || s.source === 'website') && (s.status || 'new') === 'new'
+        ).length;
+        if (newSiteOrdersCount === 0) return null;
+        return (
+          <div
+            style={{
+              marginBottom: 10,
+              padding: '10px 14px',
+              borderRadius: 12,
+              background: 'linear-gradient(90deg, rgba(147, 162, 250, 0.2) 0%, rgba(147, 162, 250, 0.06) 100%)',
+              border: '1px solid rgba(147, 162, 250, 0.55)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+              flexWrap: 'wrap'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{
+                padding: '3px 9px', borderRadius: 999, background: '#93A2FA', color: '#13151B',
+                fontSize: 11, fontWeight: 800, letterSpacing: '0.02em'
+              }}>
+                🌐 З САЙТУ
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-ink)' }}>
+                Нових замовлень з сайту: <span className="dusk-num" style={{ color: '#93A2FA' }}>{newSiteOrdersCount}</span>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedSources(['website'])}
+              className="dusk-btn dusk-btn--ghost"
+              style={{ height: 28, fontSize: 11.5, padding: '0 10px', borderColor: 'rgba(147, 162, 250, 0.45)', color: '#93A2FA' }}
+            >
+              Показати тільки з сайту
+            </button>
+          </div>
+        );
+      })()}
+
       {/* Main Content Container (Table / Mobile Cards or Kanban) */}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', width: '100%', overflow: isMobile ? 'visible' : 'hidden' }}>
         {viewMode === 'kanban' ? (
@@ -2050,6 +2094,7 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                 const items = Array.isArray(details.items) ? details.items : [];
                 const isExpanded = expandedSalesIds.includes(sale.id);
                 const isPriority = !!details.is_priority;
+                const isWebsiteOrder = !sale.source || sale.source === 'website';
                 const meta = STATUS_META[sale.status] || STATUS_META.new;
                 
                 return (
@@ -2057,7 +2102,9 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                     key={sale.id} 
                     className="dusk-panel"
                     style={{ 
-                      border: isPriority ? '1px solid var(--color-accent-2-border)' : '1px solid var(--color-rule)', 
+                      border: isWebsiteOrder ? '1.5px solid rgba(147, 162, 250, 0.72)' : isPriority ? '1px solid var(--color-accent-2-border)' : '1px solid var(--color-rule)',
+                      borderLeft: isWebsiteOrder ? '4px solid #93A2FA' : undefined,
+                      background: isWebsiteOrder ? 'linear-gradient(135deg, rgba(147, 162, 250, 0.14) 0%, var(--color-paper-2) 70%)' : undefined,
                       padding: 14, 
                       display: 'flex', 
                       flexDirection: 'column', 
@@ -2074,8 +2121,8 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                           <span className="dusk-num" style={{ fontSize: 11.5, color: 'var(--color-muted)', fontWeight: 500 }}>
                             {new Date(sale.created_at).toLocaleDateString('uk-UA')}
                           </span>
-                          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-ink-2)', background: 'oklch(100% 0 0 / 0.05)', padding: '2px 8px', borderRadius: 999 }}>
-                            {getPlatformBadgeName(sale.source)}
+                          <span style={isWebsiteOrder ? { fontSize: 10.5, fontWeight: 800, color: '#13151B', background: '#93A2FA', padding: '2px 8px', borderRadius: 999 } : { fontSize: 11, fontWeight: 500, color: 'var(--color-ink-2)', background: 'oklch(100% 0 0 / 0.05)', padding: '2px 8px', borderRadius: 999 }}>
+                            {isWebsiteOrder ? '🌐 З САЙТУ' : getPlatformBadgeName(sale.source)}
                           </span>
                           <span style={{
                             fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 999,
@@ -2267,9 +2314,10 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                       const clientPhone = details.phone || sale.customers?.phone || '—';
                       const items = Array.isArray(details.items) ? details.items : [];
                       const meta = STATUS_META[sale.status] || STATUS_META.new;
+                      const isWebsiteOrder = !sale.source || sale.source === 'website';
 
                       return (
-                        <tr key={sale.id}>
+                        <tr key={sale.id} style={isWebsiteOrder ? { background: 'rgba(147, 162, 250, 0.08)', boxShadow: 'inset 4px 0 0 #93A2FA' } : undefined}>
                           {/* Date & Source */}
                           <td style={{ verticalAlign: 'top', width: 165 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
@@ -2281,14 +2329,19 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                               </span>
                             </div>
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                              <span style={{ 
+                              <span style={isWebsiteOrder ? {
+                                fontSize: 10.5, fontWeight: 800,
+                                color: '#13151B',
+                                background: '#93A2FA',
+                                padding: '2px 8px', borderRadius: 999
+                              } : { 
                                 fontSize: 11.5, fontWeight: 500, 
                                 color: 'var(--color-ink-2)',
                                 background: 'oklch(100% 0 0 / 0.05)',
                                 border: '1px solid var(--color-rule)',
                                 padding: '2px 8px', borderRadius: 999
                               }}>
-                                {getPlatformBadgeName(sale.source)}
+                                {isWebsiteOrder ? '🌐 З САЙТУ' : getPlatformBadgeName(sale.source)}
                               </span>
                               <span className="dusk-num" style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
                                 {sale.order_number ? sale.order_number.replace(/^MAN-[A-Z]+-/, '#') : `#${sale.id.slice(0, 6)}`}

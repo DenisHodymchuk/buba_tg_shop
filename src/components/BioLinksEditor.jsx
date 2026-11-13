@@ -1008,7 +1008,7 @@ export default function BioLinksEditor() {
             }}>
               <img src="/images/buba-logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#fff', margin: 0 }}>BUBA STORE</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#fff', margin: 0 }}>ANDE3D STORE</h3>
             <span style={{ fontSize: '11px', color: 'var(--color-accent)', fontWeight: 700 }}>ПЕРЕДПЕРЕГЛЯД /LINKS</span>
           </div>
 

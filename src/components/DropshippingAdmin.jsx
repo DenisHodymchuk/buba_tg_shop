@@ -10,7 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const DEFAULT_DROPSHIPPING_DATA = {
-  headerTitle: 'BUBA SHOP • Дропшипінг Каталог',
+  headerTitle: 'ANDE3D STORE • Дропшипінг Каталог',
   headerSubtitle: 'Актуальний каталог 3D-друкованих іграшок та аксесуарів. Завантажуйте живі фото у високій якості, копіюйте готові описи та заробляйте разом з нами!',
   contactTelegram: 'https://t.me/ande_3d_manager',
   contactLabel: 'Написати менеджеру в Telegram',

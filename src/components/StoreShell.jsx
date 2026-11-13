@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import { supabase } from '@/lib/supabase';
-import CheckoutBar from '@/components/CheckoutBar';
+import CartDrawer from '@/components/CartDrawer';
 import Checkout from '@/components/Checkout';
 import OrderHistory from '@/components/OrderHistory';
 import Reviews from '@/components/Reviews';
@@ -22,6 +22,7 @@ export default function StoreShell({ children }) {
   const [bonuses, setBonuses] = useState(0);
   const [user, setUser] = useState(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -188,6 +189,7 @@ export default function StoreShell({ children }) {
     }
     setCart(updated);
     syncCartToDB(updated);
+    setIsCartOpen(true);
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
@@ -231,7 +233,7 @@ export default function StoreShell({ children }) {
         cartCount={cartTotalItems}
         bonuses={bonuses}
         isAuthorized={Boolean(user)}
-        onOpenCart={() => cart.length > 0 && setIsCheckoutOpen(true)}
+        onOpenCart={() => setIsCartOpen(true)}
         onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenReviews={() => setIsReviewsOpen(true)}
         onSearch={setSearchQuery}
@@ -284,8 +286,18 @@ export default function StoreShell({ children }) {
       </AnimatePresence>
 
       <AnimatePresence>
-        {cart.length > 0 && !isCheckoutOpen && (
-          <CheckoutBar items={cart} onCheckout={() => setIsCheckoutOpen(true)} />
+        {isCartOpen && !isCheckoutOpen && (
+          <CartDrawer
+            items={cart}
+            isMobile={isMobile}
+            onClose={() => setIsCartOpen(false)}
+            onUpdateQuantity={updateQuantity}
+            onRemove={removeFromCart}
+            onCheckout={() => {
+              setIsCartOpen(false);
+              setIsCheckoutOpen(true);
+            }}
+          />
         )}
       </AnimatePresence>
 

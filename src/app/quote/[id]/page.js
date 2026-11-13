@@ -108,7 +108,7 @@ export default function QuotePage() {
             }}
           >
             <Sparkles size={16} color="#7c3aed" />
-            <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#94a3b8' }}>BUBA • EXCLUSIVE QUOTE</span>
+            <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#94a3b8' }}>ANDE3D STORE • EXCLUSIVE QUOTE</span>
           </motion.div>
           
           <motion.h1 
@@ -241,7 +241,7 @@ export default function QuotePage() {
       </AnimatePresence>
 
       <footer style={{ textAlign: 'center', padding: '60px 20px', color: '#334155', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em' }}>
-        POWERED BY BUBA COSMIC ENGINE
+        POWERED BY ANDE3D STORE
       </footer>
     </div>
   );

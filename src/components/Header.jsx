@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 const NAV_LINKS = [
   { href: '/hits', label: 'Хіти' },
   { href: '/catalog', label: 'Каталог' },
-  { href: '/custom-modeling', label: '3D-друк' },
   { href: '/delivery', label: 'Доставка' },
   { href: '/faq', label: 'FAQ' }
 ];
@@ -65,7 +64,7 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
               letterSpacing: '-0.02em',
               lineHeight: 1.15
             }}>
-              BUBA Store
+              ANDE3D STORE
             </div>
             <div style={{
               fontSize: 10.5,
@@ -73,7 +72,7 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
               color: '#8D93A5',
               letterSpacing: '0.02em'
             }}>
-              Майстерня 3D виробів
+              Куточок 3D виробів
             </div>
           </div>
         </Link>
@@ -160,8 +159,8 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
 
         {/* Right Side Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Bonuses Pill (only when authorized) */}
-          {isAuthorized && (
+          {/* Тимчасово вимкнено особистий кабінет (колись увімкнемо) */}
+          {false && isAuthorized && (
             <Link href="/profile" style={{ textDecoration: 'none' }}>
               <div
                 title="Бонусний рахунок"
@@ -186,28 +185,29 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
             </Link>
           )}
 
-          {/* Profile Button */}
-          <Link href="/profile" style={{ textDecoration: 'none' }}>
-            <button
-              type="button"
-              title="Особистий кабінет"
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: '#181B22',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#B8BDCB',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <User size={16} />
-            </button>
-          </Link>
+          {false && (
+            <Link href="/profile" style={{ textDecoration: 'none' }}>
+              <button
+                type="button"
+                title="Особистий кабінет"
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: '#181B22',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#B8BDCB',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <User size={16} />
+              </button>
+            </Link>
+          )}
 
           {/* Cart Button */}
           <button

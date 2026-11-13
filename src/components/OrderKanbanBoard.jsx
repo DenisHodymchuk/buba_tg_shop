@@ -212,7 +212,7 @@ export default function OrderKanbanBoard({
     const isCod = !!details.is_cod;
     const codAmount = details.cod_amount || 0;
     const codLine = isCod && codAmount > 0 ? `\nДо сплати при отриманні (наложка): ${codAmount} ₴` : '';
-    const msg = `Привіт${firstName ? `, ${firstName}` : ''}! Ваше замовлення відправлено\n\nНомер ТТН Нової Пошти: ${ttn}${codLine}\n\nДякуємо, що обрали BUBA Store!`;
+    const msg = `Привіт${firstName ? `, ${firstName}` : ''}! Ваше замовлення відправлено\n\nНомер ТТН Нової Пошти: ${ttn}${codLine}\n\nДякуємо, що обрали ANDE3D STORE!`;
     copyText(msg, `msg-${sale.id}`, 'Повідомлення з ТТН для клієнта скопійовано');
   };
 
@@ -326,6 +326,7 @@ export default function OrderKanbanBoard({
     const isExpanded = expandedCards.includes(sale.id);
     const isSelected = selectedOrderIds.includes(sale.id);
     const platformLabel = PLATFORM_LABELS[sale.source] || PLATFORM_LABELS.other;
+    const isWebsiteOrder = !sale.source || sale.source === 'website';
     const isPickup = sale.shipping_method === 'pickup' || details.city === 'Самовивіз';
 
     const colIdx = KANBAN_COLUMNS.findIndex(c => c.id === (sale.status || 'new'));
@@ -342,13 +343,19 @@ export default function OrderKanbanBoard({
         style={{
           background: isSelected
             ? 'var(--color-accent-soft)'
-            : 'var(--color-paper)',
+            : isWebsiteOrder
+              ? 'linear-gradient(135deg, rgba(147, 162, 250, 0.15) 0%, var(--color-paper) 68%)'
+              : 'var(--color-paper)',
           borderRadius: 12,
           border: isSelected
             ? '1px solid var(--color-accent-border)'
-            : isPriority
-              ? '1px solid var(--color-accent-2-border)'
-              : '1px solid var(--color-rule)',
+            : isWebsiteOrder
+              ? '1.5px solid rgba(147, 162, 250, 0.72)'
+              : isPriority
+                ? '1px solid var(--color-accent-2-border)'
+                : '1px solid var(--color-rule)',
+          borderLeft: isWebsiteOrder ? '4px solid #93A2FA' : undefined,
+          boxShadow: isWebsiteOrder ? '0 0 0 1px rgba(147, 162, 250, 0.16), 0 8px 22px rgba(147, 162, 250, 0.14)' : undefined,
           padding: compactCards ? '10px 12px' : '12px 14px',
           display: 'flex',
           flexDirection: 'column',
@@ -383,12 +390,16 @@ export default function OrderKanbanBoard({
               <Star size={14} fill={isPriority ? 'var(--color-accent-2)' : 'transparent'} stroke={isPriority ? 'var(--color-accent-2)' : 'currentColor'} />
             </button>
 
-            <span style={{
+            <span style={isWebsiteOrder ? {
+              fontSize: 10.5, fontWeight: 800, color: '#13151B',
+              background: '#93A2FA', padding: '2px 8px', borderRadius: 999,
+              letterSpacing: '0.02em', boxShadow: '0 2px 10px rgba(147, 162, 250, 0.38)'
+            } : {
               fontSize: 10.5, fontWeight: 500, color: 'var(--color-ink-2)',
               background: 'var(--color-paper-2)', padding: '1px 7px', borderRadius: 999,
               border: '1px solid var(--color-rule)'
             }}>
-              {platformLabel}
+              {isWebsiteOrder ? '🌐 З САЙТУ' : platformLabel}
             </span>
 
             {details.due_date && (

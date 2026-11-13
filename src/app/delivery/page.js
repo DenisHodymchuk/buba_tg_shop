@@ -44,8 +44,8 @@ export default function DeliveryPage() {
                 <h1 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, color: '#F3F4F8', margin: 0, letterSpacing: '-0.02em' }}>
                   Доставка, оплата та гарантія якості
                 </h1>
-                <p style={{ fontSize: 13.5, color: '#8D93A5', margin: '6px 0 0', maxWidth: 620 }}>
-                  Відправляємо Новою Поштою по всій Україні за 1–2 робочі дні. Оплачуйте онлайн карткою або при отриманні.
+                <p style={{ fontSize: 13.5, color: '#8D93A5', margin: '6px 0 0', maxWidth: 640 }}>
+                  Відправляємо Новою Поштою та Укрпоштою по всій Україні (за тарифами перевізника) та за кордон. При замовленні понад 3 000 ₴ — доставка по Україні безкоштовна!
                 </p>
               </div>
 

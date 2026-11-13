@@ -557,7 +557,7 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
     const details = order.shipping_details || {};
     const firstName = details.firstName || order.customers?.first_name || '';
     const codLine = details.is_cod && details.cod_amount > 0 ? `\nДо сплати при отриманні (наложка): ${details.cod_amount} ₴` : '';
-    const msg = `Привіт${firstName ? `, ${firstName}` : ''}! Ваше замовлення відправлено\n\nНомер ТТН Нової Пошти: ${ttn}${codLine}\n\nДякуємо, що обрали BUBA Store!`;
+    const msg = `Привіт${firstName ? `, ${firstName}` : ''}! Ваше замовлення відправлено\n\nНомер ТТН Нової Пошти: ${ttn}${codLine}\n\nДякуємо, що обрали ANDE3D STORE!`;
     navigator.clipboard.writeText(msg);
     setCopiedMsgId(order.id);
     showToast('Повідомлення з ТТН для клієнта скопійовано');

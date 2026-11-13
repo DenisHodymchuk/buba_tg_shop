@@ -7,7 +7,7 @@ const geist = Geist({
 });
 
 export const metadata = {
-  title: "BUBA STORE — Студія 3D Друку",
+  title: "ANDE3D STORE — Студія 3D Друку",
   description: "Преміальні 3D вироби та аксесуари в Telegram",
 };
 

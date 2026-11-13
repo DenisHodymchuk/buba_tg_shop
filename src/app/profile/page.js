@@ -4,7 +4,47 @@ import { supabase } from '@/lib/supabase';
 import { User, Award, Clock, ChevronLeft, Bell, BellOff } from 'lucide-react';
 import Link from 'next/link';
 
+// Тимчасово вимкнено особистий кабінет — щоб увімкнути назад, приберіть PROFILE_DISABLED
+const PROFILE_DISABLED = true;
+
 export default function Profile() {
+  if (PROFILE_DISABLED) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#13151B',
+        color: '#F3F4F8',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        textAlign: 'center',
+        gap: 14
+      }}>
+        <div style={{ fontSize: 18, fontWeight: 700 }}>Особистий кабінет тимчасово вимкнено</div>
+        <div style={{ fontSize: 13.5, color: '#8D93A5', maxWidth: 360 }}>
+          Ми оновлюємо цей розділ. Усі товари та оформлення замовлень доступні в каталозі.
+        </div>
+        <Link
+          href="/"
+          style={{
+            marginTop: 6,
+            padding: '10px 18px',
+            borderRadius: 10,
+            background: '#93A2FA',
+            color: '#13151B',
+            fontSize: 13.5,
+            fontWeight: 700,
+            textDecoration: 'none'
+          }}
+        >
+          На головну
+        </Link>
+      </div>
+    );
+  }
+
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);

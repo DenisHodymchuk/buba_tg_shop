@@ -333,7 +333,7 @@ export default function LinksPage() {
             }}>
               <img 
                 src="/images/buba-logo.png" 
-                alt="BUBA STORE Logo" 
+                alt="ANDE3D STORE Logo" 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
               />
             </div>
@@ -348,7 +348,7 @@ export default function LinksPage() {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
-            BUBA STORE
+            ANDE3D STORE
           </h1>
 
           <div style={{
@@ -521,7 +521,7 @@ export default function LinksPage() {
           }}>
             <span>Зроблено з</span>
             <Heart size={12} style={{ color: '#ec4899', fill: '#ec4899' }} />
-            <span>в Україні • BUBA STORE</span>
+            <span>в Україні • ANDE3D STORE</span>
           </div>
 
           <div style={{ fontSize: '11px', color: '#475569' }}>

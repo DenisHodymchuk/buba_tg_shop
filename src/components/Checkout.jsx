@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import {
   ChevronLeft, Trash2, Minus, Plus, CreditCard, Truck,
   User, Phone, MapPin, Coins, CheckCircle2,
-  Check, Home, ReceiptText, Loader2, X
+  Check, Home, ReceiptText, Loader2, X, Globe, Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
@@ -203,6 +203,7 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
         .insert([{
           total: total,
           status: 'new',
+          source: 'website',
           customer_id: customerId,
           shipping_method: deliveryMethod,
           payment_status: paymentMethod === 'card_transfer' ? 'pending_transfer' : 'cash',
@@ -611,14 +612,44 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
 
           {/* Delivery */}
           <section>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#8D93A5', marginBottom: 8 }}>Служба доставки</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#8D93A5' }}>Служба доставки</span>
+              <span style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: total > 3000 ? '#4ADE80' : '#93A2FA'
+              }}>
+                {total > 3000 ? 'Безкоштовна доставка по Україні!' : 'Понад 3 000 ₴ — доставка безкоштовна'}
+              </span>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <SelectorItem
                 active={deliveryMethod === 'nova_poshta'}
                 onClick={() => setDeliveryMethod('nova_poshta')}
                 icon={<Truck size={17} />}
-                title="Нова Пошта"
-                sub="У відділення або поштомат по всій Україні"
+                title="Нова Пошта (по Україні)"
+                sub="За тарифами Нової Пошти · відділення, поштомат або кур’єр"
+              />
+              <SelectorItem
+                active={deliveryMethod === 'ukrposhta'}
+                onClick={() => setDeliveryMethod('ukrposhta')}
+                icon={<Package size={17} />}
+                title="Укрпошта (по Україні)"
+                sub="За тарифами Укрпошти · доставка у відділення"
+              />
+              <SelectorItem
+                active={deliveryMethod === 'international_np'}
+                onClick={() => setDeliveryMethod('international_np')}
+                icon={<Globe size={17} />}
+                title="За кордон — Нова Пошта"
+                sub="Міжнародна доставка Nova Post за тарифами перевізника"
+              />
+              <SelectorItem
+                active={deliveryMethod === 'international_ukr'}
+                onClick={() => setDeliveryMethod('international_ukr')}
+                icon={<Globe size={17} />}
+                title="За кордон — Укрпошта"
+                sub="Міжнародне відправлення за тарифами Укрпошти"
               />
               <SelectorItem
                 active={deliveryMethod === 'pickup'}
@@ -640,11 +671,11 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
               </div>
               <Input
                 icon={<Phone size={15} />}
-                placeholder="+380"
+                placeholder={deliveryMethod.startsWith('international_') ? '+...' : '+380'}
                 value={formData.phone}
                 onChange={v => {
                   const cleaned = v.replace(/[^\d+]/g, '');
-                  if (cleaned.length < 4) {
+                  if (!deliveryMethod.startsWith('international_') && cleaned.length < 4) {
                     setFormData({ ...formData, phone: '+380' });
                   } else {
                     setFormData({ ...formData, phone: cleaned });
@@ -734,6 +765,36 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
                     </div>
                   )}
                 </div>
+              ) : deliveryMethod === 'ukrposhta' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <Input
+                    icon={<MapPin size={15} />}
+                    placeholder="Місто або населений пункт…"
+                    value={formData.city}
+                    onChange={v => setFormData({ ...formData, city: v })}
+                  />
+                  <Input
+                    icon={<Home size={15} />}
+                    placeholder="Поштовий індекс та адреса / № відділення Укрпошти…"
+                    value={formData.warehouse}
+                    onChange={v => setFormData({ ...formData, warehouse: v })}
+                  />
+                </div>
+              ) : deliveryMethod.startsWith('international_') ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <Input
+                    icon={<Globe size={15} />}
+                    placeholder="Країна та місто (напр. Poland, Warsaw)…"
+                    value={formData.city}
+                    onChange={v => setFormData({ ...formData, city: v })}
+                  />
+                  <Input
+                    icon={<Home size={15} />}
+                    placeholder="Повна адреса доставки, поштовий індекс (ZIP) або відділення…"
+                    value={formData.warehouse}
+                    onChange={v => setFormData({ ...formData, warehouse: v })}
+                  />
+                </div>
               ) : (
                 <div style={{
                   padding: '11px 14px',
@@ -812,6 +873,21 @@ export default function Checkout({ items, onClose, onUpdateQuantity, onRemove, b
           flexDirection: 'column',
           gap: 12
         }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
+            <span style={{ color: '#8D93A5' }}>Доставка:</span>
+            <span style={{
+              fontWeight: 600,
+              color: deliveryMethod === 'pickup' || (!deliveryMethod.startsWith('international_') && total > 3000) ? '#4ADE80' : '#B8BDCB'
+            }}>
+              {deliveryMethod === 'pickup'
+                ? 'Безкоштовно (самовивіз)'
+                : deliveryMethod.startsWith('international_')
+                  ? 'За тарифами перевізника (міжнародна)'
+                  : total > 3000
+                    ? 'Безкоштовно (замовлення > 3 000 ₴)'
+                    : 'За тарифами перевізника'}
+            </span>
+          </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span style={{ fontSize: 13, color: '#8D93A5', fontWeight: 500 }}>Разом до сплати:</span>
             <span style={{ fontSize: 22, color: '#F3F4F8', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>

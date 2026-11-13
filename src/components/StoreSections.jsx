@@ -4,28 +4,28 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, ArrowRight, Truck, ShieldCheck, Layers, CreditCard,
-  Award, Clock, ChevronDown, Box, CheckCircle2, MessageSquare, ShoppingBag, Plus
+  Award, Clock, ChevronDown, Box, CheckCircle2, MessageSquare, ShoppingBag, Plus, Globe, Gift
 } from 'lucide-react';
 
 const FAQ_ITEMS = [
-  {
-    q: 'Скільки часу займає виготовлення та відправка?',
-    a: 'Готові вироби зі складу відправляємо протягом 1 робочого дня. Якщо модель друкується під замовлення (або в потрібному кольорі), виготовлення займає 1–2 робочі дні.'
-  },
+  // {
+  //   q: 'Скільки часу займає виготовлення та відправка?',
+  //   a: 'Готові вироби зі складу відправляємо протягом 1 робочого дня. Якщо модель друкується під замовлення (або в потрібному кольорі), виготовлення займає 1–2 робочі дні.'
+  // },
   {
     q: 'Які матеріали ви використовуєте і чи вони безпечні?',
     a: 'Основний матеріал — сертифікований еко-пластик PLA (на основі кукурудзяного крохмалю, без запаху, безпечний для дітей та інтер’єру) та міцний PETG для функціональних підставок і деталей.'
   },
-  {
-    q: 'Чи можна замовити 3D-друк за власним фото, ескізом або STL-файлом?',
-    a: 'Так! Натисніть «Індивідуальний 3D-друк», прикріпіть фото, креслення або 3D-модель — ми безкоштовно прорахуємо вартість і терміни виготовлення.'
-  },
+  // {
+  //   q: 'Чи можна замовити 3D-друк за власним фото, ескізом або STL-файлом?',
+  //   a: 'Так! Натисніть «Індивідуальний 3D-друк», прикріпіть фото, креслення або 3D-модель — ми безкоштовно прорахуємо вартість і терміни виготовлення.'
+  // },
   {
     q: 'Як здійснюється доставка та оплата?',
-    a: 'Доставляємо Новою Поштою по всій Україні (у відділення, поштомат або кур’єром). Можна оплатити онлайн карткою (Monobank / Apple Pay / Google Pay) або при отриманні (післяплата).'
+    a: 'Відправляємо Новою Поштою та Укрпоштою по всій Україні (за тарифами перевізника). Для замовлень на суму понад 3 000 ₴ доставка по Україні — безкоштовна! Також доставляємо за кордон Новою Поштою та Укрпоштою. Оплатити можна онлайн карткою або при отриманні.'
   },
   {
-    q: 'Як працюють бонуси BUBA Store?',
+    q: 'Як працюють бонуси ANDE3D STORE?',
     a: 'Після кожного замовлення на ваш акаунт нараховуються бонуси, якими можна частково або повністю оплачувати наступні покупки в майстерні.'
   }
 ];
@@ -97,7 +97,7 @@ export function StoreHero({ isMobile, featuredProducts = [], onProductClick, add
             margin: 0,
             maxWidth: 560
           }}>
-            Колекційні фігурки, підставки, рухомі антистреси та індивідуальний 3D-друк із безпечних PLA/PETG-пластиків. Відправляємо Новою Поштою за 1–2 дні.
+            Колекційні фігурки, підставки, рухомі антистреси та індивідуальний 3D-друк із безпечних PLA/PETG-пластиків. Відправляємо Новою Поштою та Укрпоштою за 1–2 дні.
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
@@ -444,107 +444,59 @@ export function CustomPrintSection({ isMobile }) {
 }
 
 export function AdvantagesAndDelivery({ isMobile }) {
-  const advantages = [
-    {
-      icon: Layers,
-      accent: '#93A2FA',
-      title: 'Власне виробництво',
-      desc: 'Повний цикл у нашій майстерні: моделювання, 3D-друк, постобробка та контроль якості кожного виробу.'
-    },
-    {
-      icon: Sparkles,
-      accent: '#F4A97B',
-      title: 'Градієнтні та еко-матеріали',
-      desc: 'Використовуємо безпечний PLA, міцний PETG, шовковисті та багатоколірні філаменти без запаху.'
-    },
-    {
-      icon: Clock,
-      accent: '#93A2FA',
-      title: 'Швидка відправка 1–2 дні',
-      desc: 'Надійно пакуємо та відправляємо замовлення Новою Поштою по всій Україні без зайвого очікування.'
-    },
-    {
-      icon: Award,
-      accent: '#F4A97B',
-      title: 'Бонуси та підтримка',
-      desc: 'Нараховуємо кешбек бонусами на акаунт і допомагаємо підібрати колір або розмір у Telegram.'
-    }
-  ];
-
   return (
-    <>
-      <section
-        id="advantages"
-        style={{
-          maxWidth: 1360,
-          margin: '0 auto',
-          width: '100%',
-          padding: isMobile ? '28px 12px 0' : '44px 20px 0'
-        }}
-      >
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#93A2FA', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
-            Чому BUBA Store
-          </div>
-          <h2 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: '#F3F4F8', margin: 0, letterSpacing: '-0.02em' }}>
-            Якість у кожному шарі
-          </h2>
-        </div>
-
+    <section
+      id="delivery"
+      style={{
+        maxWidth: 1360,
+        margin: '0 auto',
+        width: '100%',
+        padding: isMobile ? '16px 12px 0' : '24px 20px 0'
+      }}
+    >
+        {/* Free shipping highlight banner */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, minmax(0, 1fr))',
-          gap: isMobile ? 10 : 16
+          background: 'linear-gradient(135deg, rgba(147, 162, 250, 0.14) 0%, rgba(244, 169, 123, 0.1) 100%)',
+          border: '1px solid rgba(147, 162, 250, 0.28)',
+          borderRadius: 16,
+          padding: isMobile ? '14px 16px' : '16px 22px',
+          marginBottom: isMobile ? 10 : 14,
+          display: 'flex',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12
         }}>
-          {advantages.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={idx}
-                style={{
-                  background: '#181B22',
-                  border: '1px solid rgba(255, 255, 255, 0.07)',
-                  borderRadius: 16,
-                  padding: isMobile ? 16 : 18,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10
-                }}
-              >
-                <div style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: item.accent === '#F4A97B' ? 'rgba(244, 169, 123, 0.14)' : 'rgba(147, 162, 250, 0.14)',
-                  border: item.accent === '#F4A97B' ? '1px solid rgba(244, 169, 123, 0.3)' : '1px solid rgba(147, 162, 250, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: item.accent
-                }}>
-                  <Icon size={18} />
-                </div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#F3F4F8', margin: 0 }}>{item.title}</h3>
-                <p style={{ fontSize: 13, lineHeight: 1.5, color: '#8D93A5', margin: 0 }}>{item.desc}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              background: 'rgba(147, 162, 250, 0.18)',
+              border: '1px solid rgba(147, 162, 250, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#93A2FA',
+              flexShrink: 0
+            }}>
+              <Gift size={18} />
+            </div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#F3F4F8' }}>
+                Безкоштовна доставка при замовленні понад 3 000 ₴
               </div>
-            );
-          })}
+              <div style={{ fontSize: 12.5, color: '#B8BDCB', marginTop: 2 }}>
+                Оформлюйте замовлення на суму більше 3 000 ₴ — і доставку по Україні Новою Поштою або Укрпоштою оплачуємо ми.
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
 
-      <section
-        id="delivery"
-        style={{
-          maxWidth: 1360,
-          margin: '0 auto',
-          width: '100%',
-          padding: isMobile ? '28px 12px 0' : '40px 20px 0'
-        }}
-      >
         <div style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
-          gap: isMobile ? 10 : 16
+          gap: isMobile ? 10 : 14
         }}>
           <div style={{
             background: '#181B22',
@@ -555,12 +507,63 @@ export function AdvantagesAndDelivery({ isMobile }) {
             flexDirection: 'column',
             gap: 10
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Truck size={18} style={{ color: '#93A2FA' }} />
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F3F4F8', margin: 0 }}>Доставка Новою Поштою</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Truck size={18} style={{ color: '#93A2FA' }} />
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F3F4F8', margin: 0 }}>Нова Пошта по Україні</h3>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#93A2FA', background: 'rgba(147, 162, 250, 0.12)', padding: '3px 8px', borderRadius: 999 }}>
+                1–2 дні
+              </span>
             </div>
             <p style={{ fontSize: 13, lineHeight: 1.55, color: '#B8BDCB', margin: 0 }}>
-              Відправляємо по всій Україні у відділення, поштомати або кур’єром за адресою. Термін відправлення — 1–2 робочі дні. Кожна посилка надійно запакована.
+              Відправляємо у відділення, поштомати або кур’єром за адресою по всій Україні. Вартість доставки — за тарифами Нової Пошти (для замовлень понад 3 000 ₴ — безкоштовно).
+            </p>
+          </div>
+
+          <div style={{
+            background: '#181B22',
+            border: '1px solid rgba(255, 255, 255, 0.07)',
+            borderRadius: 16,
+            padding: isMobile ? 16 : 22,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Box size={18} style={{ color: '#F4A97B' }} />
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F3F4F8', margin: 0 }}>Укрпошта по Україні</h3>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#F4A97B', background: 'rgba(244, 169, 123, 0.12)', padding: '3px 8px', borderRadius: 999 }}>
+                Вигідний тариф
+              </span>
+            </div>
+            <p style={{ fontSize: 13, lineHeight: 1.55, color: '#B8BDCB', margin: 0 }}>
+              Доставка у будь-яке відділення Укрпошти по всій Україні, включно з невеликими містами та селами. Вартість — за тарифами Укрпошти (понад 3 000 ₴ — безкоштовно).
+            </p>
+          </div>
+
+          <div style={{
+            background: '#181B22',
+            border: '1px solid rgba(255, 255, 255, 0.07)',
+            borderRadius: 16,
+            padding: isMobile ? 16 : 22,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Globe size={18} style={{ color: '#93A2FA' }} />
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F3F4F8', margin: 0 }}>Доставка за кордон</h3>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#93A2FA', background: 'rgba(147, 162, 250, 0.12)', padding: '3px 8px', borderRadius: 999 }}>
+                Worldwide
+              </span>
+            </div>
+            <p style={{ fontSize: 13, lineHeight: 1.55, color: '#B8BDCB', margin: 0 }}>
+              Відправляємо замовлення за кордон через Укрпошту та Нову Пошту (Nova Post). Надійно пакуємо кожен 3D-виріб для безпечного міжнародного перевезення за тарифами перевізника.
             </p>
           </div>
 
@@ -578,12 +581,11 @@ export function AdvantagesAndDelivery({ isMobile }) {
               <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F3F4F8', margin: 0 }}>Зручна оплата</h3>
             </div>
             <p style={{ fontSize: 13, lineHeight: 1.55, color: '#B8BDCB', margin: 0 }}>
-              Доступна онлайн-оплата карткою через Monobank, оплата при отриманні на Новій Пошті (післяплата), а також списання накопичених бонусів.
+              Доступна оплата на картку Monobank, оплата при отриманні (післяплата), а також списання накопичених бонусів ANDE3D STORE.
             </p>
           </div>
         </div>
       </section>
-    </>
   );
 }
 
@@ -714,7 +716,7 @@ export function StoreFooter({ isMobile, onOpenReviews }) {
               <Box size={18} />
             </div>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#F3F4F8' }}>BUBA Store</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#F3F4F8' }}>ANDE3D STORE</div>
               <div style={{ fontSize: 11, color: '#8D93A5' }}>Майстерня 3D-виробів</div>
             </div>
           </div>
@@ -730,9 +732,7 @@ export function StoreFooter({ isMobile, onOpenReviews }) {
           {[
             { href: '/', label: 'Головна' },
             { href: '/hits', label: 'Хіти продажів' },
-            { href: '/catalog', label: 'Каталог виробів' },
-            { href: '/delivery', label: 'Доставка та оплата' },
-            { href: '/faq', label: 'Часті запитання' }
+            { href: '/catalog', label: 'Каталог виробів' }
           ].map((l) => (
             <Link key={l.href} href={l.href} style={{ fontSize: 13, color: '#8D93A5', textDecoration: 'none' }}>
               {l.label}
@@ -742,14 +742,20 @@ export function StoreFooter({ isMobile, onOpenReviews }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#F3F4F8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
-            Сервіс і контакти
+            Сервіс
           </div>
-          <Link href="/custom-modeling" style={{ fontSize: 13, color: '#93A2FA', textDecoration: 'none', fontWeight: 600 }}>
-            Індивідуальний 3D-друк →
+          <Link href="/delivery" style={{ fontSize: 13, color: '#8D93A5', textDecoration: 'none' }}>
+            Доставка та оплата
           </Link>
-          <Link href="/profile" style={{ fontSize: 13, color: '#8D93A5', textDecoration: 'none' }}>
-            Особистий кабінет та бонуси
+          <Link href="/faq" style={{ fontSize: 13, color: '#8D93A5', textDecoration: 'none' }}>
+            Часті запитання
           </Link>
+          {/* Тимчасово вимкнено особистий кабінет */}
+          {false && (
+            <Link href="/profile" style={{ fontSize: 13, color: '#8D93A5', textDecoration: 'none' }}>
+              Особистий кабінет та бонуси
+            </Link>
+          )}
         </div>
       </div>
 
@@ -759,7 +765,7 @@ export function StoreFooter({ isMobile, onOpenReviews }) {
         textAlign: 'center'
       }}>
         <p style={{ fontSize: 11.5, color: '#8D93A5', fontWeight: 500, margin: 0 }}>
-          © 2026 BUBA Store · Майстерня 3D виробів · Усі права захищено
+          © 2026 ANDE3D STORE · Майстерня 3D виробів · Усі права захищено
         </p>
       </div>
     </footer>
