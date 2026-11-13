@@ -640,6 +640,7 @@ export default function Storefront({
   }, [products]);
 
   const bestsellersScrollRef = useRef(null);
+  const bestsellersScrollPosRef = useRef(0);
   const bestsellersPausedRef = useRef(false);
   const bestsellersManualTimeoutRef = useRef(null);
   const shouldLoopBestsellers = bestsellers.length > (isMobile ? 2 : 5);
@@ -653,17 +654,21 @@ export default function Storefront({
     let rafId;
     let lastTime = performance.now();
     const speedPxPerSec = isMobile ? 28 : 36;
+    if (bestsellersScrollRef.current) {
+      bestsellersScrollPosRef.current = bestsellersScrollRef.current.scrollLeft;
+    }
 
     const tick = (now) => {
       const dt = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
       const el = bestsellersScrollRef.current;
       if (el && !bestsellersPausedRef.current) {
-        el.scrollLeft += speedPxPerSec * dt;
+        bestsellersScrollPosRef.current += speedPxPerSec * dt;
         const halfWidth = el.scrollWidth / 2;
-        if (halfWidth > 0 && el.scrollLeft >= halfWidth) {
-          el.scrollLeft -= halfWidth;
+        if (halfWidth > 0 && bestsellersScrollPosRef.current >= halfWidth) {
+          bestsellersScrollPosRef.current -= halfWidth;
         }
+        el.scrollLeft = bestsellersScrollPosRef.current;
       }
       rafId = requestAnimationFrame(tick);
     };
@@ -749,11 +754,19 @@ export default function Storefront({
           <div
             ref={bestsellersScrollRef}
             onMouseEnter={() => { bestsellersPausedRef.current = true; }}
-            onMouseLeave={() => { bestsellersPausedRef.current = false; }}
+            onMouseLeave={() => {
+              if (bestsellersScrollRef.current) {
+                bestsellersScrollPosRef.current = bestsellersScrollRef.current.scrollLeft;
+              }
+              bestsellersPausedRef.current = false;
+            }}
             onTouchStart={() => { bestsellersPausedRef.current = true; }}
             onTouchEnd={() => {
               clearTimeout(bestsellersManualTimeoutRef.current);
               bestsellersManualTimeoutRef.current = setTimeout(() => {
+                if (bestsellersScrollRef.current) {
+                  bestsellersScrollPosRef.current = bestsellersScrollRef.current.scrollLeft;
+                }
                 bestsellersPausedRef.current = false;
               }, 2000);
             }}
