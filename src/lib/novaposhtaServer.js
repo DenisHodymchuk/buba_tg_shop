@@ -4,10 +4,12 @@ const NP_API_URL = 'https://api.novaposhta.ua/v2.0/json/';
 export const NP_CONFIG_KEY = 'nova_poshta_cabinet_config';
 
 export const DEFAULT_NP_SETTINGS = {
+  defaultBoxRef: '',
+  defaultBoxName: 'Коробка (1 кг) стандартна',
   defaultWeight: 1,
-  defaultLength: 20,
-  defaultWidth: 20,
-  defaultHeight: 15,
+  defaultLength: 24,
+  defaultWidth: 17,
+  defaultHeight: 10,
   defaultDescription: 'Сувенірна продукція',
   defaultPayerType: 'Recipient',
   defaultPaymentMethod: 'Cash'
@@ -415,4 +417,37 @@ export async function listNpScanSheets(apiKey) {
     printed: s.Printed === '1' || s.Printed === 1,
     count: Number(s.Count || 0)
   }));
+}
+
+export async function fetchNpBoxes(apiKey) {
+  const data = await npApiCall(apiKey, 'Common', 'getPackList', {});
+  const seen = new Set();
+  const boxes = [];
+
+  for (const p of data) {
+    const desc = String(p?.Description || '').trim();
+    if (!desc || !/коробк/i.test(desc)) continue;
+    // Skip duplicate "з наповнювачем" variants so the list is clean and readable
+    if (/з наповнювач/i.test(desc)) continue;
+    const lengthCm = Math.max(1, Math.round(Number(p.Length || 0) / 10));
+    const widthCm = Math.max(1, Math.round(Number(p.Width || 0) / 10));
+    const heightCm = Math.max(1, Math.round(Number(p.Height || 0) / 10));
+    const weight = Number(p.VolumetricWeight || 0) || 0.5;
+    if (!lengthCm || !widthCm || !heightCm) continue;
+
+    const dedupeKey = `${desc.toLowerCase()}_${lengthCm}_${widthCm}_${heightCm}`;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+
+    boxes.push({
+      ref: p.Ref,
+      name: desc,
+      length: lengthCm,
+      width: widthCm,
+      height: heightCm,
+      weight: Number(weight.toFixed(2))
+    });
+  }
+
+  return boxes.sort((a, b) => a.weight - b.weight || a.name.localeCompare(b.name, 'uk'));
 }

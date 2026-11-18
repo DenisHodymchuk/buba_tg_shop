@@ -28,13 +28,18 @@ export default function NovaPoshtaCabinetBar({
     citySenderName: '',
     senderWarehouseRef: '',
     senderWarehouseName: '',
+    defaultBoxRef: '',
+    defaultBoxName: 'Коробка (1 кг) стандартна',
     defaultWeight: 1,
-    defaultLength: 20,
-    defaultWidth: 20,
-    defaultHeight: 15,
+    defaultLength: 24,
+    defaultWidth: 17,
+    defaultHeight: 10,
     defaultDescription: 'Сувенірна продукція',
     defaultPayerType: 'Recipient'
   });
+
+  const [npBoxes, setNpBoxes] = useState([]);
+  const [loadingBoxes, setLoadingBoxes] = useState(false);
 
   const [showSettings, setShowSettings] = useState(false);
   const [showRegistries, setShowRegistries] = useState(false);
@@ -87,6 +92,29 @@ export default function NovaPoshtaCabinetBar({
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+
+  // Load official Nova Poshta boxes list when settings open
+  useEffect(() => {
+    if (!showSettings || !connected || npBoxes.length > 0) return;
+    let active = true;
+    setLoadingBoxes(true);
+    fetch('/api/novaposhta/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'getPacks' })
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (active && data.ok && Array.isArray(data.data)) {
+          setNpBoxes(data.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setLoadingBoxes(false);
+      });
+    return () => { active = false; };
+  }, [showSettings, connected, npBoxes.length]);
 
   // City search for sender
   useEffect(() => {
@@ -190,10 +218,12 @@ export default function NovaPoshtaCabinetBar({
           citySenderName: config.citySenderName || cityQuery,
           senderWarehouseRef: config.senderWarehouseRef,
           senderWarehouseName: config.senderWarehouseName || warehouseQuery,
+          defaultBoxRef: config.defaultBoxRef || '',
+          defaultBoxName: config.defaultBoxName || '',
           defaultWeight: Number(config.defaultWeight) || 1,
-          defaultLength: Number(config.defaultLength) || 20,
-          defaultWidth: Number(config.defaultWidth) || 20,
-          defaultHeight: Number(config.defaultHeight) || 15,
+          defaultLength: Number(config.defaultLength) || 24,
+          defaultWidth: Number(config.defaultWidth) || 17,
+          defaultHeight: Number(config.defaultHeight) || 10,
           defaultDescription: config.defaultDescription || 'Сувенірна продукція',
           defaultPayerType: config.defaultPayerType || 'Recipient'
         })
@@ -411,7 +441,7 @@ export default function NovaPoshtaCabinetBar({
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--color-muted)', marginTop: 2 }}>
               {ready
-                ? `${config.senderName || 'Відправник'} • ${config.citySenderName || ''} • ${config.defaultWeight} кг • «${config.defaultDescription}»`
+                ? `${config.senderName || 'Відправник'} • ${config.citySenderName || ''} • ${config.defaultBoxName || `${config.defaultWeight} кг`} (${config.defaultLength}×${config.defaultWidth}×${config.defaultHeight} см)`
                 : 'Підключіть API-ключ зі звичайного кабінету НП для швидкого створення ТТН, стікерів та реєстрів'}
             </div>
           </div>
@@ -755,6 +785,55 @@ export default function NovaPoshtaCabinetBar({
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Official Nova Poshta Box Picker */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <label style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                        Коробка Нової Пошти (розміри та вага підтягуються автоматично з НП)
+                      </label>
+                      {loadingBoxes && (
+                        <span style={{ fontSize: 10.5, color: 'var(--color-accent)' }}>Завантаження коробок НП…</span>
+                      )}
+                    </div>
+                    <select
+                      value={config.defaultBoxRef || ''}
+                      onChange={(e) => {
+                        const ref = e.target.value;
+                        const box = npBoxes.find((b) => b.ref === ref);
+                        if (box) {
+                          setConfig((prev) => ({
+                            ...prev,
+                            defaultBoxRef: box.ref,
+                            defaultBoxName: box.name,
+                            defaultWeight: box.weight,
+                            defaultLength: box.length,
+                            defaultWidth: box.width,
+                            defaultHeight: box.height
+                          }));
+                        } else {
+                          setConfig((prev) => ({
+                            ...prev,
+                            defaultBoxRef: '',
+                            defaultBoxName: ''
+                          }));
+                        }
+                      }}
+                      className="dusk-select"
+                      style={{ width: '100%', height: 36, fontSize: 12.5 }}
+                    >
+                      <option value="">
+                        {config.defaultBoxName
+                          ? `${config.defaultBoxName} — ${config.defaultLength}×${config.defaultWidth}×${config.defaultHeight} см (${config.defaultWeight} кг)`
+                          : 'Власні габарити (обрати коробку НП зі списку...)'}
+                      </option>
+                      {npBoxes.map((box) => (
+                        <option key={box.ref} value={box.ref}>
+                          {box.name} — {box.length}×{box.width}×{box.height} см ({box.weight} кг)
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Defaults row */}

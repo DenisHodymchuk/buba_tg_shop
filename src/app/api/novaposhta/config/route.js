@@ -7,6 +7,7 @@ import {
   fetchSenderInfo,
   searchNpCities,
   searchNpWarehouses,
+  fetchNpBoxes,
   formatNpPhone
 } from '@/lib/novaposhtaServer';
 
@@ -40,10 +41,12 @@ function sanitizeConfigForClient(cfg) {
       citySenderName: cfg.citySenderName || '',
       senderWarehouseRef: cfg.senderWarehouseRef || '',
       senderWarehouseName: cfg.senderWarehouseName || '',
+      defaultBoxRef: cfg.defaultBoxRef || '',
+      defaultBoxName: cfg.defaultBoxName || '',
       defaultWeight: cfg.defaultWeight ?? 1,
-      defaultLength: cfg.defaultLength ?? 20,
-      defaultWidth: cfg.defaultWidth ?? 20,
-      defaultHeight: cfg.defaultHeight ?? 15,
+      defaultLength: cfg.defaultLength ?? 24,
+      defaultWidth: cfg.defaultWidth ?? 17,
+      defaultHeight: cfg.defaultHeight ?? 10,
       defaultDescription: cfg.defaultDescription || 'Сувенірна продукція',
       defaultPayerType: cfg.defaultPayerType || 'Recipient',
       defaultPaymentMethod: cfg.defaultPaymentMethod || 'Cash'
@@ -86,6 +89,12 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, data: warehouses });
     }
 
+    if (action === 'getPacks') {
+      if (!activeKey) return NextResponse.json({ error: 'Спочатку введіть API-ключ НП' }, { status: 400 });
+      const boxes = await fetchNpBoxes(activeKey);
+      return NextResponse.json({ ok: true, data: boxes });
+    }
+
     if (action === 'connect') {
       if (!activeKey) {
         return NextResponse.json({ error: 'Вставте API-ключ із вашого кабінету Нової Пошти' }, { status: 400 });
@@ -121,10 +130,12 @@ export async function POST(req) {
         citySenderName: body.citySenderName ?? existing?.citySenderName ?? '',
         senderWarehouseRef: body.senderWarehouseRef ?? existing?.senderWarehouseRef ?? '',
         senderWarehouseName: body.senderWarehouseName ?? existing?.senderWarehouseName ?? '',
+        defaultBoxRef: body.defaultBoxRef ?? existing?.defaultBoxRef ?? '',
+        defaultBoxName: body.defaultBoxName ?? existing?.defaultBoxName ?? '',
         defaultWeight: Math.max(0.1, Number(body.defaultWeight) || 1),
-        defaultLength: Math.max(1, Number(body.defaultLength) || 20),
-        defaultWidth: Math.max(1, Number(body.defaultWidth) || 20),
-        defaultHeight: Math.max(1, Number(body.defaultHeight) || 15),
+        defaultLength: Math.max(1, Number(body.defaultLength) || 24),
+        defaultWidth: Math.max(1, Number(body.defaultWidth) || 17),
+        defaultHeight: Math.max(1, Number(body.defaultHeight) || 10),
         defaultDescription: String(body.defaultDescription || 'Сувенірна продукція').trim(),
         defaultPayerType: body.defaultPayerType === 'Sender' ? 'Sender' : 'Recipient',
         defaultPaymentMethod: 'Cash',
