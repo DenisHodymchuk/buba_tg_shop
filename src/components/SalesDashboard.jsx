@@ -508,6 +508,52 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
     return () => window.removeEventListener('buba_warehouse_updated', onWhUpdated);
   }, []);
 
+  // Auto-sync Nova Poshta TTN statuses on load and every 5 minutes
+  useEffect(() => {
+    let active = true;
+    const syncNpStatuses = async () => {
+      try {
+        const res = await fetch('/api/novaposhta/sync-statuses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok || !active) return;
+        const data = await res.json();
+        if (!active || !data?.ok) return;
+
+        if (Array.isArray(data.updatedOrders) && data.updatedOrders.length > 0) {
+          const updMap = new Map(data.updatedOrders.map((u) => [String(u.id), u]));
+          setSales((prev) =>
+            prev.map((s) => {
+              const upd = updMap.get(String(s.id));
+              return upd ? { ...s, status: upd.status, shipping_details: upd.shipping_details } : s;
+            })
+          );
+          if (data.changed > 0) {
+            onOrdersChanged?.();
+            const parts = [];
+            if (data.summary?.shipped) parts.push(`${data.summary.shipped} в дорозі`);
+            if (data.summary?.completed) parts.push(`${data.summary.completed} виконано`);
+            if (data.summary?.returned) parts.push(`${data.summary.returned} повернення`);
+            if (parts.length > 0) {
+              showToast?.(`НП оновила статуси: ${parts.join(', ')}`, 'success');
+            }
+          }
+        }
+      } catch (_) {
+        // silent background sync
+      }
+    };
+
+    const initialTimer = setTimeout(syncNpStatuses, 1200);
+    const interval = setInterval(syncNpStatuses, 5 * 60 * 1000);
+    return () => {
+      active = false;
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
+  }, []);
+
   // City search effect
   useEffect(() => {
     const timer = setTimeout(async () => {
