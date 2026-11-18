@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { getColorMeta } from '@/lib/orderHelpers';
 import { novaPoshta } from '@/lib/novaposhta';
+import NovaPoshtaCabinetBar from '@/components/NovaPoshtaCabinetBar';
 
 const STATUS_META = {
   new: { label: 'Нове', signal: 'apricot', icon: Clock },
@@ -74,6 +75,8 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
   const [copiedMsgId, setCopiedMsgId] = useState(null);
   const [expandedOrderIds, setExpandedOrderIds] = useState([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [npCabinetReady, setNpCabinetReady] = useState(false);
+  const [creatingNpTtnId, setCreatingNpTtnId] = useState(null);
 
   // Edit Shipping Modal State
   const [editingOrder, setEditingOrder] = useState(null);
@@ -564,6 +567,35 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
     setTimeout(() => setCopiedMsgId(null), 2000);
   };
 
+  const createNpTtnSingle = async (order, e) => {
+    if (e) e.stopPropagation();
+    if (!npCabinetReady) {
+      showToast('Спочатку підключіть та налаштуйте кабінет Нової Пошти зверху', 'error');
+      return;
+    }
+    setCreatingNpTtnId(order.id);
+    try {
+      const res = await fetch('/api/novaposhta/ttn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id })
+      });
+      const data = await res.json();
+      const first = data?.results?.[0];
+      if (!res.ok || !first?.ok) {
+        showToast(first?.error || data?.error || 'Не вдалося створити ТТН у НП', 'error');
+        return;
+      }
+      setOrders(orders.map(o => o.id === order.id ? { ...o, shipping_details: first.shipping_details } : o));
+      setTempTtn(prev => ({ ...prev, [order.id]: first.ttn }));
+      showToast(`ТТН ${first.ttn} створено у кабінеті Нової Пошти!`, 'success');
+    } catch (err) {
+      showToast('Помилка з’єднання при створенні ТТН', 'error');
+    } finally {
+      setCreatingNpTtnId(null);
+    }
+  };
+
   const activeMobileFilterCount = (deliveryFilter !== 'all' ? 1 : 0) + (codFilter !== 'all' ? 1 : 0) + (stageTab !== 'ready' ? 1 : 0);
 
   return (
@@ -779,6 +811,15 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
       </div>
 
       {/* Shipment Cards List */}
+      <NovaPoshtaCabinetBar
+        filteredOrders={filteredOrders}
+        orders={orders}
+        setOrders={setOrders}
+        showToast={showToast}
+        isMobile={isMobile}
+        onStatusLoaded={({ ready }) => setNpCabinetReady(Boolean(ready))}
+      />
+
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={stageTab}
@@ -1308,8 +1349,32 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                           {/* TTN Input & Tracking */}
                           {!isPickup && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 2 }}>
+                              {!isUkrposhta && !ttnValue && npCabinetReady && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => createNpTtnSingle(order, e)}
+                                  disabled={creatingNpTtnId === order.id}
+                                  className="dusk-btn dusk-btn--primary"
+                                  style={{ width: '100%', justifyContent: 'center', height: 36 }}
+                                >
+                                  {creatingNpTtnId === order.id ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                  ) : (
+                                    <Truck size={14} />
+                                  )}
+                                  {creatingNpTtnId === order.id ? 'Створюємо ТТН у НП…' : 'Створити ТТН у кабінеті НП'}
+                                </button>
+                              )}
+
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <label style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>Номер ТТН пошти</label>
+                                <label style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>
+                                  Номер ТТН пошти
+                                  {details.np_scansheet_number && (
+                                    <span style={{ color: 'var(--color-accent)', marginLeft: 6 }}>
+                                      • Реєстр №{details.np_scansheet_number}
+                                    </span>
+                                  )}
+                                </label>
                                 <button
                                   type="button"
                                   onClick={async () => {
@@ -1382,6 +1447,19 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                                     >
                                       Відстежити НП <ExternalLink size={11} />
                                     </a>
+                                    {!isUkrposhta && npCabinetReady && (
+                                      <a
+                                        href={`/api/novaposhta/print?type=marking100&refs=${encodeURIComponent(details.np_doc_ref || ttnValue)}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                                        style={{ justifyContent: 'center', textDecoration: 'none' }}
+                                        title="Друк маркування НП 100×100 PDF"
+                                      >
+                                        <Printer size={12} /> Стікер НП
+                                      </a>
+                                    )}
                                   </div>
                                   <button
                                     type="button"
