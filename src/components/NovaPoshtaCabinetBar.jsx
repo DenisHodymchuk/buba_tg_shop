@@ -60,8 +60,14 @@ export default function NovaPoshtaCabinetBar({
   // Batch operations & registries
   const [batchCreating, setBatchCreating] = useState(false);
   const [creatingRegistry, setCreatingRegistry] = useState(false);
+  const [syncingStatuses, setSyncingStatuses] = useState(false);
   const [registries, setRegistries] = useState([]);
   const [loadingRegistries, setLoadingRegistries] = useState(false);
+  const didAutoSyncRef = useRef(false);
+  const ordersRef = useRef(orders);
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
 
   const onStatusLoadedRef = useRef(onStatusLoaded);
   useEffect(() => {
@@ -401,6 +407,59 @@ export default function NovaPoshtaCabinetBar({
     }
   };
 
+  const handleSyncStatuses = useCallback(async (silent = false) => {
+    setSyncingStatuses(true);
+    try {
+      const res = await fetch('/api/novaposhta/sync-statuses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (!silent) showToast?.(data.error || 'Помилка синхронізації статусів НП', 'error');
+        return;
+      }
+
+      if (Array.isArray(data.updatedOrders) && data.updatedOrders.length > 0 && setOrders) {
+        const updMap = new Map(data.updatedOrders.map((u) => [String(u.id), u]));
+        setOrders(
+          (ordersRef.current || []).map((o) => {
+            const upd = updMap.get(String(o.id));
+            return upd
+              ? { ...o, status: upd.status, shipping_details: upd.shipping_details }
+              : o;
+          })
+        );
+      }
+
+      if (data.constraintWarning && !silent) {
+        showToast?.(data.constraintWarning, 'error');
+        return;
+      }
+
+      if (data.changed > 0) {
+        const parts = [];
+        if (data.summary?.shipped) parts.push(`${data.summary.shipped} в дорозі`);
+        if (data.summary?.completed) parts.push(`${data.summary.completed} виконано`);
+        if (data.summary?.returned) parts.push(`${data.summary.returned} повернення`);
+        showToast?.(`Оновлено статуси НП: ${parts.join(', ')}`, 'success');
+      } else if (!silent) {
+        showToast?.(`Усі статуси НП актуальні (перевірено ${data.checked || 0} ТТН)`);
+      }
+    } catch (_) {
+      if (!silent) showToast?.('Помилка з’єднання при синхронізації статусів НП', 'error');
+    } finally {
+      setSyncingStatuses(false);
+    }
+  }, [setOrders, showToast]);
+
+  // Auto-sync NP tracking statuses once when cabinet loads
+  useEffect(() => {
+    if (!ready || didAutoSyncRef.current) return;
+    didAutoSyncRef.current = true;
+    handleSyncStatuses(true);
+  }, [ready, handleSyncStatuses]);
+
   return (
     <div className="dusk-panel" style={{ padding: isMobile ? 12 : 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
@@ -483,6 +542,17 @@ export default function NovaPoshtaCabinetBar({
                   <Printer size={13} /> Штрих-коди 58×40 ({npOrdersWithTtn.length})
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={() => handleSyncStatuses(false)}
+                disabled={syncingStatuses}
+                className="dusk-btn dusk-btn--ghost dusk-btn--sm"
+                title="Перевірити статуси всіх активних ТТН у Новій Пошті та оновити етапи"
+              >
+                <RefreshCw size={13} className={syncingStatuses ? 'animate-spin' : ''} />
+                {syncingStatuses ? 'Синхронізація…' : 'Статуси НП'}
+              </button>
 
               <button
                 type="button"

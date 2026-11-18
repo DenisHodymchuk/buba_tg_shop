@@ -451,3 +451,63 @@ export async function fetchNpBoxes(apiKey) {
 
   return boxes.sort((a, b) => a.weight - b.weight || a.name.localeCompare(b.name, 'uk'));
 }
+
+export function mapNpStatusCodeToOrderStatus(statusCode, statusText = '') {
+  const code = Number(statusCode);
+  const text = String(statusText || '').toLowerCase();
+
+  // 1: Нова пошта очікує надходження від відправника -> ще не відправлено
+  if (code === 1) return null;
+
+  // 2: Видалено, 3: Номер не знайдено
+  if (code === 2 || code === 3) return null;
+
+  // 9, 10, 11: Відправлення отримано (+ грошовий переказ) -> Виконано
+  if (code === 9 || code === 10 || code === 11) {
+    return 'completed';
+  }
+
+  // 102, 103, 104, 105, 106: Відмова одержувача / повернення / припинено зберігання -> Повернення
+  if (
+    code === 102 ||
+    code === 103 ||
+    code === 104 ||
+    code === 105 ||
+    code === 106 ||
+    text.includes('відмов') ||
+    text.includes('повернен') ||
+    text.includes('отказ')
+  ) {
+    return 'returned';
+  }
+
+  // 4, 41, 5, 6, 7, 8, 101: Прямує / прибуло у відділення або поштомат / на шляху -> В дорозі
+  if ([4, 41, 5, 6, 7, 8, 101].includes(code)) {
+    return 'shipped';
+  }
+
+  return null;
+}
+
+export async function trackNpDocuments(apiKey, documents = []) {
+  const cleanDocs = (Array.isArray(documents) ? documents : [])
+    .map((d) => ({
+      DocumentNumber: String(d.DocumentNumber || d.ttn || '').replace(/\D/g, '').trim(),
+      Phone: formatNpPhone(d.Phone || d.phone || '')
+    }))
+    .filter((d) => d.DocumentNumber.length >= 10);
+
+  if (!cleanDocs.length) return [];
+
+  const results = [];
+  // Nova Poshta allows up to 100 documents per TrackingDocument.getStatusDocuments request
+  for (let i = 0; i < cleanDocs.length; i += 100) {
+    const chunk = cleanDocs.slice(i, i + 100);
+    const data = await npApiCall(apiKey, 'TrackingDocument', 'getStatusDocuments', {
+      Documents: chunk
+    });
+    results.push(...data);
+  }
+
+  return results;
+}

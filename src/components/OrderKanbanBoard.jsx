@@ -8,7 +8,7 @@ import {
   CheckCircle2, XCircle, Star, Phone, MapPin, Copy, 
   Check, ChevronDown, ChevronUp, Edit3, Trash2, Send,
   ExternalLink, Package, Coins, MessageSquare, User,
-  ArrowRight, ArrowLeft, MoreHorizontal, AlertCircle, GripVertical
+  ArrowRight, ArrowLeft, MoreHorizontal, AlertCircle, GripVertical, RotateCcw
 } from 'lucide-react';
 import { getColorMeta } from '@/lib/orderHelpers';
 import { formatShortDateUa, getTodayKey, DONE_OR_SHIPPED_STATUSES } from '@/lib/calendarHelpers';
@@ -21,6 +21,7 @@ export const KANBAN_COLUMNS = [
   { id: 'shipping', title: 'Готово до відправки', shortTitle: 'До відправки', signal: 'apricot', icon: Truck },
   { id: 'shipped', title: 'В дорозі', shortTitle: 'В дорозі', signal: 'periwinkle', icon: Send },
   { id: 'completed', title: 'Виконано', shortTitle: 'Виконано', signal: 'periwinkle', icon: CheckCircle2 },
+  { id: 'returned', title: 'Повернення', shortTitle: 'Повернення', signal: 'danger', icon: RotateCcw },
   { id: 'cancelled', title: 'Скасовано', shortTitle: 'Скасовано', signal: 'muted', icon: XCircle }
 ];
 

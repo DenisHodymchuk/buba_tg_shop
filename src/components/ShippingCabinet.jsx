@@ -6,7 +6,7 @@ import {
   Truck, Search, Copy, Check, ExternalLink, Send, CheckCircle2, 
   Clock, Printer, Palette, ClipboardList, XCircle, MapPin, Phone, 
   User, Package, Coins, Star, ChevronDown, ChevronUp, Edit3, X,
-  MessageSquare, Loader2, SlidersHorizontal
+  MessageSquare, Loader2, SlidersHorizontal, RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getColorMeta } from '@/lib/orderHelpers';
@@ -22,6 +22,7 @@ const STATUS_META = {
   shipping: { label: 'Готово до відправки', signal: 'apricot', icon: Truck },
   shipped: { label: 'В дорозі', signal: 'periwinkle', icon: Send },
   completed: { label: 'Виконано', signal: 'periwinkle', icon: CheckCircle2 },
+  returned: { label: 'Повернення', signal: 'danger', icon: RotateCcw },
   cancelled: { label: 'Скасовано', signal: 'muted', icon: XCircle }
 };
 
@@ -289,7 +290,7 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
 
   // Stage counts & financial tally
   const stageCounts = useMemo(() => {
-    const counts = { ready: 0, packing: 0, in_work: 0, shipped: 0, all_active: 0, completed: 0, codTotal: 0, codOrdersCount: 0 };
+    const counts = { ready: 0, packing: 0, in_work: 0, shipped: 0, all_active: 0, completed: 0, returned: 0, codTotal: 0, codOrdersCount: 0 };
     orders.forEach(o => {
       if (o.status === 'cancelled') return;
       if (o.status === 'shipping') {
@@ -305,9 +306,11 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
         counts.shipped++;
       } else if (o.status === 'completed') {
         counts.completed++;
+      } else if (o.status === 'returned') {
+        counts.returned++;
       }
 
-      if (o.status !== 'completed' && o.shipping_details?.is_cod) {
+      if (o.status !== 'completed' && o.status !== 'returned' && o.shipping_details?.is_cod) {
         counts.codOrdersCount++;
         counts.codTotal += parseFloat(o.shipping_details?.cod_amount || 0);
       }
@@ -330,8 +333,10 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
         matchesStage = order.status === 'shipped';
       } else if (stageTab === 'completed') {
         matchesStage = order.status === 'completed';
+      } else if (stageTab === 'returned') {
+        matchesStage = order.status === 'returned';
       } else {
-        matchesStage = order.status !== 'completed' && order.status !== 'shipped';
+        matchesStage = order.status !== 'completed' && order.status !== 'shipped' && order.status !== 'returned';
       }
 
       const method = order.shipping_method || 'pickup';
@@ -696,7 +701,8 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
             { id: 'packing', label: 'Пакування', count: stageCounts.packing, dot: 'apricot' },
             { id: 'in_work', label: isMobile ? 'В роботі' : 'Друк / Склейка', count: stageCounts.in_work, dot: 'apricot' },
             { id: 'shipped', label: 'В дорозі', count: stageCounts.shipped, dot: 'periwinkle' },
-            { id: 'completed', label: 'Виконано', count: stageCounts.completed, dot: 'periwinkle' }
+            { id: 'completed', label: 'Виконано', count: stageCounts.completed, dot: 'periwinkle' },
+            { id: 'returned', label: 'Повернення', count: stageCounts.returned, dot: 'danger' }
           ].map(tab => {
             const active = stageTab === tab.id;
             return (
@@ -1464,6 +1470,18 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                                       </button>
                                     )}
                                   </div>
+                                  {details.np_status_text && (
+                                    <div style={{
+                                      fontSize: 11,
+                                      padding: '6px 9px',
+                                      borderRadius: 8,
+                                      background: order.status === 'returned' ? 'rgba(248, 113, 113, 0.12)' : 'var(--color-paper)',
+                                      border: order.status === 'returned' ? '1px solid rgba(248, 113, 113, 0.35)' : '1px solid var(--color-rule)',
+                                      color: order.status === 'returned' ? 'var(--color-danger)' : 'var(--color-ink-2)'
+                                    }}>
+                                      <strong style={{ fontWeight: 600 }}>НП:</strong> {details.np_status_text}
+                                    </div>
+                                  )}
                                   <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); copyClientTtnMessage(order, ttnValue); }}
@@ -1490,7 +1508,8 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                           { st: 'painting', label: 'Склейка / Розфарб.', icon: Palette },
                           { st: 'preparing', label: 'Пакування', icon: ClipboardList },
                           { st: 'shipping', label: 'Готово до відправки', icon: Truck },
-                          { st: 'shipped', label: 'В дорозі', icon: Send }
+                          { st: 'shipped', label: 'В дорозі', icon: Send },
+                          { st: 'returned', label: 'Повернення', icon: RotateCcw }
                         ].map(btn => {
                           if (order.status === btn.st || order.status === 'completed') return null;
                           const Icon = btn.icon;

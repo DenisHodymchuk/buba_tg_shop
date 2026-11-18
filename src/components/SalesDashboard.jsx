@@ -10,7 +10,7 @@ import {
   Edit3, X, ChevronDown, ChevronUp, 
   CheckCircle2, Loader2, Filter, 
   Clock, ClipboardList, Printer, Truck, Send, XCircle, Sparkles, Copy,
-  LayoutGrid, List, Palette, Star, ClipboardPaste, UserCheck, Check, Calendar, SlidersHorizontal, Package
+  LayoutGrid, List, Palette, Star, ClipboardPaste, UserCheck, Check, Calendar, SlidersHorizontal, Package, RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -313,6 +313,15 @@ const STATUS_META = {
     bg: 'var(--color-accent-soft)', 
     border: 'var(--color-accent-border)',
     icon: CheckCircle2 
+  },
+  returned: { 
+    label: 'Повернення', 
+    fullLabel: 'Повернення',
+    tone: 'danger',
+    color: 'var(--color-danger)', 
+    bg: 'var(--color-danger-soft)', 
+    border: 'var(--color-danger-border)',
+    icon: RotateCcw 
   },
   cancelled: { 
     label: 'Скасовано', 
