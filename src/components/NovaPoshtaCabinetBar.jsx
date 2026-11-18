@@ -6,6 +6,7 @@ import {
   Truck, Settings, FileSpreadsheet, Printer, PlusCircle,
   Loader2, CheckCircle2, LogOut, RefreshCw, ChevronDown, KeyRound
 } from 'lucide-react';
+import { printNpBarcodes58x40 } from '@/lib/npBarcodePrint';
 
 export default function NovaPoshtaCabinetBar({
   filteredOrders = [],
@@ -393,11 +394,11 @@ export default function NovaPoshtaCabinetBar({
   };
 
   const handlePrintAllMarkings = () => {
-    const refs = npOrdersWithTtn
-      .map((o) => o.shipping_details?.np_doc_ref || o.shipping_details?.ttn)
-      .filter(Boolean);
-    if (!refs.length) return;
-    window.open(`/api/novaposhta/print?type=marking100&refs=${encodeURIComponent(refs.join(','))}`, '_blank');
+    if (!npOrdersWithTtn.length) return;
+    const opened = printNpBarcodes58x40(npOrdersWithTtn);
+    if (!opened) {
+      showToast?.('Дозвольте спливаючі вікна для друку наклейок 58×40', 'error');
+    }
   };
 
   return (
@@ -477,9 +478,9 @@ export default function NovaPoshtaCabinetBar({
                   type="button"
                   onClick={handlePrintAllMarkings}
                   className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                  title="Друк маркувань 100×100 для всіх видимих ТТН"
+                  title="Друк штрих-кодів ТТН на наклейках 58×40 мм"
                 >
-                  <Printer size={13} /> Стікери ({npOrdersWithTtn.length})
+                  <Printer size={13} /> Штрих-коди 58×40 ({npOrdersWithTtn.length})
                 </button>
               )}
 

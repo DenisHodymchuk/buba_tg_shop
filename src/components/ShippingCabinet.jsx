@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getColorMeta } from '@/lib/orderHelpers';
 import { novaPoshta } from '@/lib/novaposhta';
 import NovaPoshtaCabinetBar from '@/components/NovaPoshtaCabinetBar';
+import { printNpBarcodes58x40 } from '@/lib/npBarcodePrint';
 
 const STATUS_META = {
   new: { label: 'Нове', signal: 'apricot', icon: Clock },
@@ -1447,18 +1448,20 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                                     >
                                       Відстежити НП <ExternalLink size={11} />
                                     </a>
-                                    {!isUkrposhta && npCabinetReady && (
-                                      <a
-                                        href={`/api/novaposhta/print?type=marking100&refs=${encodeURIComponent(details.np_doc_ref || ttnValue)}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
+                                    {!isUkrposhta && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const ok = printNpBarcodes58x40([order]);
+                                          if (!ok) showToast('Дозвольте спливаючі вікна для друку', 'error');
+                                        }}
                                         className="dusk-btn dusk-btn--ghost dusk-btn--sm"
-                                        style={{ justifyContent: 'center', textDecoration: 'none' }}
-                                        title="Друк маркування НП 100×100 PDF"
+                                        style={{ justifyContent: 'center' }}
+                                        title="Друк штрих-коду ТТН 58×40 мм"
                                       >
-                                        <Printer size={12} /> Стікер НП
-                                      </a>
+                                        <Printer size={12} /> Код 58×40
+                                      </button>
                                     )}
                                   </div>
                                   <button
