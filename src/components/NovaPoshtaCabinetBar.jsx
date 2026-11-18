@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Truck, Settings, FileSpreadsheet, Printer, PlusCircle,
@@ -57,6 +57,11 @@ export default function NovaPoshtaCabinetBar({
   const [registries, setRegistries] = useState([]);
   const [loadingRegistries, setLoadingRegistries] = useState(false);
 
+  const onStatusLoadedRef = useRef(onStatusLoaded);
+  useEffect(() => {
+    onStatusLoadedRef.current = onStatusLoaded;
+  }, [onStatusLoaded]);
+
   const loadConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/novaposhta/config', { cache: 'no-store' });
@@ -70,14 +75,14 @@ export default function NovaPoshtaCabinetBar({
           setCityQuery(data.config.citySenderName || '');
           setWarehouseQuery(data.config.senderWarehouseName || '');
         }
-        onStatusLoaded?.({ connected: Boolean(data.connected), ready: Boolean(data.ready) });
+        onStatusLoadedRef.current?.({ connected: Boolean(data.connected), ready: Boolean(data.ready) });
       }
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
-  }, [onStatusLoaded]);
+  }, []);
 
   useEffect(() => {
     loadConfig();
@@ -547,10 +552,11 @@ export default function NovaPoshtaCabinetBar({
       <AnimatePresence initial={false}>
         {showSettings && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            style={{ overflow: 'hidden' }}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16 }}
+            style={{ overflow: 'visible' }}
           >
             <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--color-rule)', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Step 1: API Key */}
@@ -603,7 +609,7 @@ export default function NovaPoshtaCabinetBar({
 
               {/* Step 2: Sender & Default parcel params */}
               {connected && (
-                <form onSubmit={handleSaveSettings} style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 10, borderTop: '1px solid var(--color-rule)' }}>
+                <form onSubmit={handleSaveSettings} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 10, borderTop: '1px solid var(--color-rule)' }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-ink)' }}>
                     2. Відправник та стандартні параметри посилки
                   </div>
@@ -659,10 +665,16 @@ export default function NovaPoshtaCabinetBar({
                       </label>
                       <input
                         type="text"
+                        name="np_sender_city_query"
+                        autoComplete="new-password"
+                        spellCheck={false}
                         value={cityQuery}
                         onChange={(e) => {
                           setCityQuery(e.target.value);
                           setShowCityDropdown(true);
+                        }}
+                        onFocus={() => {
+                          if (cityResults.length > 0) setShowCityDropdown(true);
                         }}
                         onBlur={() => setTimeout(() => setShowCityDropdown(false), 200)}
                         placeholder="Почніть вводити місто (напр. Хмельницький)..."
@@ -704,6 +716,9 @@ export default function NovaPoshtaCabinetBar({
                       </label>
                       <input
                         type="text"
+                        name="np_sender_warehouse_query"
+                        autoComplete="new-password"
+                        spellCheck={false}
                         value={warehouseQuery}
                         onChange={(e) => {
                           setWarehouseQuery(e.target.value);
