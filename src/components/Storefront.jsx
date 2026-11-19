@@ -204,6 +204,7 @@ function ProductCard({ toy, inCartQty, isMobile, onProductClick, addToCart, comp
           : '0 8px 24px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.04)',
         transform: isActiveHover ? 'translateY(-3px)' : 'translateY(0)',
         width: '100%',
+        height: '100%',
         position: 'relative',
         cursor: 'pointer',
         transition: 'transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.24s ease'
@@ -769,7 +770,8 @@ export default function Storefront({
                   flex: isMobile
                     ? '0 0 calc((100% - 10px) / 2)'
                     : '0 0 calc((100% - 48px) / 5)',
-                  minWidth: 0
+                  minWidth: 0,
+                  display: 'flex'
                 }}
               >
                 <ProductCard
