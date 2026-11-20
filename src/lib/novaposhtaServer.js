@@ -351,18 +351,17 @@ export async function createNpTtnForOrder(config, order, overrides = {}) {
     RecipientsPhone: recipientPhone
   };
 
-  if (isPostomat) {
-    const vol = Number(((width * length * height) / 4000).toFixed(2)) || 0.5;
-    docProps.OptionsSeat = [
-      {
-        volumetricVolume: String(vol),
-        volumetricWidth: String(width),
-        volumetricLength: String(length),
-        volumetricHeight: String(height),
-        weight: String(weight)
-      }
-    ];
-  }
+  // Always pass OptionsSeat (required by Nova Poshta for postomats, drop-off points, and parcel shipments)
+  const vol = Number(((width * length * height) / 4000).toFixed(2)) || 0.5;
+  docProps.OptionsSeat = [
+    {
+      volumetricVolume: String(vol),
+      volumetricWidth: String(width),
+      volumetricLength: String(length),
+      volumetricHeight: String(height),
+      weight: String(weight)
+    }
+  ];
 
   if (isCod && codAmount > 0) {
     docProps.BackwardDeliveryData = [
