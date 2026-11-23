@@ -931,86 +931,90 @@ export default function BannersAdmin({ products = [], categories = [], isMobile 
                 )}
               </div>
 
-              <div style={{
-                overflowY: 'auto',
-                display: 'grid',
-                gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
-                gap: 10,
-                paddingRight: 2
-              }}>
-                {photoOptions.length === 0 ? (
-                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '32px 12px', color: 'var(--color-muted)', fontSize: 13 }}>
-                    Не знайдено фото за цим запитом
-                  </div>
-                ) : (
-                  photoOptions.map((opt) => {
-                    const isSelected = currentCover === opt.url;
-                    return (
-                      <button
-                        key={opt.url}
-                        type="button"
-                        onClick={async () => {
-                          await persistCollectionCovers({ ...collectionCovers, [pickingCollection]: opt.url });
-                          setPickingCollection(null);
-                        }}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 6,
-                          padding: 6,
-                          borderRadius: 12,
-                          background: isSelected ? 'rgba(147, 162, 250, 0.14)' : 'var(--color-paper)',
-                          border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-rule)',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          position: 'relative',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        <div style={{
-                          width: '100%',
-                          aspectRatio: '1 / 1',
-                          borderRadius: 8,
-                          overflow: 'hidden',
-                          background: '#13151B'
-                        }}>
-                          <img
-                            src={opt.url}
-                            alt={opt.title}
-                            loading="lazy"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          />
-                        </div>
-                        {isSelected && (
-                          <span style={{
-                            position: 'absolute',
-                            top: 10,
-                            right: 10,
-                            background: 'var(--color-accent)',
-                            color: '#0b0d14',
-                            fontSize: 10,
-                            fontWeight: 700,
-                            padding: '2px 7px',
-                            borderRadius: 999
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+                  gap: 10,
+                  alignItems: 'start'
+                }}>
+                  {photoOptions.length === 0 ? (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '32px 12px', color: 'var(--color-muted)', fontSize: 13 }}>
+                      Не знайдено фото за цим запитом
+                    </div>
+                  ) : (
+                    photoOptions.map((opt) => {
+                      const isSelected = currentCover === opt.url;
+                      return (
+                        <button
+                          key={opt.url}
+                          type="button"
+                          onClick={async () => {
+                            await persistCollectionCovers({ ...collectionCovers, [pickingCollection]: opt.url });
+                            setPickingCollection(null);
+                          }}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 6,
+                            padding: 6,
+                            borderRadius: 12,
+                            background: isSelected ? 'rgba(147, 162, 250, 0.14)' : 'var(--color-paper)',
+                            border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-rule)',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            position: 'relative',
+                            width: '100%'
+                          }}
+                        >
+                          <div style={{
+                            width: '100%',
+                            height: isMobile ? 130 : 155,
+                            borderRadius: 8,
+                            overflow: 'hidden',
+                            background: '#13151B',
+                            flexShrink: 0
                           }}>
-                            Головне
-                          </span>
-                        )}
-                        <div style={{
-                          fontSize: 11.5,
-                          fontWeight: 600,
-                          color: 'var(--color-ink)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          padding: '0 2px'
-                        }}>
-                          {opt.title || 'Без назви'}
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
+                            <img
+                              src={opt.url}
+                              alt={opt.title}
+                              loading="lazy"
+                              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                            />
+                          </div>
+                          {isSelected && (
+                            <span style={{
+                              position: 'absolute',
+                              top: 10,
+                              right: 10,
+                              background: 'var(--color-accent)',
+                              color: '#0b0d14',
+                              fontSize: 10,
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: 999
+                            }}>
+                              Головне
+                            </span>
+                          )}
+                          <div style={{
+                            fontSize: 11.5,
+                            fontWeight: 600,
+                            color: 'var(--color-ink)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            width: '100%',
+                            padding: '0 2px',
+                            flexShrink: 0
+                          }}>
+                            {opt.title || 'Без назви'}
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </div>
           </div>
