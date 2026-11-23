@@ -7,6 +7,7 @@ import Checkout from '@/components/Checkout';
 import OrderHistory from '@/components/OrderHistory';
 import Reviews from '@/components/Reviews';
 import { StoreFooter } from '@/components/StoreSections';
+import { FestiveSnowfall, FestiveFooterTrees } from '@/components/FestiveDecor';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ShoppingCart, X, ChevronLeft, ChevronRight,
@@ -747,6 +748,8 @@ export default function StoreShell({ children }) {
         )}
       </AnimatePresence>
 
+      <FestiveSnowfall />
+      <FestiveFooterTrees />
       <StoreFooter isMobile={isMobile} onOpenReviews={() => setIsReviewsOpen(true)} />
     </div>
   );

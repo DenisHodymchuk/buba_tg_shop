@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ShoppingCart, Award, Search, Box, User, MessageSquare, Share2, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { FestiveGarland } from '@/components/FestiveDecor';
 
 const NAV_LINKS = [
   { href: '/hits', label: 'Хіти' },
@@ -46,6 +47,7 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
         {/* Brand Logo */}
         <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <div style={{
+            position: 'relative',
             width: 36,
             height: 36,
             borderRadius: 10,
@@ -58,6 +60,25 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
             flexShrink: 0
           }}>
             <Box size={19} strokeWidth={2} />
+            {/* Tiny festive Santa hat on logo corner */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 18"
+              style={{
+                position: 'absolute',
+                top: -8,
+                right: -6,
+                width: 19,
+                height: 15,
+                transform: 'rotate(16deg)',
+                pointerEvents: 'none',
+                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))'
+              }}
+            >
+              <path d="M3,13 C5,4 14,1 20,7 C17,9 15,11 15,13 Z" fill="#EF4444" />
+              <rect x="2" y="12" width="14" height="3.6" rx="1.8" fill="#F8FAFC" />
+              <circle cx="20.5" cy="7.5" r="2.3" fill="#F8FAFC" />
+            </svg>
           </div>
           <div>
             <div className="text-[14.5px] sm:text-[16px]" style={{
@@ -318,6 +339,7 @@ export default function Header({ cartCount, bonuses, isAuthorized = false, onOpe
           })}
         </nav>
       </div>
+      <FestiveGarland />
     </header>
   );
 }
