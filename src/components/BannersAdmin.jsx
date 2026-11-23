@@ -32,6 +32,8 @@ export default function BannersAdmin({ products = [], categories = [], isMobile 
   const [productSearch, setProductSearch] = useState('');
   const [collectionCovers, setCollectionCovers] = useState({});
   const [uploadingCollection, setUploadingCollection] = useState('');
+  const [pickingCollection, setPickingCollection] = useState(null);
+  const [collectionPickerSearch, setCollectionPickerSearch] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -702,7 +704,7 @@ export default function BannersAdmin({ products = [], categories = [], isMobile 
               Фото колекцій (категорій)
             </h3>
             <p style={{ fontSize: 12.5, color: 'var(--color-muted)', margin: '4px 0 0' }}>
-              За замовчуванням береться фото першого товару з категорії. Тут можна завантажити власну обкладинку для будь-якої колекції.
+              За замовчуванням береться фото першого товару з категорії. Можна обрати будь-яке фото з товарів колекції або завантажити власне.
             </p>
           </div>
 
@@ -733,15 +735,25 @@ export default function BannersAdmin({ products = [], categories = [], isMobile 
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                    <div style={{
-                      width: 56,
-                      height: 44,
-                      borderRadius: 8,
-                      overflow: 'hidden',
-                      background: '#13151B',
-                      border: '1px solid var(--color-rule)',
-                      flexShrink: 0
-                    }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPickingCollection(catName);
+                        setCollectionPickerSearch('');
+                      }}
+                      title="Обрати фото з колекції"
+                      style={{
+                        width: 56,
+                        height: 44,
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        background: '#13151B',
+                        border: '1px solid var(--color-rule)',
+                        flexShrink: 0,
+                        padding: 0,
+                        cursor: 'pointer'
+                      }}
+                    >
                       {previewImg ? (
                         <img src={previewImg} alt={catName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
@@ -749,19 +761,34 @@ export default function BannersAdmin({ products = [], categories = [], isMobile 
                           <ImageIcon size={16} style={{ color: 'var(--color-muted)' }} />
                         </div>
                       )}
-                    </div>
+                    </button>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {catName}
                       </div>
                       <div style={{ fontSize: 11, color: customImg ? 'var(--color-accent)' : 'var(--color-muted)' }}>
-                        {customImg ? 'Власне фото' : `Авто (${catProducts.length} шт.)`}
+                        {customImg ? 'Обране фото' : `Авто (${catProducts.length} шт.)`}
                       </div>
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    <label className="dusk-btn" style={{ cursor: 'pointer', height: 32, fontSize: 12, padding: '0 10px' }}>
+                    {catProducts.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPickingCollection(catName);
+                          setCollectionPickerSearch('');
+                        }}
+                        className="dusk-btn"
+                        style={{ height: 32, fontSize: 12, padding: '0 10px' }}
+                        title="Обрати фото з товарів цієї колекції"
+                      >
+                        <ImageIcon size={13} />
+                        <span>Обрати</span>
+                      </button>
+                    )}
+                    <label className="dusk-btn" style={{ cursor: 'pointer', height: 32, fontSize: 12, padding: '0 10px' }} title="Завантажити своє фото з пристрою">
                       {isUploadingThis ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                       <span>{isUploadingThis ? '...' : 'Фото'}</span>
                       <input
@@ -793,6 +820,202 @@ export default function BannersAdmin({ products = [], categories = [], isMobile 
           </div>
         </div>
       )}
+
+      {/* Collection Photo Picker Modal */}
+      {pickingCollection && (() => {
+        const catProducts = products.filter(p => !p.is_hidden && p.category === pickingCollection);
+        const currentCover = collectionCovers[pickingCollection] || '';
+        const q = collectionPickerSearch.trim().toLowerCase();
+
+        // Collect all unique product photos from this collection
+        const photoOptions = [];
+        const seenUrls = new Set();
+        for (const p of catProducts) {
+          const title = String(p.title || p.name || '').trim();
+          if (q && !title.toLowerCase().includes(q)) continue;
+
+          const urls = [];
+          if (p.image_url) urls.push(p.image_url);
+          if (Array.isArray(p.images)) {
+            for (const img of p.images) {
+              const u = typeof img === 'string' ? img : img?.url;
+              if (u) urls.push(u);
+            }
+          }
+
+          urls.forEach((url, idx) => {
+            if (!url || seenUrls.has(url)) return;
+            seenUrls.add(url);
+            photoOptions.push({
+              url,
+              title: urls.length > 1 && idx > 0 ? `${title} (${idx + 1})` : title,
+              productId: p.id
+            });
+          });
+        }
+
+        return (
+          <div
+            onClick={() => setPickingCollection(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 1000,
+              background: 'rgba(6, 8, 14, 0.72)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: isMobile ? 12 : 24
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="dusk-panel"
+              style={{
+                width: '100%',
+                maxWidth: 780,
+                maxHeight: '85vh',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                padding: isMobile ? 14 : 20,
+                gap: 12
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-ink)', margin: 0 }}>
+                    Головне фото колекції «{pickingCollection}»
+                  </h3>
+                  <p style={{ fontSize: 12, color: 'var(--color-muted)', margin: '3px 0 0' }}>
+                    Натисніть на будь-яке фото товару, щоб зробити його обкладинкою цієї колекції
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPickingCollection(null)}
+                  className="dusk-btn"
+                  style={{ height: 32, padding: '0 8px' }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
+                  <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
+                  <input
+                    type="text"
+                    value={collectionPickerSearch}
+                    onChange={(e) => setCollectionPickerSearch(e.target.value)}
+                    placeholder="Пошук товару в колекції..."
+                    className="dusk-input"
+                    style={{ width: '100%', height: 34, paddingLeft: 32, fontSize: 12.5 }}
+                  />
+                </div>
+                {currentCover && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const next = { ...collectionCovers };
+                      delete next[pickingCollection];
+                      await persistCollectionCovers(next);
+                      setPickingCollection(null);
+                    }}
+                    className="dusk-btn"
+                    style={{ height: 34, fontSize: 12, color: 'var(--color-danger)' }}
+                  >
+                    Скинути на авто
+                  </button>
+                )}
+              </div>
+
+              <div style={{
+                overflowY: 'auto',
+                display: 'grid',
+                gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+                gap: 10,
+                paddingRight: 2
+              }}>
+                {photoOptions.length === 0 ? (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '32px 12px', color: 'var(--color-muted)', fontSize: 13 }}>
+                    Не знайдено фото за цим запитом
+                  </div>
+                ) : (
+                  photoOptions.map((opt) => {
+                    const isSelected = currentCover === opt.url;
+                    return (
+                      <button
+                        key={opt.url}
+                        type="button"
+                        onClick={async () => {
+                          await persistCollectionCovers({ ...collectionCovers, [pickingCollection]: opt.url });
+                          setPickingCollection(null);
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 6,
+                          padding: 6,
+                          borderRadius: 12,
+                          background: isSelected ? 'rgba(147, 162, 250, 0.14)' : 'var(--color-paper)',
+                          border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-rule)',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <div style={{
+                          width: '100%',
+                          aspectRatio: '1 / 1',
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          background: '#13151B'
+                        }}>
+                          <img
+                            src={opt.url}
+                            alt={opt.title}
+                            loading="lazy"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        </div>
+                        {isSelected && (
+                          <span style={{
+                            position: 'absolute',
+                            top: 10,
+                            right: 10,
+                            background: 'var(--color-accent)',
+                            color: '#0b0d14',
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: '2px 7px',
+                            borderRadius: 999
+                          }}>
+                            Головне
+                          </span>
+                        )}
+                        <div style={{
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          color: 'var(--color-ink)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          padding: '0 2px'
+                        }}>
+                          {opt.title || 'Без назви'}
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
