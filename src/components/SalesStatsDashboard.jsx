@@ -4,8 +4,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   BarChart3, Calendar, RefreshCw, CheckCircle2, Clock, 
-  Printer, Palette, ClipboardList, Truck, Send, XCircle
+  Printer, Palette, ClipboardList, Truck, Send, XCircle, RotateCcw
 } from 'lucide-react';
+import { getOrderUnpaidAmount } from '@/lib/orderHelpers';
 
 const PLATFORMS = [
   { key: 'website', label: 'Сайт' },
@@ -28,6 +29,7 @@ const STATUS_META = {
   shipping: { label: 'До відправки', signal: 'apricot', icon: Truck },
   shipped: { label: 'В дорозі', signal: 'periwinkle', icon: Send },
   completed: { label: 'Виконано', signal: 'periwinkle', icon: CheckCircle2 },
+  returned: { label: 'Повернення', signal: 'muted', icon: RotateCcw },
   cancelled: { label: 'Скасовано', signal: 'muted', icon: XCircle }
 };
 
@@ -145,7 +147,7 @@ export default function SalesStatsDashboard({ supabase, showToast, isMobile }) {
         statusSums[st] += amt;
       }
 
-      if (st === 'cancelled') {
+      if (st === 'cancelled' || st === 'returned') {
         cancelledCount += 1;
         return;
       }
@@ -153,17 +155,8 @@ export default function SalesStatsDashboard({ supabase, showToast, isMobile }) {
       activeCount += 1;
       totalRevenue += amt;
 
-      if (sale.payment_status === 'paid') {
-        paidRevenue += amt;
-      } else if (sale.payment_status === 'partially_paid') {
-        const isCod = !!sale.shipping_details?.is_cod;
-        const codAmount = parseFloat(sale.shipping_details?.cod_amount || 0);
-        if (isCod && codAmount > 0) {
-          paidRevenue += Math.max(0, amt - codAmount);
-        } else {
-          paidRevenue += amt * 0.5;
-        }
-      }
+      const unpaidAmt = getOrderUnpaidAmount(sale);
+      paidRevenue += Math.max(0, amt - unpaidAmt);
 
       const src = sale.source || 'website';
       if (sourceSums[src] !== undefined) {
@@ -202,12 +195,11 @@ export default function SalesStatsDashboard({ supabase, showToast, isMobile }) {
     const groups = {};
 
     filteredSales.forEach(sale => {
-      if (sale.status === 'cancelled') return;
+      if (sale.status === 'cancelled' || sale.status === 'returned') return;
       if (!sale.created_at) return;
 
       const date = new Date(sale.created_at);
       const amt = parseFloat(sale.total || 0);
-      const isPaid = sale.payment_status === 'paid';
 
       let key = '';
       let label = '';
@@ -236,17 +228,8 @@ export default function SalesStatsDashboard({ supabase, showToast, isMobile }) {
 
       groups[key].total += amt;
       groups[key].count += 1;
-      if (isPaid) {
-        groups[key].paid += amt;
-      } else if (sale.payment_status === 'partially_paid') {
-        const isCod = !!sale.shipping_details?.is_cod;
-        const codAmount = parseFloat(sale.shipping_details?.cod_amount || 0);
-        if (isCod && codAmount > 0) {
-          groups[key].paid += Math.max(0, amt - codAmount);
-        } else {
-          groups[key].paid += amt * 0.5;
-        }
-      }
+      const unpaidAmt = getOrderUnpaidAmount(sale);
+      groups[key].paid += Math.max(0, amt - unpaidAmt);
     });
 
     return Object.values(groups).sort((a, b) => b.key.localeCompare(a.key));

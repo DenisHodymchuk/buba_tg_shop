@@ -9,7 +9,7 @@ import {
   MessageSquare, Loader2, SlidersHorizontal, RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getColorMeta } from '@/lib/orderHelpers';
+import { getColorMeta, getOrderUnpaidAmount } from '@/lib/orderHelpers';
 import { novaPoshta } from '@/lib/novaposhta';
 import NovaPoshtaCabinetBar from '@/components/NovaPoshtaCabinetBar';
 import { printNpBarcodes58x40 } from '@/lib/npBarcodePrint';
@@ -310,9 +310,10 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
         counts.returned++;
       }
 
-      if (o.status !== 'completed' && o.status !== 'returned' && o.shipping_details?.is_cod) {
+      const unpaidCod = o.shipping_details?.is_cod ? getOrderUnpaidAmount(o) : 0;
+      if (unpaidCod > 0) {
         counts.codOrdersCount++;
-        counts.codTotal += parseFloat(o.shipping_details?.cod_amount || 0);
+        counts.codTotal += unpaidCod;
       }
     });
     return counts;
@@ -911,14 +912,19 @@ export default function ShippingCabinet({ orders = [], setOrders, supabase, show
                         );
                       })()}
 
-                      {isCod ? (
+                      {order.payment_status === 'paid' || order.status === 'completed' ? (
+                        <span className="dusk-badge dusk-badge--periwinkle" style={{ fontSize: 10.5, padding: '2px 8px' }}>
+                          <span className="dusk-dot dusk-dot--periwinkle" style={{ width: 5, height: 5 }} />
+                          Оплачено
+                        </span>
+                      ) : isCod && getOrderUnpaidAmount(order) > 0 ? (
                         <span className="dusk-badge dusk-badge--apricot dusk-num" style={{ fontSize: 10.5, padding: '2px 8px' }}>
-                          Наложка: {codAmount} ₴
+                          Наложка: {getOrderUnpaidAmount(order)} ₴
                         </span>
                       ) : (
-                        <span className={`dusk-badge ${order.payment_status === 'paid' ? 'dusk-badge--periwinkle' : 'dusk-badge--apricot'}`} style={{ fontSize: 10.5, padding: '2px 8px' }}>
-                          <span className={`dusk-dot ${order.payment_status === 'paid' ? 'dusk-dot--periwinkle' : 'dusk-dot--apricot'}`} style={{ width: 5, height: 5 }} />
-                          {order.payment_status === 'paid' ? 'Оплачено' : 'Очікує оплати'}
+                        <span className="dusk-badge dusk-badge--apricot" style={{ fontSize: 10.5, padding: '2px 8px' }}>
+                          <span className="dusk-dot dusk-dot--apricot" style={{ width: 5, height: 5 }} />
+                          Очікує оплати
                         </span>
                       )}
 

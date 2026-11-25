@@ -18,7 +18,8 @@ import {
   QUICK_ITEM_TAGS, 
   QUICK_ORDER_NOTES, 
   getColorMeta, 
-  parseSmartShippingText 
+  parseSmartShippingText,
+  getOrderUnpaidAmount
 } from '@/lib/orderHelpers';
 import { loadWarehouseData, applyOrderConsumablesDiff } from '@/lib/warehouseStore';
 import DeadlineMiniPicker from '@/components/DeadlineMiniPicker';
@@ -526,7 +527,14 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
           setSales((prev) =>
             prev.map((s) => {
               const upd = updMap.get(String(s.id));
-              return upd ? { ...s, status: upd.status, shipping_details: upd.shipping_details } : s;
+              return upd
+                ? {
+                    ...s,
+                    status: upd.status,
+                    payment_status: upd.payment_status || s.payment_status,
+                    shipping_details: upd.shipping_details
+                  }
+                : s;
             })
           );
           if (data.changed > 0) {
@@ -1000,15 +1008,14 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
     let activeWorkCount = 0;
 
     filteredSales.forEach(s => {
-      if (s.status === 'cancelled') return;
+      if (s.status === 'cancelled' || s.status === 'returned') return;
       const amt = parseFloat(s.total) || 0;
       totalSum += amt;
 
-      const details = s.shipping_details || {};
-      if (s.payment_status !== 'paid') {
+      const unpaidAmt = getOrderUnpaidAmount(s);
+      if (unpaidAmt > 0) {
         unpaidCount += 1;
-        const codAmt = details.is_cod && details.cod_amount ? parseFloat(details.cod_amount) : amt;
-        unpaidSum += (isNaN(codAmt) ? amt : codAmt);
+        unpaidSum += unpaidAmt;
       }
 
       if (['new', 'printing', 'painting', 'preparing', 'shipping'].includes(s.status)) {
@@ -2260,9 +2267,9 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                                 Доставка: {details.city} {details.warehouse ? `— ${details.warehouse}` : ''}
                               </div>
                             )}
-                            {details.is_cod && details.cod_amount > 0 && (
+                            {details.is_cod && getOrderUnpaidAmount(sale) > 0 && (
                               <div className="dusk-num" style={{ fontSize: 12, color: 'var(--color-accent-2)', fontWeight: 500 }}>
-                                Наложка: {details.cod_amount} ₴
+                                Наложка: {getOrderUnpaidAmount(sale)} ₴
                               </div>
                             )}
                             {details.notes && (
@@ -2521,11 +2528,15 @@ export default function SalesDashboard({ showToast, externalOpenAdd, onClearExte
                             <div className="dusk-num" style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 500, color: 'var(--color-ink)' }}>
                               {Number(sale.total || 0).toLocaleString('uk-UA')}<span className="c" style={{ fontSize: 12.5 }}>.00 ₴</span>
                             </div>
-                            {details.is_cod && details.cod_amount > 0 && (
+                            {details.is_cod && getOrderUnpaidAmount(sale) > 0 ? (
                               <div className="dusk-num" style={{ fontSize: 11.5, color: 'var(--color-accent-2)', fontWeight: 500, marginTop: 3 }}>
-                                Наложка: {details.cod_amount} ₴
+                                Наложка: {getOrderUnpaidAmount(sale)} ₴
                               </div>
-                            )}
+                            ) : details.is_cod && details.cod_amount > 0 ? (
+                              <div className="dusk-num" style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 3 }}>
+                                Була наложка: {details.cod_amount} ₴
+                              </div>
+                            ) : null}
                           </td>
 
                           {/* Payment Selector (Custom Dusk Pill Dropdown) */}

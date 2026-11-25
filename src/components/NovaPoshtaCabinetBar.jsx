@@ -426,7 +426,12 @@ export default function NovaPoshtaCabinetBar({
           (ordersRef.current || []).map((o) => {
             const upd = updMap.get(String(o.id));
             return upd
-              ? { ...o, status: upd.status, shipping_details: upd.shipping_details }
+              ? {
+                  ...o,
+                  status: upd.status,
+                  payment_status: upd.payment_status || o.payment_status,
+                  shipping_details: upd.shipping_details
+                }
               : o;
           })
         );

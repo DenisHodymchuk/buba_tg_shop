@@ -22,7 +22,7 @@ export async function POST() {
 
     const { data: orders, error: fetchErr } = await supabase
       .from('orders')
-      .select('id, status, shipping_method, shipping_details, customers(phone)')
+      .select('id, status, payment_status, total, shipping_method, shipping_details, customers(phone)')
       .in('status', ['new', 'printing', 'painting', 'preparing', 'shipping', 'shipped']);
 
     if (fetchErr) {
@@ -89,6 +89,9 @@ export async function POST() {
       const updatePayload = { shipping_details: updatedDetails };
       if (statusChanged) {
         updatePayload.status = mappedStatus;
+        if (mappedStatus === 'completed') {
+          updatePayload.payment_status = 'paid';
+        }
       }
 
       const { error: updErr } = await supabase
@@ -107,6 +110,7 @@ export async function POST() {
           updatedOrders.push({
             id: order.id,
             status: order.status,
+            payment_status: order.payment_status,
             shipping_details: updatedDetails
           });
         }
@@ -116,13 +120,33 @@ export async function POST() {
       if (statusChanged) {
         changedCount++;
         if (mappedStatus === 'shipped') summary.shipped++;
-        if (mappedStatus === 'completed') summary.completed++;
+        if (mappedStatus === 'completed') {
+          summary.completed++;
+          const adId = order.shipping_details?.attributed_ad_id;
+          const orderTotal = parseFloat(order.total || 0);
+          if (adId && orderTotal > 0) {
+            try {
+              const { data: adData } = await supabase
+                .from('advertisements')
+                .select('revenue')
+                .eq('id', adId)
+                .single();
+              if (adData) {
+                await supabase
+                  .from('advertisements')
+                  .update({ revenue: (parseFloat(adData.revenue || 0)) + orderTotal })
+                  .eq('id', adId);
+              }
+            } catch (_) {}
+          }
+        }
         if (mappedStatus === 'returned') summary.returned++;
       }
 
       updatedOrders.push({
         id: order.id,
         status: statusChanged ? mappedStatus : order.status,
+        payment_status: updatePayload.payment_status || order.payment_status,
         shipping_details: updatedDetails
       });
     }

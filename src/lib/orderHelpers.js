@@ -197,3 +197,44 @@ export function getChannelMeta(channelId) {
   if (!channelId) return CHANNEL_META.website;
   return CHANNEL_META[channelId] || CHANNEL_META[String(channelId).toLowerCase()] || { id: channelId, label: channelId };
 }
+
+/**
+ * Повертає реальний залишок до сплати / накладеного платежу по замовленню (₴).
+ * Для скасованих, повернутих, виконаних (отриманих) або повністю оплачених замовлень завжди повертає 0.
+ */
+export function getOrderUnpaidAmount(order) {
+  if (!order) return 0;
+  const status = order.status || 'new';
+  if (status === 'cancelled' || status === 'returned' || status === 'completed') {
+    return 0;
+  }
+  if (order.payment_status === 'paid') {
+    return 0;
+  }
+
+  let details = order.shipping_details;
+  if (typeof details === 'string') {
+    try { details = JSON.parse(details); } catch (_) { details = {}; }
+  }
+  details = details || {};
+
+  const total = Math.max(0, parseFloat(order.total) || 0);
+  const prepay = Math.max(0, parseFloat(details.prepayment_amount) || 0);
+  const rawCod = parseFloat(details.cod_amount);
+
+  if (details.is_cod) {
+    if (!Number.isNaN(rawCod) && rawCod > 0) {
+      return rawCod;
+    }
+    if (prepay > 0) {
+      return Math.max(0, total - prepay);
+    }
+    return total;
+  }
+
+  if (prepay > 0) {
+    return Math.max(0, total - prepay);
+  }
+
+  return total;
+}

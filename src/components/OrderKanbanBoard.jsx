@@ -10,7 +10,7 @@ import {
   ExternalLink, Package, Coins, MessageSquare, User,
   ArrowRight, ArrowLeft, MoreHorizontal, AlertCircle, GripVertical, RotateCcw
 } from 'lucide-react';
-import { getColorMeta } from '@/lib/orderHelpers';
+import { getColorMeta, getOrderUnpaidAmount } from '@/lib/orderHelpers';
 import { formatShortDateUa, getTodayKey, DONE_OR_SHIPPED_STATUSES } from '@/lib/calendarHelpers';
 
 export const KANBAN_COLUMNS = [
@@ -315,6 +315,7 @@ export default function OrderKanbanBoard({
     const isCod = !!details.is_cod;
     const codAmount = parseFloat(details.cod_amount || 0);
     const totalAmount = parseFloat(sale.total || 0);
+    const unpaidAmount = getOrderUnpaidAmount(sale);
     const prepayment = isCod && codAmount > 0 ? Math.max(0, totalAmount - codAmount) : 0;
     const items = Array.isArray(sale.items) ? sale.items : (Array.isArray(details.items) ? details.items : []);
     const totalItemsCount = items.reduce((acc, it) => acc + (parseInt(it.quantity || it.count || 1, 10)), 0);
@@ -485,18 +486,18 @@ export default function OrderKanbanBoard({
 
           {/* Payment / COD Signal Badge */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
-            {isCod ? (
-              <span className="dusk-badge dusk-badge--apricot" style={{ padding: '2px 7px', fontSize: 10.5 }}>
-                Наложка: {codAmount} ₴
-              </span>
-            ) : sale.payment_status === 'paid' ? (
+            {sale.payment_status === 'paid' || sale.status === 'completed' ? (
               <span className="dusk-badge dusk-badge--periwinkle" style={{ padding: '2px 7px', fontSize: 10.5 }}>
                 <span className="dusk-dot dusk-dot--periwinkle" style={{ width: 5, height: 5 }} />
                 Оплачено
               </span>
+            ) : isCod && unpaidAmount > 0 ? (
+              <span className="dusk-badge dusk-badge--apricot" style={{ padding: '2px 7px', fontSize: 10.5 }}>
+                Наложка: {unpaidAmount} ₴
+              </span>
             ) : sale.payment_status === 'partially_paid' ? (
               <span className="dusk-badge dusk-badge--apricot" style={{ padding: '2px 7px', fontSize: 10.5 }}>
-                Частково
+                Частково{unpaidAmount > 0 ? `: ${unpaidAmount} ₴` : ''}
               </span>
             ) : (
               <span className="dusk-badge dusk-badge--apricot" style={{ padding: '2px 7px', fontSize: 10.5 }}>
